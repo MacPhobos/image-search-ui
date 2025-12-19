@@ -61,6 +61,20 @@ src/
 - **Formatting**: Prettier
 - **Deployment**: Node.js adapter
 
+
+##  Contract Change Checklist (8 bullets)                                                                                                                                                   
+                                                                                                                                                                                             
+When the API contract (docs/api-contract.md) changes:                                                                                                                                                             
+                                                                                                                                                                                             
+  1. Bump version in api-contract.md header and changelog                                                                                                                                    
+  2. Update backend Pydantic models in image-search-service                                                                                                                                  
+  3. Verify OpenAPI generation - hit http://localhost:8000/openapi.json                                                                                                                      
+  4. Run UI type generation - cd image-search-ui && npm run gen:api                                                                                                                          
+  5. Update UI code if generated types changed breaking interfaces                                                                                                                           
+  6. Copy updated api-contract.md to both repos (keep identical)                                                                                                                             
+  7. Run tests in both repos before merging                                                                                                                                                  
+  8. Tag release with matching versions in both repos      
+
 ## License
 
 GPLv3
