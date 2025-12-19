@@ -1,10 +1,17 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/svelte';
+import { installMockFetch, resetMocks } from './helpers/mockFetch';
+
+// Install mock fetch before each test
+beforeEach(() => {
+	installMockFetch();
+});
 
 // Cleanup after each test
 afterEach(() => {
 	cleanup();
+	resetMocks();
 });
 
 // Mock SvelteKit environment modules

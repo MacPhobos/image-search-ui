@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import Page from '../routes/+page.svelte';
+import Page from '../../routes/+page.svelte';
 import type { Mock } from 'vitest';
+import {
+	createSearchResponse,
+	createBeachResult,
+	createMountainResult,
+	createEmptySearchResponse
+} from '../helpers/fixtures';
 
 // Mock the API client module
 vi.mock('$lib/api/client', () => ({
@@ -49,7 +55,8 @@ describe('Dashboard Page', () => {
 		render(Page);
 
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 
 		await fireEvent.input(input, { target: { value: 'beach' } });
 		await fireEvent.submit(form);
@@ -58,39 +65,15 @@ describe('Dashboard Page', () => {
 	});
 
 	it('renders search results when API returns data', async () => {
-		const mockResults = {
-			results: [
-				{
-					asset: {
-						id: 1,
-						path: '/photos/beach-sunset.jpg',
-						createdAt: '2024-12-19T10:00:00Z',
-						indexedAt: '2024-12-19T10:01:00Z'
-					},
-					score: 0.95,
-					highlights: ['beach', 'sunset', 'ocean']
-				},
-				{
-					asset: {
-						id: 2,
-						path: '/photos/mountain-view.jpg',
-						createdAt: '2024-12-18T09:00:00Z',
-						indexedAt: null
-					},
-					score: 0.78,
-					highlights: ['mountain']
-				}
-			],
-			total: 2,
-			query: 'beach'
-		};
+		const mockResults = createSearchResponse([createBeachResult(), createMountainResult()], 'beach');
 
 		(searchImages as Mock).mockResolvedValueOnce(mockResults);
 
 		render(Page);
 
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 
 		await fireEvent.input(input, { target: { value: 'beach' } });
 		await fireEvent.submit(form);
@@ -128,7 +111,8 @@ describe('Dashboard Page', () => {
 		render(Page);
 
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 
 		await fireEvent.input(input, { target: { value: 'test' } });
 		await fireEvent.submit(form);
@@ -141,16 +125,15 @@ describe('Dashboard Page', () => {
 	});
 
 	it('shows no results message when search returns empty', async () => {
-		(searchImages as Mock).mockResolvedValueOnce({
-			results: [],
-			total: 0,
-			query: 'nonexistent'
-		});
+		const mockResults = createEmptySearchResponse('nonexistent');
+
+		(searchImages as Mock).mockResolvedValueOnce(mockResults);
 
 		render(Page);
 
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 
 		await fireEvent.input(input, { target: { value: 'nonexistent' } });
 		await fireEvent.submit(form);
@@ -163,11 +146,9 @@ describe('Dashboard Page', () => {
 	});
 
 	it('passes filters to search API', async () => {
-		(searchImages as Mock).mockResolvedValueOnce({
-			results: [],
-			total: 0,
-			query: 'test'
-		});
+		const mockResults = createEmptySearchResponse('test');
+
+		(searchImages as Mock).mockResolvedValueOnce(mockResults);
 
 		render(Page);
 
@@ -179,7 +160,8 @@ describe('Dashboard Page', () => {
 
 		// Submit search
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 		await fireEvent.input(input, { target: { value: 'test' } });
 		await fireEvent.submit(form);
 

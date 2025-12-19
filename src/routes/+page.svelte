@@ -11,7 +11,6 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let hasSearched = $state(false);
-	let totalResults = $state(0);
 
 	async function handleSearch(searchQuery: string) {
 		query = searchQuery;
@@ -25,7 +24,6 @@
 				filters
 			});
 			results = response.results;
-			totalResults = response.total;
 		} catch (err) {
 			if (err instanceof ApiError) {
 				error = err.data?.message || err.message;
@@ -33,7 +31,6 @@
 				error = err instanceof Error ? err.message : 'An unexpected error occurred';
 			}
 			results = [];
-			totalResults = 0;
 		} finally {
 			loading = false;
 		}

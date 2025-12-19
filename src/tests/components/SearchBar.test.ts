@@ -45,7 +45,8 @@ describe('SearchBar', () => {
 		render(SearchBar, { props: { onSearch } });
 
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 
 		await fireEvent.input(input, { target: { value: '  beach sunset  ' } });
 		await fireEvent.submit(form);
@@ -59,7 +60,8 @@ describe('SearchBar', () => {
 		render(SearchBar, { props: { onSearch } });
 
 		const input = screen.getByRole('textbox', { name: /search query/i });
-		const form = input.closest('form')!;
+		const form = input.closest('form');
+		if (!form) throw new Error('Form not found');
 
 		await fireEvent.input(input, { target: { value: '   ' } });
 		await fireEvent.submit(form);
