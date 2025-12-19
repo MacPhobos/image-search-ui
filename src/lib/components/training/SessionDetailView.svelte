@@ -29,7 +29,7 @@
 	const jobsTotalPages = $derived(Math.ceil(jobsTotal / jobsPageSize));
 
 	async function fetchProgress() {
-		if (loadingProgress) return;
+		if (loadingProgress || !session?.id) return; // Guard against concurrent calls and undefined session
 		loadingProgress = true;
 		try {
 			progress = await getProgress(session.id);
@@ -41,7 +41,7 @@
 	}
 
 	async function fetchJobs() {
-		if (loadingJobs) return; // Guard against concurrent calls
+		if (loadingJobs || !session?.id) return; // Guard against concurrent calls and undefined session
 		loadingJobs = true;
 		try {
 			const response = await listJobs(session.id, jobsPage, jobsPageSize);
@@ -80,9 +80,9 @@
 		await fetchJobs(); // Also refresh jobs after status change
 	}
 
-	// Load initial data only once
+	// Load initial data only once when session.id is available
 	$effect(() => {
-		if (!initialLoadDone) {
+		if (!initialLoadDone && session?.id) {
 			initialLoadDone = true;
 			untrack(() => {
 				fetchProgress();
@@ -93,10 +93,10 @@
 
 	// Start/stop polling based on session status
 	$effect(() => {
-		const status = session.status;
+		const status = session?.status;
 
 		untrack(() => {
-			if (status === 'running') {
+			if (status === 'running' && session?.id) {
 				startPolling();
 			} else {
 				stopPolling();

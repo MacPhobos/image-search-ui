@@ -10,12 +10,8 @@
 
 	let { data }: Props = $props();
 
-	let session = $state<TrainingSession>({} as TrainingSession);
-
-	// Initialize from page data
-	$effect(() => {
-		session = data.session;
-	});
+	// Initialize session directly from page data (not via $effect to avoid timing issues)
+	let session = $state<TrainingSession>(data.session);
 
 	async function handleSessionUpdate() {
 		try {
