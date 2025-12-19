@@ -1,13 +1,30 @@
 // Re-export generated types for convenience
 import type { components } from '$lib/api/generated';
 
-// Alias generated types
+// Alias generated types - Search
 export type Asset = components['schemas']['Asset'];
 export type SearchRequest = components['schemas']['SearchRequest'];
 export type SearchResponse = components['schemas']['SearchResponse'];
 export type SearchResult = components['schemas']['SearchResult'];
 export type ErrorResponse = components['schemas']['ErrorResponse'];
 export type PaginatedAssetResponse = components['schemas']['PaginatedResponse_Asset_'];
+
+// Alias generated types - Training
+export type TrainingSession = components['schemas']['TrainingSessionResponse'];
+export type TrainingSessionCreate = components['schemas']['TrainingSessionCreate'];
+export type TrainingSessionUpdate = components['schemas']['TrainingSessionUpdate'];
+export type TrainingJob = components['schemas']['TrainingJobResponse'];
+export type TrainingProgress = components['schemas']['TrainingProgressResponse'];
+export type ProgressStats = components['schemas']['ProgressStats'];
+export type TrainingSubdirectory = components['schemas']['TrainingSubdirectoryResponse'];
+export type SubdirectorySelection = components['schemas']['SubdirectorySelectionUpdate'];
+export type DirectoryScanResponse = components['schemas']['DirectoryScanResponse'];
+export type SubdirectoryInfo = components['schemas']['DirectoryInfo'];
+export type ControlResponse = components['schemas']['ControlResponse'];
+export type PaginatedTrainingSessionResponse =
+	components['schemas']['PaginatedResponse_TrainingSessionResponse_'];
+export type PaginatedTrainingJobResponse =
+	components['schemas']['PaginatedResponse_TrainingJobResponse_'];
 
 // Health check response
 export interface HealthResponse {

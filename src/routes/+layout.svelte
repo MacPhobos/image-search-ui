@@ -32,6 +32,10 @@
 <div class="app">
 	<header>
 		<h1>Image Search</h1>
+		<nav class="nav">
+			<a href="/">Search</a>
+			<a href="/training">Training</a>
+		</nav>
 		<div class="health-indicator">
 			<span class="health-dot health-{healthStatus}"></span>
 			<span class="health-text">
@@ -83,12 +87,33 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: 2rem;
 	}
 
 	header h1 {
 		margin: 0;
 		font-size: 1.75rem;
 		font-weight: 600;
+	}
+
+	.nav {
+		display: flex;
+		gap: 1.5rem;
+		align-items: center;
+	}
+
+	.nav a {
+		color: white;
+		text-decoration: none;
+		font-size: 1rem;
+		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	.nav a:hover {
+		background-color: rgba(255, 255, 255, 0.1);
 	}
 
 	.health-indicator {
