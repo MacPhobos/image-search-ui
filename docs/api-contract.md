@@ -30,9 +30,9 @@ This document defines the API contract between `image-search-service` (backend) 
 
 ## Base Configuration
 
-| Environment | Base URL |
-|-------------|----------|
-| Development | `http://localhost:8000` |
+| Environment | Base URL                                     |
+| ----------- | -------------------------------------------- |
+| Development | `http://localhost:8000`                      |
 | Production  | `https://api.image-search.example.com` (TBD) |
 
 All endpoints are prefixed with `/api/v1` except `/health` and `/openapi.json`.
@@ -72,13 +72,13 @@ All list endpoints return paginated responses.
 
 ```typescript
 interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;        // Current page (1-indexed)
-    pageSize: number;    // Items per page
-    totalItems: number;  // Total count
-    totalPages: number;  // Calculated total pages
-  };
+	data: T[];
+	pagination: {
+		page: number; // Current page (1-indexed)
+		pageSize: number; // Items per page
+		totalItems: number; // Total count
+		totalPages: number; // Calculated total pages
+	};
 }
 ```
 
@@ -101,11 +101,11 @@ All errors follow this shape.
 
 ```typescript
 interface ErrorResponse {
-  error: {
-    code: string;        // Machine-readable code (e.g., "ASSET_NOT_FOUND")
-    message: string;     // Human-readable message
-    details?: unknown;   // Optional additional context
-  };
+	error: {
+		code: string; // Machine-readable code (e.g., "ASSET_NOT_FOUND")
+		message: string; // Human-readable message
+		details?: unknown; // Optional additional context
+	};
 }
 ```
 
@@ -134,7 +134,7 @@ Health check endpoint. No authentication required. No `/api/v1` prefix.
 
 ```json
 {
-  "status": "ok"
+	"status": "ok"
 }
 ```
 
@@ -148,25 +148,25 @@ Asset management for image files.
 
 ```typescript
 interface Asset {
-  id: string;              // UUID
-  path: string;            // Original file path
-  filename: string;        // Basename of file
-  url: string;             // Accessible URL for full image
-  thumbnailUrl: string;    // Accessible URL for thumbnail
-  mimeType: string;        // e.g., "image/jpeg"
-  width: number;           // Pixels
-  height: number;          // Pixels
-  fileSize: number;        // Bytes
-  createdAt: string;       // ISO 8601 timestamp
-  updatedAt: string;       // ISO 8601 timestamp
-  metadata?: {
-    camera?: string;
-    dateTaken?: string;
-    location?: {
-      latitude: number;
-      longitude: number;
-    };
-  };
+	id: string; // UUID
+	path: string; // Original file path
+	filename: string; // Basename of file
+	url: string; // Accessible URL for full image
+	thumbnailUrl: string; // Accessible URL for thumbnail
+	mimeType: string; // e.g., "image/jpeg"
+	width: number; // Pixels
+	height: number; // Pixels
+	fileSize: number; // Bytes
+	createdAt: string; // ISO 8601 timestamp
+	updatedAt: string; // ISO 8601 timestamp
+	metadata?: {
+		camera?: string;
+		dateTaken?: string;
+		location?: {
+			latitude: number;
+			longitude: number;
+		};
+	};
 }
 ```
 
@@ -176,46 +176,46 @@ List all assets with pagination.
 
 **Query Parameters**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | integer | 1 | Page number (1-indexed) |
-| `pageSize` | integer | 50 | Items per page (max: 100) |
-| `sortBy` | string | `createdAt` | Sort field: `createdAt`, `filename`, `fileSize` |
-| `sortOrder` | string | `desc` | Sort direction: `asc`, `desc` |
+| Parameter   | Type    | Default     | Description                                     |
+| ----------- | ------- | ----------- | ----------------------------------------------- |
+| `page`      | integer | 1           | Page number (1-indexed)                         |
+| `pageSize`  | integer | 50          | Items per page (max: 100)                       |
+| `sortBy`    | string  | `createdAt` | Sort field: `createdAt`, `filename`, `fileSize` |
+| `sortOrder` | string  | `desc`      | Sort direction: `asc`, `desc`                   |
 
 **Response** `200 OK`
 
 ```json
 {
-  "data": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "path": "/photos/2024/vacation/beach.jpg",
-      "filename": "beach.jpg",
-      "url": "/files/550e8400-e29b-41d4-a716-446655440000/full",
-      "thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/thumb",
-      "mimeType": "image/jpeg",
-      "width": 4032,
-      "height": 3024,
-      "fileSize": 3542890,
-      "createdAt": "2024-12-19T10:30:00Z",
-      "updatedAt": "2024-12-19T10:30:00Z",
-      "metadata": {
-        "camera": "iPhone 15 Pro",
-        "dateTaken": "2024-12-15T14:22:00Z",
-        "location": {
-          "latitude": 25.7617,
-          "longitude": -80.1918
-        }
-      }
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "pageSize": 50,
-    "totalItems": 1247,
-    "totalPages": 25
-  }
+	"data": [
+		{
+			"id": "550e8400-e29b-41d4-a716-446655440000",
+			"path": "/photos/2024/vacation/beach.jpg",
+			"filename": "beach.jpg",
+			"url": "/files/550e8400-e29b-41d4-a716-446655440000/full",
+			"thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/thumb",
+			"mimeType": "image/jpeg",
+			"width": 4032,
+			"height": 3024,
+			"fileSize": 3542890,
+			"createdAt": "2024-12-19T10:30:00Z",
+			"updatedAt": "2024-12-19T10:30:00Z",
+			"metadata": {
+				"camera": "iPhone 15 Pro",
+				"dateTaken": "2024-12-15T14:22:00Z",
+				"location": {
+					"latitude": 25.7617,
+					"longitude": -80.1918
+				}
+			}
+		}
+	],
+	"pagination": {
+		"page": 1,
+		"pageSize": 50,
+		"totalItems": 1247,
+		"totalPages": 25
+	}
 }
 ```
 
@@ -229,10 +229,10 @@ Get single asset by ID.
 
 ```json
 {
-  "error": {
-    "code": "ASSET_NOT_FOUND",
-    "message": "Asset with ID '550e8400-...' not found"
-  }
+	"error": {
+		"code": "ASSET_NOT_FOUND",
+		"message": "Asset with ID '550e8400-...' not found"
+	}
 }
 ```
 
@@ -244,8 +244,8 @@ Trigger a directory scan to discover new assets.
 
 ```json
 {
-  "paths": ["/photos/2024", "/photos/2023"],
-  "recursive": true
+	"paths": ["/photos/2024", "/photos/2023"],
+	"recursive": true
 }
 ```
 
@@ -253,8 +253,8 @@ Trigger a directory scan to discover new assets.
 
 ```json
 {
-  "jobId": "job-550e8400-e29b-41d4-a716-446655440000",
-  "message": "Scan job queued"
+	"jobId": "job-550e8400-e29b-41d4-a716-446655440000",
+	"message": "Scan job queued"
 }
 ```
 
@@ -276,45 +276,45 @@ Search assets by text query (semantic search).
 
 **Query Parameters**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `q` | string | *required* | Search query text |
-| `page` | integer | 1 | Page number |
-| `pageSize` | integer | 20 | Results per page (max: 100) |
-| `minScore` | number | 0.0 | Minimum similarity score (0.0-1.0) |
-| `personId` | string | - | Filter by person ID |
-| `dateFrom` | string | - | Filter: date taken >= (ISO 8601) |
-| `dateTo` | string | - | Filter: date taken <= (ISO 8601) |
+| Parameter  | Type    | Default    | Description                        |
+| ---------- | ------- | ---------- | ---------------------------------- |
+| `q`        | string  | _required_ | Search query text                  |
+| `page`     | integer | 1          | Page number                        |
+| `pageSize` | integer | 20         | Results per page (max: 100)        |
+| `minScore` | number  | 0.0        | Minimum similarity score (0.0-1.0) |
+| `personId` | string  | -          | Filter by person ID                |
+| `dateFrom` | string  | -          | Filter: date taken >= (ISO 8601)   |
+| `dateTo`   | string  | -          | Filter: date taken <= (ISO 8601)   |
 
 **Response** `200 OK`
 
 ```json
 {
-  "data": [
-    {
-      "asset": {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "path": "/photos/2024/vacation/beach.jpg",
-        "filename": "beach.jpg",
-        "url": "/files/550e8400-e29b-41d4-a716-446655440000/full",
-        "thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/thumb",
-        "mimeType": "image/jpeg",
-        "width": 4032,
-        "height": 3024,
-        "fileSize": 3542890,
-        "createdAt": "2024-12-19T10:30:00Z",
-        "updatedAt": "2024-12-19T10:30:00Z"
-      },
-      "score": 0.89,
-      "highlights": ["beach", "ocean", "sunset"]
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "pageSize": 20,
-    "totalItems": 47,
-    "totalPages": 3
-  }
+	"data": [
+		{
+			"asset": {
+				"id": "550e8400-e29b-41d4-a716-446655440000",
+				"path": "/photos/2024/vacation/beach.jpg",
+				"filename": "beach.jpg",
+				"url": "/files/550e8400-e29b-41d4-a716-446655440000/full",
+				"thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/thumb",
+				"mimeType": "image/jpeg",
+				"width": 4032,
+				"height": 3024,
+				"fileSize": 3542890,
+				"createdAt": "2024-12-19T10:30:00Z",
+				"updatedAt": "2024-12-19T10:30:00Z"
+			},
+			"score": 0.89,
+			"highlights": ["beach", "ocean", "sunset"]
+		}
+	],
+	"pagination": {
+		"page": 1,
+		"pageSize": 20,
+		"totalItems": 47,
+		"totalPages": 3
+	}
 }
 ```
 
@@ -326,9 +326,9 @@ Find visually similar images to a given asset.
 
 ```json
 {
-  "assetId": "550e8400-e29b-41d4-a716-446655440000",
-  "limit": 10,
-  "minScore": 0.7
+	"assetId": "550e8400-e29b-41d4-a716-446655440000",
+	"limit": 10,
+	"minScore": 0.7
 }
 ```
 
@@ -344,12 +344,12 @@ Face detection and person labeling.
 
 ```typescript
 interface Person {
-  id: string;              // UUID
-  name: string;            // Display name (may be "Unknown" initially)
-  thumbnailUrl?: string;   // Representative face thumbnail
-  faceCount: number;       // Number of detected faces
-  createdAt: string;       // ISO 8601
-  updatedAt: string;       // ISO 8601
+	id: string; // UUID
+	name: string; // Display name (may be "Unknown" initially)
+	thumbnailUrl?: string; // Representative face thumbnail
+	faceCount: number; // Number of detected faces
+	createdAt: string; // ISO 8601
+	updatedAt: string; // ISO 8601
 }
 ```
 
@@ -357,18 +357,18 @@ interface Person {
 
 ```typescript
 interface Face {
-  id: string;              // UUID
-  assetId: string;         // Parent asset ID
-  personId?: string;       // Assigned person (null if unassigned)
-  boundingBox: {
-    x: number;             // Top-left X (0.0-1.0 normalized)
-    y: number;             // Top-left Y (0.0-1.0 normalized)
-    width: number;         // Width (0.0-1.0 normalized)
-    height: number;        // Height (0.0-1.0 normalized)
-  };
-  confidence: number;      // Detection confidence (0.0-1.0)
-  thumbnailUrl: string;    // Cropped face thumbnail
-  createdAt: string;       // ISO 8601
+	id: string; // UUID
+	assetId: string; // Parent asset ID
+	personId?: string; // Assigned person (null if unassigned)
+	boundingBox: {
+		x: number; // Top-left X (0.0-1.0 normalized)
+		y: number; // Top-left Y (0.0-1.0 normalized)
+		width: number; // Width (0.0-1.0 normalized)
+		height: number; // Height (0.0-1.0 normalized)
+	};
+	confidence: number; // Detection confidence (0.0-1.0)
+	thumbnailUrl: string; // Cropped face thumbnail
+	createdAt: string; // ISO 8601
 }
 ```
 
@@ -378,12 +378,12 @@ List all identified people.
 
 **Query Parameters**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | integer | 1 | Page number |
-| `pageSize` | integer | 50 | Items per page |
-| `sortBy` | string | `faceCount` | Sort: `name`, `faceCount`, `createdAt` |
-| `sortOrder` | string | `desc` | Direction: `asc`, `desc` |
+| Parameter   | Type    | Default     | Description                            |
+| ----------- | ------- | ----------- | -------------------------------------- |
+| `page`      | integer | 1           | Page number                            |
+| `pageSize`  | integer | 50          | Items per page                         |
+| `sortBy`    | string  | `faceCount` | Sort: `name`, `faceCount`, `createdAt` |
+| `sortOrder` | string  | `desc`      | Direction: `asc`, `desc`               |
 
 **Response** `200 OK` - `PaginatedResponse<Person>`
 
@@ -401,7 +401,7 @@ Update person (e.g., rename).
 
 ```json
 {
-  "name": "John Smith"
+	"name": "John Smith"
 }
 ```
 
@@ -415,8 +415,8 @@ Merge multiple people into one (e.g., when same person was detected separately).
 
 ```json
 {
-  "sourceIds": ["id-1", "id-2", "id-3"],
-  "targetId": "id-1"
+	"sourceIds": ["id-1", "id-2", "id-3"],
+	"targetId": "id-1"
 }
 ```
 
@@ -424,12 +424,12 @@ Merge multiple people into one (e.g., when same person was detected separately).
 
 ```json
 {
-  "merged": {
-    "id": "id-1",
-    "name": "John Smith",
-    "faceCount": 47
-  },
-  "deletedIds": ["id-2", "id-3"]
+	"merged": {
+		"id": "id-1",
+		"name": "John Smith",
+		"faceCount": 47
+	},
+	"deletedIds": ["id-2", "id-3"]
 }
 ```
 
@@ -453,7 +453,7 @@ Assign a face to a person.
 
 ```json
 {
-  "personId": "550e8400-e29b-41d4-a716-446655440000"
+	"personId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
@@ -469,34 +469,34 @@ Background job management for long-running operations.
 
 ```typescript
 interface Job {
-  id: string;              // UUID
-  type: JobType;           // Job type enum
-  status: JobStatus;       // Current status
-  progress?: {
-    current: number;       // Items processed
-    total: number;         // Total items
-    percentage: number;    // 0-100
-  };
-  result?: unknown;        // Job-specific result data
-  error?: string;          // Error message if failed
-  createdAt: string;       // ISO 8601
-  startedAt?: string;      // When processing began
-  completedAt?: string;    // When finished (success or failure)
+	id: string; // UUID
+	type: JobType; // Job type enum
+	status: JobStatus; // Current status
+	progress?: {
+		current: number; // Items processed
+		total: number; // Total items
+		percentage: number; // 0-100
+	};
+	result?: unknown; // Job-specific result data
+	error?: string; // Error message if failed
+	createdAt: string; // ISO 8601
+	startedAt?: string; // When processing began
+	completedAt?: string; // When finished (success or failure)
 }
 
 type JobType =
-  | "SCAN"           // Directory scan
-  | "EMBED"          // Generate embeddings
-  | "FACE_DETECT"    // Detect faces
-  | "FACE_CLUSTER"   // Cluster faces into people
-  | "THUMBNAIL";     // Generate thumbnails
+	| 'SCAN' // Directory scan
+	| 'EMBED' // Generate embeddings
+	| 'FACE_DETECT' // Detect faces
+	| 'FACE_CLUSTER' // Cluster faces into people
+	| 'THUMBNAIL'; // Generate thumbnails
 
 type JobStatus =
-  | "PENDING"        // Queued, not started
-  | "RUNNING"        // In progress
-  | "COMPLETED"      // Finished successfully
-  | "FAILED"         // Finished with error
-  | "CANCELLED";     // User cancelled
+	| 'PENDING' // Queued, not started
+	| 'RUNNING' // In progress
+	| 'COMPLETED' // Finished successfully
+	| 'FAILED' // Finished with error
+	| 'CANCELLED'; // User cancelled
 ```
 
 #### `GET /api/v1/jobs`
@@ -505,12 +505,12 @@ List jobs with optional filters.
 
 **Query Parameters**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | integer | 1 | Page number |
-| `pageSize` | integer | 20 | Items per page |
-| `type` | string | - | Filter by job type |
-| `status` | string | - | Filter by status |
+| Parameter  | Type    | Default | Description        |
+| ---------- | ------- | ------- | ------------------ |
+| `page`     | integer | 1       | Page number        |
+| `pageSize` | integer | 20      | Items per page     |
+| `type`     | string  | -       | Filter by job type |
+| `status`   | string  | -       | Filter by status   |
 
 **Response** `200 OK` - `PaginatedResponse<Job>`
 
@@ -528,8 +528,8 @@ Cancel a pending or running job.
 
 ```json
 {
-  "id": "job-123",
-  "status": "CANCELLED"
+	"id": "job-123",
+	"status": "CANCELLED"
 }
 ```
 
@@ -537,10 +537,10 @@ Cancel a pending or running job.
 
 ```json
 {
-  "error": {
-    "code": "JOB_NOT_CANCELLABLE",
-    "message": "Job is already completed"
-  }
+	"error": {
+		"code": "JOB_NOT_CANCELLABLE",
+		"message": "Job is already completed"
+	}
 }
 ```
 
@@ -554,18 +554,18 @@ User feedback for improving search quality. **This is a future feature placehold
 
 ```typescript
 interface Correction {
-  id: string;              // UUID
-  type: CorrectionType;
-  assetId: string;         // Related asset
-  data: unknown;           // Type-specific correction data
-  status: "PENDING" | "APPLIED" | "REJECTED";
-  createdAt: string;       // ISO 8601
+	id: string; // UUID
+	type: CorrectionType;
+	assetId: string; // Related asset
+	data: unknown; // Type-specific correction data
+	status: 'PENDING' | 'APPLIED' | 'REJECTED';
+	createdAt: string; // ISO 8601
 }
 
 type CorrectionType =
-  | "FACE_IDENTITY"    // Wrong person assigned to face
-  | "SEARCH_RELEVANCE" // Search result was not relevant
-  | "METADATA";        // Incorrect metadata
+	| 'FACE_IDENTITY' // Wrong person assigned to face
+	| 'SEARCH_RELEVANCE' // Search result was not relevant
+	| 'METADATA'; // Incorrect metadata
 ```
 
 #### `POST /api/v1/corrections`
@@ -576,13 +576,13 @@ Submit a correction.
 
 ```json
 {
-  "type": "FACE_IDENTITY",
-  "assetId": "asset-123",
-  "data": {
-    "faceId": "face-456",
-    "incorrectPersonId": "person-789",
-    "correctPersonId": "person-012"
-  }
+	"type": "FACE_IDENTITY",
+	"assetId": "asset-123",
+	"data": {
+		"faceId": "face-456",
+		"incorrectPersonId": "person-789",
+		"correctPersonId": "person-012"
+	}
 }
 ```
 
@@ -602,10 +602,10 @@ All list endpoints use consistent pagination.
 
 ### Request Parameters
 
-| Parameter | Type | Default | Max | Description |
-|-----------|------|---------|-----|-------------|
-| `page` | integer | 1 | - | 1-indexed page number |
-| `pageSize` | integer | 20 | 100 | Items per page |
+| Parameter  | Type    | Default | Max | Description           |
+| ---------- | ------- | ------- | --- | --------------------- |
+| `page`     | integer | 1       | -   | 1-indexed page number |
+| `pageSize` | integer | 20      | 100 | Items per page        |
 
 ### Response Structure
 
@@ -648,33 +648,33 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `VALIDATION_ERROR` | 400 | Invalid request parameters |
-| `ASSET_NOT_FOUND` | 404 | Asset ID does not exist |
-| `PERSON_NOT_FOUND` | 404 | Person ID does not exist |
-| `FACE_NOT_FOUND` | 404 | Face ID does not exist |
-| `JOB_NOT_FOUND` | 404 | Job ID does not exist |
-| `JOB_NOT_CANCELLABLE` | 409 | Job already completed |
-| `MERGE_CONFLICT` | 409 | Cannot merge (e.g., same person) |
-| `RATE_LIMITED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                  | HTTP Status | Description                      |
+| --------------------- | ----------- | -------------------------------- |
+| `VALIDATION_ERROR`    | 400         | Invalid request parameters       |
+| `ASSET_NOT_FOUND`     | 404         | Asset ID does not exist          |
+| `PERSON_NOT_FOUND`    | 404         | Person ID does not exist         |
+| `FACE_NOT_FOUND`      | 404         | Face ID does not exist           |
+| `JOB_NOT_FOUND`       | 404         | Job ID does not exist            |
+| `JOB_NOT_CANCELLABLE` | 409         | Job already completed            |
+| `MERGE_CONFLICT`      | 409         | Cannot merge (e.g., same person) |
+| `RATE_LIMITED`        | 429         | Too many requests                |
+| `INTERNAL_ERROR`      | 500         | Server error                     |
 
 ---
 
 ## Status Codes
 
-| Code | Usage |
-|------|-------|
-| `200 OK` | Successful GET, PATCH, POST (for actions) |
-| `201 Created` | Successful POST (for resource creation) |
-| `202 Accepted` | Job queued for async processing |
-| `204 No Content` | Successful DELETE |
-| `400 Bad Request` | Validation error |
-| `404 Not Found` | Resource not found |
-| `409 Conflict` | State conflict (e.g., job already done) |
-| `429 Too Many Requests` | Rate limited |
-| `500 Internal Server Error` | Unexpected server error |
+| Code                        | Usage                                     |
+| --------------------------- | ----------------------------------------- |
+| `200 OK`                    | Successful GET, PATCH, POST (for actions) |
+| `201 Created`               | Successful POST (for resource creation)   |
+| `202 Accepted`              | Job queued for async processing           |
+| `204 No Content`            | Successful DELETE                         |
+| `400 Bad Request`           | Validation error                          |
+| `404 Not Found`             | Resource not found                        |
+| `409 Conflict`              | State conflict (e.g., job already done)   |
+| `429 Too Many Requests`     | Rate limited                              |
+| `500 Internal Server Error` | Unexpected server error                   |
 
 ---
 
@@ -740,6 +740,7 @@ Authorization: Bearer <api-key>
 ### Endpoints Requiring Auth (Future)
 
 All endpoints except:
+
 - `GET /health`
 - `GET /openapi.json`
 
@@ -747,10 +748,10 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2024-12-19 | Initial contract freeze |
+| Version | Date       | Changes                 |
+| ------- | ---------- | ----------------------- |
+| 1.0.0   | 2024-12-19 | Initial contract freeze |
 
 ---
 
-*This contract is the source of truth. UI and service implementations must conform to these definitions.*
+_This contract is the source of truth. UI and service implementations must conform to these definitions._

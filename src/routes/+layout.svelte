@@ -1,16 +1,49 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { onMount } from 'svelte';
+	import { checkHealth } from '$lib/api/client';
 
 	interface Props {
 		children: Snippet;
 	}
 
 	let { children }: Props = $props();
+
+	type HealthStatus = 'checking' | 'healthy' | 'unhealthy';
+	let healthStatus = $state<HealthStatus>('checking');
+
+	onMount(() => {
+		checkBackendHealth();
+		// Check health every 30 seconds
+		const interval = setInterval(checkBackendHealth, 30000);
+		return () => clearInterval(interval);
+	});
+
+	async function checkBackendHealth() {
+		try {
+			const response = await checkHealth();
+			healthStatus = response.status === 'ok' ? 'healthy' : 'unhealthy';
+		} catch {
+			healthStatus = 'unhealthy';
+		}
+	}
 </script>
 
 <div class="app">
 	<header>
 		<h1>Image Search</h1>
+		<div class="health-indicator">
+			<span class="health-dot health-{healthStatus}"></span>
+			<span class="health-text">
+				{#if healthStatus === 'checking'}
+					Checking backend...
+				{:else if healthStatus === 'healthy'}
+					Backend connected
+				{:else}
+					Backend offline
+				{/if}
+			</span>
+		</div>
 	</header>
 
 	<main>
@@ -47,12 +80,56 @@
 		color: white;
 		padding: 1.5rem 2rem;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 
 	header h1 {
 		margin: 0;
 		font-size: 1.75rem;
 		font-weight: 600;
+	}
+
+	.health-indicator {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.health-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		animation: pulse 2s infinite;
+	}
+
+	.health-checking {
+		background-color: #f59e0b;
+	}
+
+	.health-healthy {
+		background-color: #10b981;
+		animation: none;
+	}
+
+	.health-unhealthy {
+		background-color: #ef4444;
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
+	.health-text {
+		font-size: 0.75rem;
+		opacity: 0.9;
 	}
 
 	main {

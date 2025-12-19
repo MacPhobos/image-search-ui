@@ -2,7 +2,7 @@
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import FiltersPanel from '$lib/components/FiltersPanel.svelte';
 	import ResultsGrid from '$lib/components/ResultsGrid.svelte';
-	import { searchImages } from '$lib/api/client';
+	import { searchImages, ApiError } from '$lib/api/client';
 	import type { SearchResult, SearchFilters } from '$lib/types';
 
 	let query = $state('');
@@ -10,21 +10,30 @@
 	let results = $state<SearchResult[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
+	let hasSearched = $state(false);
+	let totalResults = $state(0);
 
 	async function handleSearch(searchQuery: string) {
 		query = searchQuery;
 		loading = true;
 		error = null;
+		hasSearched = true;
 
 		try {
 			const response = await searchImages({
 				query: searchQuery,
 				filters
 			});
-			results = response.data;
+			results = response.results;
+			totalResults = response.total;
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'An error occurred';
+			if (err instanceof ApiError) {
+				error = err.data?.message || err.message;
+			} else {
+				error = err instanceof Error ? err.message : 'An unexpected error occurred';
+			}
 			results = [];
+			totalResults = 0;
 		} finally {
 			loading = false;
 		}
@@ -53,11 +62,12 @@
 
 		<div class="results-section">
 			{#if error}
-				<div class="error-message">
-					<p>Error: {error}</p>
+				<div class="error-message" role="alert">
+					<strong>Error:</strong>
+					{error}
 				</div>
 			{/if}
-			<ResultsGrid {results} {loading} />
+			<ResultsGrid {results} {loading} {hasSearched} />
 		</div>
 	</div>
 </div>
@@ -85,16 +95,12 @@
 	}
 
 	.error-message {
-		background-color: #fee;
-		border: 1px solid #fcc;
+		background-color: #fee2e2;
+		border: 1px solid #fecaca;
 		border-radius: 8px;
 		padding: 1rem;
 		margin-bottom: 1rem;
-		color: #c33;
-	}
-
-	.error-message p {
-		margin: 0;
+		color: #dc2626;
 	}
 
 	@media (max-width: 768px) {

@@ -1,13 +1,19 @@
-import type { ApiResponse, SearchParams, SearchResult } from '$lib/types';
+import type {
+	SearchParams,
+	SearchResponse,
+	HealthResponse,
+	ApiErrorData,
+	SearchRequest
+} from '$lib/types';
 import { env } from '$env/dynamic/public';
 
 const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-class ApiError extends Error {
+export class ApiError extends Error {
 	constructor(
 		message: string,
 		public status: number,
-		public data?: unknown
+		public data?: ApiErrorData
 	) {
 		super(message);
 		this.name = 'ApiError';
@@ -40,28 +46,52 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 		if (error instanceof ApiError) {
 			throw error;
 		}
-		throw new ApiError('Network request failed', 0, error);
+		throw new ApiError('Network request failed', 0, undefined);
 	}
 }
 
-export async function searchImages(params: SearchParams): Promise<ApiResponse<SearchResult[]>> {
-	const queryParams = new URLSearchParams({
-		q: params.query,
-		...(params.page && { page: params.page.toString() }),
-		...(params.pageSize && { pageSize: params.pageSize.toString() })
-	});
+/**
+ * Search for images using semantic search.
+ * Uses POST /api/v1/search endpoint.
+ */
+export async function searchImages(params: SearchParams): Promise<SearchResponse> {
+	// Convert frontend SearchParams to API SearchRequest
+	const requestBody: SearchRequest = {
+		query: params.query,
+		limit: params.limit ?? 50,
+		offset: params.offset ?? 0,
+		filters: undefined
+	};
 
-	// Add filters to query params if provided
+	// Convert date filters to API format if provided
 	if (params.filters) {
-		if (params.filters.category) {
-			queryParams.append('category', params.filters.category);
+		const apiFilters: Record<string, string> = {};
+		if (params.filters.dateFrom) {
+			apiFilters['dateFrom'] = params.filters.dateFrom;
 		}
-		if (params.filters.sortBy) {
-			queryParams.append('sortBy', params.filters.sortBy);
+		if (params.filters.dateTo) {
+			apiFilters['dateTo'] = params.filters.dateTo;
+		}
+		if (params.filters.personId) {
+			apiFilters['personId'] = params.filters.personId;
+		}
+		if (Object.keys(apiFilters).length > 0) {
+			requestBody.filters = apiFilters;
 		}
 	}
 
-	return apiRequest<ApiResponse<SearchResult[]>>(`/api/search?${queryParams.toString()}`);
+	return apiRequest<SearchResponse>('/api/v1/search', {
+		method: 'POST',
+		body: JSON.stringify(requestBody)
+	});
 }
 
-export { ApiError };
+/**
+ * Check backend health status.
+ * Uses GET /health endpoint (no /api/v1 prefix).
+ */
+export async function checkHealth(): Promise<HealthResponse> {
+	return apiRequest<HealthResponse>('/health');
+}
+
+export { API_BASE_URL };

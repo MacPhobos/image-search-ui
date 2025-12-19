@@ -1,36 +1,37 @@
-// Image search result interface
-export interface SearchResult {
-	id: string;
-	url: string;
-	thumbnailUrl: string;
-	title: string;
-	description?: string;
-	source?: string;
-	timestamp?: string;
+// Re-export generated types for convenience
+import type { components } from '$lib/api/generated';
+
+// Alias generated types
+export type Asset = components['schemas']['Asset'];
+export type SearchRequest = components['schemas']['SearchRequest'];
+export type SearchResponse = components['schemas']['SearchResponse'];
+export type SearchResult = components['schemas']['SearchResult'];
+export type ErrorResponse = components['schemas']['ErrorResponse'];
+export type PaginatedAssetResponse = components['schemas']['PaginatedResponse_Asset_'];
+
+// Health check response
+export interface HealthResponse {
+	status: string;
 }
 
-// Search filter options
+// Search filters for UI (date range + future face filter)
 export interface SearchFilters {
-	category?: string;
-	dateRange?: {
-		start: string;
-		end: string;
-	};
-	sortBy?: 'relevance' | 'date' | 'popularity';
+	dateFrom?: string; // ISO 8601 date
+	dateTo?: string; // ISO 8601 date
+	personId?: string; // Face filter (future)
 }
 
-// API response wrapper
-export interface ApiResponse<T> {
-	data: T;
-	total?: number;
-	page?: number;
-	pageSize?: number;
-}
-
-// Search request parameters
+// Frontend search params (what the UI uses)
 export interface SearchParams {
 	query: string;
 	filters?: SearchFilters;
-	page?: number;
-	pageSize?: number;
+	limit?: number;
+	offset?: number;
+}
+
+// API error with parsed response
+export interface ApiErrorData {
+	error: string;
+	message: string;
+	details?: Record<string, string>;
 }
