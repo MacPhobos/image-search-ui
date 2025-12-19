@@ -1,5 +1,7 @@
 # SvelteKit
 .svelte-kit/
+.claude/
+.claude-mpm/
 
 # Added by Claude MPM /mpm-init
 $RECYCLE.BIN/

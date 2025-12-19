@@ -10,7 +10,8 @@
 		"lint": "eslint . --ext .js,.ts,.svelte",
 		"format": "prettier --write .",
 		"test": "vitest run",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"gen:api": "openapi-typescript ${VITE_API_BASE_URL:-http://localhost:8000}/openapi.json -o src/lib/api/generated.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^5.2.10",
