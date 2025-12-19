@@ -1,0 +1,101 @@
+import { render, screen, fireEvent } from '@testing-library/svelte';
+import { describe, it, expect, vi } from 'vitest';
+import SearchBar from '$lib/components/SearchBar.svelte';
+
+describe('SearchBar', () => {
+	it('renders with default placeholder', () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const input = screen.getByPlaceholderText('Search images...');
+		expect(input).toBeInTheDocument();
+	});
+
+	it('renders with custom placeholder', () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch, placeholder: 'Custom placeholder' } });
+
+		const input = screen.getByPlaceholderText('Custom placeholder');
+		expect(input).toBeInTheDocument();
+	});
+
+	it('calls onSearch with trimmed query when form is submitted', async () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const input = screen.getByPlaceholderText('Search images...');
+		const submitButton = screen.getByText('Search');
+
+		await fireEvent.input(input, { target: { value: '  test query  ' } });
+		await fireEvent.click(submitButton);
+
+		expect(mockSearch).toHaveBeenCalledWith('test query');
+		expect(mockSearch).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not call onSearch with empty query', async () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const input = screen.getByPlaceholderText('Search images...');
+		const submitButton = screen.getByText('Search');
+
+		await fireEvent.input(input, { target: { value: '   ' } });
+		await fireEvent.click(submitButton);
+
+		expect(mockSearch).not.toHaveBeenCalled();
+	});
+
+	it('shows clear button when query is not empty', async () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const input = screen.getByPlaceholderText('Search images...');
+
+		// Initially no clear button
+		expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
+
+		// Type something
+		await fireEvent.input(input, { target: { value: 'test' } });
+
+		// Clear button should appear
+		expect(screen.getByLabelText('Clear search')).toBeInTheDocument();
+	});
+
+	it('clears input when clear button is clicked', async () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const input = screen.getByPlaceholderText('Search images...') as HTMLInputElement;
+
+		// Type something
+		await fireEvent.input(input, { target: { value: 'test query' } });
+		expect(input.value).toBe('test query');
+
+		// Click clear button
+		const clearButton = screen.getByLabelText('Clear search');
+		await fireEvent.click(clearButton);
+
+		expect(input.value).toBe('');
+	});
+
+	it('disables submit button when query is empty', () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const submitButton = screen.getByText('Search') as HTMLButtonElement;
+		expect(submitButton.disabled).toBe(true);
+	});
+
+	it('enables submit button when query has text', async () => {
+		const mockSearch = vi.fn();
+		render(SearchBar, { props: { onSearch: mockSearch } });
+
+		const input = screen.getByPlaceholderText('Search images...');
+		const submitButton = screen.getByText('Search') as HTMLButtonElement;
+
+		await fireEvent.input(input, { target: { value: 'test' } });
+
+		expect(submitButton.disabled).toBe(false);
+	});
+});
