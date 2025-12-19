@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SearchResult } from '$lib/types';
+	import { API_BASE_URL } from '$lib/api/client';
 
 	interface Props {
 		results: SearchResult[];
@@ -8,6 +9,9 @@
 	}
 
 	let { results, loading = false, hasSearched = false }: Props = $props();
+
+	// Track image load errors per asset ID
+	let imageErrors = $state<Set<number>>(new Set());
 
 	function formatDate(dateString: string): string {
 		try {
@@ -21,8 +25,17 @@
 		return (score * 100).toFixed(1) + '%';
 	}
 
-	function getFilename(path: string): string {
-		return path.split('/').pop() || path;
+	function getImageUrl(thumbnailUrl: string): string {
+		return `${API_BASE_URL}${thumbnailUrl}`;
+	}
+
+	function handleImageError(assetId: number) {
+		imageErrors.add(assetId);
+		imageErrors = new Set(imageErrors); // Trigger reactivity
+	}
+
+	function hasImageError(assetId: number): boolean {
+		return imageErrors.has(assetId);
 	}
 </script>
 
@@ -47,8 +60,20 @@
 		<div class="results-grid">
 			{#each results as result (result.asset.id)}
 				<article class="result-card">
-					<div class="result-image-placeholder">
-						<span class="filename">{getFilename(result.asset.path)}</span>
+					<div class="result-image-container">
+						{#if hasImageError(result.asset.id)}
+							<div class="result-image-placeholder">
+								<span class="filename">{result.asset.filename}</span>
+							</div>
+						{:else}
+							<img
+								src={getImageUrl(result.asset.thumbnailUrl)}
+								alt={result.asset.filename}
+								class="result-image"
+								loading="lazy"
+								onerror={() => handleImageError(result.asset.id)}
+							/>
+						{/if}
 					</div>
 					<div class="result-info">
 						<div class="result-path" title={result.asset.path}>
@@ -142,9 +167,32 @@
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 	}
 
-	.result-image-placeholder {
+	.result-image-container {
 		width: 100%;
 		height: 180px;
+		overflow: hidden;
+		background: #f5f5f5;
+	}
+
+	.result-image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		animation: fadeIn 0.3s ease-in;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	.result-image-placeholder {
+		width: 100%;
+		height: 100%;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		display: flex;
 		align-items: center;

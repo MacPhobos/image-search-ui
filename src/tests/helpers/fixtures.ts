@@ -4,11 +4,18 @@ import type { Asset, SearchResult, SearchResponse } from '$lib/types';
  * Create a test Asset with sensible defaults
  */
 export function createAsset(overrides?: Partial<Asset>): Asset {
+	const id = overrides?.id ?? 1;
+	const path = overrides?.path ?? '/photos/test-image.jpg';
+	const filename = path.split('/').pop() || 'test-image.jpg';
+
 	const defaults: Asset = {
-		id: 1,
-		path: '/photos/test-image.jpg',
+		id,
+		path,
 		createdAt: '2024-12-19T10:00:00Z',
-		indexedAt: '2024-12-19T10:01:00Z'
+		indexedAt: '2024-12-19T10:01:00Z',
+		url: `/api/v1/images/${id}/full`,
+		thumbnailUrl: `/api/v1/images/${id}/thumbnail`,
+		filename
 	};
 
 	return { ...defaults, ...overrides };

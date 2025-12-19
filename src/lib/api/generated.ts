@@ -987,6 +987,21 @@ export interface components {
             createdAt: string;
             /** Indexedat */
             indexedAt?: string | null;
+            /**
+             * Url
+             * @description Full-size image URL.
+             */
+            readonly url: string;
+            /**
+             * Thumbnailurl
+             * @description Thumbnail image URL.
+             */
+            readonly thumbnailUrl: string;
+            /**
+             * Filename
+             * @description Extracted filename from path.
+             */
+            readonly filename: string;
         };
         /**
          * ControlResponse

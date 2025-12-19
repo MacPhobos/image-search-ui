@@ -54,9 +54,9 @@ describe('ResultsGrid', () => {
 		// Check result count header
 		expect(screen.getByText('2 results')).toBeInTheDocument();
 
-		// Check filenames are displayed
-		expect(screen.getByText('beach-sunset.jpg')).toBeInTheDocument();
-		expect(screen.getByText('mountain-view.jpg')).toBeInTheDocument();
+		// Check images are displayed with alt text for filenames
+		expect(screen.getByAltText('beach-sunset.jpg')).toBeInTheDocument();
+		expect(screen.getByAltText('mountain-view.jpg')).toBeInTheDocument();
 
 		// Check full paths are displayed
 		expect(screen.getByText('/photos/beach-sunset.jpg')).toBeInTheDocument();
@@ -178,6 +178,22 @@ describe('ResultsGrid', () => {
 		});
 
 		// Component should render without highlights section
-		expect(screen.getByText('test-image.jpg')).toBeInTheDocument();
+		expect(screen.getByAltText('test-image.jpg')).toBeInTheDocument();
+	});
+
+	it('displays images with lazy loading and correct URLs', () => {
+		const results = [createBeachResult()];
+
+		render(ResultsGrid, {
+			props: {
+				results,
+				loading: false,
+				hasSearched: true
+			}
+		});
+
+		const img = screen.getByAltText('beach-sunset.jpg') as HTMLImageElement;
+		expect(img).toHaveAttribute('loading', 'lazy');
+		expect(img.src).toContain('/api/v1/images/1/thumbnail');
 	});
 });

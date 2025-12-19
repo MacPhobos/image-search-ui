@@ -13,6 +13,7 @@ import {
 vi.mock('$lib/api/client', () => ({
 	searchImages: vi.fn(),
 	checkHealth: vi.fn(),
+	API_BASE_URL: 'http://localhost:8000',
 	ApiError: class ApiError extends Error {
 		constructor(
 			message: string,
@@ -82,9 +83,9 @@ describe('Dashboard Page', () => {
 			expect(screen.getByText('2 results')).toBeInTheDocument();
 		});
 
-		// Check that result cards are rendered
-		expect(screen.getByText('beach-sunset.jpg')).toBeInTheDocument();
-		expect(screen.getByText('mountain-view.jpg')).toBeInTheDocument();
+		// Check that result images are rendered with alt text
+		expect(screen.getByAltText('beach-sunset.jpg')).toBeInTheDocument();
+		expect(screen.getByAltText('mountain-view.jpg')).toBeInTheDocument();
 
 		// Check paths are shown
 		expect(screen.getByText('/photos/beach-sunset.jpg')).toBeInTheDocument();
