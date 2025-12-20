@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { createSession, scanDirectory } from '$lib/api/training';
+	import type { Category } from '$lib/api/categories';
 	import DirectoryBrowser from './DirectoryBrowser.svelte';
+	import CategorySelector from '../CategorySelector.svelte';
+	import CategoryCreateModal from '../CategoryCreateModal.svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -11,14 +14,21 @@
 
 	let sessionName = $state('');
 	let rootPath = $state('');
+	let categoryId = $state<number | null>(null);
 	let selectedSubdirs = $state<string[]>([]);
 	let step = $state<'info' | 'subdirs'>('info');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
+	let showCategoryModal = $state(false);
 
 	async function handleNextStep() {
 		if (!sessionName || !rootPath) {
-			error = 'Please provide both session name and root path';
+			error = 'Please provide session name and root path';
+			return;
+		}
+
+		if (!categoryId) {
+			error = 'Please select a category';
 			return;
 		}
 
@@ -37,6 +47,11 @@
 	}
 
 	async function handleCreate() {
+		if (!categoryId) {
+			error = 'Please select a category';
+			return;
+		}
+
 		loading = true;
 		error = null;
 
@@ -44,6 +59,7 @@
 			const session = await createSession({
 				name: sessionName,
 				rootPath: rootPath,
+				categoryId: categoryId,
 				subdirectories: selectedSubdirs.length > 0 ? selectedSubdirs : undefined
 			});
 			onSessionCreated(session.id);
@@ -53,6 +69,11 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	function handleCategoryCreated(category: Category) {
+		categoryId = category.id;
+		showCategoryModal = false;
 	}
 
 	function handleBack() {
@@ -91,6 +112,19 @@
 					/>
 					<p class="form-help">
 						Provide the absolute path to the directory containing images to train on.
+					</p>
+				</div>
+
+				<div class="form-group">
+					<CategorySelector
+						selectedId={categoryId}
+						onSelect={(id) => (categoryId = id)}
+						onCreateNew={() => (showCategoryModal = true)}
+						showCreateOption={true}
+						label="Category"
+					/>
+					<p class="form-help">
+						Categorize this training session for better organization.
 					</p>
 				</div>
 
@@ -135,6 +169,12 @@
 		{/if}
 	</div>
 </div>
+
+<CategoryCreateModal
+	open={showCategoryModal}
+	onClose={() => (showCategoryModal = false)}
+	onCreated={handleCategoryCreated}
+/>
 
 <style>
 	.modal-overlay {

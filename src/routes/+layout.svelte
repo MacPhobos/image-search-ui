@@ -34,6 +34,7 @@
 		<h1>Mac'Image Search</h1>
 		<nav class="nav">
 			<a href="/">Search</a>
+			<a href="/categories">Categories</a>
 			<a href="/training">Training</a>
 		</nav>
 		<div class="health-indicator">

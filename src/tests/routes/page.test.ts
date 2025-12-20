@@ -91,8 +91,8 @@ describe('Dashboard Page', () => {
 		expect(screen.getByText('/photos/beach-sunset.jpg')).toBeInTheDocument();
 
 		// Check scores are formatted and displayed
-		expect(screen.getByText('95.0%')).toBeInTheDocument();
-		expect(screen.getByText('78.0%')).toBeInTheDocument();
+		expect(screen.getByText('Cosine Score: 95.0%')).toBeInTheDocument();
+		expect(screen.getByText('Cosine Score: 78.0%')).toBeInTheDocument();
 
 		// Check highlights are rendered
 		expect(screen.getByText('beach')).toBeInTheDocument();

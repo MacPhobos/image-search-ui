@@ -36,6 +36,7 @@ export interface SearchFilters {
 	dateFrom?: string; // ISO 8601 date
 	dateTo?: string; // ISO 8601 date
 	personId?: string; // Face filter (future)
+	categoryId?: number; // Category filter
 }
 
 // Frontend search params (what the UI uses)
@@ -52,3 +53,11 @@ export interface ApiErrorData {
 	message: string;
 	details?: Record<string, string>;
 }
+
+// Category types (re-export from categories API)
+export type {
+	Category,
+	CategoryCreate,
+	CategoryUpdate,
+	PaginatedCategoryResponse
+} from '$lib/api/categories';

@@ -1,6 +1,6 @@
 # Image Search API Contract
 
-> **Version**: 1.0.0
+> **Version**: 1.1.0
 > **Last Updated**: 2024-12-19
 > **Status**: FROZEN - Changes require version bump and UI sync
 
@@ -15,6 +15,7 @@ This document defines the API contract between `image-search-service` (backend) 
 3. [Common Types](#common-types)
 4. [Endpoints](#endpoints)
    - [Health](#health)
+   - [Categories](#categories)
    - [Assets](#assets)
    - [Search](#search)
    - [People/Faces](#peoplefaces)
@@ -135,6 +136,161 @@ Health check endpoint. No authentication required. No `/api/v1` prefix.
 ```json
 {
 	"status": "ok"
+}
+```
+
+---
+
+### Categories
+
+Category management for organizing training sessions and filtering search results.
+
+#### Category Schema
+
+```typescript
+interface Category {
+	id: number; // Auto-increment ID
+	name: string; // Category name (max 100 chars, unique)
+	description?: string | null; // Optional description
+	color?: string | null; // Hex color code (e.g., "#3B82F6")
+	isDefault: boolean; // Whether this is the default category
+	createdAt: string; // ISO 8601 timestamp
+	updatedAt: string; // ISO 8601 timestamp
+	sessionCount?: number; // Number of training sessions (in responses)
+}
+```
+
+#### `GET /api/v1/categories`
+
+List all categories with pagination.
+
+**Query Parameters**
+
+| Parameter  | Type    | Default | Description               |
+| ---------- | ------- | ------- | ------------------------- |
+| `page`     | integer | 1       | Page number (1-indexed)   |
+| `pageSize` | integer | 50      | Items per page (max: 100) |
+
+**Response** `200 OK`
+
+```json
+{
+	"items": [
+		{
+			"id": 1,
+			"name": "General",
+			"description": "Default category for all training sessions",
+			"color": null,
+			"isDefault": true,
+			"createdAt": "2024-12-19T10:00:00Z",
+			"updatedAt": "2024-12-19T10:00:00Z",
+			"sessionCount": 5
+		},
+		{
+			"id": 2,
+			"name": "Vacation",
+			"description": "Photos from vacations and trips",
+			"color": "#10B981",
+			"isDefault": false,
+			"createdAt": "2024-12-19T11:00:00Z",
+			"updatedAt": "2024-12-19T11:00:00Z",
+			"sessionCount": 2
+		}
+	],
+	"total": 2,
+	"page": 1,
+	"pageSize": 50,
+	"hasMore": false
+}
+```
+
+#### `POST /api/v1/categories`
+
+Create a new category.
+
+**Request Body**
+
+```json
+{
+	"name": "Vacation",
+	"description": "Photos from vacations and trips",
+	"color": "#10B981"
+}
+```
+
+| Field         | Type   | Required | Description                     |
+| ------------- | ------ | -------- | ------------------------------- |
+| `name`        | string | Yes      | Category name (max 100 chars)   |
+| `description` | string | No       | Category description            |
+| `color`       | string | No       | Hex color code (e.g., #10B981)  |
+
+**Response** `201 Created` - Category object
+
+**Response** `409 Conflict` - Duplicate name
+
+```json
+{
+	"detail": "Category with name 'Vacation' already exists"
+}
+```
+
+#### `GET /api/v1/categories/{id}`
+
+Get single category by ID.
+
+**Response** `200 OK` - Category object with sessionCount
+
+**Response** `404 Not Found`
+
+```json
+{
+	"detail": "Category not found"
+}
+```
+
+#### `PATCH /api/v1/categories/{id}`
+
+Update a category.
+
+**Request Body**
+
+```json
+{
+	"name": "Updated Name",
+	"description": "Updated description",
+	"color": "#EF4444"
+}
+```
+
+All fields are optional. Only provided fields are updated.
+
+**Response** `200 OK` - Updated Category object
+
+**Response** `404 Not Found` - Category not found
+
+**Response** `409 Conflict` - Duplicate name
+
+#### `DELETE /api/v1/categories/{id}`
+
+Delete a category.
+
+**Response** `204 No Content` - Successfully deleted
+
+**Response** `400 Bad Request` - Cannot delete default category
+
+```json
+{
+	"detail": "Cannot delete the default category"
+}
+```
+
+**Response** `404 Not Found` - Category not found
+
+**Response** `409 Conflict` - Category has training sessions
+
+```json
+{
+	"detail": "Cannot delete category with 5 training sessions. Reassign sessions first."
 }
 ```
 
@@ -281,10 +437,11 @@ Search assets by text query (semantic search).
 | `q`        | string  | _required_ | Search query text                  |
 | `page`     | integer | 1          | Page number                        |
 | `pageSize` | integer | 20         | Results per page (max: 100)        |
-| `minScore` | number  | 0.0        | Minimum similarity score (0.0-1.0) |
-| `personId` | string  | -          | Filter by person ID                |
-| `dateFrom` | string  | -          | Filter: date taken >= (ISO 8601)   |
-| `dateTo`   | string  | -          | Filter: date taken <= (ISO 8601)   |
+| `minScore`   | number  | 0.0        | Minimum similarity score (0.0-1.0) |
+| `personId`   | string  | -          | Filter by person ID                |
+| `categoryId` | integer | -          | Filter by category ID              |
+| `dateFrom`   | string  | -          | Filter: date taken >= (ISO 8601)   |
+| `dateTo`     | string  | -          | Filter: date taken <= (ISO 8601)   |
 
 **Response** `200 OK`
 
@@ -648,17 +805,21 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code                  | HTTP Status | Description                      |
-| --------------------- | ----------- | -------------------------------- |
-| `VALIDATION_ERROR`    | 400         | Invalid request parameters       |
-| `ASSET_NOT_FOUND`     | 404         | Asset ID does not exist          |
-| `PERSON_NOT_FOUND`    | 404         | Person ID does not exist         |
-| `FACE_NOT_FOUND`      | 404         | Face ID does not exist           |
-| `JOB_NOT_FOUND`       | 404         | Job ID does not exist            |
-| `JOB_NOT_CANCELLABLE` | 409         | Job already completed            |
-| `MERGE_CONFLICT`      | 409         | Cannot merge (e.g., same person) |
-| `RATE_LIMITED`        | 429         | Too many requests                |
-| `INTERNAL_ERROR`      | 500         | Server error                     |
+| Code                     | HTTP Status | Description                          |
+| ------------------------ | ----------- | ------------------------------------ |
+| `VALIDATION_ERROR`       | 400         | Invalid request parameters           |
+| `ASSET_NOT_FOUND`        | 404         | Asset ID does not exist              |
+| `CATEGORY_NOT_FOUND`     | 404         | Category ID does not exist           |
+| `PERSON_NOT_FOUND`       | 404         | Person ID does not exist             |
+| `FACE_NOT_FOUND`         | 404         | Face ID does not exist               |
+| `JOB_NOT_FOUND`          | 404         | Job ID does not exist                |
+| `CATEGORY_NAME_EXISTS`   | 409         | Category name already exists         |
+| `CATEGORY_HAS_SESSIONS`  | 409         | Category has training sessions       |
+| `CATEGORY_IS_DEFAULT`    | 400         | Cannot delete default category       |
+| `JOB_NOT_CANCELLABLE`    | 409         | Job already completed                |
+| `MERGE_CONFLICT`         | 409         | Cannot merge (e.g., same person)     |
+| `RATE_LIMITED`           | 429         | Too many requests                    |
+| `INTERNAL_ERROR`         | 500         | Server error                         |
 
 ---
 
@@ -748,9 +909,10 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date       | Changes                 |
-| ------- | ---------- | ----------------------- |
-| 1.0.0   | 2024-12-19 | Initial contract freeze |
+| Version | Date       | Changes                                                                                      |
+| ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |
+| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                      |
 
 ---
 

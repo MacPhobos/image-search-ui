@@ -1,6 +1,8 @@
 <script lang="ts">
-	import type { SearchFilters } from '$lib/types';
+	import type { SearchFilters, Category } from '$lib/types';
+	import { listCategories } from '$lib/api/categories';
 	import { untrack } from 'svelte';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		onFilterChange: (filters: SearchFilters) => void;
@@ -10,12 +12,28 @@
 
 	let dateFrom = $state('');
 	let dateTo = $state('');
+	let categoryId = $state<number | null>(null);
+	let categories = $state<Category[]>([]);
+	let categoriesLoading = $state(true);
 	let initialized = $state(false);
+
+	// Load categories on mount
+	onMount(async () => {
+		try {
+			const response = await listCategories(1, 100);
+			categories = response.items;
+		} catch (err) {
+			console.error('Failed to load categories:', err);
+		} finally {
+			categoriesLoading = false;
+		}
+	});
 
 	// Reactive filters object
 	let filters = $derived<SearchFilters>({
 		...(dateFrom && { dateFrom }),
-		...(dateTo && { dateTo })
+		...(dateTo && { dateTo }),
+		...(categoryId && { categoryId })
 	});
 
 	// Notify parent when filters change (skip initial render)
@@ -34,10 +52,17 @@
 	function handleClearFilters() {
 		dateFrom = '';
 		dateTo = '';
+		categoryId = null;
 	}
 
 	function hasActiveFilters(): boolean {
-		return Boolean(dateFrom || dateTo);
+		return Boolean(dateFrom || dateTo || categoryId);
+	}
+
+	function handleCategoryChange(event: Event) {
+		const target = event.target as HTMLSelectElement;
+		const value = target.value;
+		categoryId = value ? parseInt(value, 10) : null;
 	}
 </script>
 
@@ -57,6 +82,28 @@
 	<div class="filter-group">
 		<label for="dateTo">Date To</label>
 		<input type="date" id="dateTo" bind:value={dateTo} class="date-input" />
+	</div>
+
+	<div class="filter-group">
+		<label for="categoryFilter">Category</label>
+		{#if categoriesLoading}
+			<select id="categoryFilter" disabled class="disabled-select">
+				<option value="">Loading categories...</option>
+			</select>
+		{:else}
+			<select
+				id="categoryFilter"
+				value={categoryId?.toString() ?? ''}
+				onchange={handleCategoryChange}
+			>
+				<option value="">All categories</option>
+				{#each categories as category (category.id)}
+					<option value={category.id.toString()}>
+						{category.name}
+					</option>
+				{/each}
+			</select>
+		{/if}
 	</div>
 
 	<div class="filter-group">

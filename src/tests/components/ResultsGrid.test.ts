@@ -82,8 +82,8 @@ describe('ResultsGrid', () => {
 			}
 		});
 
-		expect(screen.getByText('95.0%')).toBeInTheDocument();
-		expect(screen.getByText('78.0%')).toBeInTheDocument();
+		expect(screen.getByText('Cosine Score: 95.0%')).toBeInTheDocument();
+		expect(screen.getByText('Cosine Score: 78.0%')).toBeInTheDocument();
 	});
 
 	it('displays highlights when available', () => {

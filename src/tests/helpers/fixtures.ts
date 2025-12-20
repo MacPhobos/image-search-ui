@@ -1,4 +1,5 @@
 import type { Asset, SearchResult, SearchResponse } from '$lib/types';
+import type { Category, PaginatedCategoryResponse } from '$lib/api/categories';
 
 /**
  * Create a test Asset with sensible defaults
@@ -117,4 +118,74 @@ export function createEmptySearchResponse(query: string = 'nonexistent'): Search
 		total: 0,
 		query
 	};
+}
+
+/**
+ * Create a test Category with sensible defaults
+ */
+export function createCategory(overrides?: Partial<Category>): Category {
+	const id = overrides?.id ?? 1;
+	const name = overrides?.name ?? `Category ${id}`;
+
+	const defaults: Category = {
+		id,
+		name,
+		description: null,
+		color: null,
+		isDefault: false,
+		createdAt: '2024-12-19T10:00:00Z',
+		updatedAt: '2024-12-19T10:00:00Z',
+		sessionCount: 0
+	};
+
+	return { ...defaults, ...overrides };
+}
+
+/**
+ * Create a paginated category response
+ */
+export function createCategoryResponse(
+	categories?: Category[],
+	page: number = 1,
+	pageSize: number = 50
+): PaginatedCategoryResponse {
+	const items = categories ?? [createCategory()];
+
+	return {
+		items,
+		total: items.length,
+		page,
+		pageSize,
+		hasMore: false
+	};
+}
+
+/**
+ * Create a default "Uncategorized" category
+ */
+export function createDefaultCategory(): Category {
+	return createCategory({
+		id: 1,
+		name: 'Uncategorized',
+		description: 'Default category for uncategorized images',
+		color: '#6B7280',
+		isDefault: true
+	});
+}
+
+/**
+ * Create multiple categories for testing
+ */
+export function createMultipleCategories(count: number, startId: number = 1): Category[] {
+	return Array.from({ length: count }, (_, i) => {
+		const id = startId + i;
+		const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+		return createCategory({
+			id,
+			name: `Category ${id}`,
+			description: `Description for category ${id}`,
+			color: colors[i % colors.length],
+			sessionCount: i * 3
+		});
+	});
 }
