@@ -61,3 +61,18 @@ export type {
 	CategoryUpdate,
 	PaginatedCategoryResponse
 } from '$lib/api/categories';
+
+// Vector management types (re-export from vectors API)
+export type {
+	DirectoryStats,
+	DirectoryStatsResponse,
+	DirectoryDeleteRequest,
+	DirectoryDeleteResponse,
+	RetrainRequest,
+	RetrainResponse,
+	DeletionResponse,
+	OrphanCleanupRequest,
+	ResetRequest,
+	DeletionLogEntry,
+	DeletionLogsResponse
+} from '$lib/api/vectors';

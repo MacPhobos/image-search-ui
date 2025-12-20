@@ -36,6 +36,7 @@
 			<a href="/">Search</a>
 			<a href="/categories">Categories</a>
 			<a href="/training">Training</a>
+			<a href="/vectors">Vectors</a>
 		</nav>
 		<div class="health-indicator">
 			<span class="health-dot health-{healthStatus}"></span>
