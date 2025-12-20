@@ -81,7 +81,7 @@
 						</div>
 						<div class="result-meta">
 							<span class="score" title="Similarity score">
-								{formatScore(result.score)}
+								Cosine Score: {formatScore(result.score)}
 							</span>
 							<span class="date" title="Created">
 								{formatDate(result.asset.createdAt)}
@@ -169,15 +169,20 @@
 
 	.result-image-container {
 		width: 100%;
-		height: 180px;
-		overflow: hidden;
-		background: #f5f5f5;
+		min-height: 120px;
+		max-height: 280px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f0f0f0;
 	}
 
 	.result-image {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
+		max-width: 100%;
+		max-height: 280px;
+		width: auto;
+		height: auto;
+		object-fit: contain;
 		animation: fadeIn 0.3s ease-in;
 	}
 
@@ -192,7 +197,7 @@
 
 	.result-image-placeholder {
 		width: 100%;
-		height: 100%;
+		min-height: 120px;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		display: flex;
 		align-items: center;

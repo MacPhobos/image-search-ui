@@ -31,7 +31,7 @@
 
 <div class="app">
 	<header>
-		<h1>Image Search</h1>
+		<h1>Mac'Image Search</h1>
 		<nav class="nav">
 			<a href="/">Search</a>
 			<a href="/training">Training</a>
