@@ -189,3 +189,106 @@ export function createMultipleCategories(count: number, startId: number = 1): Ca
 		});
 	});
 }
+
+// Vector Management Fixtures
+
+import type {
+	DirectoryStats,
+	DeletionLogEntry,
+	DirectoryStatsResponse,
+	DeletionLogsResponse
+} from '$lib/api/vectors';
+
+/**
+ * Create a test DirectoryStats with sensible defaults
+ */
+export function createDirectoryStats(overrides?: Partial<DirectoryStats>): DirectoryStats {
+	const defaults: DirectoryStats = {
+		pathPrefix: '/photos/vacation',
+		vectorCount: 150,
+		lastIndexed: '2024-12-19T10:00:00Z'
+	};
+
+	return { ...defaults, ...overrides };
+}
+
+/**
+ * Create a test DeletionLogEntry with sensible defaults
+ */
+export function createDeletionLog(overrides?: Partial<DeletionLogEntry>): DeletionLogEntry {
+	const defaults: DeletionLogEntry = {
+		id: 1,
+		deletionType: 'DIRECTORY',
+		deletionTarget: '/photos/vacation',
+		vectorCount: 150,
+		deletionReason: 'Cleanup',
+		createdAt: '2024-12-19T10:00:00Z'
+	};
+
+	return { ...defaults, ...overrides };
+}
+
+/**
+ * Create a DirectoryStatsResponse with multiple directories
+ */
+export function createDirectoryStatsResponse(
+	directories?: DirectoryStats[]
+): DirectoryStatsResponse {
+	const items = directories ?? [createDirectoryStats()];
+	const totalVectors = items.reduce((sum, d) => sum + d.vectorCount, 0);
+
+	return {
+		directories: items,
+		totalVectors
+	};
+}
+
+/**
+ * Create a DeletionLogsResponse with pagination
+ */
+export function createDeletionLogsResponse(
+	logs?: DeletionLogEntry[],
+	page: number = 1,
+	pageSize: number = 10
+): DeletionLogsResponse {
+	const items = logs ?? [createDeletionLog()];
+
+	return {
+		logs: items,
+		total: items.length,
+		page,
+		pageSize
+	};
+}
+
+/**
+ * Create multiple directory stats for testing
+ */
+export function createMultipleDirectories(count: number): DirectoryStats[] {
+	return Array.from({ length: count }, (_, i) => {
+		return createDirectoryStats({
+			pathPrefix: `/photos/dir-${i + 1}`,
+			vectorCount: (i + 1) * 50,
+			lastIndexed:
+				i % 2 === 0 ? new Date(2024, 11, 19 - i).toISOString() : null
+		});
+	});
+}
+
+/**
+ * Create multiple deletion logs for testing
+ */
+export function createMultipleDeletionLogs(count: number): DeletionLogEntry[] {
+	const types = ['DIRECTORY', 'SESSION', 'CATEGORY', 'ASSET', 'ORPHAN'];
+	return Array.from({ length: count }, (_, i) => {
+		const type = types[i % types.length];
+		return createDeletionLog({
+			id: i + 1,
+			deletionType: type,
+			deletionTarget: type === 'DIRECTORY' ? `/photos/dir-${i}` : `${type.toLowerCase()}-${i}`,
+			vectorCount: (i + 1) * 25,
+			deletionReason: i % 2 === 0 ? `Reason ${i}` : null,
+			createdAt: new Date(2024, 11, 19, 10, i).toISOString()
+		});
+	});
+}
