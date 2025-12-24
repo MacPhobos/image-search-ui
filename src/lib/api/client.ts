@@ -75,6 +75,9 @@ export async function searchImages(params: SearchParams): Promise<SearchResponse
 		if (params.filters.personId) {
 			apiFilters['personId'] = params.filters.personId;
 		}
+		if (params.filters.categoryId) {
+			apiFilters['categoryId'] = params.filters.categoryId.toString();
+		}
 		if (Object.keys(apiFilters).length > 0) {
 			requestBody.filters = apiFilters;
 		}

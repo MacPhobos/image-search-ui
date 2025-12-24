@@ -58,6 +58,48 @@ describe('API Client', () => {
 			});
 		});
 
+		it('includes categoryId filter as string in request body', async () => {
+			const mockData = createSearchResponse([], 'test');
+			mockResponse('http://localhost:8000/api/v1/search', mockData);
+
+			await searchImages({
+				query: 'test',
+				filters: {
+					categoryId: 42
+				}
+			});
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody.filters).toEqual({
+				categoryId: '42'
+			});
+		});
+
+		it('includes all filter types together', async () => {
+			const mockData = createSearchResponse([], 'test');
+			mockResponse('http://localhost:8000/api/v1/search', mockData);
+
+			await searchImages({
+				query: 'test',
+				filters: {
+					dateFrom: '2024-01-01',
+					dateTo: '2024-12-31',
+					personId: 'person-123',
+					categoryId: 5
+				}
+			});
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody.filters).toEqual({
+				dateFrom: '2024-01-01',
+				dateTo: '2024-12-31',
+				personId: 'person-123',
+				categoryId: '5'
+			});
+		});
+
 		it('throws ApiError on HTTP error', async () => {
 			mockResponse(
 				'http://localhost:8000/api/v1/search',
