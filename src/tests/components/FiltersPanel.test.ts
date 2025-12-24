@@ -66,19 +66,16 @@ describe('FiltersPanel', () => {
 		expect(dateTo.value).toBe('');
 	});
 
-	it('face filter select is disabled with "Coming Soon" badge', () => {
+	it('people filter shows loading state initially', () => {
 		const onFilterChange = vi.fn();
 		render(FiltersPanel, { props: { onFilterChange } });
 
-		const faceFilterLabel = screen.getByText('Face Filter');
-		expect(faceFilterLabel).toBeInTheDocument();
+		const peopleFilterLabel = screen.getByText('People Filter');
+		expect(peopleFilterLabel).toBeInTheDocument();
 
-		// Check for Coming Soon badge
-		expect(screen.getByText('Coming Soon')).toBeInTheDocument();
-
-		// Face filter select should be disabled
-		const select = screen.getByRole('combobox', { name: /face filter/i });
-		expect(select).toBeDisabled();
+		// Person filter input should be disabled while loading
+		const input = screen.getByPlaceholderText('Loading people...');
+		expect(input).toBeDisabled();
 	});
 
 	it('onFilterChange callback receives correct filter object', async () => {

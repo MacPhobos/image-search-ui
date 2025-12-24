@@ -67,14 +67,33 @@ export function mockResponse(url: string, response: unknown, status: number = 20
 }
 
 /**
- * Register an error response for a URL pattern
+ * Register an error response for a URL pattern (overloaded)
  * @param url - Exact URL or regex pattern
- * @param error - Error to throw
+ * @param errorOrStatus - Error object, error message string, or HTTP status code
+ * @param dataOrStatus - Response data (for status code) or status code (for message)
  */
-export function mockError(url: string, error: Error): void {
-	mockRegistry[url] = {
-		error
-	};
+export function mockError(url: string, errorOrStatus: Error | string | number, dataOrStatus?: unknown): void {
+	if (errorOrStatus instanceof Error) {
+		// mockError(url, new Error())
+		mockRegistry[url] = {
+			error: errorOrStatus
+		};
+	} else if (typeof errorOrStatus === 'number') {
+		// mockError(url, 500, { detail: 'error' })
+		mockRegistry[url] = {
+			status: errorOrStatus,
+			ok: false,
+			data: dataOrStatus
+		};
+	} else {
+		// mockError(url, 'message', 500)
+		const status = typeof dataOrStatus === 'number' ? dataOrStatus : 500;
+		mockRegistry[url] = {
+			status,
+			ok: false,
+			data: { message: errorOrStatus, detail: errorOrStatus }
+		};
+	}
 }
 
 /**

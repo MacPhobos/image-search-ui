@@ -76,3 +76,19 @@ export type {
 	DeletionLogEntry,
 	DeletionLogsResponse
 } from '$lib/api/vectors';
+
+// Face detection and person types (re-export from faces API)
+export type {
+	BoundingBox,
+	FaceInstance,
+	ClusterSummary,
+	ClusterListResponse,
+	ClusterDetailResponse,
+	Person,
+	PersonListResponse,
+	LabelClusterResponse,
+	MergePersonsResponse,
+	SplitClusterResponse,
+	DetectFacesResponse,
+	ClusteringResultResponse
+} from '$lib/api/faces';

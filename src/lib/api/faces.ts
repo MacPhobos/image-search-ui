@@ -1,0 +1,410 @@
+/**
+ * Face detection and person management API client.
+ * Handles clusters, persons, and face labeling operations.
+ */
+
+import { env } from '$env/dynamic/public';
+import { ApiError } from './client';
+
+const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
+	const url = `${API_BASE_URL}${endpoint}`;
+
+	try {
+		const response = await fetch(url, {
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...options?.headers
+			}
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => null);
+			throw new ApiError(
+				errorData?.message ||
+					errorData?.detail ||
+					`HTTP ${response.status}: ${response.statusText}`,
+				response.status,
+				errorData
+			);
+		}
+
+		// Handle 204 No Content
+		if (response.status === 204) {
+			return undefined as T;
+		}
+
+		return await response.json();
+	} catch (error) {
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		throw new ApiError('Network request failed', 0, undefined);
+	}
+}
+
+// ============ Types ============
+
+/** Bounding box coordinates for a face. */
+export interface BoundingBox {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
+/** A single face instance detected in an image. */
+export interface FaceInstance {
+	id: string; // UUID
+	assetId: number;
+	bbox: BoundingBox;
+	detectionConfidence: number;
+	qualityScore: number | null;
+	clusterId: string | null;
+	personId: string | null; // UUID
+	personName: string | null;
+	createdAt: string; // ISO datetime
+}
+
+/** Summary info for a face cluster. */
+export interface ClusterSummary {
+	clusterId: string;
+	faceCount: number;
+	sampleFaceIds: string[]; // UUIDs
+	avgQuality: number | null;
+	personId: string | null; // UUID
+	personName: string | null;
+}
+
+/** Paginated list of clusters. */
+export interface ClusterListResponse {
+	items: ClusterSummary[];
+	total: number;
+	page: number;
+	pageSize: number;
+}
+
+/** Detailed cluster info with all faces. */
+export interface ClusterDetailResponse {
+	clusterId: string;
+	faces: FaceInstance[];
+	personId: string | null;
+	personName: string | null;
+}
+
+/** Person entity representing a labeled individual. */
+export interface Person {
+	id: string; // UUID
+	name: string;
+	status: 'active' | 'merged' | 'hidden';
+	faceCount: number;
+	prototypeCount: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/** Paginated list of persons. */
+export interface PersonListResponse {
+	items: Person[];
+	total: number;
+	page: number;
+	pageSize: number;
+}
+
+/** Response from labeling a cluster. */
+export interface LabelClusterResponse {
+	personId: string;
+	personName: string;
+	facesLabeled: number;
+	prototypesCreated: number;
+}
+
+/** Response from merging persons. */
+export interface MergePersonsResponse {
+	sourcePersonId: string;
+	targetPersonId: string;
+	facesMoved: number;
+}
+
+/** Response from splitting a cluster. */
+export interface SplitClusterResponse {
+	originalClusterId: string;
+	newClusters: string[];
+	status: string;
+}
+
+/** Response from detecting faces. */
+export interface DetectFacesResponse {
+	assetId: number;
+	facesDetected: number;
+	faceIds: string[];
+}
+
+/** Response from clustering operation. */
+export interface ClusteringResultResponse {
+	totalFaces: number;
+	clustersFound: number;
+	noiseCount: number;
+	status: string;
+}
+
+/** A single face instance within a photo (for review UI). */
+export interface FaceInPhoto {
+	faceInstanceId: string;
+	bboxX: number;
+	bboxY: number;
+	bboxW: number;
+	bboxH: number;
+	detectionConfidence: number;
+	qualityScore: number | null;
+	personId: string | null;
+	personName: string | null;
+	clusterId: string | null;
+}
+
+/** Photo with faces for person review. */
+export interface PersonPhotoGroup {
+	photoId: number;
+	takenAt: string | null;
+	thumbnailUrl: string;
+	fullUrl: string;
+	faces: FaceInPhoto[];
+	faceCount: number;
+	hasNonPersonFaces: boolean;
+}
+
+/** Paginated list of photos for a person. */
+export interface PersonPhotosResponse {
+	items: PersonPhotoGroup[];
+	total: number;
+	page: number;
+	pageSize: number;
+	personId: string;
+	personName: string;
+}
+
+/** Response from bulk remove operation. */
+export interface BulkRemoveResponse {
+	updatedFaces: number;
+	updatedPhotos: number;
+	skippedFaces: number;
+}
+
+/** Response from bulk move operation. */
+export interface BulkMoveResponse {
+	toPersonId: string;
+	toPersonName: string;
+	updatedFaces: number;
+	updatedPhotos: number;
+	skippedFaces: number;
+	personCreated: boolean;
+}
+
+// ============ Cluster API Functions ============
+
+/**
+ * List face clusters with pagination.
+ * @param page - Page number (1-indexed)
+ * @param pageSize - Items per page (1-100)
+ * @param includeLabeled - Include clusters already assigned to persons
+ */
+export async function listClusters(
+	page: number = 1,
+	pageSize: number = 20,
+	includeLabeled: boolean = false
+): Promise<ClusterListResponse> {
+	const params = new URLSearchParams({
+		page: page.toString(),
+		page_size: pageSize.toString(),
+		include_labeled: includeLabeled.toString()
+	});
+	return apiRequest<ClusterListResponse>(`/api/v1/faces/clusters?${params.toString()}`);
+}
+
+/**
+ * Get detailed info for a specific cluster.
+ * @param clusterId - The cluster ID
+ */
+export async function getCluster(clusterId: string): Promise<ClusterDetailResponse> {
+	return apiRequest<ClusterDetailResponse>(`/api/v1/faces/clusters/${encodeURIComponent(clusterId)}`);
+}
+
+/**
+ * Label a cluster with a person name (creates person if needed).
+ * @param clusterId - The cluster ID to label
+ * @param name - The person's name
+ */
+export async function labelCluster(clusterId: string, name: string): Promise<LabelClusterResponse> {
+	return apiRequest<LabelClusterResponse>(
+		`/api/v1/faces/clusters/${encodeURIComponent(clusterId)}/label`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ name })
+		}
+	);
+}
+
+/**
+ * Split a cluster into smaller sub-clusters.
+ * @param clusterId - The cluster ID to split
+ * @param minClusterSize - Minimum faces per resulting cluster
+ */
+export async function splitCluster(
+	clusterId: string,
+	minClusterSize: number = 3
+): Promise<SplitClusterResponse> {
+	return apiRequest<SplitClusterResponse>(
+		`/api/v1/faces/clusters/${encodeURIComponent(clusterId)}/split`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ minClusterSize })
+		}
+	);
+}
+
+// ============ Person API Functions ============
+
+/**
+ * List persons with pagination.
+ * @param page - Page number (1-indexed)
+ * @param pageSize - Items per page (1-100)
+ * @param status - Filter by status (active, merged, hidden)
+ */
+export async function listPersons(
+	page: number = 1,
+	pageSize: number = 20,
+	status?: 'active' | 'merged' | 'hidden'
+): Promise<PersonListResponse> {
+	const params = new URLSearchParams({
+		page: page.toString(),
+		page_size: pageSize.toString()
+	});
+	if (status) {
+		params.set('status', status);
+	}
+	return apiRequest<PersonListResponse>(`/api/v1/faces/persons?${params.toString()}`);
+}
+
+/**
+ * Merge one person into another.
+ * @param personId - Source person ID to merge (will be marked as merged)
+ * @param intoPersonId - Target person ID to merge into
+ */
+export async function mergePersons(
+	personId: string,
+	intoPersonId: string
+): Promise<MergePersonsResponse> {
+	return apiRequest<MergePersonsResponse>(`/api/v1/faces/persons/${personId}/merge`, {
+		method: 'POST',
+		body: JSON.stringify({ intoPersonId })
+	});
+}
+
+/**
+ * Get photos for person review with pagination.
+ * @param personId - The person ID
+ * @param page - Page number (1-indexed)
+ * @param pageSize - Items per page (1-100)
+ */
+export async function getPersonPhotos(
+	personId: string,
+	page: number = 1,
+	pageSize: number = 20
+): Promise<PersonPhotosResponse> {
+	const params = new URLSearchParams({
+		page: page.toString(),
+		page_size: pageSize.toString()
+	});
+	return apiRequest<PersonPhotosResponse>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/photos?${params.toString()}`
+	);
+}
+
+/**
+ * Bulk remove faces from a person (unlabel faces in selected photos).
+ * @param personId - The person ID
+ * @param photoIds - Array of photo IDs to unlabel
+ */
+export async function bulkRemoveFromPerson(
+	personId: string,
+	photoIds: number[]
+): Promise<BulkRemoveResponse> {
+	return apiRequest<BulkRemoveResponse>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/photos/bulk-remove`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ photoIds })
+		}
+	);
+}
+
+/**
+ * Bulk move faces to another person (relabel faces in selected photos).
+ * @param fromPersonId - Source person ID
+ * @param photoIds - Array of photo IDs to move
+ * @param destination - Target person (either `{ toPersonId }` or `{ toPersonName }`)
+ */
+export async function bulkMoveToPerson(
+	fromPersonId: string,
+	photoIds: number[],
+	destination: { toPersonId: string } | { toPersonName: string }
+): Promise<BulkMoveResponse> {
+	return apiRequest<BulkMoveResponse>(
+		`/api/v1/faces/persons/${encodeURIComponent(fromPersonId)}/photos/bulk-move`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ photoIds, ...destination })
+		}
+	);
+}
+
+// ============ Face Detection API Functions ============
+
+/**
+ * Detect faces in a specific asset.
+ * @param assetId - The asset ID to process
+ * @param minConfidence - Minimum detection confidence (0-1)
+ * @param minFaceSize - Minimum face size in pixels
+ */
+export async function detectFaces(
+	assetId: number,
+	minConfidence: number = 0.5,
+	minFaceSize: number = 20
+): Promise<DetectFacesResponse> {
+	return apiRequest<DetectFacesResponse>(`/api/v1/faces/detect/${assetId}`, {
+		method: 'POST',
+		body: JSON.stringify({ minConfidence, minFaceSize })
+	});
+}
+
+/**
+ * Trigger face clustering on unlabeled faces.
+ * @param qualityThreshold - Minimum face quality (0-1)
+ * @param maxFaces - Maximum faces to process
+ * @param minClusterSize - Minimum cluster size
+ */
+export async function triggerClustering(
+	qualityThreshold: number = 0.5,
+	maxFaces: number = 50000,
+	minClusterSize: number = 5
+): Promise<ClusteringResultResponse> {
+	return apiRequest<ClusteringResultResponse>('/api/v1/faces/cluster', {
+		method: 'POST',
+		body: JSON.stringify({ qualityThreshold, maxFaces, minClusterSize })
+	});
+}
+
+/**
+ * Get all detected faces for a specific asset.
+ * @param assetId - The asset ID
+ */
+export async function getFacesForAsset(assetId: number): Promise<{
+	items: FaceInstance[];
+	total: number;
+	page: number;
+	pageSize: number;
+}> {
+	return apiRequest(`/api/v1/faces/assets/${assetId}`);
+}
