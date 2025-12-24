@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.1.0
-> **Last Updated**: 2024-12-19
+> **Version**: 1.2.0
+> **Last Updated**: 2024-12-24
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -502,7 +502,8 @@ Face detection and person labeling.
 ```typescript
 interface Person {
 	id: string; // UUID
-	name: string; // Display name (may be "Unknown" initially)
+	name: string; // Display name (unique, required)
+	status: string; // Person status: "active" or "inactive"
 	thumbnailUrl?: string; // Representative face thumbnail
 	faceCount: number; // Number of detected faces
 	createdAt: string; // ISO 8601
@@ -526,6 +527,41 @@ interface Face {
 	confidence: number; // Detection confidence (0.0-1.0)
 	thumbnailUrl: string; // Cropped face thumbnail
 	createdAt: string; // ISO 8601
+}
+```
+
+#### `POST /api/v1/faces/persons`
+
+Create a new person entity.
+
+**Request Body**
+
+```json
+{
+	"name": "John Smith"
+}
+```
+
+| Field  | Type   | Required | Description                    |
+| ------ | ------ | -------- | ------------------------------ |
+| `name` | string | Yes      | Person name (unique)           |
+
+**Response** `201 Created`
+
+```json
+{
+	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"name": "John Smith",
+	"status": "active",
+	"createdAt": "2024-12-24T10:00:00Z"
+}
+```
+
+**Response** `409 Conflict` - Person with name already exists
+
+```json
+{
+	"detail": "Person with name 'John Smith' already exists"
 }
 ```
 
@@ -602,9 +638,15 @@ List faces not yet assigned to any person.
 
 **Response** `200 OK` - `PaginatedResponse<Face>`
 
-#### `POST /api/v1/faces/{faceId}/assign`
+#### `POST /api/v1/faces/faces/{faceId}/assign`
 
-Assign a face to a person.
+Assign a face instance to a person.
+
+**Path Parameters**
+
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
+| `faceId`  | string | Yes      | Face instance ID (UUID) |
 
 **Request Body**
 
@@ -614,7 +656,41 @@ Assign a face to a person.
 }
 ```
 
-**Response** `200 OK` - Updated Face object
+| Field      | Type   | Required | Description        |
+| ---------- | ------ | -------- | ------------------ |
+| `personId` | string | Yes      | Person ID (UUID)   |
+
+**Response** `200 OK`
+
+```json
+{
+	"faceId": "123e4567-e89b-12d3-a456-426614174000",
+	"personId": "550e8400-e29b-41d4-a716-446655440000",
+	"personName": "John Smith"
+}
+```
+
+**Response** `404 Not Found` - Face or person not found
+
+```json
+{
+	"error": {
+		"code": "FACE_NOT_FOUND",
+		"message": "Face with ID '123e4567-...' not found"
+	}
+}
+```
+
+or
+
+```json
+{
+	"error": {
+		"code": "PERSON_NOT_FOUND",
+		"message": "Person with ID '550e8400-...' not found"
+	}
+}
+```
 
 ---
 
@@ -805,21 +881,22 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code                    | HTTP Status | Description                      |
-| ----------------------- | ----------- | -------------------------------- |
-| `VALIDATION_ERROR`      | 400         | Invalid request parameters       |
-| `ASSET_NOT_FOUND`       | 404         | Asset ID does not exist          |
-| `CATEGORY_NOT_FOUND`    | 404         | Category ID does not exist       |
-| `PERSON_NOT_FOUND`      | 404         | Person ID does not exist         |
-| `FACE_NOT_FOUND`        | 404         | Face ID does not exist           |
-| `JOB_NOT_FOUND`         | 404         | Job ID does not exist            |
-| `CATEGORY_NAME_EXISTS`  | 409         | Category name already exists     |
-| `CATEGORY_HAS_SESSIONS` | 409         | Category has training sessions   |
-| `CATEGORY_IS_DEFAULT`   | 400         | Cannot delete default category   |
-| `JOB_NOT_CANCELLABLE`   | 409         | Job already completed            |
-| `MERGE_CONFLICT`        | 409         | Cannot merge (e.g., same person) |
-| `RATE_LIMITED`          | 429         | Too many requests                |
-| `INTERNAL_ERROR`        | 500         | Server error                     |
+| Code                     | HTTP Status | Description                          |
+| ------------------------ | ----------- | ------------------------------------ |
+| `VALIDATION_ERROR`       | 400         | Invalid request parameters           |
+| `ASSET_NOT_FOUND`        | 404         | Asset ID does not exist              |
+| `CATEGORY_NOT_FOUND`     | 404         | Category ID does not exist           |
+| `PERSON_NOT_FOUND`       | 404         | Person ID does not exist             |
+| `FACE_NOT_FOUND`         | 404         | Face ID does not exist               |
+| `JOB_NOT_FOUND`          | 404         | Job ID does not exist                |
+| `CATEGORY_NAME_EXISTS`   | 409         | Category name already exists         |
+| `PERSON_NAME_EXISTS`     | 409         | Person name already exists           |
+| `CATEGORY_HAS_SESSIONS`  | 409         | Category has training sessions       |
+| `CATEGORY_IS_DEFAULT`    | 400         | Cannot delete default category       |
+| `JOB_NOT_CANCELLABLE`    | 409         | Job already completed                |
+| `MERGE_CONFLICT`         | 409         | Cannot merge (e.g., same person)     |
+| `RATE_LIMITED`           | 429         | Too many requests                    |
+| `INTERNAL_ERROR`         | 500         | Server error                         |
 
 ---
 
@@ -909,10 +986,11 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date       | Changes                                                                                       |
-| ------- | ---------- | --------------------------------------------------------------------------------------------- |
+| Version | Date       | Changes                                                                                      |
+| ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema |
 | 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |
-| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                       |
+| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                      |
 
 ---
 

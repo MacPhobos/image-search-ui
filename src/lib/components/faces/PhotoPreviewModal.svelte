@@ -1,13 +1,15 @@
 <script lang="ts">
 	import type { PersonPhotoGroup, FaceInPhoto } from '$lib/api/faces';
+	import { listPersons, assignFaceToPerson, createPerson } from '$lib/api/faces';
+	import type { Person } from '$lib/api/faces';
 
 	interface Props {
 		/** The photo to display */
 		photo: PersonPhotoGroup;
-		/** The person being reviewed (for highlighting their faces) */
-		currentPersonId: string;
-		/** Name of current person */
-		currentPersonName: string;
+		/** The person being reviewed (for highlighting their faces) - optional for search results */
+		currentPersonId?: string | null;
+		/** Name of current person - optional for search results */
+		currentPersonName?: string | null;
 		/** Called when modal should close */
 		onClose: () => void;
 		/** Optional: navigate to previous photo */
@@ -16,7 +18,7 @@
 		onNext?: () => void;
 	}
 
-	let { photo, currentPersonId, currentPersonName, onClose, onPrevious, onNext }: Props = $props();
+	let { photo, currentPersonId = null, currentPersonName = null, onClose, onPrevious, onNext }: Props = $props();
 
 	// State
 	let imgElement: HTMLImageElement | undefined = $state();
@@ -24,6 +26,24 @@
 	let imgWidth = $state(0);
 	let imgHeight = $state(0);
 	let highlightedFaceId = $state<string | null>(null);
+
+	// Face assignment state
+	let assigningFaceId = $state<string | null>(null);
+	let personSearchQuery = $state('');
+	let persons = $state<Person[]>([]);
+	let personsLoading = $state(false);
+	let personsError = $state<string | null>(null);
+	let assignmentSubmitting = $state(false);
+	let assignmentError = $state<string | null>(null);
+
+	// Derived states
+	let filteredPersons = $derived(() => {
+		const query = personSearchQuery.toLowerCase().trim();
+		if (!query) return persons;
+		return persons.filter((p) => p.name.toLowerCase().includes(query));
+	});
+
+	let showCreateOption = $derived(() => personSearchQuery.trim().length > 0);
 
 	function handleImageLoad() {
 		if (imgElement) {
@@ -56,6 +76,12 @@
 	}
 
 	function getFaceColor(face: FaceInPhoto): string {
+		// If no current person is set (search results context), all labeled faces use blue
+		if (!currentPersonId) {
+			if (face.personId) return '#3b82f6'; // Blue - any labeled person
+			return '#6b7280'; // Gray - unlabeled
+		}
+		// Person details context: differentiate current vs other persons
 		if (face.personId === currentPersonId) return '#22c55e'; // Green - current person
 		if (face.personId) return '#eab308'; // Yellow - other person
 		return '#6b7280'; // Gray - unlabeled
@@ -65,15 +91,132 @@
 		if (face.personName) return face.personName;
 		return 'Unknown';
 	}
+
+	async function loadPersons() {
+		personsLoading = true;
+		personsError = null;
+		try {
+			const response = await listPersons(1, 100, 'active');
+			persons = response.items;
+		} catch (err) {
+			console.error('Failed to load persons:', err);
+			personsError = 'Failed to load persons.';
+		} finally {
+			personsLoading = false;
+		}
+	}
+
+	function startAssignment(faceId: string) {
+		const face = photo.faces.find((f) => f.faceInstanceId === faceId);
+		if (face?.personId !== null) return;
+
+		assigningFaceId = faceId;
+		highlightedFaceId = faceId;
+		personSearchQuery = '';
+		assignmentError = null;
+
+		if (persons.length === 0) {
+			loadPersons();
+		}
+	}
+
+	function cancelAssignment() {
+		assigningFaceId = null;
+		personSearchQuery = '';
+		assignmentError = null;
+	}
+
+	async function handleAssignToExisting(person: Person) {
+		if (!assigningFaceId || assignmentSubmitting) return;
+
+		assignmentSubmitting = true;
+		assignmentError = null;
+
+		try {
+			await assignFaceToPerson(assigningFaceId, person.id);
+
+			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === assigningFaceId);
+			if (faceIndex !== -1) {
+				photo.faces[faceIndex] = {
+					...photo.faces[faceIndex],
+					personId: person.id,
+					personName: person.name
+				};
+			}
+
+			assigningFaceId = null;
+			personSearchQuery = '';
+		} catch (err) {
+			console.error('Failed to assign face:', err);
+			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
+		} finally {
+			assignmentSubmitting = false;
+		}
+	}
+
+	async function handleCreateAndAssign() {
+		if (!assigningFaceId || !personSearchQuery.trim() || assignmentSubmitting) return;
+
+		assignmentSubmitting = true;
+		assignmentError = null;
+
+		const newName = personSearchQuery.trim();
+
+		try {
+			const newPerson = await createPerson(newName);
+			await assignFaceToPerson(assigningFaceId, newPerson.id);
+
+			persons = [
+				...persons,
+				{
+					id: newPerson.id,
+					name: newPerson.name,
+					status: newPerson.status as 'active' | 'merged' | 'hidden',
+					faceCount: 1,
+					prototypeCount: 0,
+					createdAt: newPerson.createdAt,
+					updatedAt: newPerson.createdAt
+				}
+			];
+
+			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === assigningFaceId);
+			if (faceIndex !== -1) {
+				photo.faces[faceIndex] = {
+					...photo.faces[faceIndex],
+					personId: newPerson.id,
+					personName: newPerson.name
+				};
+			}
+
+			assigningFaceId = null;
+			personSearchQuery = '';
+		} catch (err) {
+			console.error('Failed to create person and assign:', err);
+			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';
+		} finally {
+			assignmentSubmitting = false;
+		}
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div class="modal-backdrop" onclick={handleBackdropClick}>
-	<div class="modal photo-preview-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+	<div
+		class="modal photo-preview-modal"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="modal-title"
+	>
 		<header class="modal-header">
-			<h2 id="modal-title">Photo Preview - {currentPersonName}</h2>
+			<h2 id="modal-title">
+				{#if currentPersonName}
+					Photo Preview - {currentPersonName}
+				{:else}
+					Photo Preview
+				{/if}
+			</h2>
 			<button type="button" class="close-button" onclick={onClose} aria-label="Close">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18" />
@@ -115,8 +258,8 @@
 									width={face.bboxW}
 									height={face.bboxH}
 									class="face-box"
-									class:current-person={face.personId === currentPersonId}
-									class:other-person={face.personId && face.personId !== currentPersonId}
+									class:current-person={currentPersonId && face.personId === currentPersonId}
+									class:other-person={face.personId && (!currentPersonId || face.personId !== currentPersonId)}
 									class:unknown={!face.personId}
 									class:highlighted={highlightedFaceId === face.faceInstanceId}
 									style="stroke: {getFaceColor(face)};"
@@ -139,38 +282,125 @@
 				<h3>Faces ({photo.faceCount})</h3>
 				<ul class="face-list">
 					{#each photo.faces as face (face.faceInstanceId)}
-						<li
-							class="face-item"
-							class:highlighted={highlightedFaceId === face.faceInstanceId}
-						>
-							<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-							<button
-								type="button"
-								class="face-item-button"
-								onclick={() => handleHighlightFace(face.faceInstanceId)}
-								aria-label="Highlight face of {getFaceLabel(face)}"
-							>
-								<span
-									class="face-indicator"
-									class:current-person={face.personId === currentPersonId}
-									class:other-person={face.personId && face.personId !== currentPersonId}
-									style="background-color: {getFaceColor(face)};"
-								></span>
-								<div class="face-info">
-									<span class="face-name">
-										{getFaceLabel(face)}
-										{#if face.personId === currentPersonId}
-											<span class="current-badge">(current)</span>
+						<li class="face-item" class:highlighted={highlightedFaceId === face.faceInstanceId}>
+							<div class="face-item-content">
+								<button
+									type="button"
+									class="face-item-button"
+									onclick={() => handleHighlightFace(face.faceInstanceId)}
+									aria-label="Highlight face of {getFaceLabel(face)}"
+								>
+									<span
+										class="face-indicator"
+										class:current-person={currentPersonId && face.personId === currentPersonId}
+										class:other-person={face.personId && (!currentPersonId || face.personId !== currentPersonId)}
+										style="background-color: {getFaceColor(face)};"
+									></span>
+									<div class="face-info">
+										<span class="face-name">
+											{getFaceLabel(face)}
+											{#if currentPersonId && face.personId === currentPersonId}
+												<span class="current-badge">(current)</span>
+											{/if}
+										</span>
+										<span class="face-meta">
+											Conf: {(face.detectionConfidence * 100).toFixed(0)}%
+											{#if face.qualityScore !== null}
+												| Q: {face.qualityScore.toFixed(1)}
+											{/if}
+										</span>
+									</div>
+								</button>
+
+								<!-- Assign button for unknown faces -->
+								{#if face.personId === null && assigningFaceId !== face.faceInstanceId}
+									<button
+										type="button"
+										class="assign-btn"
+										onclick={(e) => {
+											e.stopPropagation();
+											startAssignment(face.faceInstanceId);
+										}}
+										aria-label="Assign this face to a person"
+									>
+										Assign
+									</button>
+								{/if}
+							</div>
+
+							<!-- Assignment panel (shown when this face is being assigned) -->
+							{#if assigningFaceId === face.faceInstanceId}
+								<div class="assignment-panel">
+									<div class="assignment-header">
+										<h4>Assign Face</h4>
+										<button
+											type="button"
+											class="close-assignment"
+											onclick={cancelAssignment}
+											aria-label="Cancel assignment"
+										>
+											×
+										</button>
+									</div>
+
+									{#if assignmentError}
+										<div class="assignment-error" role="alert">
+											{assignmentError}
+										</div>
+									{/if}
+
+									<input
+										type="text"
+										placeholder="Search or create person..."
+										bind:value={personSearchQuery}
+										class="person-search-input"
+										aria-label="Search persons or enter new name"
+									/>
+
+									<div class="person-options">
+										{#if personsLoading}
+											<div class="loading-option">Loading...</div>
+										{:else if personsError}
+											<div class="no-results">{personsError}</div>
+										{:else}
+											<!-- Create new option -->
+											{#if showCreateOption()}
+												<button
+													type="button"
+													class="person-option create-new"
+													onclick={handleCreateAndAssign}
+													disabled={assignmentSubmitting}
+												>
+													<span class="person-avatar create-avatar">+</span>
+													<span>Create "{personSearchQuery.trim()}"</span>
+												</button>
+											{/if}
+
+											<!-- Existing persons -->
+											{#each filteredPersons() as person (person.id)}
+												<button
+													type="button"
+													class="person-option"
+													onclick={() => handleAssignToExisting(person)}
+													disabled={assignmentSubmitting}
+												>
+													<span class="person-avatar">
+														{person.name.charAt(0).toUpperCase()}
+													</span>
+													<div class="person-option-info">
+														<span class="person-option-name">{person.name}</span>
+														<span class="person-option-meta">{person.faceCount} faces</span>
+													</div>
+												</button>
+											{/each}
+
+											{#if filteredPersons().length === 0 && !showCreateOption()}
+												<div class="no-results">No persons found</div>
+											{/if}
 										{/if}
-									</span>
-									<span class="face-meta">
-										Conf: {(face.detectionConfidence * 100).toFixed(0)}%
-										{#if face.qualityScore !== null}
-											| Q: {face.qualityScore.toFixed(1)}
-										{/if}
-									</span>
+									</div>
 								</div>
-							</button>
+							{/if}
 						</li>
 					{/each}
 				</ul>
@@ -230,7 +460,9 @@
 		align-items: center;
 		justify-content: center;
 		color: #666;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 
 	.close-button:hover {
@@ -339,16 +571,40 @@
 		background-color: #f3f4f6;
 	}
 
+	.face-item-content {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
 	.face-item-button {
 		display: flex;
 		align-items: center;
 		gap: 0.625rem;
-		width: 100%;
+		flex: 1;
 		padding: 0.625rem;
 		border: none;
 		background: none;
 		cursor: pointer;
 		text-align: left;
+	}
+
+	.assign-btn {
+		padding: 0.25rem 0.5rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		background-color: #4a90e2;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+		flex-shrink: 0;
+		margin-right: 0.5rem;
+	}
+
+	.assign-btn:hover {
+		background-color: #3a7bc8;
 	}
 
 	.face-indicator {
@@ -412,6 +668,165 @@
 
 	.nav-btn.next {
 		right: 0.5rem;
+	}
+
+	/* Assignment panel styles */
+	.assignment-panel {
+		background-color: #f8f9fa;
+		border-radius: 8px;
+		padding: 0.75rem;
+		margin: 0.5rem 0.625rem;
+		border: 1px solid #e0e0e0;
+	}
+
+	.assignment-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.625rem;
+	}
+
+	.assignment-header h4 {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.close-assignment {
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
+		font-size: 1.5rem;
+		line-height: 1;
+		color: #666;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	.close-assignment:hover {
+		background-color: #e0e0e0;
+	}
+
+	.assignment-error {
+		background-color: #fef2f2;
+		color: #dc2626;
+		padding: 0.5rem;
+		border-radius: 4px;
+		margin-bottom: 0.5rem;
+		font-size: 0.75rem;
+	}
+
+	.person-search-input {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		margin-bottom: 0.5rem;
+		transition: border-color 0.2s;
+	}
+
+	.person-search-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+	}
+
+	.person-options {
+		max-height: 150px;
+		overflow-y: auto;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		background-color: white;
+	}
+
+	.loading-option,
+	.no-results {
+		padding: 0.75rem;
+		text-align: center;
+		color: #666;
+		font-size: 0.75rem;
+	}
+
+	.person-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.5rem;
+		border: none;
+		background: none;
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.person-option:hover:not(:disabled) {
+		background-color: #f5f5f5;
+	}
+
+	.person-option:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.person-option:not(:last-child) {
+		border-bottom: 1px solid #f0f0f0;
+	}
+
+	.person-option.create-new {
+		background-color: #f0f7ff;
+		color: #4a90e2;
+		font-weight: 500;
+		font-size: 0.8125rem;
+	}
+
+	.person-option.create-new:hover:not(:disabled) {
+		background-color: #e0efff;
+	}
+
+	.person-avatar {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 600;
+		font-size: 0.75rem;
+		flex-shrink: 0;
+	}
+
+	.person-avatar.create-avatar {
+		background: #4a90e2;
+		font-size: 1rem;
+	}
+
+	.person-option-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.person-option-name {
+		font-weight: 500;
+		color: #333;
+		font-size: 0.8125rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.person-option-meta {
+		font-size: 0.6875rem;
+		color: #999;
 	}
 
 	/* Responsive adjustments */

@@ -8,6 +8,17 @@ import { ApiError } from './client';
 
 const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+/**
+ * Prefixes a relative URL with the API base URL.
+ * Returns absolute URLs unchanged.
+ */
+function toAbsoluteUrl(relativeUrl: string): string {
+	if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+		return relativeUrl;
+	}
+	return `${API_BASE_URL}${relativeUrl}`;
+}
+
 async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const url = `${API_BASE_URL}${endpoint}`;
 
@@ -202,6 +213,52 @@ export interface BulkMoveResponse {
 	personCreated: boolean;
 }
 
+/** Request to assign a face to a person. */
+export interface AssignFaceRequest {
+	personId: string;
+}
+
+/** Response from assigning a face. */
+export interface AssignFaceResponse {
+	faceId: string;
+	personId: string;
+	personName: string;
+}
+
+/** Request to create a new person. */
+export interface CreatePersonRequest {
+	name: string;
+}
+
+/** Response from creating a person. */
+export interface CreatePersonResponse {
+	id: string;
+	name: string;
+	status: string;
+	createdAt: string;
+}
+
+// ============ Utility Functions ============
+
+/**
+ * Transform FaceInstance array to FaceInPhoto array.
+ * Maps bbox fields from object format to flat format for use in PhotoPreviewModal.
+ */
+export function transformFaceInstancesToFaceInPhoto(faces: FaceInstance[]): FaceInPhoto[] {
+	return faces.map((face) => ({
+		faceInstanceId: face.id,
+		bboxX: face.bbox.x,
+		bboxY: face.bbox.y,
+		bboxW: face.bbox.width,
+		bboxH: face.bbox.height,
+		detectionConfidence: face.detectionConfidence,
+		qualityScore: face.qualityScore,
+		personId: face.personId,
+		personName: face.personName,
+		clusterId: face.clusterId
+	}));
+}
+
 // ============ Cluster API Functions ============
 
 /**
@@ -288,6 +345,17 @@ export async function listPersons(
 }
 
 /**
+ * Create a new person.
+ * @param name - The person's name
+ */
+export async function createPerson(name: string): Promise<CreatePersonResponse> {
+	return apiRequest<CreatePersonResponse>('/api/v1/faces/persons', {
+		method: 'POST',
+		body: JSON.stringify({ name })
+	});
+}
+
+/**
  * Merge one person into another.
  * @param personId - Source person ID to merge (will be marked as merged)
  * @param intoPersonId - Target person ID to merge into
@@ -317,9 +385,19 @@ export async function getPersonPhotos(
 		page: page.toString(),
 		page_size: pageSize.toString()
 	});
-	return apiRequest<PersonPhotosResponse>(
+	const response = await apiRequest<PersonPhotosResponse>(
 		`/api/v1/faces/persons/${encodeURIComponent(personId)}/photos?${params.toString()}`
 	);
+
+	// Transform relative image URLs to absolute URLs
+	return {
+		...response,
+		items: response.items.map((photo) => ({
+			...photo,
+			thumbnailUrl: toAbsoluteUrl(photo.thumbnailUrl),
+			fullUrl: toAbsoluteUrl(photo.fullUrl)
+		}))
+	};
 }
 
 /**
@@ -407,4 +485,24 @@ export async function getFacesForAsset(assetId: number): Promise<{
 	pageSize: number;
 }> {
 	return apiRequest(`/api/v1/faces/assets/${assetId}`);
+}
+
+// ============ Face Assignment API Functions ============
+
+/**
+ * Assign a face to a person.
+ * @param faceId - The face instance ID
+ * @param personId - The target person ID
+ */
+export async function assignFaceToPerson(
+	faceId: string,
+	personId: string
+): Promise<AssignFaceResponse> {
+	return apiRequest<AssignFaceResponse>(
+		`/api/v1/faces/faces/${encodeURIComponent(faceId)}/assign`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ personId })
+		}
+	);
 }
