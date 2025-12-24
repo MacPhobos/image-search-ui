@@ -66,7 +66,10 @@ describe('Dashboard Page', () => {
 	});
 
 	it('renders search results when API returns data', async () => {
-		const mockResults = createSearchResponse([createBeachResult(), createMountainResult()], 'beach');
+		const mockResults = createSearchResponse(
+			[createBeachResult(), createMountainResult()],
+			'beach'
+		);
 
 		(searchImages as Mock).mockResolvedValueOnce(mockResults);
 

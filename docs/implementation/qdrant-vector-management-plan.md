@@ -10,16 +10,16 @@ Add comprehensive vector management capabilities to the image search system, ena
 
 ## Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Primary Operation** | Directory-based deletion | Users organize images in directories; need to retrain/delete by path prefix |
-| **Path Matching** | Prefix matching | Qdrant supports efficient prefix filtering on path field |
-| **Retrain Strategy** | Delete + Reset Session + Queue Job | Three-step atomic operation ensures clean state |
-| **Orphan Detection** | Qdrant → Database lookup | Scroll Qdrant vectors, check if asset_id exists in PostgreSQL |
-| **Soft vs Hard Delete** | Hard delete from Qdrant | Vectors are derived data; can be regenerated from source images |
-| **Audit Logging** | Log all deletions | Track who deleted what, when, and why (via deletion_reason field) |
-| **Safety Confirmations** | Required for bulk operations | Directory deletion, orphan cleanup, full reset require confirmation |
-| **Rate Limiting** | Batch processing with delays | Large deletions processed in batches to avoid Qdrant overload |
+| Decision                 | Choice                             | Rationale                                                                   |
+| ------------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
+| **Primary Operation**    | Directory-based deletion           | Users organize images in directories; need to retrain/delete by path prefix |
+| **Path Matching**        | Prefix matching                    | Qdrant supports efficient prefix filtering on path field                    |
+| **Retrain Strategy**     | Delete + Reset Session + Queue Job | Three-step atomic operation ensures clean state                             |
+| **Orphan Detection**     | Qdrant → Database lookup           | Scroll Qdrant vectors, check if asset_id exists in PostgreSQL               |
+| **Soft vs Hard Delete**  | Hard delete from Qdrant            | Vectors are derived data; can be regenerated from source images             |
+| **Audit Logging**        | Log all deletions                  | Track who deleted what, when, and why (via deletion_reason field)           |
+| **Safety Confirmations** | Required for bulk operations       | Directory deletion, orphan cleanup, full reset require confirmation         |
+| **Rate Limiting**        | Batch processing with delays       | Large deletions processed in batches to avoid Qdrant overload               |
 
 ---
 
@@ -47,6 +47,7 @@ class VectorDeletionLog(Base):
 **File**: `image-search-service/src/image_search_service/db/models.py`
 
 Update TrainingSession model:
+
 ```python
 class TrainingSession(Base):
     # ... existing fields ...
@@ -629,12 +630,13 @@ api_v1_router.include_router(vectors_router)
 ## Phase 4: API Contract Update
 
 **Files**:
+
 - `image-search-service/docs/api-contract.md`
 - `image-search-ui/docs/api-contract.md`
 
 Add Vector Management section:
 
-```markdown
+````markdown
 ### Vector Management
 
 Manage vector data stored in Qdrant, including deletion and retraining operations.
@@ -644,20 +646,23 @@ Manage vector data stored in Qdrant, including deletion and retraining operation
 Delete vectors matching directory path prefix.
 
 **Request Body**
+
 ```json
 {
-  "pathPrefix": "/photos/2024/vacation/",
-  "deletionReason": "Removing duplicates",
-  "confirm": true
+	"pathPrefix": "/photos/2024/vacation/",
+	"deletionReason": "Removing duplicates",
+	"confirm": true
 }
 ```
+````
 
 **Response** `200 OK`
+
 ```json
 {
-  "deletedCount": 150,
-  "pathPrefix": "/photos/2024/vacation/",
-  "logId": 42
+	"deletedCount": 150,
+	"pathPrefix": "/photos/2024/vacation/",
+	"logId": 42
 }
 ```
 
@@ -666,21 +671,23 @@ Delete vectors matching directory path prefix.
 Delete existing vectors + reset session + create new training job.
 
 **Request Body**
+
 ```json
 {
-  "pathPrefix": "/photos/2024/",
-  "categoryId": 2,
-  "deletionReason": "Re-training with updated model",
-  "confirm": true
+	"pathPrefix": "/photos/2024/",
+	"categoryId": 2,
+	"deletionReason": "Re-training with updated model",
+	"confirm": true
 }
 ```
 
 **Response** `200 OK`
+
 ```json
 {
-  "deletedCount": 500,
-  "jobId": "job-uuid-123",
-  "sessionsReset": 2
+	"deletedCount": 500,
+	"jobId": "job-uuid-123",
+	"sessionsReset": 2
 }
 ```
 
@@ -689,20 +696,21 @@ Delete existing vectors + reset session + create new training job.
 List directories with vector counts and training status.
 
 **Response** `200 OK`
+
 ```json
 [
-  {
-    "path": "/photos/2024/vacation/",
-    "vectorCount": 150,
-    "sessionCount": 1,
-    "lastTrainedAt": "2024-12-19T10:00:00Z"
-  },
-  {
-    "path": "/photos/2023/",
-    "vectorCount": 430,
-    "sessionCount": 3,
-    "lastTrainedAt": "2024-12-18T15:30:00Z"
-  }
+	{
+		"path": "/photos/2024/vacation/",
+		"vectorCount": 150,
+		"sessionCount": 1,
+		"lastTrainedAt": "2024-12-19T10:00:00Z"
+	},
+	{
+		"path": "/photos/2023/",
+		"vectorCount": 430,
+		"sessionCount": 3,
+		"lastTrainedAt": "2024-12-18T15:30:00Z"
+	}
 ]
 ```
 
@@ -719,11 +727,12 @@ Delete all vectors from a training session.
 **Query Parameters**: `?confirm=true` (required)
 
 **Response** `200 OK`
+
 ```json
 {
-  "deletedCount": 75,
-  "pathPrefix": "session_5",
-  "logId": 43
+	"deletedCount": 75,
+	"pathPrefix": "session_5",
+	"logId": 43
 }
 ```
 
@@ -734,11 +743,12 @@ Delete all vectors in a category.
 **Query Parameters**: `?confirm=true` (required)
 
 **Response** `200 OK`
+
 ```json
 {
-  "deletedCount": 230,
-  "pathPrefix": "category_2",
-  "logId": 44
+	"deletedCount": 230,
+	"pathPrefix": "category_2",
+	"logId": 44
 }
 ```
 
@@ -747,14 +757,16 @@ Delete all vectors in a category.
 Remove vectors without corresponding database records.
 
 **Request Body**
+
 ```json
 {
-  "confirm": true,
-  "deletionReason": "Cleanup after asset deletion"
+	"confirm": true,
+	"deletionReason": "Cleanup after asset deletion"
 }
 ```
 
 **Response** `200 OK`
+
 ```json
 {
   "deletedCount": 12,
@@ -767,22 +779,25 @@ Remove vectors without corresponding database records.
 Delete ALL vectors and recreate collection (DANGEROUS).
 
 **Request Body**
+
 ```json
 {
-  "confirm": true,
-  "confirmationText": "DELETE ALL VECTORS",
-  "deletionReason": "Complete system reset"
+	"confirm": true,
+	"confirmationText": "DELETE ALL VECTORS",
+	"deletionReason": "Complete system reset"
 }
 ```
 
 **Response** `200 OK`
+
 ```json
 {
-  "deletedCount": 1247,
-  "message": "Successfully deleted 1247 vectors and reset collection"
+	"deletedCount": 1247,
+	"message": "Successfully deleted 1247 vectors and reset collection"
 }
 ```
-```
+
+````
 
 Bump version to **1.2.0**.
 
@@ -795,7 +810,7 @@ Bump version to **1.2.0**.
 After backend deployment:
 ```bash
 cd image-search-ui && npm run gen:api
-```
+````
 
 ### 5.2 API Client
 
@@ -803,125 +818,125 @@ cd image-search-ui && npm run gen:api
 
 ```typescript
 import type {
-  DeleteByDirectoryRequest,
-  DeleteByDirectoryResponse,
-  RetrainDirectoryRequest,
-  RetrainDirectoryResponse,
-  DirectoryStatusResponse,
-  CleanupOrphansRequest,
-  CleanupOrphansResponse,
-  ResetCollectionRequest,
-  ResetCollectionResponse
+	DeleteByDirectoryRequest,
+	DeleteByDirectoryResponse,
+	RetrainDirectoryRequest,
+	RetrainDirectoryResponse,
+	DirectoryStatusResponse,
+	CleanupOrphansRequest,
+	CleanupOrphansResponse,
+	ResetCollectionRequest,
+	ResetCollectionResponse
 } from './generated';
 
 export async function deleteByDirectory(
-  request: DeleteByDirectoryRequest
+	request: DeleteByDirectoryRequest
 ): Promise<DeleteByDirectoryResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/vectors/by-directory`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request)
-  });
+	const response = await fetch(`${API_BASE_URL}/api/v1/vectors/by-directory`, {
+		method: 'DELETE',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(request)
+	});
 
-  if (!response.ok) {
-    throw new Error(`Failed to delete vectors: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to delete vectors: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export async function retrainDirectory(
-  request: RetrainDirectoryRequest
+	request: RetrainDirectoryRequest
 ): Promise<RetrainDirectoryResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/vectors/retrain`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request)
-  });
+	const response = await fetch(`${API_BASE_URL}/api/v1/vectors/retrain`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(request)
+	});
 
-  if (!response.ok) {
-    throw new Error(`Failed to retrain directory: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to retrain directory: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export async function getDirectoryStatus(): Promise<DirectoryStatusResponse[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/vectors/directories/status`);
+	const response = await fetch(`${API_BASE_URL}/api/v1/vectors/directories/status`);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch directory status: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to fetch directory status: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export async function deleteByAsset(assetId: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/vectors/by-asset/${assetId}`, {
-    method: 'DELETE'
-  });
+	const response = await fetch(`${API_BASE_URL}/api/v1/vectors/by-asset/${assetId}`, {
+		method: 'DELETE'
+	});
 
-  if (!response.ok) {
-    throw new Error(`Failed to delete asset vector: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to delete asset vector: ${response.statusText}`);
+	}
 }
 
 export async function deleteBySession(sessionId: number): Promise<DeleteByDirectoryResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/vectors/by-session/${sessionId}?confirm=true`,
-    { method: 'DELETE' }
-  );
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/vectors/by-session/${sessionId}?confirm=true`,
+		{ method: 'DELETE' }
+	);
 
-  if (!response.ok) {
-    throw new Error(`Failed to delete session vectors: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to delete session vectors: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export async function deleteByCategory(categoryId: number): Promise<DeleteByDirectoryResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/vectors/by-category/${categoryId}?confirm=true`,
-    { method: 'DELETE' }
-  );
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/vectors/by-category/${categoryId}?confirm=true`,
+		{ method: 'DELETE' }
+	);
 
-  if (!response.ok) {
-    throw new Error(`Failed to delete category vectors: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to delete category vectors: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export async function cleanupOrphans(
-  request: CleanupOrphansRequest
+	request: CleanupOrphansRequest
 ): Promise<CleanupOrphansResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/vectors/cleanup-orphans`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request)
-  });
+	const response = await fetch(`${API_BASE_URL}/api/v1/vectors/cleanup-orphans`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(request)
+	});
 
-  if (!response.ok) {
-    throw new Error(`Failed to cleanup orphans: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to cleanup orphans: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 
 export async function resetCollection(
-  request: ResetCollectionRequest
+	request: ResetCollectionRequest
 ): Promise<ResetCollectionResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/vectors/reset`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request)
-  });
+	const response = await fetch(`${API_BASE_URL}/api/v1/vectors/reset`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(request)
+	});
 
-  if (!response.ok) {
-    throw new Error(`Failed to reset collection: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		throw new Error(`Failed to reset collection: ${response.statusText}`);
+	}
 
-  return response.json();
+	return response.json();
 }
 ```
 
@@ -963,86 +978,86 @@ export async function resetCollection(
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import DirectoryManager from '$lib/components/vectors/DirectoryManager.svelte';
-  import OrphanCleanupPanel from '$lib/components/vectors/OrphanCleanupPanel.svelte';
-  import DangerZone from '$lib/components/vectors/DangerZone.svelte';
-  import { getDirectoryStatus } from '$lib/api/vectors';
-  import type { DirectoryStatusResponse } from '$lib/api/generated';
+	import { onMount } from 'svelte';
+	import DirectoryManager from '$lib/components/vectors/DirectoryManager.svelte';
+	import OrphanCleanupPanel from '$lib/components/vectors/OrphanCleanupPanel.svelte';
+	import DangerZone from '$lib/components/vectors/DangerZone.svelte';
+	import { getDirectoryStatus } from '$lib/api/vectors';
+	import type { DirectoryStatusResponse } from '$lib/api/generated';
 
-  let directories = $state<DirectoryStatusResponse[]>([]);
-  let loading = $state(true);
-  let error = $state<string | null>(null);
+	let directories = $state<DirectoryStatusResponse[]>([]);
+	let loading = $state(true);
+	let error = $state<string | null>(null);
 
-  onMount(async () => {
-    try {
-      directories = await getDirectoryStatus();
-    } catch (err) {
-      error = err instanceof Error ? err.message : 'Failed to load directory status';
-    } finally {
-      loading = false;
-    }
-  });
+	onMount(async () => {
+		try {
+			directories = await getDirectoryStatus();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to load directory status';
+		} finally {
+			loading = false;
+		}
+	});
 
-  async function handleRefresh() {
-    loading = true;
-    error = null;
-    try {
-      directories = await getDirectoryStatus();
-    } catch (err) {
-      error = err instanceof Error ? err.message : 'Failed to refresh';
-    } finally {
-      loading = false;
-    }
-  }
+	async function handleRefresh() {
+		loading = true;
+		error = null;
+		try {
+			directories = await getDirectoryStatus();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to refresh';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <main>
-  <header>
-    <h1>Vector Management</h1>
-    <p>Manage trained vector data stored in Qdrant</p>
-  </header>
+	<header>
+		<h1>Vector Management</h1>
+		<p>Manage trained vector data stored in Qdrant</p>
+	</header>
 
-  {#if error}
-    <div class="alert error" role="alert">{error}</div>
-  {/if}
+	{#if error}
+		<div class="alert error" role="alert">{error}</div>
+	{/if}
 
-  <section>
-    <h2>Directory Status</h2>
-    {#if loading}
-      <p>Loading directory status...</p>
-    {:else}
-      <DirectoryManager {directories} onRefresh={handleRefresh} />
-    {/if}
-  </section>
+	<section>
+		<h2>Directory Status</h2>
+		{#if loading}
+			<p>Loading directory status...</p>
+		{:else}
+			<DirectoryManager {directories} onRefresh={handleRefresh} />
+		{/if}
+	</section>
 
-  <section>
-    <h2>Orphan Cleanup</h2>
-    <OrphanCleanupPanel onComplete={handleRefresh} />
-  </section>
+	<section>
+		<h2>Orphan Cleanup</h2>
+		<OrphanCleanupPanel onComplete={handleRefresh} />
+	</section>
 
-  <section class="danger-section">
-    <h2>Danger Zone</h2>
-    <DangerZone onComplete={handleRefresh} />
-  </section>
+	<section class="danger-section">
+		<h2>Danger Zone</h2>
+		<DangerZone onComplete={handleRefresh} />
+	</section>
 </main>
 
 <style>
-  .danger-section {
-    border: 2px solid #ef4444;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-top: 2rem;
-    background-color: #fef2f2;
-  }
+	.danger-section {
+		border: 2px solid #ef4444;
+		border-radius: 8px;
+		padding: 1.5rem;
+		margin-top: 2rem;
+		background-color: #fef2f2;
+	}
 
-  .alert.error {
-    background-color: #fee;
-    border: 1px solid #fcc;
-    padding: 1rem;
-    border-radius: 4px;
-    color: #c00;
-  }
+	.alert.error {
+		background-color: #fee;
+		border: 1px solid #fcc;
+		padding: 1rem;
+		border-radius: 4px;
+		color: #c00;
+	}
 </style>
 ```
 
@@ -1051,6 +1066,7 @@ export async function resetCollection(
 **File**: `src/routes/training/sessions/+page.svelte`
 
 Add directory management actions to training session list:
+
 - "Delete Vectors" button per session
 - "Retrain" button per session
 - Opens modals from `src/lib/components/vectors/`
@@ -1060,12 +1076,13 @@ Add directory management actions to training session list:
 **File**: `src/routes/+layout.svelte`
 
 Add "Vector Management" link in header navigation:
+
 ```svelte
 <nav>
-  <a href="/">Dashboard</a>
-  <a href="/categories">Categories</a>
-  <a href="/training/sessions">Training Sessions</a>
-  <a href="/vectors">Vector Management</a>
+	<a href="/">Dashboard</a>
+	<a href="/categories">Categories</a>
+	<a href="/training/sessions">Training Sessions</a>
+	<a href="/vectors">Vector Management</a>
 </nav>
 ```
 
@@ -1076,6 +1093,7 @@ Add "Vector Management" link in header navigation:
 **New File**: `image-search-service/tests/services/test_vector_management_service.py`
 
 Test cases:
+
 - [ ] Delete by directory (empty result, with results, invalid path)
 - [ ] Retrain directory (creates job, resets sessions, deletes vectors)
 - [ ] Get directory status (empty, with data)
@@ -1089,6 +1107,7 @@ Test cases:
 **New File**: `image-search-service/tests/vector/test_qdrant_deletions.py`
 
 Test cases:
+
 - [ ] Delete vectors by directory prefix (single match, multiple matches, no matches)
 - [ ] Delete vectors by asset ID (exists, not found)
 - [ ] Delete vectors by session ID
@@ -1101,6 +1120,7 @@ Test cases:
 **New File**: `image-search-service/tests/api/test_vectors.py`
 
 Test cases:
+
 - [ ] DELETE /api/v1/vectors/by-directory (requires confirm, validates path)
 - [ ] POST /api/v1/vectors/retrain (requires confirm, creates job)
 - [ ] GET /api/v1/vectors/directories/status (returns list)
@@ -1111,6 +1131,7 @@ Test cases:
 - [ ] POST /api/v1/vectors/reset (requires confirm + text match)
 
 **Update**: `tests/conftest.py`
+
 - Add fixtures for VectorDeletionLog
 - Mock Qdrant client for deletion methods
 
@@ -1127,43 +1148,44 @@ import DirectoryManager from '$lib/components/vectors/DirectoryManager.svelte';
 import { createDirectoryStatus } from '../../helpers/fixtures';
 
 describe('DirectoryManager', () => {
-  it('renders empty state', () => {
-    const { getByText } = render(DirectoryManager, {
-      props: { directories: [], onRefresh: () => {} }
-    });
-    expect(getByText(/no directories/i)).toBeInTheDocument();
-  });
+	it('renders empty state', () => {
+		const { getByText } = render(DirectoryManager, {
+			props: { directories: [], onRefresh: () => {} }
+		});
+		expect(getByText(/no directories/i)).toBeInTheDocument();
+	});
 
-  it('displays directory status table', () => {
-    const directories = [
-      createDirectoryStatus({ path: '/photos/2024/', vectorCount: 150 }),
-      createDirectoryStatus({ path: '/photos/2023/', vectorCount: 230 })
-    ];
-    const { getByText } = render(DirectoryManager, {
-      props: { directories, onRefresh: () => {} }
-    });
+	it('displays directory status table', () => {
+		const directories = [
+			createDirectoryStatus({ path: '/photos/2024/', vectorCount: 150 }),
+			createDirectoryStatus({ path: '/photos/2023/', vectorCount: 230 })
+		];
+		const { getByText } = render(DirectoryManager, {
+			props: { directories, onRefresh: () => {} }
+		});
 
-    expect(getByText('/photos/2024/')).toBeInTheDocument();
-    expect(getByText('150')).toBeInTheDocument();
-    expect(getByText('/photos/2023/')).toBeInTheDocument();
-    expect(getByText('230')).toBeInTheDocument();
-  });
+		expect(getByText('/photos/2024/')).toBeInTheDocument();
+		expect(getByText('150')).toBeInTheDocument();
+		expect(getByText('/photos/2023/')).toBeInTheDocument();
+		expect(getByText('230')).toBeInTheDocument();
+	});
 
-  it('shows delete and retrain buttons', () => {
-    const directories = [createDirectoryStatus()];
-    const { getByRole } = render(DirectoryManager, {
-      props: { directories, onRefresh: () => {} }
-    });
+	it('shows delete and retrain buttons', () => {
+		const directories = [createDirectoryStatus()];
+		const { getByRole } = render(DirectoryManager, {
+			props: { directories, onRefresh: () => {} }
+		});
 
-    expect(getByRole('button', { name: /delete/i })).toBeInTheDocument();
-    expect(getByRole('button', { name: /retrain/i })).toBeInTheDocument();
-  });
+		expect(getByRole('button', { name: /delete/i })).toBeInTheDocument();
+		expect(getByRole('button', { name: /retrain/i })).toBeInTheDocument();
+	});
 });
 ```
 
 **New File**: `src/tests/components/vectors/DeleteConfirmationModal.test.ts`
 
 Test cases:
+
 - [ ] Renders modal with operation details
 - [ ] Shows deletion reason input
 - [ ] Confirm button calls onConfirm
@@ -1173,6 +1195,7 @@ Test cases:
 **New File**: `src/tests/components/vectors/DangerZone.test.ts`
 
 Test cases:
+
 - [ ] Requires typing exact confirmation text
 - [ ] Confirm button disabled until text matches
 - [ ] Calls reset API on confirm
@@ -1181,6 +1204,7 @@ Test cases:
 **New File**: `src/tests/routes/vectors.test.ts`
 
 Test cases:
+
 - [ ] Loads directory status on mount
 - [ ] Displays error on API failure
 - [ ] Refresh button reloads data
@@ -1189,45 +1213,47 @@ Test cases:
 **Update**: `src/tests/helpers/fixtures.ts`
 
 Add fixture factories:
+
 ```typescript
 export function createDirectoryStatus(
-  overrides?: Partial<DirectoryStatusResponse>
+	overrides?: Partial<DirectoryStatusResponse>
 ): DirectoryStatusResponse {
-  return {
-    path: '/photos/2024/',
-    vectorCount: 100,
-    sessionCount: 2,
-    lastTrainedAt: '2024-12-19T10:00:00Z',
-    ...overrides
-  };
+	return {
+		path: '/photos/2024/',
+		vectorCount: 100,
+		sessionCount: 2,
+		lastTrainedAt: '2024-12-19T10:00:00Z',
+		...overrides
+	};
 }
 
 export function createDeleteByDirectoryResponse(
-  overrides?: Partial<DeleteByDirectoryResponse>
+	overrides?: Partial<DeleteByDirectoryResponse>
 ): DeleteByDirectoryResponse {
-  return {
-    deletedCount: 50,
-    pathPrefix: '/photos/2024/',
-    logId: 1,
-    ...overrides
-  };
+	return {
+		deletedCount: 50,
+		pathPrefix: '/photos/2024/',
+		logId: 1,
+		...overrides
+	};
 }
 ```
 
 **Update**: `src/tests/helpers/mockFetch.ts`
 
 Add mocks for vector management endpoints:
+
 ```typescript
 export function mockDeleteByDirectory(response: DeleteByDirectoryResponse) {
-  mockResponse('/api/v1/vectors/by-directory', response, { method: 'DELETE' });
+	mockResponse('/api/v1/vectors/by-directory', response, { method: 'DELETE' });
 }
 
 export function mockRetrainDirectory(response: RetrainDirectoryResponse) {
-  mockResponse('/api/v1/vectors/retrain', response, { method: 'POST' });
+	mockResponse('/api/v1/vectors/retrain', response, { method: 'POST' });
 }
 
 export function mockDirectoryStatus(directories: DirectoryStatusResponse[]) {
-  mockResponse('/api/v1/vectors/directories/status', directories);
+	mockResponse('/api/v1/vectors/directories/status', directories);
 }
 ```
 
@@ -1261,6 +1287,7 @@ Week 3: Frontend
 ## Critical Files to Modify
 
 ### Backend
+
 1. `src/image_search_service/db/models.py` - Add VectorDeletionLog, update TrainingSession
 2. `src/image_search_service/db/migrations/versions/008_*.py` - NEW migration
 3. `src/image_search_service/vector/qdrant.py` - Add deletion methods
@@ -1273,6 +1300,7 @@ Week 3: Frontend
 10. `tests/api/test_vectors.py` - NEW
 
 ### Frontend
+
 1. `src/lib/api/vectors.ts` - NEW API client
 2. `src/lib/components/vectors/DirectoryManager.svelte` - NEW
 3. `src/lib/components/vectors/DeleteConfirmationModal.svelte` - NEW
@@ -1287,28 +1315,30 @@ Week 3: Frontend
 12. `src/tests/helpers/fixtures.ts` - Add vector management fixtures
 
 ### Shared
+
 - `docs/api-contract.md` (both repos) - Add Vector Management section, bump to v1.2.0
 
 ---
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Large deletions timeout | Batch processing with configurable batch_size; use background jobs for >1000 vectors |
-| Qdrant scroll pagination issues | Implement robust scroll with offset tracking; test with large collections |
-| Accidental full deletion | Multiple confirmation layers: confirm flag + confirmation text match |
-| Database/Qdrant sync issues | Deletion logs track all operations; orphan cleanup handles inconsistencies |
-| UI doesn't reflect deletions | Refresh directory status after all operations; show loading states |
-| Path prefix matching errors | Validate path format; show preview of affected vectors before deletion |
-| Session reset breaks training | Queue new job atomically with reset; test retrain workflow end-to-end |
-| Audit log grows unbounded | Add retention policy (archive logs older than 90 days) in future |
+| Risk                            | Mitigation                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------ |
+| Large deletions timeout         | Batch processing with configurable batch_size; use background jobs for >1000 vectors |
+| Qdrant scroll pagination issues | Implement robust scroll with offset tracking; test with large collections            |
+| Accidental full deletion        | Multiple confirmation layers: confirm flag + confirmation text match                 |
+| Database/Qdrant sync issues     | Deletion logs track all operations; orphan cleanup handles inconsistencies           |
+| UI doesn't reflect deletions    | Refresh directory status after all operations; show loading states                   |
+| Path prefix matching errors     | Validate path format; show preview of affected vectors before deletion               |
+| Session reset breaks training   | Queue new job atomically with reset; test retrain workflow end-to-end                |
+| Audit log grows unbounded       | Add retention policy (archive logs older than 90 days) in future                     |
 
 ---
 
 ## Future Enhancements
 
 ### Phase 8: Advanced Features (Post-MVP)
+
 - **Soft Delete**: Mark vectors as deleted without removing from Qdrant
 - **Deletion Preview**: Show list of affected assets before confirming
 - **Batch Retrain**: Queue multiple directory retraining jobs
@@ -1320,6 +1350,7 @@ Week 3: Frontend
 - **Scheduled Cleanup**: Cron job for orphan cleanup and retention enforcement
 
 ### Authentication Integration (When Auth Added)
+
 - Deletion logs include user_id
 - Role-based permissions (admin-only for reset operations)
 - Deletion reason becomes required for admins
@@ -1330,18 +1361,21 @@ Week 3: Frontend
 ## Success Metrics
 
 ### Backend
+
 - All deletion methods tested with >95% coverage
 - Qdrant operations handle collections >10,000 vectors
 - Audit logs capture all deletion events
 - No orphaned vectors after cleanup operation
 
 ### Frontend
+
 - Directory status loads in <2s for 100 directories
 - Confirmation modals prevent accidental deletions
 - User can delete/retrain directory in <3 clicks
 - Error states clearly communicate failures
 
 ### Integration
+
 - Retrain workflow completes successfully end-to-end
 - Directory status accurate after deletions
 - No database/Qdrant inconsistencies after operations

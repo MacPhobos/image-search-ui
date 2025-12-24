@@ -79,10 +79,7 @@
 </div>
 
 {#if showCreateModal}
-	<CreateSessionModal
-		onClose={handleCloseModal}
-		onSessionCreated={handleSessionCreated}
-	/>
+	<CreateSessionModal onClose={handleCloseModal} onSessionCreated={handleSessionCreated} />
 {/if}
 
 <style>

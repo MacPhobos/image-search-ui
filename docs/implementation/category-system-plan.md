@@ -10,12 +10,12 @@ Add an image category system to organize training sessions and enable filtered s
 
 ## Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Required vs Optional | **Required** | Users must select a category when creating training sessions |
-| Default Category Name | **"General"** | Pre-created default category for initial use |
-| Category Deletion | **Prevent if has sessions** | Return 409 error; user must reassign sessions first |
-| UI Access | **Dedicated page + inline** | /categories page for full CRUD, plus "Create New" in dropdowns |
+| Decision              | Choice                      | Rationale                                                      |
+| --------------------- | --------------------------- | -------------------------------------------------------------- |
+| Required vs Optional  | **Required**                | Users must select a category when creating training sessions   |
+| Default Category Name | **"General"**               | Pre-created default category for initial use                   |
+| Category Deletion     | **Prevent if has sessions** | Return 409 error; user must reassign sessions first            |
+| UI Access             | **Dedicated page + inline** | /categories page for full CRUD, plus "Create New" in dropdowns |
 
 ---
 
@@ -45,6 +45,7 @@ class Category(Base):
 **File**: `image-search-service/src/image_search_service/db/models.py`
 
 Add foreign key to existing TrainingSession:
+
 ```python
 category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
 category: Mapped["Category"] = relationship(back_populates="training_sessions")
@@ -94,12 +95,12 @@ class CategoryResponse(BaseModel):
 
 **New File**: `image-search-service/src/image_search_service/api/routes/categories.py`
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/categories` | GET | List all categories (paginated) |
-| `/api/v1/categories` | POST | Create new category |
-| `/api/v1/categories/{id}` | GET | Get category with session count |
-| `/api/v1/categories/{id}` | PATCH | Update category |
+| Endpoint                  | Method | Description                           |
+| ------------------------- | ------ | ------------------------------------- |
+| `/api/v1/categories`      | GET    | List all categories (paginated)       |
+| `/api/v1/categories`      | POST   | Create new category                   |
+| `/api/v1/categories/{id}` | GET    | Get category with session count       |
+| `/api/v1/categories/{id}` | PATCH  | Update category                       |
 | `/api/v1/categories/{id}` | DELETE | Delete category (409 if has sessions) |
 
 ### 2.3 Update Training Schemas
@@ -149,10 +150,12 @@ api_v1_router.include_router(categories_router)
 ## Phase 3: API Contract Update
 
 **Files**:
+
 - `image-search-service/docs/api-contract.md`
 - `image-search-ui/docs/api-contract.md`
 
 Add Category section with:
+
 - Category schema definition
 - All CRUD endpoints
 - Updated TrainingSessionCreate (categoryId required)
@@ -167,6 +170,7 @@ Bump version to **1.1.0**.
 ### 4.1 Generate Types
 
 After backend deployment:
+
 ```bash
 cd image-search-ui && npm run gen:api
 ```
@@ -176,16 +180,17 @@ cd image-search-ui && npm run gen:api
 **New File**: `image-search-ui/src/lib/api/categories.ts`
 
 ```typescript
-export async function listCategories(page?, pageSize?): Promise<PaginatedResponse<Category>>
-export async function createCategory(data: CategoryCreate): Promise<Category>
-export async function getCategory(id: number): Promise<Category>
-export async function updateCategory(id: number, data: CategoryUpdate): Promise<Category>
-export async function deleteCategory(id: number): Promise<void>
+export async function listCategories(page?, pageSize?): Promise<PaginatedResponse<Category>>;
+export async function createCategory(data: CategoryCreate): Promise<Category>;
+export async function getCategory(id: number): Promise<Category>;
+export async function updateCategory(id: number, data: CategoryUpdate): Promise<Category>;
+export async function deleteCategory(id: number): Promise<void>;
 ```
 
 ### 4.3 Components
 
 **New Files**:
+
 - `src/lib/components/CategorySelector.svelte` - Dropdown with "Create New" option
 - `src/lib/components/CategoryBadge.svelte` - Color badge for display
 - `src/lib/components/CategoryCreateModal.svelte` - Inline creation modal
@@ -193,10 +198,12 @@ export async function deleteCategory(id: number): Promise<void>
 ### 4.4 Update Existing Components
 
 **File**: `src/lib/components/training/CreateSessionModal.svelte`
+
 - Add CategorySelector (required field)
 - Validation: cannot proceed without category selection
 
 **File**: `src/lib/components/FiltersPanel.svelte`
+
 - Add category dropdown filter
 - Load categories on mount
 - Include categoryId in filter object
@@ -204,6 +211,7 @@ export async function deleteCategory(id: number): Promise<void>
 ### 4.5 Category Management Page
 
 **New File**: `src/routes/categories/+page.svelte`
+
 - List all categories with session counts
 - Create/Edit/Delete actions
 - Prevent deletion of categories with sessions (show error)
@@ -212,6 +220,7 @@ export async function deleteCategory(id: number): Promise<void>
 ### 4.6 Navigation Update
 
 **File**: `src/routes/+layout.svelte`
+
 - Add "Categories" link in header navigation
 
 ---
@@ -221,6 +230,7 @@ export async function deleteCategory(id: number): Promise<void>
 **New File**: `image-search-service/tests/api/test_categories.py`
 
 Test cases:
+
 - [ ] List categories (empty, with data, pagination)
 - [ ] Create category (valid, duplicate name fails)
 - [ ] Get category (exists, not found)
@@ -230,6 +240,7 @@ Test cases:
 - [ ] Search filters by category_id
 
 **Update**: `tests/conftest.py`
+
 - Add `default_category` fixture
 - Update training session fixtures to include category_id
 
@@ -238,6 +249,7 @@ Test cases:
 ## Phase 6: Frontend Tests
 
 **New File**: `src/tests/components/CategorySelector.test.ts`
+
 - Renders loading state
 - Displays categories after load
 - Calls onSelect on change
@@ -245,16 +257,19 @@ Test cases:
 - Opens modal on "Create New" click
 
 **New File**: `src/tests/routes/categories.test.ts`
+
 - Lists categories
 - Create flow
 - Delete confirmation
 - Error on delete with sessions
 
 **Update**: `src/tests/components/FiltersPanel.test.ts`
+
 - Category filter renders
 - Category filter includes in filter object
 
 **Update**: `src/tests/helpers/fixtures.ts`
+
 - Add `createCategory()` fixture factory
 - Add `createDefaultCategory()` fixture
 
@@ -282,6 +297,7 @@ Week 2: Frontend
 ## Critical Files to Modify
 
 ### Backend
+
 1. `src/image_search_service/db/models.py` - Add Category model, update TrainingSession
 2. `src/image_search_service/db/migrations/versions/` - New migration file
 3. `src/image_search_service/api/category_schemas.py` - NEW
@@ -294,6 +310,7 @@ Week 2: Frontend
 10. `tests/api/test_categories.py` - NEW
 
 ### Frontend
+
 1. `src/lib/api/categories.ts` - NEW
 2. `src/lib/types.ts` - Add category type aliases
 3. `src/lib/components/CategorySelector.svelte` - NEW
@@ -307,15 +324,16 @@ Week 2: Frontend
 11. `src/tests/helpers/fixtures.ts` - Add category fixtures
 
 ### Shared
+
 - `docs/api-contract.md` (both repos) - Add Category section, bump to v1.1.0
 
 ---
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Existing training sessions lack category | Migration assigns all to "General" default |
-| Qdrant payloads don't have category_id | Store during training; existing assets need re-training or migration script |
-| Frontend type mismatch | Strict workflow: backend deploy → gen:api → frontend update |
-| Category deletion breaks references | 409 error with session count; prevent deletion |
+| Risk                                     | Mitigation                                                                  |
+| ---------------------------------------- | --------------------------------------------------------------------------- |
+| Existing training sessions lack category | Migration assigns all to "General" default                                  |
+| Qdrant payloads don't have category_id   | Store during training; existing assets need re-training or migration script |
+| Frontend type mismatch                   | Strict workflow: backend deploy → gen:api → frontend update                 |
+| Category deletion breaks references      | 409 error with session count; prevent deletion                              |

@@ -218,11 +218,11 @@ Create a new category.
 }
 ```
 
-| Field         | Type   | Required | Description                     |
-| ------------- | ------ | -------- | ------------------------------- |
-| `name`        | string | Yes      | Category name (max 100 chars)   |
-| `description` | string | No       | Category description            |
-| `color`       | string | No       | Hex color code (e.g., #10B981)  |
+| Field         | Type   | Required | Description                    |
+| ------------- | ------ | -------- | ------------------------------ |
+| `name`        | string | Yes      | Category name (max 100 chars)  |
+| `description` | string | No       | Category description           |
+| `color`       | string | No       | Hex color code (e.g., #10B981) |
 
 **Response** `201 Created` - Category object
 
@@ -432,11 +432,11 @@ Search assets by text query (semantic search).
 
 **Query Parameters**
 
-| Parameter  | Type    | Default    | Description                        |
-| ---------- | ------- | ---------- | ---------------------------------- |
-| `q`        | string  | _required_ | Search query text                  |
-| `page`     | integer | 1          | Page number                        |
-| `pageSize` | integer | 20         | Results per page (max: 100)        |
+| Parameter    | Type    | Default    | Description                        |
+| ------------ | ------- | ---------- | ---------------------------------- |
+| `q`          | string  | _required_ | Search query text                  |
+| `page`       | integer | 1          | Page number                        |
+| `pageSize`   | integer | 20         | Results per page (max: 100)        |
 | `minScore`   | number  | 0.0        | Minimum similarity score (0.0-1.0) |
 | `personId`   | string  | -          | Filter by person ID                |
 | `categoryId` | integer | -          | Filter by category ID              |
@@ -805,21 +805,21 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code                     | HTTP Status | Description                          |
-| ------------------------ | ----------- | ------------------------------------ |
-| `VALIDATION_ERROR`       | 400         | Invalid request parameters           |
-| `ASSET_NOT_FOUND`        | 404         | Asset ID does not exist              |
-| `CATEGORY_NOT_FOUND`     | 404         | Category ID does not exist           |
-| `PERSON_NOT_FOUND`       | 404         | Person ID does not exist             |
-| `FACE_NOT_FOUND`         | 404         | Face ID does not exist               |
-| `JOB_NOT_FOUND`          | 404         | Job ID does not exist                |
-| `CATEGORY_NAME_EXISTS`   | 409         | Category name already exists         |
-| `CATEGORY_HAS_SESSIONS`  | 409         | Category has training sessions       |
-| `CATEGORY_IS_DEFAULT`    | 400         | Cannot delete default category       |
-| `JOB_NOT_CANCELLABLE`    | 409         | Job already completed                |
-| `MERGE_CONFLICT`         | 409         | Cannot merge (e.g., same person)     |
-| `RATE_LIMITED`           | 429         | Too many requests                    |
-| `INTERNAL_ERROR`         | 500         | Server error                         |
+| Code                    | HTTP Status | Description                      |
+| ----------------------- | ----------- | -------------------------------- |
+| `VALIDATION_ERROR`      | 400         | Invalid request parameters       |
+| `ASSET_NOT_FOUND`       | 404         | Asset ID does not exist          |
+| `CATEGORY_NOT_FOUND`    | 404         | Category ID does not exist       |
+| `PERSON_NOT_FOUND`      | 404         | Person ID does not exist         |
+| `FACE_NOT_FOUND`        | 404         | Face ID does not exist           |
+| `JOB_NOT_FOUND`         | 404         | Job ID does not exist            |
+| `CATEGORY_NAME_EXISTS`  | 409         | Category name already exists     |
+| `CATEGORY_HAS_SESSIONS` | 409         | Category has training sessions   |
+| `CATEGORY_IS_DEFAULT`   | 400         | Cannot delete default category   |
+| `JOB_NOT_CANCELLABLE`   | 409         | Job already completed            |
+| `MERGE_CONFLICT`        | 409         | Cannot merge (e.g., same person) |
+| `RATE_LIMITED`          | 429         | Too many requests                |
+| `INTERNAL_ERROR`        | 500         | Server error                     |
 
 ---
 
@@ -909,10 +909,10 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date       | Changes                                                                                      |
-| ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| Version | Date       | Changes                                                                                       |
+| ------- | ---------- | --------------------------------------------------------------------------------------------- |
 | 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |
-| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                      |
+| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                       |
 
 ---
 

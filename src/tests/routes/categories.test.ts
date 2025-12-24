@@ -271,9 +271,7 @@ describe('Categories Page', () => {
 		const dialogs = screen.getAllByRole('dialog');
 		expect(dialogs.length).toBeGreaterThan(0);
 		expect(screen.getByText('Delete Category')).toBeInTheDocument();
-		expect(
-			screen.getByText(/Are you sure you want to delete the category/)
-		).toBeInTheDocument();
+		expect(screen.getByText(/Are you sure you want to delete the category/)).toBeInTheDocument();
 	});
 
 	it('shows warning about sessions in delete confirmation', async () => {

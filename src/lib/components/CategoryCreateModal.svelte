@@ -80,7 +80,12 @@
 			</div>
 
 			<div class="modal-body">
-				<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+				<form
+					onsubmit={(e) => {
+						e.preventDefault();
+						handleSubmit();
+					}}
+				>
 					<div class="form-group">
 						<label for="category-name">
 							Name <span class="required">*</span>
@@ -143,9 +148,7 @@
 			</div>
 
 			<div class="modal-footer">
-				<button class="btn btn-secondary" onclick={handleClose} disabled={loading}>
-					Cancel
-				</button>
+				<button class="btn btn-secondary" onclick={handleClose} disabled={loading}> Cancel </button>
 				<button class="btn btn-primary" onclick={handleSubmit} disabled={loading}>
 					{loading ? 'Creating...' : 'Create Category'}
 				</button>
@@ -288,7 +291,9 @@
 
 	.color-preset.selected {
 		border-color: #1f2937;
-		box-shadow: 0 0 0 2px white, 0 0 0 4px #1f2937;
+		box-shadow:
+			0 0 0 2px white,
+			0 0 0 4px #1f2937;
 	}
 
 	.color-preset:disabled {

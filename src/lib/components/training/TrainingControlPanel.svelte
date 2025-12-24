@@ -1,10 +1,5 @@
 <script lang="ts">
-	import {
-		startTraining,
-		pauseTraining,
-		cancelTraining,
-		restartTraining
-	} from '$lib/api/training';
+	import { startTraining, pauseTraining, cancelTraining, restartTraining } from '$lib/api/training';
 
 	interface Props {
 		sessionId: number;
@@ -122,7 +117,13 @@
 
 {#if showConfirmDialog}
 	<div class="modal-overlay" onclick={cancelDialog} role="presentation">
-		<div class="modal-content" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
+		<div
+			class="modal-content"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+		>
 			<h3>Confirm Action</h3>
 			<p>
 				{#if confirmAction === 'cancel'}

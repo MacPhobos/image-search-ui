@@ -82,7 +82,13 @@
 </script>
 
 <div class="modal-overlay" onclick={onClose} role="presentation">
-	<div class="modal-content" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1">
+	<div
+		class="modal-content"
+		onclick={(e) => e.stopPropagation()}
+		role="dialog"
+		aria-modal="true"
+		tabindex="-1"
+	>
 		<div class="modal-header">
 			<h2>Create Training Session</h2>
 			<button class="close-btn" onclick={onClose}>&times;</button>
@@ -123,9 +129,7 @@
 						showCreateOption={true}
 						label="Category"
 					/>
-					<p class="form-help">
-						Categorize this training session for better organization.
-					</p>
+					<p class="form-help">Categorize this training session for better organization.</p>
 				</div>
 
 				{#if error}

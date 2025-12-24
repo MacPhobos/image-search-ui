@@ -153,7 +153,9 @@
 				showPercentage={true}
 			/>
 			{#if progress.progress.etaSeconds}
-				<ETADisplay eta={new Date(Date.now() + progress.progress.etaSeconds * 1000).toISOString()} />
+				<ETADisplay
+					eta={new Date(Date.now() + progress.progress.etaSeconds * 1000).toISOString()}
+				/>
 			{/if}
 			<TrainingStats stats={progress.progress} />
 		</section>

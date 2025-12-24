@@ -134,9 +134,7 @@
 							</td>
 							<td class="date">{formatDate(category.createdAt)}</td>
 							<td class="actions">
-								<button class="btn-edit" onclick={() => handleEditClick(category)}>
-									Edit
-								</button>
+								<button class="btn-edit" onclick={() => handleEditClick(category)}> Edit </button>
 								{#if category.isDefault}
 									<button class="btn-delete" disabled title="Cannot delete default category">
 										Delete
@@ -206,9 +204,7 @@
 			</div>
 			<div class="modal-footer">
 				<button class="btn btn-secondary" onclick={handleCancelDelete}>Cancel</button>
-				<button class="btn btn-danger" onclick={() => handleDelete(deleteConfirm)}>
-					Delete
-				</button>
+				<button class="btn btn-danger" onclick={() => handleDelete(deleteConfirm)}> Delete </button>
 			</div>
 		</div>
 	</div>

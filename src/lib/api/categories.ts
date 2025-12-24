@@ -22,7 +22,9 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => null);
 			throw new ApiError(
-				errorData?.message || errorData?.detail || `HTTP ${response.status}: ${response.statusText}`,
+				errorData?.message ||
+					errorData?.detail ||
+					`HTTP ${response.status}: ${response.statusText}`,
 				response.status,
 				errorData
 			);
@@ -88,9 +90,7 @@ export async function listCategories(
 		page: page.toString(),
 		page_size: pageSize.toString()
 	});
-	return apiRequest<PaginatedCategoryResponse>(
-		`/api/v1/categories?${params.toString()}`
-	);
+	return apiRequest<PaginatedCategoryResponse>(`/api/v1/categories?${params.toString()}`);
 }
 
 /**
@@ -113,10 +113,7 @@ export async function getCategory(categoryId: number): Promise<Category> {
 /**
  * Update a category.
  */
-export async function updateCategory(
-	categoryId: number,
-	data: CategoryUpdate
-): Promise<Category> {
+export async function updateCategory(categoryId: number, data: CategoryUpdate): Promise<Category> {
 	return apiRequest<Category>(`/api/v1/categories/${categoryId}`, {
 		method: 'PATCH',
 		body: JSON.stringify(data)

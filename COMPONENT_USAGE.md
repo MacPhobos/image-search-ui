@@ -10,14 +10,14 @@ A dropdown component for selecting categories with loading states, error handlin
 
 ```svelte
 <script lang="ts">
-  import CategorySelector from '$lib/components/CategorySelector.svelte';
+	import CategorySelector from '$lib/components/CategorySelector.svelte';
 
-  let selectedCategoryId = $state<number | null>(null);
+	let selectedCategoryId = $state<number | null>(null);
 
-  function handleCategorySelect(categoryId: number | null) {
-    selectedCategoryId = categoryId;
-    console.log('Selected category:', categoryId);
-  }
+	function handleCategorySelect(categoryId: number | null) {
+		selectedCategoryId = categoryId;
+		console.log('Selected category:', categoryId);
+	}
 </script>
 
 <CategorySelector selectedId={selectedCategoryId} onSelect={handleCategorySelect} />
@@ -27,25 +27,25 @@ A dropdown component for selecting categories with loading states, error handlin
 
 ```svelte
 <script lang="ts">
-  import CategorySelector from '$lib/components/CategorySelector.svelte';
+	import CategorySelector from '$lib/components/CategorySelector.svelte';
 
-  let selectedCategoryId = $state<number | null>(null);
-  let showCreateModal = $state(false);
+	let selectedCategoryId = $state<number | null>(null);
+	let showCreateModal = $state(false);
 
-  function handleCategorySelect(categoryId: number | null) {
-    selectedCategoryId = categoryId;
-  }
+	function handleCategorySelect(categoryId: number | null) {
+		selectedCategoryId = categoryId;
+	}
 
-  function handleCreateNew() {
-    showCreateModal = true;
-  }
+	function handleCreateNew() {
+		showCreateModal = true;
+	}
 </script>
 
 <CategorySelector
-  selectedId={selectedCategoryId}
-  onSelect={handleCategorySelect}
-  onCreateNew={handleCreateNew}
-  showCreateOption={true}
+	selectedId={selectedCategoryId}
+	onSelect={handleCategorySelect}
+	onCreateNew={handleCreateNew}
+	showCreateOption={true}
 />
 ```
 
@@ -53,23 +53,23 @@ A dropdown component for selecting categories with loading states, error handlin
 
 ```svelte
 <CategorySelector
-  selectedId={selectedCategoryId}
-  onSelect={handleCategorySelect}
-  label="Choose a category"
-  disabled={isLoading}
+	selectedId={selectedCategoryId}
+	onSelect={handleCategorySelect}
+	label="Choose a category"
+	disabled={isLoading}
 />
 ```
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `selectedId` | `number \| null` | required | Currently selected category ID |
-| `onSelect` | `(categoryId: number \| null) => void` | required | Callback when category is selected |
-| `onCreateNew` | `() => void` | `undefined` | Optional callback for "Create New" action |
-| `disabled` | `boolean` | `false` | Disable the selector |
-| `showCreateOption` | `boolean` | `true` | Show "Create New Category..." option |
-| `label` | `string` | `'Category'` | Label text for the selector |
+| Prop               | Type                                   | Default      | Description                               |
+| ------------------ | -------------------------------------- | ------------ | ----------------------------------------- |
+| `selectedId`       | `number \| null`                       | required     | Currently selected category ID            |
+| `onSelect`         | `(categoryId: number \| null) => void` | required     | Callback when category is selected        |
+| `onCreateNew`      | `() => void`                           | `undefined`  | Optional callback for "Create New" action |
+| `disabled`         | `boolean`                              | `false`      | Disable the selector                      |
+| `showCreateOption` | `boolean`                              | `true`       | Show "Create New Category..." option      |
+| `label`            | `string`                               | `'Category'` | Label text for the selector               |
 
 ### States
 
@@ -85,19 +85,19 @@ A small badge component for displaying category names with color-coded backgroun
 
 ```svelte
 <script lang="ts">
-  import CategoryBadge from '$lib/components/CategoryBadge.svelte';
-  import type { Category } from '$lib/api/categories';
+	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
+	import type { Category } from '$lib/api/categories';
 
-  const category: Category = {
-    id: 1,
-    name: 'Vacation Photos',
-    description: null,
-    color: '#3B82F6',
-    isDefault: false,
-    createdAt: '2024-12-19T10:00:00Z',
-    updatedAt: '2024-12-19T10:00:00Z',
-    sessionCount: 5
-  };
+	const category: Category = {
+		id: 1,
+		name: 'Vacation Photos',
+		description: null,
+		color: '#3B82F6',
+		isDefault: false,
+		createdAt: '2024-12-19T10:00:00Z',
+		updatedAt: '2024-12-19T10:00:00Z',
+		sessionCount: 5
+	};
 </script>
 
 <CategoryBadge {category} />
@@ -117,13 +117,13 @@ A small badge component for displaying category names with color-coded backgroun
 
 ```svelte
 <script lang="ts">
-  const defaultCategory: Category = {
-    id: 1,
-    name: 'Uncategorized',
-    color: '#6B7280',
-    isDefault: true,
-    // ... other fields
-  };
+	const defaultCategory: Category = {
+		id: 1,
+		name: 'Uncategorized',
+		color: '#6B7280',
+		isDefault: true
+		// ... other fields
+	};
 </script>
 
 <!-- Shows: "Uncategorized (Default)" -->
@@ -132,10 +132,10 @@ A small badge component for displaying category names with color-coded backgroun
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `category` | `Category` | required | Category object to display |
-| `size` | `'small' \| 'medium'` | `'small'` | Badge size |
+| Prop       | Type                  | Default   | Description                |
+| ---------- | --------------------- | --------- | -------------------------- |
+| `category` | `Category`            | required  | Category object to display |
+| `size`     | `'small' \| 'medium'` | `'small'` | Badge size                 |
 
 ### Features
 
@@ -157,10 +157,10 @@ Category fixtures are available in `src/tests/helpers/fixtures.ts`:
 
 ```typescript
 import {
-  createCategory,
-  createDefaultCategory,
-  createCategoryResponse,
-  createMultipleCategories
+	createCategory,
+	createDefaultCategory,
+	createCategoryResponse,
+	createMultipleCategories
 } from '../helpers/fixtures';
 
 // Single category

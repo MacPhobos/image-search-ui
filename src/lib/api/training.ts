@@ -218,12 +218,9 @@ export async function restartTraining(
 	failedOnly: boolean = false
 ): Promise<ControlResponse> {
 	const params = failedOnly ? '?failed_only=true' : '';
-	return apiRequest<ControlResponse>(
-		`/api/v1/training/sessions/${sessionId}/restart${params}`,
-		{
-			method: 'POST'
-		}
-	);
+	return apiRequest<ControlResponse>(`/api/v1/training/sessions/${sessionId}/restart${params}`, {
+		method: 'POST'
+	});
 }
 
 // Jobs

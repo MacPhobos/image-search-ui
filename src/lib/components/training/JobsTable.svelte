@@ -59,7 +59,9 @@
 						<td class="error-cell">
 							{#if job.errorMessage}
 								<span class="error-text" title={job.errorMessage}>
-									{job.errorMessage.length > 50 ? job.errorMessage.substring(0, 50) + '...' : job.errorMessage}
+									{job.errorMessage.length > 50
+										? job.errorMessage.substring(0, 50) + '...'
+										: job.errorMessage}
 								</span>
 							{:else}
 								-
