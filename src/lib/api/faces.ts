@@ -506,3 +506,201 @@ export async function assignFaceToPerson(
 		}
 	);
 }
+
+// ============ Face Detection Session Types ============
+
+/** Face detection session status. */
+export type FaceDetectionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'paused' | 'cancelled';
+
+/** A face detection batch processing session. */
+export interface FaceDetectionSession {
+	id: string;
+	trainingSessionId: number | null;
+	status: FaceDetectionStatus;
+	totalImages: number;
+	processedImages: number;
+	failedImages: number;
+	facesDetected: number;
+	facesAssigned: number;
+	minConfidence: number;
+	minFaceSize: number;
+	batchSize: number;
+	lastError: string | null;
+	createdAt: string;
+	startedAt: string | null;
+	completedAt: string | null;
+	jobId: string | null;
+	progressPercent: number;
+}
+
+/** Paginated list of face detection sessions. */
+export interface FaceDetectionSessionListResponse {
+	items: FaceDetectionSession[];
+	total: number;
+	page: number;
+	pageSize: number;
+}
+
+/** Request to create a new face detection session. */
+export interface CreateFaceDetectionSessionRequest {
+	trainingSessionId?: number;
+	minConfidence?: number;
+	minFaceSize?: number;
+	batchSize?: number;
+}
+
+/** Progress update for face detection session (SSE). */
+export interface FaceDetectionProgress {
+	sessionId: string;
+	status: string;
+	totalImages: number;
+	processedImages: number;
+	failedImages: number;
+	facesDetected: number;
+	facesAssigned: number;
+	progressPercent: number;
+	lastError: string | null;
+}
+
+// ============ Face Detection Session API Functions ============
+
+/**
+ * List face detection sessions with pagination.
+ * @param page - Page number (1-indexed)
+ * @param pageSize - Items per page (1-100)
+ * @param status - Filter by status
+ */
+export async function listFaceDetectionSessions(
+	page: number = 1,
+	pageSize: number = 20,
+	status?: FaceDetectionStatus
+): Promise<FaceDetectionSessionListResponse> {
+	const params = new URLSearchParams({
+		page: page.toString(),
+		page_size: pageSize.toString()
+	});
+	if (status) {
+		params.set('status', status);
+	}
+	return apiRequest<FaceDetectionSessionListResponse>(`/api/v1/faces/sessions?${params.toString()}`);
+}
+
+/**
+ * Get a single face detection session.
+ * @param sessionId - The session ID (UUID)
+ */
+export async function getFaceDetectionSession(
+	sessionId: string
+): Promise<FaceDetectionSession> {
+	return apiRequest<FaceDetectionSession>(
+		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}`
+	);
+}
+
+/**
+ * Create a new face detection session.
+ * @param request - Session configuration options
+ */
+export async function createFaceDetectionSession(
+	request: CreateFaceDetectionSessionRequest = {}
+): Promise<FaceDetectionSession> {
+	return apiRequest<FaceDetectionSession>('/api/v1/faces/sessions', {
+		method: 'POST',
+		body: JSON.stringify({
+			training_session_id: request.trainingSessionId,
+			min_confidence: request.minConfidence ?? 0.5,
+			min_face_size: request.minFaceSize ?? 20,
+			batch_size: request.batchSize ?? 16
+		})
+	});
+}
+
+/**
+ * Pause a running face detection session.
+ * @param sessionId - The session ID (UUID)
+ */
+export async function pauseFaceDetectionSession(
+	sessionId: string
+): Promise<FaceDetectionSession> {
+	return apiRequest<FaceDetectionSession>(
+		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}/pause`,
+		{
+			method: 'POST'
+		}
+	);
+}
+
+/**
+ * Resume a paused face detection session.
+ * @param sessionId - The session ID (UUID)
+ */
+export async function resumeFaceDetectionSession(
+	sessionId: string
+): Promise<FaceDetectionSession> {
+	return apiRequest<FaceDetectionSession>(
+		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}/resume`,
+		{
+			method: 'POST'
+		}
+	);
+}
+
+/**
+ * Cancel a face detection session.
+ * @param sessionId - The session ID (UUID)
+ */
+export async function cancelFaceDetectionSession(
+	sessionId: string
+): Promise<{ status: string }> {
+	return apiRequest<{ status: string }>(
+		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}`,
+		{
+			method: 'DELETE'
+		}
+	);
+}
+
+/**
+ * Subscribe to face detection progress via Server-Sent Events.
+ * @param sessionId - The session ID (UUID)
+ * @param onProgress - Callback for progress updates
+ * @param onComplete - Callback for completion
+ * @param onError - Callback for errors
+ * @returns Cleanup function to close the EventSource
+ */
+export function subscribeFaceDetectionProgress(
+	sessionId: string,
+	onProgress: (data: FaceDetectionProgress) => void,
+	onComplete?: (data: FaceDetectionProgress) => void,
+	onError?: (error: string) => void
+): () => void {
+	const eventSource = new EventSource(
+		`${API_BASE_URL}/api/v1/faces/sessions/${encodeURIComponent(sessionId)}/events`
+	);
+
+	eventSource.addEventListener('progress', (event) => {
+		const data = JSON.parse(event.data);
+		onProgress(data);
+	});
+
+	eventSource.addEventListener('complete', (event) => {
+		const data = JSON.parse(event.data);
+		onComplete?.(data);
+		eventSource.close();
+	});
+
+	eventSource.addEventListener('error', (event) => {
+		if (event instanceof MessageEvent) {
+			const data = JSON.parse(event.data);
+			onError?.(data.error);
+		}
+		eventSource.close();
+	});
+
+	eventSource.onerror = () => {
+		eventSource.close();
+	};
+
+	// Return cleanup function
+	return () => eventSource.close();
+}

@@ -35,6 +35,7 @@
 		<nav class="nav">
 			<a href="/">Search</a>
 			<a href="/faces/clusters">Faces</a>
+			<a href="/faces/sessions">Face Sessions</a>
 			<a href="/people">People</a>
 			<a href="/categories">Categories</a>
 			<a href="/training">Training</a>

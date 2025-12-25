@@ -2,6 +2,9 @@
 	import { untrack } from 'svelte';
 	import type { TrainingSession, TrainingProgress, TrainingJob } from '$lib/types';
 	import { getProgress, listJobs } from '$lib/api/training';
+	import type { FaceDetectionSession } from '$lib/api/faces';
+	import { listFaceDetectionSessions } from '$lib/api/faces';
+	import FaceDetectionSessionCard from '../faces/FaceDetectionSessionCard.svelte';
 	import StatusBadge from './StatusBadge.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import ETADisplay from './ETADisplay.svelte';
@@ -25,6 +28,8 @@
 	let loadingJobs = $state(false);
 	let pollingInterval: ReturnType<typeof setInterval> | null = null;
 	let initialLoadDone = $state(false);
+	let faceSession = $state<FaceDetectionSession | null>(null);
+	let loadingFaceSession = $state(false);
 
 	const jobsTotalPages = $derived(Math.ceil(jobsTotal / jobsPageSize));
 
@@ -52,6 +57,23 @@
 			jobs = [];
 		} finally {
 			loadingJobs = false;
+		}
+	}
+
+	async function fetchFaceSession() {
+		if (loadingFaceSession || !session?.id) return;
+		loadingFaceSession = true;
+		try {
+			const response = await listFaceDetectionSessions(1, 10);
+			// Find session linked to this training session
+			faceSession = response.items.find(
+				s => s.trainingSessionId === session.id
+			) ?? null;
+		} catch (err) {
+			console.error('Failed to fetch face detection session:', err);
+			faceSession = null;
+		} finally {
+			loadingFaceSession = false;
 		}
 	}
 
@@ -87,7 +109,15 @@
 			untrack(() => {
 				fetchProgress();
 				fetchJobs();
+				fetchFaceSession();
 			});
+		}
+	});
+
+	// Load face session when training completes
+	$effect(() => {
+		if (session?.status === 'completed') {
+			untrack(() => fetchFaceSession());
 		}
 	});
 
@@ -172,6 +202,13 @@
 		/>
 	</section>
 
+	{#if faceSession}
+		<section class="face-detection-section">
+			<h2>Face Detection</h2>
+			<FaceDetectionSessionCard session={faceSession} onUpdate={fetchFaceSession} />
+		</section>
+	{/if}
+
 	<div class="actions-footer">
 		<a href="/training" class="btn-back">← Back to Sessions</a>
 	</div>
@@ -227,7 +264,8 @@
 	}
 
 	.progress-section,
-	.jobs-section {
+	.jobs-section,
+	.face-detection-section {
 		background-color: white;
 		border-radius: 8px;
 		padding: 1.5rem;
@@ -236,7 +274,8 @@
 	}
 
 	.progress-section h2,
-	.jobs-section h2 {
+	.jobs-section h2,
+	.face-detection-section h2 {
 		margin-top: 0;
 		margin-bottom: 1rem;
 		font-size: 1.25rem;
