@@ -4,7 +4,7 @@
 	import { ApiError } from '$lib/api/client';
 	import ClusterCard from '$lib/components/faces/ClusterCard.svelte';
 	import type { ClusterSummary } from '$lib/types';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	// State
 	let clusters = $state<ClusterSummary[]>([]);
@@ -18,17 +18,27 @@
 	// Tab state: 'unlabeled' or 'all'
 	let activeTab = $state<'unlabeled' | 'all'>('unlabeled');
 
-	const PAGE_SIZE = 20;
+	const PAGE_SIZE = 100;
 
-	// Load clusters on mount and when tab changes
+	// Track previous tab to detect actual changes
+	let previousTab = $state<'unlabeled' | 'all' | null>(null);
+
+	// Load clusters on mount
 	onMount(() => {
 		loadClusters(true);
+		previousTab = activeTab;
 	});
 
 	$effect(() => {
-		// Re-load when tab changes (track activeTab)
+		// Track activeTab for changes
 		const tab = activeTab;
-		loadClusters(true);
+
+		// Only reload when tab actually changes (not on mount or pagination)
+		if (previousTab !== null && tab !== previousTab) {
+			previousTab = tab;
+			// Use untrack to prevent tracking currentPage and other state inside loadClusters
+			untrack(() => loadClusters(true));
+		}
 	});
 
 	async function loadClusters(reset: boolean = false) {
