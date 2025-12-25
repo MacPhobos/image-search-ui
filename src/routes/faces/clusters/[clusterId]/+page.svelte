@@ -1,15 +1,21 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { getCluster, splitCluster } from '$lib/api/faces';
+	import { getCluster, splitCluster, getFacesForAsset, transformFaceInstancesToFaceInPhoto } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import FaceThumbnail from '$lib/components/faces/FaceThumbnail.svelte';
 	import LabelClusterModal from '$lib/components/faces/LabelClusterModal.svelte';
+	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import type { ClusterDetailResponse, FaceInstance } from '$lib/types';
+	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
+	import { env } from '$env/dynamic/public';
+
+	// Type assertion needed due to SvelteKit's dynamic env types
+	const API_BASE_URL = (env as Record<string, string | undefined>).VITE_API_BASE_URL || 'http://localhost:8000';
 
 	// Get cluster ID from route params
-	let clusterId = $derived($page.params.clusterId);
+	let clusterId = $derived($page.params.clusterId as string);
 
 	// State
 	let cluster = $state<ClusterDetailResponse | null>(null);
@@ -18,6 +24,11 @@
 	let showLabelModal = $state(false);
 	let splitting = $state(false);
 	let splitError = $state<string | null>(null);
+
+	// Photo preview modal state
+	let showPhotoModal = $state(false);
+	let selectedPhoto = $state<PersonPhotoGroup | null>(null);
+	let loadingPhoto = $state(false);
 
 	// Pagination for faces (client-side)
 	let visibleFaceCount = $state(24);
@@ -41,6 +52,8 @@
 	});
 
 	async function loadCluster() {
+		if (!clusterId) return;
+
 		loading = true;
 		error = null;
 		visibleFaceCount = FACES_PER_PAGE;
@@ -105,7 +118,7 @@
 	}
 
 	async function handleSplit() {
-		if (splitting || !cluster) return;
+		if (splitting || !cluster || !clusterId) return;
 
 		// Confirm action
 		if (!confirm('This will attempt to split this cluster into smaller sub-clusters. Continue?')) {
@@ -142,6 +155,51 @@
 	function shortenClusterId(id: string): string {
 		if (id.length <= 12) return id;
 		return id.substring(0, 12) + '...';
+	}
+
+	async function handleFaceClick(face: FaceInstance) {
+		if (loadingPhoto) return;
+
+		loadingPhoto = true;
+		try {
+			// Fetch all faces for this asset
+			const facesData = await getFacesForAsset(face.assetId);
+
+			// Transform faces to FaceInPhoto format
+			const facesInPhoto = transformFaceInstancesToFaceInPhoto(facesData.items);
+
+			// Calculate counts
+			const faceCount = facesInPhoto.length;
+			const hasNonPersonFaces = facesInPhoto.some(f => f.personId === null || (cluster?.personId && f.personId !== cluster.personId));
+
+			// Build PersonPhotoGroup
+			selectedPhoto = {
+				photoId: face.assetId,
+				takenAt: null, // Not available in face instance
+				thumbnailUrl: `${API_BASE_URL}/api/v1/images/${face.assetId}/thumbnail`,
+				fullUrl: `${API_BASE_URL}/api/v1/images/${face.assetId}/full`,
+				faces: facesInPhoto,
+				faceCount,
+				hasNonPersonFaces
+			};
+
+			showPhotoModal = true;
+		} catch (err) {
+			console.error('Failed to load photo faces:', err);
+			// Show error to user (could add error state if needed)
+		} finally {
+			loadingPhoto = false;
+		}
+	}
+
+	function handleClosePhotoModal() {
+		showPhotoModal = false;
+		selectedPhoto = null;
+	}
+
+	function handlePersonAssignment() {
+		// Refresh cluster data after person assignment
+		loadCluster();
 	}
 </script>
 
@@ -260,17 +318,23 @@
 			<h2>Faces in Cluster</h2>
 			<div class="faces-grid">
 				{#each visibleFaces as face (face.id)}
-					<div class="face-item" title="Quality: {((face.qualityScore ?? 0) * 100).toFixed(0)}%">
+					<button
+						type="button"
+						class="face-item"
+						title="Quality: {((face.qualityScore ?? 0) * 100).toFixed(0)}% - Click to view photo"
+						onclick={() => handleFaceClick(face)}
+						disabled={loadingPhoto}
+					>
 						<FaceThumbnail
 							thumbnailUrl={`/api/v1/images/${face.assetId}/thumbnail`}
 							bbox={face.bbox}
-							size={80}
+							size={140}
 							alt="Face from asset {face.assetId}"
 						/>
 						<div class="face-quality">
 							{((face.qualityScore ?? 0) * 100).toFixed(0)}%
 						</div>
-					</div>
+					</button>
 				{/each}
 			</div>
 
@@ -291,6 +355,16 @@
 		clusterId={cluster.clusterId}
 		onSuccess={handleLabelSuccess}
 		onClose={handleCloseLabelModal}
+	/>
+{/if}
+
+<!-- Photo Preview Modal -->
+{#if showPhotoModal && selectedPhoto}
+	<PhotoPreviewModal
+		photo={selectedPhoto}
+		currentPersonId={cluster?.personId ?? null}
+		currentPersonName={cluster?.personName ?? null}
+		onClose={handleClosePhotoModal}
 	/>
 {/if}
 
@@ -551,7 +625,7 @@
 
 	.faces-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		gap: 1rem;
 	}
 
@@ -560,6 +634,26 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 0.5rem;
+		border: none;
+		background: none;
+		padding: 0.5rem;
+		cursor: pointer;
+		border-radius: 8px;
+		transition: background-color 0.2s, transform 0.1s;
+	}
+
+	.face-item:hover:not(:disabled) {
+		background-color: #f5f5f5;
+		transform: scale(1.02);
+	}
+
+	.face-item:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	.face-item:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
 	}
 
 	.face-quality {
