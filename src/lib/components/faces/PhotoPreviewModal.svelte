@@ -75,16 +75,28 @@
 		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
+	// Color palette for distinct face colors
+	const FACE_COLORS = [
+		'#3b82f6', // Blue
+		'#22c55e', // Green
+		'#f59e0b', // Amber
+		'#ef4444', // Red
+		'#8b5cf6', // Purple
+		'#ec4899', // Pink
+		'#14b8a6', // Teal
+		'#f97316', // Orange
+		'#06b6d4', // Cyan
+		'#84cc16', // Lime
+	];
+
+	function getFaceColorByIndex(index: number): string {
+		return FACE_COLORS[index % FACE_COLORS.length];
+	}
+
 	function getFaceColor(face: FaceInPhoto): string {
-		// If no current person is set (search results context), all labeled faces use blue
-		if (!currentPersonId) {
-			if (face.personId) return '#3b82f6'; // Blue - any labeled person
-			return '#6b7280'; // Gray - unlabeled
-		}
-		// Person details context: differentiate current vs other persons
-		if (face.personId === currentPersonId) return '#22c55e'; // Green - current person
-		if (face.personId) return '#eab308'; // Yellow - other person
-		return '#6b7280'; // Gray - unlabeled
+		// Find the face index in the photo.faces array
+		const index = photo.faces.findIndex(f => f.faceInstanceId === face.faceInstanceId);
+		return getFaceColorByIndex(index >= 0 ? index : 0);
 	}
 
 	function getFaceLabel(face: FaceInPhoto): string {
@@ -108,7 +120,7 @@
 
 	function startAssignment(faceId: string) {
 		const face = photo.faces.find((f) => f.faceInstanceId === faceId);
-		if (face?.personId !== null) return;
+		if (face?.personName) return;
 
 		assigningFaceId = faceId;
 		highlightedFaceId = faceId;
@@ -282,7 +294,11 @@
 				<h3>Faces ({photo.faceCount})</h3>
 				<ul class="face-list">
 					{#each photo.faces as face (face.faceInstanceId)}
-						<li class="face-item" class:highlighted={highlightedFaceId === face.faceInstanceId}>
+						<li
+							class="face-item"
+							class:highlighted={highlightedFaceId === face.faceInstanceId}
+							style="--highlight-color: {getFaceColor(face)};"
+						>
 							<div class="face-item-content">
 								<button
 									type="button"
@@ -312,8 +328,8 @@
 									</div>
 								</button>
 
-								<!-- Assign button for unknown faces -->
-								{#if face.personId === null && assigningFaceId !== face.faceInstanceId}
+								<!-- Assign button for faces without a person name -->
+								{#if !face.personName && assigningFaceId !== face.faceInstanceId}
 									<button
 										type="button"
 										class="assign-btn"
@@ -526,15 +542,28 @@
 		stroke-width: 3;
 		cursor: pointer;
 		pointer-events: auto;
-		transition: stroke-width 0.2s;
+		transition: stroke-width 0.2s, opacity 0.2s;
+		opacity: 0.7;
 	}
 
 	.face-box:hover {
 		stroke-width: 4;
+		opacity: 1;
 	}
 
 	.face-box.highlighted {
-		stroke-width: 5;
+		stroke-width: 6;
+		opacity: 1;
+		animation: pulse-box 1.5s ease-in-out infinite;
+	}
+
+	@keyframes pulse-box {
+		0%, 100% {
+			stroke-width: 6;
+		}
+		50% {
+			stroke-width: 8;
+		}
 	}
 
 	.face-sidebar {
@@ -563,12 +592,16 @@
 
 	.face-item {
 		border-radius: 6px;
-		transition: background-color 0.2s;
+		transition: background-color 0.2s, box-shadow 0.2s;
 	}
 
-	.face-item:hover,
-	.face-item.highlighted {
+	.face-item:hover {
 		background-color: #f3f4f6;
+	}
+
+	.face-item.highlighted {
+		background-color: #e0f2fe;
+		box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
 	}
 
 	.face-item-content {

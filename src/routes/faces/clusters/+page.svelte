@@ -18,6 +18,27 @@
 	// Tab state: 'unlabeled' or 'all'
 	let activeTab = $state<'unlabeled' | 'all'>('unlabeled');
 
+	// Sort state: 'faceCount' (default) or 'avgQuality'
+	type SortOption = 'faceCount' | 'avgQuality';
+	let sortBy = $state<SortOption>('faceCount');
+
+	// Sorted clusters (derived from clusters and sortBy)
+	let sortedClusters = $derived(() => {
+		if (clusters.length === 0) return [];
+
+		return [...clusters].sort((a, b) => {
+			if (sortBy === 'faceCount') {
+				// Sort by face count descending (most faces first)
+				return b.faceCount - a.faceCount;
+			} else {
+				// Sort by average quality descending (highest quality first)
+				const qualityA = a.avgQuality ?? 0;
+				const qualityB = b.avgQuality ?? 0;
+				return qualityB - qualityA;
+			}
+		});
+	});
+
 	const PAGE_SIZE = 100;
 
 	// Track previous tab to detect actual changes
@@ -89,6 +110,11 @@
 	function handleTabChange(tab: 'unlabeled' | 'all') {
 		if (activeTab === tab) return;
 		activeTab = tab;
+	}
+
+	function handleSortChange(event: Event) {
+		const target = event.target as HTMLSelectElement;
+		sortBy = target.value as SortOption;
 	}
 
 	function handleRetry() {
@@ -171,10 +197,22 @@
 				<span class="results-count">
 					Showing {clusters.length} of {totalClusters} clusters
 				</span>
+				<div class="sort-controls">
+					<label for="sort-select" class="sort-label">Sort by:</label>
+					<select
+						id="sort-select"
+						class="sort-select"
+						value={sortBy}
+						onchange={handleSortChange}
+					>
+						<option value="faceCount">Number of Faces</option>
+						<option value="avgQuality">Average Quality</option>
+					</select>
+				</div>
 			</div>
 
 			<div class="clusters-grid">
-				{#each clusters as cluster (cluster.clusterId)}
+				{#each sortedClusters() as cluster (cluster.clusterId)}
 					<ClusterCard {cluster} onClick={() => handleClusterClick(cluster)} />
 				{/each}
 			</div>
@@ -368,12 +406,49 @@
 
 	/* Results */
 	.results-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		margin-bottom: 1rem;
+		flex-wrap: wrap;
+		gap: 0.75rem;
 	}
 
 	.results-count {
 		font-size: 0.875rem;
 		color: #666;
+	}
+
+	.sort-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.sort-label {
+		font-size: 0.875rem;
+		color: #666;
+	}
+
+	.sort-select {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.875rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		background-color: white;
+		color: #333;
+		cursor: pointer;
+		transition: border-color 0.2s;
+	}
+
+	.sort-select:hover {
+		border-color: #9ca3af;
+	}
+
+	.sort-select:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 	}
 
 	.clusters-grid {

@@ -2,11 +2,10 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { listPersons, mergePersons, getPersonPhotos } from '$lib/api/faces';
-	import { searchImages } from '$lib/api/client';
 	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
-	import type { Person, SearchResult } from '$lib/types';
+	import type { Person } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
 
@@ -20,7 +19,7 @@
 
 	// State
 	let person = $state<Person | null>(null);
-	let photos = $state<SearchResult[]>([]);
+	let photos = $state<PersonPhotoGroup[]>([]);
 	let loading = $state(true);
 	let loadingPhotos = $state(true);
 	let error = $state<string | null>(null);
@@ -93,15 +92,9 @@
 		photoError = null;
 
 		try {
-			// Search for photos containing this person
-			const response = await searchImages({
-				query: '', // Empty query with person filter
-				filters: {
-					personId: person.id
-				},
-				limit: 50
-			});
-			photos = response.results;
+			// Get photos with faces for this person
+			const response = await getPersonPhotos(person.id, 1, 50);
+			photos = response.items;
 		} catch (err) {
 			console.error('Failed to load photos:', err);
 			// Don't show error if it's just empty results
@@ -333,22 +326,20 @@
 					</div>
 				{:else}
 					<div class="photos-grid">
-						{#each photos as result (result.asset.id)}
+						{#each photos as photo (photo.photoId)}
 							<article class="photo-card">
 								<div class="photo-image-container">
 									<img
-										src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${result.asset.thumbnailUrl}`}
-										alt={result.asset.filename}
+										src={photo.thumbnailUrl}
+										alt=""
 										loading="lazy"
 										class="photo-image"
 									/>
+									<span class="face-count-badge">{photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}</span>
 								</div>
 								<div class="photo-info">
-									<span class="photo-path" title={result.asset.path}>
-										{result.asset.filename}
-									</span>
 									<span class="photo-date">
-										{formatDate(result.asset.createdAt)}
+										{photo.takenAt ? formatDate(photo.takenAt) : ''}
 									</span>
 								</div>
 							</article>
@@ -732,6 +723,7 @@
 	}
 
 	.photo-image-container {
+		position: relative;
 		aspect-ratio: 1;
 		background-color: #f0f0f0;
 	}
@@ -740,6 +732,19 @@
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
+	}
+
+	.face-count-badge {
+		position: absolute;
+		bottom: 8px;
+		right: 8px;
+		padding: 0.25rem 0.5rem;
+		border-radius: 4px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		background: rgba(0, 0, 0, 0.7);
+		color: white;
+		backdrop-filter: blur(4px);
 	}
 
 	.photo-info {
