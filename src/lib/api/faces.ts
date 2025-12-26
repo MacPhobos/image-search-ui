@@ -704,3 +704,107 @@ export function subscribeFaceDetectionProgress(
 	// Return cleanup function
 	return () => eventSource.close();
 }
+
+// ============ Face Suggestion Types ============
+
+/** A face labeling suggestion for review. */
+export interface FaceSuggestion {
+	id: number;
+	faceInstanceId: string;
+	suggestedPersonId: string;
+	confidence: number;
+	sourceFaceId: string;
+	status: 'pending' | 'accepted' | 'rejected' | 'expired';
+	createdAt: string;
+	reviewedAt: string | null;
+	faceThumbnailUrl: string | null;
+	personName: string | null;
+}
+
+/** Paginated list of face suggestions. */
+export interface FaceSuggestionListResponse {
+	items: FaceSuggestion[];
+	total: number;
+	page: number;
+	pageSize: number;
+}
+
+/** Response from bulk suggestion action. */
+export interface BulkSuggestionActionResponse {
+	processed: number;
+	failed: number;
+	errors: string[];
+}
+
+// ============ Face Suggestion API Functions ============
+
+/**
+ * List face suggestions with pagination.
+ * @param page - Page number (1-indexed)
+ * @param pageSize - Items per page (1-100)
+ * @param status - Filter by status (pending, accepted, rejected, expired)
+ * @param personId - Filter by person ID
+ */
+export async function listSuggestions(
+	page: number = 1,
+	pageSize: number = 20,
+	status?: string,
+	personId?: string
+): Promise<FaceSuggestionListResponse> {
+	const params = new URLSearchParams({
+		page: page.toString(),
+		page_size: pageSize.toString()
+	});
+	if (status) params.set('status', status);
+	if (personId) params.set('person_id', personId);
+
+	return apiRequest<FaceSuggestionListResponse>(
+		`/api/v1/faces/suggestions?${params.toString()}`
+	);
+}
+
+/**
+ * Accept a face suggestion (assigns face to suggested person).
+ * @param suggestionId - The suggestion ID
+ */
+export async function acceptSuggestion(suggestionId: number): Promise<FaceSuggestion> {
+	return apiRequest<FaceSuggestion>(
+		`/api/v1/faces/suggestions/${suggestionId}/accept`,
+		{
+			method: 'POST',
+			body: JSON.stringify({})
+		}
+	);
+}
+
+/**
+ * Reject a face suggestion.
+ * @param suggestionId - The suggestion ID
+ */
+export async function rejectSuggestion(suggestionId: number): Promise<FaceSuggestion> {
+	return apiRequest<FaceSuggestion>(
+		`/api/v1/faces/suggestions/${suggestionId}/reject`,
+		{
+			method: 'POST',
+			body: JSON.stringify({})
+		}
+	);
+}
+
+/**
+ * Perform bulk action on multiple suggestions.
+ * @param suggestionIds - Array of suggestion IDs
+ * @param action - Action to perform (accept or reject)
+ */
+export async function bulkSuggestionAction(
+	suggestionIds: number[],
+	action: 'accept' | 'reject'
+): Promise<BulkSuggestionActionResponse> {
+	return apiRequest<BulkSuggestionActionResponse>(
+		'/api/v1/faces/suggestions/bulk-action',
+		{
+			method: 'POST',
+			body: JSON.stringify({ suggestionIds, action })
+		}
+	);
+}
