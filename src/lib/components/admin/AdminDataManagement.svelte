@@ -30,11 +30,13 @@
 		return new Date(timestamp).toLocaleString();
 	}
 
-	function getTotalVectorsDeleted(collections: Record<string, number>): number {
+	function getTotalVectorsDeleted(collections: Record<string, number> | undefined | null): number {
+		if (!collections) return 0;
 		return Object.values(collections).reduce((sum, count) => sum + count, 0);
 	}
 
-	function getTotalRowsDeleted(tables: Record<string, number>): number {
+	function getTotalRowsDeleted(tables: Record<string, number> | undefined | null): number {
+		if (!tables) return 0;
 		return Object.values(tables).reduce((sum, count) => sum + count, 0);
 	}
 </script>
