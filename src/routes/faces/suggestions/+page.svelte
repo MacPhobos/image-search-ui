@@ -29,7 +29,7 @@
 	let selectedSuggestion = $state<FaceSuggestion | null>(null);
 
 	// Group suggestions by person ID, sorted by confidence descending within each group
-	let groupedSuggestions = $derived<SuggestionGroup[]>(() => {
+	let groupedSuggestions = $derived.by<SuggestionGroup[]>(() => {
 		// Group by personId
 		const groups = new Map<string, FaceSuggestion[]>();
 
