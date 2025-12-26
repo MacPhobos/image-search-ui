@@ -9,8 +9,8 @@ import { mockResponse, mockError, resetMocks } from '../../helpers/mockFetch';
  *
  * Tests the integration of face suggestions functionality in PhotoPreviewModal:
  * - Automatic suggestion fetching for unknown faces
- * - PersonDropdown integration with suggestions
- * - Quick accept button for top suggestions
+ * - Suggestion hints with "Accept" button for quick acceptance
+ * - Inline assignment panel with search and person list (opened via "Assign" button)
  * - Bounding box labels with suggested names
  * - Loading states and error handling
  * - Request cancellation on unmount
@@ -166,7 +166,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		expect(suggestionCalls).toHaveLength(0);
 	});
 
-	it('displays PersonDropdown for unknown faces', () => {
+	it('displays "Assign" button for unknown faces', () => {
 		mockResponse('/api/v1/faces/faces/face-1/suggestions', {
 			faceId: 'face-1',
 			suggestions: [],
@@ -186,9 +186,9 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 			}
 		});
 
-		// Should show dropdown for unknown faces
-		const dropdowns = screen.getAllByRole('combobox', { name: 'Select person' });
-		expect(dropdowns.length).toBeGreaterThanOrEqual(1);
+		// Should show "Assign" button for unknown faces
+		const assignButtons = screen.getAllByRole('button', { name: /Assign this face to a person/i });
+		expect(assignButtons.length).toBeGreaterThanOrEqual(1);
 	});
 
 	it('shows loading state while fetching suggestions', async () => {
@@ -217,7 +217,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 	});
 
-	it('displays suggestions in PersonDropdown', async () => {
+	it('displays suggestion hint with "Accept" button', async () => {
 		mockResponse('/api/v1/faces/faces/face-1/suggestions', {
 			faceId: 'face-1',
 			suggestions: [
@@ -251,16 +251,19 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 			{ timeout: 2000 }
 		);
 
-		// Open first dropdown
-		const dropdowns = screen.getAllByRole('combobox', { name: 'Select person' });
-		await fireEvent.click(dropdowns[0]);
-
-		// Wait for dropdown menu to open and check for suggestions section
+		// Wait for suggestion hint to appear with top suggestion
 		await waitFor(() => {
-			const suggestedText = screen.queryByText('SUGGESTED');
-			// Suggestions should appear if dropdown is open
-			if (suggestedText) {
-				expect(suggestedText).toBeInTheDocument();
+			const suggestionText = screen.queryByText(/Suggested: John Doe \(87%\)/);
+			if (suggestionText) {
+				expect(suggestionText).toBeInTheDocument();
+			}
+		});
+
+		// Should also have an "Accept" button
+		await waitFor(() => {
+			const acceptButton = screen.queryByTitle(/Accept suggestion/i);
+			if (acceptButton) {
+				expect(acceptButton).toBeInTheDocument();
 			}
 		});
 	});
@@ -343,16 +346,16 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 			{ timeout: 2000 }
 		);
 
-		// Wait a bit for quick accept button to render after suggestions load
+		// Wait a bit for accept button to render after suggestions load
 		await new Promise((resolve) => setTimeout(resolve, 100));
 
-		// Find quick accept button by class name or text content
-		const quickAcceptButtons = document.querySelectorAll('.quick-accept-btn');
+		// Find accept button by class name
+		const acceptButtons = document.querySelectorAll('.accept-suggestion-btn');
 
-		// If quick accept button exists, test it
-		if (quickAcceptButtons.length > 0) {
-			// Click the first quick accept button
-			await fireEvent.click(quickAcceptButtons[0]);
+		// If accept button exists, test it
+		if (acceptButtons.length > 0) {
+			// Click the first accept button
+			await fireEvent.click(acceptButtons[0]);
 
 			// Wait for assignment API call
 			await waitFor(
@@ -368,7 +371,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 				{ timeout: 2000 }
 			);
 		} else {
-			// Quick accept button didn't render - verify suggestions were fetched
+			// Accept button didn't render - verify suggestions were fetched
 			expect(globalThis.fetch).toHaveBeenCalledWith(
 				expect.stringContaining('/api/v1/faces/faces/face-1/suggestions'),
 				expect.any(Object)
@@ -584,15 +587,15 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 			{ timeout: 2000 }
 		);
 
-		// Wait a bit for quick accept button to render
+		// Wait a bit for accept button to render
 		await new Promise((resolve) => setTimeout(resolve, 100));
 
-		// Find quick accept button by class name
-		const quickAcceptButtons = document.querySelectorAll('.quick-accept-btn');
+		// Find accept button by class name
+		const acceptButtons = document.querySelectorAll('.accept-suggestion-btn');
 
-		// If quick accept button exists, click it and verify assignment
-		if (quickAcceptButtons.length > 0) {
-			await fireEvent.click(quickAcceptButtons[0]);
+		// If accept button exists, click it and verify assignment
+		if (acceptButtons.length > 0) {
+			await fireEvent.click(acceptButtons[0]);
 
 			// Wait for assignment to complete
 			await waitFor(
@@ -610,7 +613,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 	});
 
-	it('allows manual selection from PersonDropdown even when suggestions exist', async () => {
+	it('allows manual assignment via "Assign" button even when suggestions exist', async () => {
 		mockResponse('/api/v1/faces/faces/face-1/suggestions', {
 			faceId: 'face-1',
 			suggestions: [{ personId: 'person-1', personName: 'John Doe', confidence: 0.87 }],
@@ -648,21 +651,23 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 			{ timeout: 2000 }
 		);
 
-		// Open first dropdown
-		const dropdowns = screen.getAllByRole('combobox', { name: 'Select person' });
-		await fireEvent.click(dropdowns[0]);
+		// Find and click the "Assign" button
+		const assignButtons = screen.getAllByRole('button', { name: /Assign this face to a person/i });
+		expect(assignButtons.length).toBeGreaterThan(0);
+		await fireEvent.click(assignButtons[0]);
 
-		// Wait for dropdown to open
+		// Wait for assignment panel to open with search input
 		await waitFor(() => {
-			const listbox = screen.queryByRole('listbox');
-			if (listbox) {
-				expect(listbox).toBeInTheDocument();
-			}
+			const searchInput = screen.queryByPlaceholderText(/Search or create person/i);
+			expect(searchInput).toBeInTheDocument();
 		});
 
-		// User can still select a different person manually
-		// (This tests that the dropdown is functional alongside suggestions)
-		expect(dropdowns[0]).toBeInTheDocument();
+		// Verify the assignment panel is open and functional
+		const searchInput = screen.getByPlaceholderText(/Search or create person/i);
+		expect(searchInput).toBeInTheDocument();
+
+		// User can search and select a different person manually
+		// (This tests that the assignment panel is functional alongside suggestions)
 	});
 
 	it('shows loading indicator in bounding box label while fetching suggestions', async () => {

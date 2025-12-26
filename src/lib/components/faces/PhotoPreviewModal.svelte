@@ -8,7 +8,6 @@
 		getFaceSuggestions
 	} from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
-	import PersonDropdown from './PersonDropdown.svelte';
 
 	interface Props {
 		/** The photo to display */
@@ -230,34 +229,7 @@
 		}
 	}
 
-	async function handleCreateAndAssignFace(faceId: string, name: string) {
-		try {
-			const newPerson = await createPerson(name);
-
-			// Add to local persons list
-			persons = [
-				...persons,
-				{
-					id: newPerson.id,
-					name: newPerson.name,
-					status: newPerson.status as 'active' | 'merged' | 'hidden',
-					faceCount: 1,
-					prototypeCount: 0,
-					createdAt: newPerson.createdAt,
-					updatedAt: newPerson.createdAt
-				}
-			];
-
-			// Assign face to new person
-			await handleAssignFace(faceId, newPerson.id, newPerson.name);
-		} catch (error) {
-			console.error('Failed to create person and assign:', error);
-			unassignmentError =
-				error instanceof Error ? error.message : 'Failed to create person and assign face.';
-		}
-	}
-
-	// Legacy handlers for old assignment panel (kept for compatibility)
+	// Assignment panel handlers
 	async function handleAssignToExisting(person: Person) {
 		if (!assigningFaceId || assignmentSubmitting) return;
 
@@ -591,8 +563,23 @@
 									</div>
 								</button>
 
+								<!-- Assign button for faces without a person name -->
+								{#if !face.personName && assigningFaceId !== face.faceInstanceId}
+									<button
+										type="button"
+										class="assign-btn"
+										onclick={(e) => {
+											e.stopPropagation();
+											startAssignment(face.faceInstanceId);
+										}}
+										aria-label="Assign this face to a person"
+									>
+										Assign
+									</button>
+								{/if}
+
 								<!-- Unassign button for faces with a person name -->
-								{#if face.personName}
+								{#if face.personName && assigningFaceId !== face.faceInstanceId}
 									<button
 										type="button"
 										class="unassign-btn"
@@ -613,39 +600,104 @@
 								{/if}
 							</div>
 
-							<!-- Show PersonDropdown for unknown faces -->
-							{#if !face.personId}
-								<div class="person-dropdown-container">
-									<PersonDropdown
-										selectedPersonId={null}
-										persons={persons}
-										suggestions={faceSuggestions.get(face.faceInstanceId)?.suggestions ?? []}
-										loading={faceSuggestions.get(face.faceInstanceId)?.loading ?? false}
-										placeholder="Assign person..."
-										onSelect={(personId, personName) =>
-											handleAssignFace(face.faceInstanceId, personId, personName)}
-										onCreate={(name) => handleCreateAndAssignFace(face.faceInstanceId, name)}
-									/>
-
-									<!-- Quick accept button for first suggestion -->
-									{#if (faceSuggestions.get(face.faceInstanceId)?.suggestions?.length ?? 0) > 0}
-										{@const firstSuggestion = faceSuggestions.get(face.faceInstanceId)!.suggestions[0]}
+							<!-- Suggestion indicator for unknown faces (when not assigning) -->
+							{#if !face.personName && assigningFaceId !== face.faceInstanceId}
+								{@const suggestionState = faceSuggestions.get(face.faceInstanceId)}
+								{@const topSuggestion = suggestionState?.suggestions?.[0]}
+								{#if topSuggestion}
+									<div class="suggestion-hint">
+										<span class="suggestion-icon">💡</span>
+										<span class="suggestion-text">
+											Suggested: {topSuggestion.personName} ({Math.round(topSuggestion.confidence * 100)}%)
+										</span>
 										<button
 											type="button"
-											class="quick-accept-btn"
+											class="accept-suggestion-btn"
 											onclick={() =>
 												handleAssignFace(
 													face.faceInstanceId,
-													firstSuggestion.personId,
-													firstSuggestion.personName
+													topSuggestion.personId,
+													topSuggestion.personName
 												)}
-											title="Accept suggestion: {firstSuggestion.personName}"
+											title="Accept suggestion"
 										>
-											✓ {firstSuggestion.personName} ({Math.round(
-												firstSuggestion.confidence * 100
-											)}%)
+											✓ Accept
 										</button>
+									</div>
+								{/if}
+							{/if}
+
+							<!-- Assignment panel (shown when this face is being assigned) -->
+							{#if assigningFaceId === face.faceInstanceId}
+								<div class="assignment-panel">
+									<div class="assignment-header">
+										<h4>Assign Face</h4>
+										<button
+											type="button"
+											class="close-assignment"
+											onclick={cancelAssignment}
+											aria-label="Cancel assignment"
+										>
+											×
+										</button>
+									</div>
+
+									{#if assignmentError}
+										<div class="assignment-error" role="alert">
+											{assignmentError}
+										</div>
 									{/if}
+
+									<input
+										type="text"
+										placeholder="Search or create person..."
+										bind:value={personSearchQuery}
+										class="person-search-input"
+										aria-label="Search persons or enter new name"
+									/>
+
+									<div class="person-options">
+										{#if personsLoading}
+											<div class="loading-option">Loading...</div>
+										{:else if personsError}
+											<div class="no-results">{personsError}</div>
+										{:else}
+											<!-- Create new option -->
+											{#if showCreateOption()}
+												<button
+													type="button"
+													class="person-option create-new"
+													onclick={handleCreateAndAssign}
+													disabled={assignmentSubmitting}
+												>
+													<span class="person-avatar create-avatar">+</span>
+													<span>Create "{personSearchQuery.trim()}"</span>
+												</button>
+											{/if}
+
+											<!-- Existing persons -->
+											{#each filteredPersons() as person (person.id)}
+												<button
+													type="button"
+													class="person-option"
+													onclick={() => handleAssignToExisting(person)}
+													disabled={assignmentSubmitting}
+												>
+													<span class="person-avatar">
+														{person.name.charAt(0).toUpperCase()}
+													</span>
+													<div class="person-option-info">
+														<span class="person-option-name">{person.name}</span>
+														<span class="person-option-meta">{person.faceCount} faces</span>
+													</div>
+												</button>
+											{/each}
+
+											{#if filteredPersons().length === 0 && !showCreateOption()}
+												<div class="no-results">No persons found</div>
+											{/if}
+										{/if}
+									</div>
 								</div>
 							{/if}
 						</li>
@@ -1018,38 +1070,208 @@
 		right: 0.5rem;
 	}
 
-	/* PersonDropdown container */
-	.person-dropdown-container {
-		padding: 0.625rem;
+	/* Suggestion hint styles */
+	.suggestion-hint {
 		display: flex;
-		flex-direction: column;
+		align-items: center;
 		gap: 0.5rem;
+		padding: 0.5rem 0.625rem;
+		background-color: #fffbeb;
+		border: 1px solid #fef3c7;
+		border-radius: 6px;
+		margin: 0.25rem 0.625rem 0.5rem;
+		font-size: 0.75rem;
 	}
 
-	/* Quick accept button */
-	.quick-accept-btn {
+	.suggestion-icon {
+		font-size: 1rem;
+		flex-shrink: 0;
+	}
+
+	.suggestion-text {
+		flex: 1;
+		color: #92400e;
+		font-weight: 500;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.accept-suggestion-btn {
+		padding: 0.25rem 0.5rem;
+		background-color: #22c55e;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.2s;
+		flex-shrink: 0;
+		white-space: nowrap;
+	}
+
+	.accept-suggestion-btn:hover {
+		background-color: #16a34a;
+	}
+
+	/* Assignment panel styles */
+	.assignment-panel {
+		background-color: #f8f9fa;
+		border-radius: 8px;
+		padding: 0.75rem;
+		margin: 0.5rem 0.625rem;
+		border: 1px solid #e0e0e0;
+	}
+
+	.assignment-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.625rem;
+	}
+
+	.assignment-header h4 {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.close-assignment {
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
+		font-size: 1.5rem;
+		line-height: 1;
+		color: #666;
+		border-radius: 4px;
+		transition: background-color 0.2s;
+	}
+
+	.close-assignment:hover {
+		background-color: #e0e0e0;
+	}
+
+	.assignment-error {
+		background-color: #fef2f2;
+		color: #dc2626;
+		padding: 0.5rem;
+		border-radius: 4px;
+		margin-bottom: 0.5rem;
+		font-size: 0.75rem;
+	}
+
+	.person-search-input {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		margin-bottom: 0.5rem;
+		transition: border-color 0.2s;
+	}
+
+	.person-search-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+	}
+
+	.person-options {
+		max-height: 150px;
+		overflow-y: auto;
+		border: 1px solid #e0e0e0;
+		border-radius: 6px;
+		background-color: white;
+	}
+
+	.loading-option,
+	.no-results {
+		padding: 0.75rem;
+		text-align: center;
+		color: #666;
+		font-size: 0.75rem;
+	}
+
+	.person-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.5rem;
+		border: none;
+		background: none;
+		text-align: left;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.person-option:hover:not(:disabled) {
+		background-color: #f5f5f5;
+	}
+
+	.person-option:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.person-option:not(:last-child) {
+		border-bottom: 1px solid #f0f0f0;
+	}
+
+	.person-option.create-new {
+		background-color: #f0f7ff;
+		color: #4a90e2;
+		font-weight: 500;
+		font-size: 0.8125rem;
+	}
+
+	.person-option.create-new:hover:not(:disabled) {
+		background-color: #e0efff;
+	}
+
+	.person-avatar {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.25rem;
-		padding: 0.375rem 0.75rem;
-		background: #22c55e;
-		color: white;
-		border: none;
-		border-radius: 0.375rem;
-		font-size: 0.8125rem;
+		font-weight: 600;
+		font-size: 0.75rem;
+		flex-shrink: 0;
+	}
+
+	.person-avatar.create-avatar {
+		background: #4a90e2;
+		font-size: 1rem;
+	}
+
+	.person-option-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.person-option-name {
 		font-weight: 500;
-		cursor: pointer;
-		transition: background 0.15s ease;
-		width: 100%;
+		color: #333;
+		font-size: 0.8125rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
-	.quick-accept-btn:hover {
-		background: #16a34a;
-	}
-
-	.quick-accept-btn:active {
-		background: #15803d;
+	.person-option-meta {
+		font-size: 0.6875rem;
+		color: #999;
 	}
 
 	/* Responsive adjustments */
