@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FaceSuggestion } from '$lib/api/faces';
+	import { API_BASE_URL } from '$lib/api/client';
 
 	interface Props {
 		suggestion: FaceSuggestion | null;
@@ -68,6 +69,16 @@
 			minute: '2-digit'
 		});
 	}
+
+	function getImageUrl(url: string | null): string {
+		if (!url) return '';
+		// If already absolute, use as-is
+		if (url.startsWith('http://') || url.startsWith('https://')) {
+			return url;
+		}
+		// Prepend API base URL for relative paths
+		return `${API_BASE_URL}${url}`;
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -96,7 +107,7 @@
 				<div class="image-container">
 					{#if suggestion.faceThumbnailUrl}
 						<img
-							src={suggestion.faceThumbnailUrl}
+							src={getImageUrl(suggestion.faceThumbnailUrl)}
 							alt="Face for {suggestion.personName || 'Unknown'}"
 							class="face-image"
 						/>
