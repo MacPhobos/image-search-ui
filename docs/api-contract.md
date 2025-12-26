@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.3.0
-> **Last Updated**: 2025-12-25
+> **Version**: 1.4.0
+> **Last Updated**: 2025-12-26
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -693,6 +693,48 @@ or
 }
 ```
 
+#### `DELETE /api/v1/faces/faces/{faceId}/person`
+
+Unassign a face instance from its currently assigned person. The face returns to unassigned state and can be reassigned later.
+
+**Path Parameters**
+
+| Parameter | Type   | Required | Description             |
+| --------- | ------ | -------- | ----------------------- |
+| `faceId`  | string | Yes      | Face instance ID (UUID) |
+
+**Response** `200 OK`
+
+```json
+{
+	"faceId": "123e4567-e89b-12d3-a456-426614174000",
+	"previousPersonId": "550e8400-e29b-41d4-a716-446655440000",
+	"previousPersonName": "John Smith"
+}
+```
+
+**Response** `404 Not Found` - Face not found
+
+```json
+{
+	"error": {
+		"code": "FACE_NOT_FOUND",
+		"message": "Face with ID '123e4567-...' not found"
+	}
+}
+```
+
+**Response** `400 Bad Request` - Face is not assigned to any person
+
+```json
+{
+	"error": {
+		"code": "FACE_NOT_ASSIGNED",
+		"message": "Face is not assigned to any person"
+	}
+}
+```
+
 ---
 
 ### Face Suggestions
@@ -1161,6 +1203,7 @@ All errors return JSON with consistent structure.
 | `CATEGORY_NOT_FOUND`         | 404         | Category ID does not exist           |
 | `PERSON_NOT_FOUND`           | 404         | Person ID does not exist             |
 | `FACE_NOT_FOUND`             | 404         | Face ID does not exist               |
+| `FACE_NOT_ASSIGNED`          | 400         | Face is not assigned to any person   |
 | `JOB_NOT_FOUND`              | 404         | Job ID does not exist                |
 | `SUGGESTION_NOT_FOUND`       | 404         | Suggestion ID does not exist         |
 | `CATEGORY_NAME_EXISTS`       | 409         | Category name already exists         |
@@ -1263,6 +1306,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code. |
 | 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes. |
 | 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema |
 | 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |

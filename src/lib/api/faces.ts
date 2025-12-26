@@ -225,6 +225,13 @@ export interface AssignFaceResponse {
 	personName: string;
 }
 
+/** Response from unassigning a face. */
+export interface UnassignFaceResponse {
+	faceId: string;
+	previousPersonId: string;
+	previousPersonName: string;
+}
+
 /** Request to create a new person. */
 export interface CreatePersonRequest {
 	name: string;
@@ -503,6 +510,20 @@ export async function assignFaceToPerson(
 		{
 			method: 'POST',
 			body: JSON.stringify({ personId })
+		}
+	);
+}
+
+/**
+ * Unassign a face from its currently assigned person.
+ * The face returns to unassigned state and can be reassigned later.
+ * @param faceId - The face instance ID
+ */
+export async function unassignFace(faceId: string): Promise<UnassignFaceResponse> {
+	return apiRequest<UnassignFaceResponse>(
+		`/api/v1/faces/faces/${encodeURIComponent(faceId)}/person`,
+		{
+			method: 'DELETE'
 		}
 	);
 }

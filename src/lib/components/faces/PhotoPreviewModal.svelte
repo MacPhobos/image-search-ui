@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PersonPhotoGroup, FaceInPhoto } from '$lib/api/faces';
-	import { listPersons, assignFaceToPerson, createPerson } from '$lib/api/faces';
+	import { listPersons, assignFaceToPerson, createPerson, unassignFace } from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
 
 	interface Props {
@@ -35,6 +35,10 @@
 	let personsError = $state<string | null>(null);
 	let assignmentSubmitting = $state(false);
 	let assignmentError = $state<string | null>(null);
+
+	// Face unassignment state
+	let unassigningFaceId = $state<string | null>(null);
+	let unassignmentError = $state<string | null>(null);
 
 	// Derived states
 	let filteredPersons = $derived(() => {
@@ -209,6 +213,36 @@
 			assignmentSubmitting = false;
 		}
 	}
+
+	async function handleUnassignFace(faceId: string) {
+		const face = photo.faces.find((f) => f.faceInstanceId === faceId);
+		if (!face?.personName) return;
+
+		if (!confirm(`Unassign "${face.personName}" from this face?`)) {
+			return;
+		}
+
+		unassigningFaceId = faceId;
+		unassignmentError = null;
+
+		try {
+			await unassignFace(faceId);
+
+			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
+			if (faceIndex !== -1) {
+				photo.faces[faceIndex] = {
+					...photo.faces[faceIndex],
+					personId: null,
+					personName: null
+				};
+			}
+		} catch (err) {
+			console.error('Failed to unassign face:', err);
+			unassignmentError = err instanceof Error ? err.message : 'Failed to unassign face.';
+		} finally {
+			unassigningFaceId = null;
+		}
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -236,6 +270,21 @@
 				</svg>
 			</button>
 		</header>
+
+		<!-- Unassignment error display -->
+		{#if unassignmentError}
+			<div class="error-banner" role="alert">
+				{unassignmentError}
+				<button
+					type="button"
+					class="error-close"
+					onclick={() => (unassignmentError = null)}
+					aria-label="Dismiss error"
+				>
+					✕
+				</button>
+			</div>
+		{/if}
 
 		<div class="modal-body">
 			<!-- Photo container with navigation -->
@@ -340,6 +389,27 @@
 										aria-label="Assign this face to a person"
 									>
 										Assign
+									</button>
+								{/if}
+
+								<!-- Unassign button for faces with a person name -->
+								{#if face.personName && assigningFaceId !== face.faceInstanceId}
+									<button
+										type="button"
+										class="unassign-btn"
+										onclick={(e) => {
+											e.stopPropagation();
+											handleUnassignFace(face.faceInstanceId);
+										}}
+										disabled={unassigningFaceId === face.faceInstanceId}
+										aria-label="Unassign this face from {face.personName}"
+										title="Remove label"
+									>
+										{#if unassigningFaceId === face.faceInstanceId}
+											...
+										{:else}
+											✕
+										{/if}
 									</button>
 								{/if}
 							</div>
@@ -491,6 +561,42 @@
 		height: 20px;
 	}
 
+	.error-banner {
+		background-color: #fef2f2;
+		border: 1px solid #fecaca;
+		color: #dc2626;
+		padding: 0.75rem 1rem;
+		margin: 0 1rem;
+		margin-top: 1rem;
+		border-radius: 6px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		font-size: 0.875rem;
+	}
+
+	.error-close {
+		width: 20px;
+		height: 20px;
+		padding: 0;
+		border: none;
+		background: none;
+		cursor: pointer;
+		font-size: 1rem;
+		color: #dc2626;
+		opacity: 0.7;
+		transition: opacity 0.2s;
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.error-close:hover {
+		opacity: 1;
+	}
+
 	.modal-body {
 		display: flex;
 		gap: 1rem;
@@ -638,6 +744,40 @@
 
 	.assign-btn:hover {
 		background-color: #3a7bc8;
+	}
+
+	.unassign-btn {
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		font-size: 0.875rem;
+		font-weight: 600;
+		background-color: #fee;
+		color: #dc2626;
+		border: 1px solid #fecaca;
+		border-radius: 50%;
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			color 0.2s,
+			border-color 0.2s;
+		flex-shrink: 0;
+		margin-right: 0.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 1;
+	}
+
+	.unassign-btn:hover:not(:disabled) {
+		background-color: #dc2626;
+		color: white;
+		border-color: #dc2626;
+	}
+
+	.unassign-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.face-indicator {
