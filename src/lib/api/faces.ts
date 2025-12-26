@@ -741,6 +741,27 @@ export interface FaceSuggestion {
 	personName: string | null;
 }
 
+/** A person suggestion item for a face based on face recognition. */
+export interface FaceSuggestionItem {
+	personId: string;
+	personName: string;
+	confidence: number;
+}
+
+/** Response from fetching face suggestions for a specific face. */
+export interface FaceSuggestionsResponse {
+	faceId: string;
+	suggestions: FaceSuggestionItem[];
+	thresholdUsed: number;
+}
+
+/** Enhanced FaceInPhoto with suggestions state. */
+export interface FaceInPhotoWithSuggestions extends FaceInPhoto {
+	suggestions?: FaceSuggestionItem[];
+	suggestionsLoading?: boolean;
+	suggestionsError?: string | null;
+}
+
 /** Paginated list of face suggestions. */
 export interface FaceSuggestionListResponse {
 	items: FaceSuggestion[];
@@ -815,5 +836,36 @@ export async function bulkSuggestionAction(
 	return apiRequest<BulkSuggestionActionResponse>('/api/v1/faces/suggestions/bulk-action', {
 		method: 'POST',
 		body: JSON.stringify({ suggestionIds, action })
+	});
+}
+
+/**
+ * Fetch person suggestions for a face based on face recognition.
+ * Returns a list of persons ranked by similarity to the provided face.
+ * @param faceId - UUID of the face instance
+ * @param options - Optional parameters
+ * @returns Promise with suggestions sorted by confidence (highest first)
+ */
+export async function getFaceSuggestions(
+	faceId: string,
+	options?: {
+		minConfidence?: number; // Minimum confidence threshold (0.0-1.0, default 0.7)
+		limit?: number; // Maximum number of suggestions to return (default 5)
+		signal?: AbortSignal; // For request cancellation
+	}
+): Promise<FaceSuggestionsResponse> {
+	const params = new URLSearchParams();
+	if (options?.minConfidence !== undefined) {
+		params.set('min_confidence', options.minConfidence.toString());
+	}
+	if (options?.limit !== undefined) {
+		params.set('limit', options.limit.toString());
+	}
+
+	const queryString = params.toString();
+	const endpoint = `/api/v1/faces/faces/${encodeURIComponent(faceId)}/suggestions${queryString ? `?${queryString}` : ''}`;
+
+	return apiRequest<FaceSuggestionsResponse>(endpoint, {
+		signal: options?.signal
 	});
 }

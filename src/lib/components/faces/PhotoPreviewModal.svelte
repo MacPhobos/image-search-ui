@@ -1,7 +1,14 @@
 <script lang="ts">
-	import type { PersonPhotoGroup, FaceInPhoto } from '$lib/api/faces';
-	import { listPersons, assignFaceToPerson, createPerson, unassignFace } from '$lib/api/faces';
+	import type { PersonPhotoGroup, FaceInPhoto, FaceSuggestionItem } from '$lib/api/faces';
+	import {
+		listPersons,
+		assignFaceToPerson,
+		createPerson,
+		unassignFace,
+		getFaceSuggestions
+	} from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
+	import PersonDropdown from './PersonDropdown.svelte';
 
 	interface Props {
 		/** The photo to display */
@@ -47,6 +54,14 @@
 	let unassigningFaceId = $state<string | null>(null);
 	let unassignmentError = $state<string | null>(null);
 
+	// Face suggestions state
+	interface FaceSuggestionsState {
+		suggestions: FaceSuggestionItem[];
+		loading: boolean;
+		error: string | null;
+	}
+	let faceSuggestions = $state<Map<string, FaceSuggestionsState>>(new Map());
+
 	// Derived states
 	let filteredPersons = $derived(() => {
 		const query = personSearchQuery.toLowerCase().trim();
@@ -63,6 +78,49 @@
 			imageLoaded = true;
 		}
 	}
+
+	// Load persons list when modal opens
+	$effect(() => {
+		if (persons.length === 0) {
+			loadPersons();
+		}
+	});
+
+	// Fetch suggestions for unknown faces (non-blocking with cleanup)
+	$effect(() => {
+		// Get all faces without a personId
+		const unknownFaces = photo.faces.filter((f) => !f.personId);
+
+		// Create abort controller for cleanup
+		const controller = new AbortController();
+
+		// Fetch suggestions for each unknown face (non-blocking)
+		unknownFaces.forEach((face) => {
+			// Set loading state
+			faceSuggestions.set(face.faceInstanceId, { suggestions: [], loading: true, error: null });
+
+			getFaceSuggestions(face.faceInstanceId, { signal: controller.signal })
+				.then((response) => {
+					faceSuggestions.set(face.faceInstanceId, {
+						suggestions: response.suggestions,
+						loading: false,
+						error: null
+					});
+				})
+				.catch((err) => {
+					if (err.name !== 'AbortError') {
+						faceSuggestions.set(face.faceInstanceId, {
+							suggestions: [],
+							loading: false,
+							error: err instanceof Error ? err.message : 'Failed to load suggestions'
+						});
+					}
+				});
+		});
+
+		// Cleanup: abort pending requests when modal closes
+		return () => controller.abort();
+	});
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
@@ -149,6 +207,57 @@
 		assignmentError = null;
 	}
 
+	async function handleAssignFace(faceId: string, personId: string, personName: string) {
+		try {
+			await assignFaceToPerson(faceId, personId);
+
+			// Optimistically update local photo state
+			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
+			if (faceIndex >= 0) {
+				photo.faces[faceIndex] = {
+					...photo.faces[faceIndex],
+					personId,
+					personName
+				};
+			}
+
+			// Clear suggestions for this face
+			faceSuggestions.delete(faceId);
+		} catch (error) {
+			console.error('Failed to assign face:', error);
+			unassignmentError =
+				error instanceof Error ? error.message : 'Failed to assign face to person.';
+		}
+	}
+
+	async function handleCreateAndAssignFace(faceId: string, name: string) {
+		try {
+			const newPerson = await createPerson(name);
+
+			// Add to local persons list
+			persons = [
+				...persons,
+				{
+					id: newPerson.id,
+					name: newPerson.name,
+					status: newPerson.status as 'active' | 'merged' | 'hidden',
+					faceCount: 1,
+					prototypeCount: 0,
+					createdAt: newPerson.createdAt,
+					updatedAt: newPerson.createdAt
+				}
+			];
+
+			// Assign face to new person
+			await handleAssignFace(faceId, newPerson.id, newPerson.name);
+		} catch (error) {
+			console.error('Failed to create person and assign:', error);
+			unassignmentError =
+				error instanceof Error ? error.message : 'Failed to create person and assign face.';
+		}
+	}
+
+	// Legacy handlers for old assignment panel (kept for compatibility)
 	async function handleAssignToExisting(person: Person) {
 		if (!assigningFaceId || assignmentSubmitting) return;
 
@@ -319,6 +428,13 @@
 					{#if imageLoaded && imgWidth > 0 && imgHeight > 0}
 						<svg class="face-overlay" viewBox="0 0 {imgWidth} {imgHeight}" aria-hidden="true">
 							{#each photo.faces as face (face.faceInstanceId)}
+								{@const faceColor = getFaceColor(face)}
+								{@const isHighlighted = highlightedFaceId === face.faceInstanceId}
+								{@const suggestionState = faceSuggestions.get(face.faceInstanceId)}
+								{@const suggestions = suggestionState?.suggestions ?? []}
+								{@const topSuggestion = suggestions[0]}
+
+								<!-- Face bounding box -->
 								<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 								<rect
 									x={face.bboxX}
@@ -330,10 +446,99 @@
 									class:other-person={face.personId &&
 										(!currentPersonId || face.personId !== currentPersonId)}
 									class:unknown={!face.personId}
-									class:highlighted={highlightedFaceId === face.faceInstanceId}
-									style="stroke: {getFaceColor(face)};"
+									class:highlighted={isHighlighted}
+									style="stroke: {faceColor};"
 									onclick={() => handleHighlightFace(face.faceInstanceId)}
 								/>
+
+								<!-- Label below bounding box -->
+								{#if face.personName}
+									<!-- Assigned person label -->
+									<g class="face-label">
+										<rect
+											x={face.bboxX}
+											y={face.bboxY + face.bboxH + 4}
+											width={Math.max(face.bboxW, 100)}
+											height={24}
+											rx={4}
+											fill="rgba(0, 0, 0, 0.75)"
+										/>
+										<text
+											x={face.bboxX + 8}
+											y={face.bboxY + face.bboxH + 20}
+											fill="white"
+											font-size="14"
+											font-weight="500"
+										>
+											{face.personName}
+										</text>
+									</g>
+								{:else if suggestionState?.loading}
+									<!-- Loading state -->
+									<g class="face-label loading-label">
+										<rect
+											x={face.bboxX}
+											y={face.bboxY + face.bboxH + 4}
+											width={80}
+											height={24}
+											rx={4}
+											fill="rgba(100, 116, 139, 0.6)"
+										/>
+										<text
+											x={face.bboxX + 8}
+											y={face.bboxY + face.bboxH + 20}
+											fill="white"
+											font-size="13"
+										>
+											Loading...
+										</text>
+									</g>
+								{:else if topSuggestion}
+									<!-- Suggested person label -->
+									{@const labelText = `Suggested: ${topSuggestion.personName} (${Math.round(topSuggestion.confidence * 100)}%)`}
+									{@const labelWidth = Math.max(face.bboxW, labelText.length * 7.5)}
+									<g class="face-label suggestion-label">
+										<rect
+											x={face.bboxX}
+											y={face.bboxY + face.bboxH + 4}
+											width={labelWidth}
+											height={24}
+											rx={4}
+											fill="rgba(234, 179, 8, 0.9)"
+										/>
+										<text
+											x={face.bboxX + 8}
+											y={face.bboxY + face.bboxH + 20}
+											fill="#422006"
+											font-size="13"
+											font-weight="500"
+										>
+											Suggested: {topSuggestion.personName} ({Math.round(topSuggestion.confidence *
+												100)}%)
+										</text>
+									</g>
+								{:else}
+									<!-- Unknown label -->
+									<g class="face-label unknown-label">
+										<rect
+											x={face.bboxX}
+											y={face.bboxY + face.bboxH + 4}
+											width={Math.max(face.bboxW, 80)}
+											height={24}
+											rx={4}
+											fill="rgba(100, 116, 139, 0.85)"
+										/>
+										<text
+											x={face.bboxX + 8}
+											y={face.bboxY + face.bboxH + 20}
+											fill="white"
+											font-size="13"
+											font-style="italic"
+										>
+											Unknown
+										</text>
+									</g>
+								{/if}
 							{/each}
 						</svg>
 					{/if}
@@ -386,23 +591,8 @@
 									</div>
 								</button>
 
-								<!-- Assign button for faces without a person name -->
-								{#if !face.personName && assigningFaceId !== face.faceInstanceId}
-									<button
-										type="button"
-										class="assign-btn"
-										onclick={(e) => {
-											e.stopPropagation();
-											startAssignment(face.faceInstanceId);
-										}}
-										aria-label="Assign this face to a person"
-									>
-										Assign
-									</button>
-								{/if}
-
 								<!-- Unassign button for faces with a person name -->
-								{#if face.personName && assigningFaceId !== face.faceInstanceId}
+								{#if face.personName}
 									<button
 										type="button"
 										class="unassign-btn"
@@ -423,77 +613,39 @@
 								{/if}
 							</div>
 
-							<!-- Assignment panel (shown when this face is being assigned) -->
-							{#if assigningFaceId === face.faceInstanceId}
-								<div class="assignment-panel">
-									<div class="assignment-header">
-										<h4>Assign Face</h4>
-										<button
-											type="button"
-											class="close-assignment"
-											onclick={cancelAssignment}
-											aria-label="Cancel assignment"
-										>
-											×
-										</button>
-									</div>
-
-									{#if assignmentError}
-										<div class="assignment-error" role="alert">
-											{assignmentError}
-										</div>
-									{/if}
-
-									<input
-										type="text"
-										placeholder="Search or create person..."
-										bind:value={personSearchQuery}
-										class="person-search-input"
-										aria-label="Search persons or enter new name"
+							<!-- Show PersonDropdown for unknown faces -->
+							{#if !face.personId}
+								<div class="person-dropdown-container">
+									<PersonDropdown
+										selectedPersonId={null}
+										persons={persons}
+										suggestions={faceSuggestions.get(face.faceInstanceId)?.suggestions ?? []}
+										loading={faceSuggestions.get(face.faceInstanceId)?.loading ?? false}
+										placeholder="Assign person..."
+										onSelect={(personId, personName) =>
+											handleAssignFace(face.faceInstanceId, personId, personName)}
+										onCreate={(name) => handleCreateAndAssignFace(face.faceInstanceId, name)}
 									/>
 
-									<div class="person-options">
-										{#if personsLoading}
-											<div class="loading-option">Loading...</div>
-										{:else if personsError}
-											<div class="no-results">{personsError}</div>
-										{:else}
-											<!-- Create new option -->
-											{#if showCreateOption()}
-												<button
-													type="button"
-													class="person-option create-new"
-													onclick={handleCreateAndAssign}
-													disabled={assignmentSubmitting}
-												>
-													<span class="person-avatar create-avatar">+</span>
-													<span>Create "{personSearchQuery.trim()}"</span>
-												</button>
-											{/if}
-
-											<!-- Existing persons -->
-											{#each filteredPersons() as person (person.id)}
-												<button
-													type="button"
-													class="person-option"
-													onclick={() => handleAssignToExisting(person)}
-													disabled={assignmentSubmitting}
-												>
-													<span class="person-avatar">
-														{person.name.charAt(0).toUpperCase()}
-													</span>
-													<div class="person-option-info">
-														<span class="person-option-name">{person.name}</span>
-														<span class="person-option-meta">{person.faceCount} faces</span>
-													</div>
-												</button>
-											{/each}
-
-											{#if filteredPersons().length === 0 && !showCreateOption()}
-												<div class="no-results">No persons found</div>
-											{/if}
-										{/if}
-									</div>
+									<!-- Quick accept button for first suggestion -->
+									{#if (faceSuggestions.get(face.faceInstanceId)?.suggestions?.length ?? 0) > 0}
+										{@const firstSuggestion = faceSuggestions.get(face.faceInstanceId)!.suggestions[0]}
+										<button
+											type="button"
+											class="quick-accept-btn"
+											onclick={() =>
+												handleAssignFace(
+													face.faceInstanceId,
+													firstSuggestion.personId,
+													firstSuggestion.personName
+												)}
+											title="Accept suggestion: {firstSuggestion.personName}"
+										>
+											✓ {firstSuggestion.personName} ({Math.round(
+												firstSuggestion.confidence * 100
+											)}%)
+										</button>
+									{/if}
 								</div>
 							{/if}
 						</li>
@@ -684,6 +836,15 @@
 		}
 	}
 
+	.face-label {
+		pointer-events: none;
+		transition: opacity 0.2s ease;
+	}
+
+	.face-label text {
+		font-family: system-ui, -apple-system, sans-serif;
+	}
+
 	.face-sidebar {
 		width: 280px;
 		flex-shrink: 0;
@@ -857,163 +1018,38 @@
 		right: 0.5rem;
 	}
 
-	/* Assignment panel styles */
-	.assignment-panel {
-		background-color: #f8f9fa;
-		border-radius: 8px;
-		padding: 0.75rem;
-		margin: 0.5rem 0.625rem;
-		border: 1px solid #e0e0e0;
-	}
-
-	.assignment-header {
+	/* PersonDropdown container */
+	.person-dropdown-container {
+		padding: 0.625rem;
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 0.625rem;
-	}
-
-	.assignment-header h4 {
-		margin: 0;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #333;
-	}
-
-	.close-assignment {
-		width: 24px;
-		height: 24px;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		font-size: 1.5rem;
-		line-height: 1;
-		color: #666;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
-
-	.close-assignment:hover {
-		background-color: #e0e0e0;
-	}
-
-	.assignment-error {
-		background-color: #fef2f2;
-		color: #dc2626;
-		padding: 0.5rem;
-		border-radius: 4px;
-		margin-bottom: 0.5rem;
-		font-size: 0.75rem;
-	}
-
-	.person-search-input {
-		width: 100%;
-		padding: 0.5rem;
-		border: 1px solid #ddd;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		margin-bottom: 0.5rem;
-		transition: border-color 0.2s;
-	}
-
-	.person-search-input:focus {
-		outline: none;
-		border-color: #4a90e2;
-	}
-
-	.person-options {
-		max-height: 150px;
-		overflow-y: auto;
-		border: 1px solid #e0e0e0;
-		border-radius: 6px;
-		background-color: white;
-	}
-
-	.loading-option,
-	.no-results {
-		padding: 0.75rem;
-		text-align: center;
-		color: #666;
-		font-size: 0.75rem;
-	}
-
-	.person-option {
-		display: flex;
-		align-items: center;
+		flex-direction: column;
 		gap: 0.5rem;
-		width: 100%;
-		padding: 0.5rem;
-		border: none;
-		background: none;
-		text-align: left;
-		cursor: pointer;
-		transition: background-color 0.2s;
 	}
 
-	.person-option:hover:not(:disabled) {
-		background-color: #f5f5f5;
-	}
-
-	.person-option:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.person-option:not(:last-child) {
-		border-bottom: 1px solid #f0f0f0;
-	}
-
-	.person-option.create-new {
-		background-color: #f0f7ff;
-		color: #4a90e2;
-		font-weight: 500;
-		font-size: 0.8125rem;
-	}
-
-	.person-option.create-new:hover:not(:disabled) {
-		background-color: #e0efff;
-	}
-
-	.person-avatar {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		color: white;
+	/* Quick accept button */
+	.quick-accept-btn {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-weight: 600;
-		font-size: 0.75rem;
-		flex-shrink: 0;
-	}
-
-	.person-avatar.create-avatar {
-		background: #4a90e2;
-		font-size: 1rem;
-	}
-
-	.person-option-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.125rem;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.person-option-name {
-		font-weight: 500;
-		color: #333;
+		gap: 0.25rem;
+		padding: 0.375rem 0.75rem;
+		background: #22c55e;
+		color: white;
+		border: none;
+		border-radius: 0.375rem;
 		font-size: 0.8125rem;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background 0.15s ease;
+		width: 100%;
 	}
 
-	.person-option-meta {
-		font-size: 0.6875rem;
-		color: #999;
+	.quick-accept-btn:hover {
+		background: #16a34a;
+	}
+
+	.quick-accept-btn:active {
+		background: #15803d;
 	}
 
 	/* Responsive adjustments */
