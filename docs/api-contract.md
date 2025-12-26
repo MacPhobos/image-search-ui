@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.2.0
-> **Last Updated**: 2024-12-24
+> **Version**: 1.3.0
+> **Last Updated**: 2025-12-25
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -19,6 +19,7 @@ This document defines the API contract between `image-search-service` (backend) 
    - [Assets](#assets)
    - [Search](#search)
    - [People/Faces](#peoplefaces)
+   - [Face Suggestions](#face-suggestions)
    - [Jobs](#jobs)
    - [Corrections](#corrections)
 5. [Pagination](#pagination)
@@ -694,6 +695,278 @@ or
 
 ---
 
+### Face Suggestions
+
+Automatic face assignment suggestions based on similarity to labeled faces. When a face is assigned to a person, the system generates suggestions for other similar unassigned faces.
+
+#### FaceSuggestion Schema
+
+```typescript
+interface FaceSuggestion {
+	id: number; // Auto-increment ID
+	faceInstanceId: string; // UUID of the suggested face
+	suggestedPersonId: string; // UUID of the person to assign
+	confidence: number; // Similarity score (0.0-1.0)
+	sourceFaceId: string; // UUID of the source face that triggered this suggestion
+	status: 'pending' | 'accepted' | 'rejected' | 'expired'; // Suggestion status
+	createdAt: string; // ISO 8601 timestamp
+	reviewedAt: string | null; // ISO 8601 timestamp when reviewed (null if pending)
+	faceThumbnailUrl: string | null; // Thumbnail URL for the suggested face
+	personName: string | null; // Name of the suggested person
+}
+```
+
+#### SuggestionStats Response
+
+```typescript
+interface SuggestionStats {
+	total: number; // Total suggestions
+	pending: number; // Pending suggestions
+	accepted: number; // Accepted suggestions
+	rejected: number; // Rejected suggestions
+	expired: number; // Expired suggestions
+	reviewed: number; // Total reviewed (accepted + rejected)
+	acceptanceRate: number; // Percentage of accepted vs reviewed (0-100)
+	topPersonsWithPending: Array<{
+		personId: string; // UUID
+		name: string; // Person name
+		pendingCount: number; // Number of pending suggestions for this person
+	}>;
+}
+```
+
+#### BulkActionRequest
+
+```typescript
+interface BulkActionRequest {
+	suggestionIds: number[]; // Array of suggestion IDs to act on
+	action: 'accept' | 'reject'; // Action to perform
+}
+```
+
+#### BulkActionResponse
+
+```typescript
+interface BulkActionResponse {
+	successCount: number; // Number of successfully processed suggestions
+	failedCount: number; // Number of failed suggestions
+	errors: Array<{
+		suggestionId: number; // ID of the suggestion that failed
+		reason: string; // Error message
+	}>;
+}
+```
+
+#### `GET /api/v1/faces/suggestions`
+
+List face suggestions with pagination and filtering.
+
+**Query Parameters**
+
+| Parameter  | Type    | Default | Description                                  |
+| ---------- | ------- | ------- | -------------------------------------------- |
+| `page`     | integer | 1       | Page number (1-indexed)                      |
+| `pageSize` | integer | 20      | Items per page (max: 100)                    |
+| `status`   | string  | -       | Filter by status: pending, accepted, rejected, expired |
+| `personId` | string  | -       | Filter by suggested person ID (UUID)         |
+
+**Response** `200 OK`
+
+```json
+{
+	"data": [
+		{
+			"id": 1,
+			"faceInstanceId": "123e4567-e89b-12d3-a456-426614174000",
+			"suggestedPersonId": "550e8400-e29b-41d4-a716-446655440000",
+			"confidence": 0.92,
+			"sourceFaceId": "789e0123-e89b-12d3-a456-426614174456",
+			"status": "pending",
+			"createdAt": "2025-12-25T10:00:00Z",
+			"reviewedAt": null,
+			"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
+			"personName": "John Smith"
+		}
+	],
+	"pagination": {
+		"page": 1,
+		"pageSize": 20,
+		"totalItems": 15,
+		"totalPages": 1
+	}
+}
+```
+
+#### `GET /api/v1/faces/suggestions/stats`
+
+Get statistics about face suggestions.
+
+**Response** `200 OK`
+
+```json
+{
+	"total": 100,
+	"pending": 45,
+	"accepted": 40,
+	"rejected": 10,
+	"expired": 5,
+	"reviewed": 50,
+	"acceptanceRate": 80.0,
+	"topPersonsWithPending": [
+		{
+			"personId": "550e8400-e29b-41d4-a716-446655440000",
+			"name": "John Smith",
+			"pendingCount": 15
+		},
+		{
+			"personId": "660e8400-e29b-41d4-a716-446655440111",
+			"name": "Jane Doe",
+			"pendingCount": 12
+		}
+	]
+}
+```
+
+#### `GET /api/v1/faces/suggestions/{id}`
+
+Get a single face suggestion by ID.
+
+**Path Parameters**
+
+| Parameter | Type    | Required | Description       |
+| --------- | ------- | -------- | ----------------- |
+| `id`      | integer | Yes      | Suggestion ID     |
+
+**Response** `200 OK` - FaceSuggestion object
+
+**Response** `404 Not Found`
+
+```json
+{
+	"error": {
+		"code": "SUGGESTION_NOT_FOUND",
+		"message": "Suggestion with ID 123 not found"
+	}
+}
+```
+
+#### `POST /api/v1/faces/suggestions/{id}/accept`
+
+Accept a face suggestion and assign the face to the suggested person.
+
+**Path Parameters**
+
+| Parameter | Type    | Required | Description       |
+| --------- | ------- | -------- | ----------------- |
+| `id`      | integer | Yes      | Suggestion ID     |
+
+**Response** `200 OK`
+
+```json
+{
+	"id": 1,
+	"faceInstanceId": "123e4567-e89b-12d3-a456-426614174000",
+	"suggestedPersonId": "550e8400-e29b-41d4-a716-446655440000",
+	"confidence": 0.92,
+	"sourceFaceId": "789e0123-e89b-12d3-a456-426614174456",
+	"status": "accepted",
+	"createdAt": "2025-12-25T10:00:00Z",
+	"reviewedAt": "2025-12-25T10:15:00Z",
+	"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
+	"personName": "John Smith"
+}
+```
+
+**Response** `404 Not Found` - Suggestion not found
+
+**Response** `409 Conflict` - Suggestion already reviewed
+
+```json
+{
+	"error": {
+		"code": "SUGGESTION_ALREADY_REVIEWED",
+		"message": "Suggestion has already been accepted or rejected"
+	}
+}
+```
+
+#### `POST /api/v1/faces/suggestions/{id}/reject`
+
+Reject a face suggestion without assigning the face.
+
+**Path Parameters**
+
+| Parameter | Type    | Required | Description       |
+| --------- | ------- | -------- | ----------------- |
+| `id`      | integer | Yes      | Suggestion ID     |
+
+**Response** `200 OK`
+
+```json
+{
+	"id": 1,
+	"faceInstanceId": "123e4567-e89b-12d3-a456-426614174000",
+	"suggestedPersonId": "550e8400-e29b-41d4-a716-446655440000",
+	"confidence": 0.92,
+	"sourceFaceId": "789e0123-e89b-12d3-a456-426614174456",
+	"status": "rejected",
+	"createdAt": "2025-12-25T10:00:00Z",
+	"reviewedAt": "2025-12-25T10:15:00Z",
+	"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
+	"personName": "John Smith"
+}
+```
+
+**Response** `404 Not Found` - Suggestion not found
+
+**Response** `409 Conflict` - Suggestion already reviewed
+
+#### `POST /api/v1/faces/suggestions/bulk-action`
+
+Accept or reject multiple suggestions in a single request.
+
+**Request Body**
+
+```json
+{
+	"suggestionIds": [1, 2, 3, 4, 5],
+	"action": "accept"
+}
+```
+
+| Field           | Type     | Required | Description                      |
+| --------------- | -------- | -------- | -------------------------------- |
+| `suggestionIds` | integer[] | Yes     | Array of suggestion IDs          |
+| `action`        | string   | Yes      | Action: "accept" or "reject"     |
+
+**Response** `200 OK`
+
+```json
+{
+	"successCount": 4,
+	"failedCount": 1,
+	"errors": [
+		{
+			"suggestionId": 3,
+			"reason": "Suggestion has already been reviewed"
+		}
+	]
+}
+```
+
+**Response** `400 Bad Request` - Invalid request
+
+```json
+{
+	"error": {
+		"code": "VALIDATION_ERROR",
+		"message": "Invalid action. Must be 'accept' or 'reject'"
+	}
+}
+```
+
+---
+
 ### Jobs
 
 Background job management for long-running operations.
@@ -881,22 +1154,24 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code                     | HTTP Status | Description                          |
-| ------------------------ | ----------- | ------------------------------------ |
-| `VALIDATION_ERROR`       | 400         | Invalid request parameters           |
-| `ASSET_NOT_FOUND`        | 404         | Asset ID does not exist              |
-| `CATEGORY_NOT_FOUND`     | 404         | Category ID does not exist           |
-| `PERSON_NOT_FOUND`       | 404         | Person ID does not exist             |
-| `FACE_NOT_FOUND`         | 404         | Face ID does not exist               |
-| `JOB_NOT_FOUND`          | 404         | Job ID does not exist                |
-| `CATEGORY_NAME_EXISTS`   | 409         | Category name already exists         |
-| `PERSON_NAME_EXISTS`     | 409         | Person name already exists           |
-| `CATEGORY_HAS_SESSIONS`  | 409         | Category has training sessions       |
-| `CATEGORY_IS_DEFAULT`    | 400         | Cannot delete default category       |
-| `JOB_NOT_CANCELLABLE`    | 409         | Job already completed                |
-| `MERGE_CONFLICT`         | 409         | Cannot merge (e.g., same person)     |
-| `RATE_LIMITED`           | 429         | Too many requests                    |
-| `INTERNAL_ERROR`         | 500         | Server error                         |
+| Code                         | HTTP Status | Description                          |
+| ---------------------------- | ----------- | ------------------------------------ |
+| `VALIDATION_ERROR`           | 400         | Invalid request parameters           |
+| `ASSET_NOT_FOUND`            | 404         | Asset ID does not exist              |
+| `CATEGORY_NOT_FOUND`         | 404         | Category ID does not exist           |
+| `PERSON_NOT_FOUND`           | 404         | Person ID does not exist             |
+| `FACE_NOT_FOUND`             | 404         | Face ID does not exist               |
+| `JOB_NOT_FOUND`              | 404         | Job ID does not exist                |
+| `SUGGESTION_NOT_FOUND`       | 404         | Suggestion ID does not exist         |
+| `CATEGORY_NAME_EXISTS`       | 409         | Category name already exists         |
+| `PERSON_NAME_EXISTS`         | 409         | Person name already exists           |
+| `CATEGORY_HAS_SESSIONS`      | 409         | Category has training sessions       |
+| `CATEGORY_IS_DEFAULT`        | 400         | Cannot delete default category       |
+| `JOB_NOT_CANCELLABLE`        | 409         | Job already completed                |
+| `MERGE_CONFLICT`             | 409         | Cannot merge (e.g., same person)     |
+| `SUGGESTION_ALREADY_REVIEWED`| 409         | Suggestion already accepted/rejected |
+| `RATE_LIMITED`               | 429         | Too many requests                    |
+| `INTERNAL_ERROR`             | 500         | Server error                         |
 
 ---
 
@@ -988,6 +1263,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes. |
 | 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema |
 | 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |
 | 1.0.0   | 2024-12-19 | Initial contract freeze                                                                      |
