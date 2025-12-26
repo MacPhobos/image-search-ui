@@ -4,12 +4,19 @@
 	import { listPersons } from '$lib/api/faces';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
+	import { tid } from '$lib/testing/testid';
 
 	interface Props {
 		onFilterChange: (filters: SearchFilters) => void;
+		testId?: string;
 	}
 
-	let { onFilterChange }: Props = $props();
+	let { onFilterChange, testId = 'filters-panel' }: Props = $props();
+
+	// Derived scoped test ID generator (reactive to testId changes)
+	const t = $derived((...segments: string[]) =>
+		segments.length === 0 ? testId : tid(testId, ...segments)
+	);
 
 	// Date filters
 	let dateFrom = $state('');
@@ -37,8 +44,8 @@
 	});
 
 	// Selected persons for display
-	let selectedPersons = $derived.by<Person[]>(() =>
-		persons?.filter((p) => selectedPersonIds.includes(p.id)) ?? []
+	let selectedPersons = $derived.by<Person[]>(
+		() => persons?.filter((p) => selectedPersonIds.includes(p.id)) ?? []
 	);
 
 	// Load data on mount
@@ -134,28 +141,52 @@
 	}
 </script>
 
-<aside class="filters-panel">
-	<div class="filters-header">
+<aside class="filters-panel" data-testid={t()}>
+	<div class="filters-header" data-testid={t('header')}>
 		<h2>Filters</h2>
 		{#if hasActiveFilters()}
-			<button type="button" class="clear-btn" onclick={handleClearFilters}>Clear all</button>
+			<button
+				type="button"
+				class="clear-btn"
+				onclick={handleClearFilters}
+				data-testid={t('btn-clear')}
+			>
+				Clear all
+			</button>
 		{/if}
 	</div>
 
 	<div class="filter-group">
 		<label for="dateFrom">Date From</label>
-		<input type="date" id="dateFrom" bind:value={dateFrom} class="date-input" />
+		<input
+			type="date"
+			id="dateFrom"
+			bind:value={dateFrom}
+			class="date-input"
+			data-testid={t('input-date-from')}
+		/>
 	</div>
 
 	<div class="filter-group">
 		<label for="dateTo">Date To</label>
-		<input type="date" id="dateTo" bind:value={dateTo} class="date-input" />
+		<input
+			type="date"
+			id="dateTo"
+			bind:value={dateTo}
+			class="date-input"
+			data-testid={t('input-date-to')}
+		/>
 	</div>
 
 	<div class="filter-group">
 		<label for="categoryFilter">Category</label>
 		{#if categoriesLoading}
-			<select id="categoryFilter" disabled class="disabled-select">
+			<select
+				id="categoryFilter"
+				disabled
+				class="disabled-select"
+				data-testid={t('select-category')}
+			>
 				<option value="">Loading categories...</option>
 			</select>
 		{:else}
@@ -163,6 +194,7 @@
 				id="categoryFilter"
 				value={categoryId?.toString() ?? ''}
 				onchange={handleCategoryChange}
+				data-testid={t('select-category')}
 			>
 				<option value="">All categories</option>
 				{#each categories as category (category.id)}

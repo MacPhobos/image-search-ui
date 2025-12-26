@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DeleteAllDataModal from './DeleteAllDataModal.svelte';
+	import PersonDataManagement from './PersonDataManagement.svelte';
 	import type { DeleteAllDataResponse } from '$lib/api/admin';
 
 	let showDeleteModal = $state(false);
@@ -59,7 +60,9 @@
 					<div class="stat-item">
 						<span class="stat-label">Vectors Deleted:</span>
 						<span class="stat-value"
-							>{getTotalVectorsDeleted(lastDeletionResult.qdrantCollectionsDeleted).toLocaleString()}</span
+							>{getTotalVectorsDeleted(
+								lastDeletionResult.qdrantCollectionsDeleted
+							).toLocaleString()}</span
 						>
 					</div>
 					<div class="stat-item">
@@ -81,6 +84,9 @@
 			</div>
 		</div>
 	{/if}
+
+	<!-- Person Data Management section -->
+	<PersonDataManagement />
 
 	<div class="danger-zone">
 		<div class="danger-header">

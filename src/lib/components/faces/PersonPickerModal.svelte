@@ -24,7 +24,8 @@
 		persons.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
 	);
 	let canConfirm = $derived(
-		(mode === 'existing' && selectedPerson !== null) || (mode === 'new' && newPersonName.trim().length > 0)
+		(mode === 'existing' && selectedPerson !== null) ||
+			(mode === 'new' && newPersonName.trim().length > 0)
 	);
 
 	// Load persons when modal opens

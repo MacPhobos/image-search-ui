@@ -27,9 +27,7 @@
 
 	// Derived
 	let hasSelection = $derived(selectedPhotoIds.size > 0);
-	let allSelected = $derived(
-		selectedPhotoIds.size === photos.length && photos.length > 0
-	);
+	let allSelected = $derived(selectedPhotoIds.size === photos.length && photos.length > 0);
 	let totalPages = $derived(Math.ceil(total / pageSize));
 
 	// Load photos when component mounts or personId/page changes
@@ -104,9 +102,7 @@
 		}
 	}
 
-	async function handleBulkMove(
-		destination: { toPersonId: string } | { toPersonName: string }
-	) {
+	async function handleBulkMove(destination: { toPersonId: string } | { toPersonName: string }) {
 		bulkActionInProgress = true;
 		showMoveModal = false;
 
@@ -154,7 +150,13 @@
 		</div>
 	{:else if error}
 		<div class="error-state" role="alert">
-			<svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				class="error-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="12" cy="12" r="10" />
 				<line x1="12" y1="8" x2="12" y2="12" />
 				<line x1="12" y1="16" x2="12.01" y2="16" />
@@ -190,7 +192,9 @@
 					>
 						<img src={getImageUrl(photo.thumbnailUrl)} alt="" loading="lazy" />
 						<div class="badges">
-							<span class="face-count-badge">{photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}</span>
+							<span class="face-count-badge"
+								>{photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}</span
+							>
 							{#if photo.hasNonPersonFaces}
 								<span class="mixed-badge">Mixed</span>
 							{/if}
@@ -247,9 +251,7 @@
 				>
 					Move to...
 				</button>
-				<button type="button" class="action-btn clear-btn" onclick={clearSelection}>
-					Clear
-				</button>
+				<button type="button" class="action-btn clear-btn" onclick={clearSelection}> Clear </button>
 			</div>
 		</div>
 	{/if}

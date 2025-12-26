@@ -33,9 +33,7 @@
 	let error = $state<string | null>(null);
 
 	// Get all pending suggestion IDs in this group
-	const pendingSuggestions = $derived(
-		group.suggestions.filter((s) => s.status === 'pending')
-	);
+	const pendingSuggestions = $derived(group.suggestions.filter((s) => s.status === 'pending'));
 	const pendingIds = $derived(pendingSuggestions.map((s) => s.id));
 
 	// Check if all pending suggestions in this group are selected
@@ -45,9 +43,7 @@
 
 	// Check if some (but not all) pending suggestions are selected
 	const someSelected = $derived(
-		pendingIds.length > 0 &&
-			!allSelected &&
-			pendingIds.some((id) => selectedIds.has(id))
+		pendingIds.length > 0 && !allSelected && pendingIds.some((id) => selectedIds.has(id))
 	);
 
 	function handleSelectAll(e: Event) {
@@ -146,7 +142,7 @@
 			<SuggestionThumbnail
 				{suggestion}
 				selected={selectedIds.has(suggestion.id)}
-				onSelect={onSelect}
+				{onSelect}
 				onClick={() => onThumbnailClick(suggestion)}
 			/>
 		{/each}

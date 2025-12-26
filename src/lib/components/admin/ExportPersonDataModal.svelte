@@ -1,38 +1,49 @@
 <script lang="ts">
-	import { deleteAllData, type DeleteAllDataResponse } from '$lib/api/admin';
+	import { exportPersonMetadata, type PersonMetadataExport } from '$lib/api/admin';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
-		onSuccess: (response: DeleteAllDataResponse) => void;
+		onSuccess: (result: PersonMetadataExport) => void;
 	}
 
 	let { open, onClose, onSuccess }: Props = $props();
 
-	const REQUIRED_TEXT = 'DELETE ALL DATA';
-
-	let confirmationText = $state('');
-	let reason = $state('');
+	let maxFacesPerPerson = $state(100);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
-	let canConfirm = $derived(confirmationText === REQUIRED_TEXT);
+	let isValidInput = $derived(maxFacesPerPerson >= 1 && maxFacesPerPerson <= 500);
 
-	async function handleDelete() {
-		if (!canConfirm) return;
+	function downloadJson(data: unknown, filename: string): void {
+		const blob = new Blob([JSON.stringify(data, null, 2)], {
+			type: 'application/json'
+		});
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	}
+
+	async function handleExport() {
+		if (!isValidInput) return;
 
 		loading = true;
 		error = null;
 		try {
-			const response = await deleteAllData({
-				confirm: true,
-				confirmationText,
-				reason: reason || undefined
-			});
-			onSuccess(response);
-			// Reset form
-			confirmationText = '';
-			reason = '';
+			const result = await exportPersonMetadata(maxFacesPerPerson);
+
+			// Trigger file download
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+			const filename = `person-metadata-${timestamp}.json`;
+			downloadJson(result, filename);
+
+			// Notify parent
+			onSuccess(result);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'An error occurred';
 		} finally {
@@ -42,8 +53,6 @@
 
 	function handleCancel() {
 		if (loading) return;
-		confirmationText = '';
-		reason = '';
 		error = null;
 		onClose();
 	}
@@ -65,56 +74,51 @@
 			tabindex="-1"
 		>
 			<div class="modal-header">
-				<h2>Delete All Application Data</h2>
+				<h2>Export Person Data</h2>
 				<button class="close-btn" onclick={handleCancel} disabled={loading}>&times;</button>
 			</div>
 
 			<div class="modal-body">
-				<div class="warning-banner">
-					<span class="warning-icon">⚠️</span>
-					<div class="warning-content">
-						<p class="warning-title">Destructive Action - Cannot Be Undone</p>
-						<p class="warning-text">This will permanently delete ALL application data including:</p>
-						<ul class="warning-list">
-							<li>All vector embeddings in Qdrant (main + faces collections)</li>
-							<li>All database records (images, training sessions, categories, etc.)</li>
-							<li>All deletion logs and metadata</li>
+				<div class="info-banner">
+					<span class="info-icon">ℹ️</span>
+					<div class="info-content">
+						<p class="info-title">Export Person-to-Face Mappings</p>
+						<p class="info-text">
+							This will export all persons and their associated face-to-image mappings as a JSON
+							file. The export includes:
+						</p>
+						<ul class="info-list">
+							<li>Person names and statuses</li>
+							<li>Face bounding boxes and image paths</li>
+							<li>Detection confidence and quality scores</li>
 						</ul>
-						<p class="warning-text">
-							<strong>Only the database schema will be preserved.</strong>
+						<p class="info-text">
+							Use this for backup or to migrate data between environments.
 						</p>
 					</div>
 				</div>
 
 				<div class="form-group">
-					<label for="confirmation-input">
-						Type <strong>{REQUIRED_TEXT}</strong> to confirm:
+					<label for="max-faces-input">
+						Maximum faces per person (1-500):
 					</label>
 					<input
-						id="confirmation-input"
-						type="text"
-						bind:value={confirmationText}
+						id="max-faces-input"
+						type="number"
+						bind:value={maxFacesPerPerson}
 						class="form-input"
-						class:invalid={confirmationText && !canConfirm}
+						class:invalid={!isValidInput}
 						disabled={loading}
-						placeholder={REQUIRED_TEXT}
-						autocomplete="off"
+						min="1"
+						max="500"
+						step="1"
 					/>
-					{#if confirmationText && !canConfirm}
-						<p class="validation-error">Text must exactly match "{REQUIRED_TEXT}"</p>
+					{#if !isValidInput}
+						<p class="validation-error">Must be between 1 and 500</p>
 					{/if}
-				</div>
-
-				<div class="form-group">
-					<label for="reason-input">Reason (optional):</label>
-					<textarea
-						id="reason-input"
-						bind:value={reason}
-						class="form-textarea"
-						disabled={loading}
-						rows="3"
-						placeholder="Why are you deleting all data? (e.g., Development reset, Testing)"
-					></textarea>
+					<p class="help-text">
+						Limits the number of face mappings exported per person. Default is 100.
+					</p>
 				</div>
 
 				{#if error}
@@ -129,8 +133,8 @@
 				<button class="btn btn-secondary" onclick={handleCancel} disabled={loading}>
 					Cancel
 				</button>
-				<button class="btn btn-danger" onclick={handleDelete} disabled={loading || !canConfirm}>
-					{loading ? 'Deleting...' : 'Delete All Data'}
+				<button class="btn btn-primary" onclick={handleExport} disabled={loading || !isValidInput}>
+					{loading ? 'Exporting...' : 'Export'}
 				</button>
 			</div>
 		</div>
@@ -173,7 +177,7 @@
 	.modal-header h2 {
 		margin: 0;
 		font-size: 1.25rem;
-		color: #dc2626;
+		color: #1f2937;
 	}
 
 	.close-btn {
@@ -207,48 +211,48 @@
 		overflow-y: auto;
 	}
 
-	.warning-banner {
+	.info-banner {
 		display: flex;
 		gap: 1rem;
 		padding: 1rem;
-		background-color: #fee2e2;
-		border: 2px solid #dc2626;
+		background-color: #eff6ff;
+		border: 2px solid #3b82f6;
 		border-radius: 6px;
 		margin-bottom: 1.5rem;
 	}
 
-	.warning-icon {
+	.info-icon {
 		font-size: 1.5rem;
 		flex-shrink: 0;
 	}
 
-	.warning-content {
+	.info-content {
 		flex: 1;
 	}
 
-	.warning-title {
+	.info-title {
 		margin: 0 0 0.5rem 0;
 		font-weight: 700;
 		font-size: 0.95rem;
-		color: #991b1b;
+		color: #1e40af;
 	}
 
-	.warning-text {
+	.info-text {
 		margin: 0 0 0.5rem 0;
 		font-size: 0.875rem;
-		color: #7f1d1d;
+		color: #1e3a8a;
 		line-height: 1.5;
 	}
 
-	.warning-list {
+	.info-list {
 		margin: 0.5rem 0;
 		padding-left: 1.25rem;
 		font-size: 0.875rem;
-		color: #7f1d1d;
+		color: #1e3a8a;
 		line-height: 1.6;
 	}
 
-	.warning-list li {
+	.info-list li {
 		margin-bottom: 0.25rem;
 	}
 
@@ -264,8 +268,7 @@
 		color: #374151;
 	}
 
-	.form-input,
-	.form-textarea {
+	.form-input {
 		width: 100%;
 		padding: 0.625rem 0.875rem;
 		border: 1px solid #d1d5db;
@@ -276,8 +279,7 @@
 		font-family: inherit;
 	}
 
-	.form-input:focus,
-	.form-textarea:focus {
+	.form-input:focus {
 		outline: none;
 		border-color: #3b82f6;
 		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -292,16 +294,18 @@
 		box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 	}
 
-	.form-textarea {
-		resize: vertical;
-		min-height: 4rem;
-	}
-
 	.validation-error {
 		margin: 0.5rem 0 0 0;
 		font-size: 0.8rem;
 		color: #dc2626;
 		font-weight: 500;
+	}
+
+	.help-text {
+		margin: 0.5rem 0 0 0;
+		font-size: 0.8rem;
+		color: #6b7280;
+		line-height: 1.4;
 	}
 
 	.error-message {
@@ -337,13 +341,13 @@
 		cursor: not-allowed;
 	}
 
-	.btn-danger {
-		background-color: #dc2626;
+	.btn-primary {
+		background-color: #3b82f6;
 		color: white;
 	}
 
-	.btn-danger:hover:not(:disabled) {
-		background-color: #b91c1c;
+	.btn-primary:hover:not(:disabled) {
+		background-color: #2563eb;
 		transform: translateY(-1px);
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 	}

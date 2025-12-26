@@ -101,9 +101,7 @@
 	<header class="page-header">
 		<div class="header-content">
 			<h1>People</h1>
-			<p class="subtitle">
-				Browse and manage identified people in your photos.
-			</p>
+			<p class="subtitle">Browse and manage identified people in your photos.</p>
 		</div>
 		<a href="/faces/clusters" class="clusters-link">
 			View Clusters
@@ -116,7 +114,13 @@
 	<!-- Filters -->
 	<div class="filters-bar">
 		<div class="search-container">
-			<svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				class="search-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="11" cy="11" r="8" />
 				<path d="m21 21-4.35-4.35" />
 			</svg>
@@ -149,19 +153,29 @@
 			</div>
 		{:else if error}
 			<div class="error-state" role="alert">
-				<svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="error-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="12" cy="12" r="10" />
 					<line x1="12" y1="8" x2="12" y2="12" />
 					<line x1="12" y1="16" x2="12.01" y2="16" />
 				</svg>
 				<p>{error}</p>
-				<button type="button" class="retry-button" onclick={handleRetry}>
-					Try Again
-				</button>
+				<button type="button" class="retry-button" onclick={handleRetry}> Try Again </button>
 			</div>
 		{:else if filteredPersons.length === 0}
 			<div class="empty-state">
-				<svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="empty-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="12" cy="8" r="4" />
 					<path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
 				</svg>
@@ -256,7 +270,9 @@
 		font-size: 0.95rem;
 		font-weight: 500;
 		text-decoration: none;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 
 	.clusters-link:hover {
@@ -466,7 +482,9 @@
 		font-size: 1rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 
 	.load-more-button:hover:not(:disabled) {

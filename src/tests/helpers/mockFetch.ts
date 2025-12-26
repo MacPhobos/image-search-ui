@@ -72,7 +72,11 @@ export function mockResponse(url: string, response: unknown, status: number = 20
  * @param errorOrStatus - Error object, error message string, or HTTP status code
  * @param dataOrStatus - Response data (for status code) or status code (for message)
  */
-export function mockError(url: string, errorOrStatus: Error | string | number, dataOrStatus?: unknown): void {
+export function mockError(
+	url: string,
+	errorOrStatus: Error | string | number,
+	dataOrStatus?: unknown
+): void {
 	if (errorOrStatus instanceof Error) {
 		// mockError(url, new Error())
 		mockRegistry[url] = {

@@ -48,13 +48,9 @@
 		const groupArray: SuggestionGroup[] = [];
 		for (const [personId, groupSuggestions] of groups) {
 			// Sort by confidence descending
-			const sortedSuggestions = [...groupSuggestions].sort(
-				(a, b) => b.confidence - a.confidence
-			);
+			const sortedSuggestions = [...groupSuggestions].sort((a, b) => b.confidence - a.confidence);
 
-			const pendingCount = sortedSuggestions.filter(
-				(s) => s.status === 'pending'
-			).length;
+			const pendingCount = sortedSuggestions.filter((s) => s.status === 'pending').length;
 
 			groupArray.push({
 				personId,
@@ -76,11 +72,7 @@
 		isLoading = true;
 		error = null;
 		try {
-			const response = await listSuggestions(
-				page,
-				pageSize,
-				statusFilter || undefined
-			);
+			const response = await listSuggestions(page, pageSize, statusFilter || undefined);
 			suggestions = response.items;
 			total = response.total;
 		} catch (e) {
@@ -115,9 +107,7 @@
 	}
 
 	function selectAll() {
-		const pendingIds = suggestions
-			.filter((s) => s.status === 'pending')
-			.map((s) => s.id);
+		const pendingIds = suggestions.filter((s) => s.status === 'pending').map((s) => s.id);
 		selectedIds = new Set(pendingIds);
 	}
 
@@ -196,9 +186,7 @@
 	});
 
 	const totalPages = $derived(Math.ceil(total / pageSize));
-	const pendingCount = $derived(
-		suggestions.filter((s) => s.status === 'pending').length
-	);
+	const pendingCount = $derived(suggestions.filter((s) => s.status === 'pending').length);
 </script>
 
 <svelte:head>
@@ -214,18 +202,10 @@
 	</div>
 
 	<!-- Filters and Bulk Actions -->
-	<div
-		class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg"
-	>
+	<div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
 		<div class="flex items-center gap-2">
-			<label for="status" class="text-sm font-medium text-gray-700"
-				>Status:</label
-			>
-			<select
-				id="status"
-				bind:value={statusFilter}
-				class="rounded border-gray-300 text-sm"
-			>
+			<label for="status" class="text-sm font-medium text-gray-700">Status:</label>
+			<select id="status" bind:value={statusFilter} class="rounded border-gray-300 text-sm">
 				<option value="">All</option>
 				<option value="pending">Pending</option>
 				<option value="accepted">Accepted</option>
@@ -238,10 +218,7 @@
 				<button onclick={selectAll} class="text-sm text-blue-600 hover:underline">
 					Select All ({pendingCount})
 				</button>
-				<button
-					onclick={selectNone}
-					class="text-sm text-gray-600 hover:underline"
-				>
+				<button onclick={selectNone} class="text-sm text-gray-600 hover:underline">
 					Select None
 				</button>
 			</div>
@@ -269,18 +246,14 @@
 	</div>
 
 	{#if error}
-		<div
-			class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
-		>
+		<div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
 			{error}
 		</div>
 	{/if}
 
 	{#if isLoading}
 		<div class="flex justify-center py-12">
-			<div
-				class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-			></div>
+			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
 		</div>
 	{:else if suggestions.length === 0}
 		<div class="text-center py-12 text-gray-500">No suggestions found</div>

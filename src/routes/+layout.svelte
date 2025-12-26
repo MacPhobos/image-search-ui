@@ -2,12 +2,21 @@
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import { checkHealth } from '$lib/api/client';
+	import { tid } from '$lib/testing/testid';
+	import { setViewId } from '$lib/dev/viewId';
 
 	interface Props {
 		children: Snippet;
 	}
 
 	let { children }: Props = $props();
+
+	// DEV: Set view ID for DevOverlay breadcrumb
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			return setViewId('layout:/');
+		}
+	});
 
 	type HealthStatus = 'checking' | 'healthy' | 'unhealthy';
 	let healthStatus = $state<HealthStatus>('checking');
@@ -29,10 +38,10 @@
 	}
 </script>
 
-<div class="app">
-	<header>
+<div class="app" data-testid={tid('layout', 'root')}>
+	<header data-testid={tid('layout', 'header')}>
 		<h1>Mac'Image Search</h1>
-		<nav class="nav">
+		<nav class="nav" data-testid={tid('layout', 'nav')}>
 			<a href="/">Search</a>
 			<a href="/faces/clusters">Faces</a>
 			<a href="/faces/sessions">Face Sessions</a>
@@ -43,7 +52,7 @@
 			<a href="/vectors">Vectors</a>
 			<a href="/admin">Admin</a>
 		</nav>
-		<div class="health-indicator">
+		<div class="health-indicator" data-testid={tid('layout', 'health')}>
 			<span class="health-dot health-{healthStatus}"></span>
 			<span class="health-text">
 				{#if healthStatus === 'checking'}
@@ -57,14 +66,21 @@
 		</div>
 	</header>
 
-	<main>
+	<main data-testid={tid('layout', 'main')}>
 		{@render children()}
 	</main>
 
-	<footer>
+	<footer data-testid={tid('layout', 'footer')}>
 		<p>&copy; 2025 Image Search. Licensed under GPLv3.</p>
 	</footer>
 </div>
+
+<!-- DEV-ONLY: Development overlay -->
+{#if import.meta.env.DEV}
+	{#await import('$lib/dev/DevOverlay.svelte') then { default: DevOverlay }}
+		<DevOverlay />
+	{/await}
+{/if}
 
 <style>
 	:global(body) {

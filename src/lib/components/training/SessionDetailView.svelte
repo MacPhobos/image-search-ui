@@ -66,9 +66,7 @@
 		try {
 			const response = await listFaceDetectionSessions(1, 10);
 			// Find session linked to this training session
-			faceSession = response.items.find(
-				s => s.trainingSessionId === session.id
-			) ?? null;
+			faceSession = response.items.find((s) => s.trainingSessionId === session.id) ?? null;
 		} catch (err) {
 			console.error('Failed to fetch face detection session:', err);
 			faceSession = null;

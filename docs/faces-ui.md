@@ -5,6 +5,7 @@ This document describes the Face UI feature in the Image Search application, whi
 ## Overview
 
 The Face UI provides:
+
 - **Face Clusters**: Browse groups of similar faces detected in your photos
 - **Person Labeling**: Assign names to face clusters to identify people
 - **People Management**: View and manage identified people
@@ -12,12 +13,12 @@ The Face UI provides:
 
 ## Routes
 
-| Route | Description |
-|-------|-------------|
-| `/faces/clusters` | Browse all face clusters (unlabeled and labeled) |
-| `/faces/clusters/[clusterId]` | View and label a specific cluster |
-| `/people` | Browse all identified people |
-| `/people/[personId]` | View a person's profile and photos |
+| Route                         | Description                                      |
+| ----------------------------- | ------------------------------------------------ |
+| `/faces/clusters`             | Browse all face clusters (unlabeled and labeled) |
+| `/faces/clusters/[clusterId]` | View and label a specific cluster                |
+| `/people`                     | Browse all identified people                     |
+| `/people/[personId]`          | View a person's profile and photos               |
 
 ## Features
 
@@ -97,12 +98,12 @@ POST /api/v1/faces/persons/{personId}/merge  { intoPersonId: string }
 
 ### Face Components (`src/lib/components/faces/`)
 
-| Component | Description |
-|-----------|-------------|
-| `FaceThumbnail.svelte` | Displays a face with optional bbox cropping |
-| `ClusterCard.svelte` | Card showing cluster summary with sample faces |
-| `PersonCard.svelte` | Card showing person info |
-| `LabelClusterModal.svelte` | Modal for labeling clusters with person names |
+| Component                  | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `FaceThumbnail.svelte`     | Displays a face with optional bbox cropping    |
+| `ClusterCard.svelte`       | Card showing cluster summary with sample faces |
+| `PersonCard.svelte`        | Card showing person info                       |
+| `LabelClusterModal.svelte` | Modal for labeling clusters with person names  |
 
 ### API Client (`src/lib/api/faces.ts`)
 
@@ -110,19 +111,19 @@ Functions available:
 
 ```typescript
 // Clusters
-listClusters(page, pageSize, includeLabeled)
-getCluster(clusterId)
-labelCluster(clusterId, name)
-splitCluster(clusterId, minClusterSize)
+listClusters(page, pageSize, includeLabeled);
+getCluster(clusterId);
+labelCluster(clusterId, name);
+splitCluster(clusterId, minClusterSize);
 
 // Persons
-listPersons(page, pageSize, status)
-mergePersons(personId, intoPersonId)
+listPersons(page, pageSize, status);
+mergePersons(personId, intoPersonId);
 
 // Face Detection
-detectFaces(assetId, minConfidence, minFaceSize)
-triggerClustering(qualityThreshold, maxFaces, minClusterSize)
-getFacesForAsset(assetId)
+detectFaces(assetId, minConfidence, minFaceSize);
+triggerClustering(qualityThreshold, maxFaces, minClusterSize);
+getFacesForAsset(assetId);
 ```
 
 ## Configuration

@@ -42,9 +42,7 @@ describe('Vectors Management Page', () => {
 		vi.clearAllMocks();
 
 		// Default mock for categories
-		(getCategories as Mock).mockResolvedValue(
-			createCategoryResponse(createMultipleCategories(3))
-		);
+		(getCategories as Mock).mockResolvedValue(createCategoryResponse(createMultipleCategories(3)));
 
 		// Default mocks for vector APIs
 		(getDirectoryStats as Mock).mockResolvedValue(
@@ -59,9 +57,7 @@ describe('Vectors Management Page', () => {
 		render(VectorsPage);
 
 		expect(screen.getByText('Vector Management')).toBeInTheDocument();
-		expect(
-			screen.getByText(/manage qdrant vector database/i)
-		).toBeInTheDocument();
+		expect(screen.getByText(/manage qdrant vector database/i)).toBeInTheDocument();
 	});
 
 	it('shows directory statistics section', async () => {
@@ -351,9 +347,7 @@ describe('Vectors Management Page', () => {
 	});
 
 	it('handles empty directory stats gracefully', async () => {
-		(getDirectoryStats as Mock).mockResolvedValue(
-			createDirectoryStatsResponse([])
-		);
+		(getDirectoryStats as Mock).mockResolvedValue(createDirectoryStatsResponse([]));
 
 		render(VectorsPage);
 
@@ -363,9 +357,7 @@ describe('Vectors Management Page', () => {
 	});
 
 	it('handles empty deletion logs gracefully', async () => {
-		(getDeletionLogs as Mock).mockResolvedValue(
-			createDeletionLogsResponse([])
-		);
+		(getDeletionLogs as Mock).mockResolvedValue(createDeletionLogsResponse([]));
 
 		render(VectorsPage);
 

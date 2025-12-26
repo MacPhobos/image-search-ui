@@ -1,14 +1,21 @@
 <script lang="ts">
 	import type { Category } from '$lib/api/categories';
 	import { createCategory } from '$lib/api/categories';
+	import { tid } from '$lib/testing/testid';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
 		onCreated: (category: Category) => void;
+		testId?: string;
 	}
 
-	let { open, onClose, onCreated }: Props = $props();
+	let { open, onClose, onCreated, testId = 'modal__category-create' }: Props = $props();
+
+	// Derived scoped test ID generator (reactive to testId changes)
+	const t = $derived((...segments: string[]) =>
+		segments.length === 0 ? testId : tid(testId, ...segments)
+	);
 
 	let name = $state('');
 	let description = $state('');
@@ -66,20 +73,23 @@
 </script>
 
 {#if open}
-	<div class="modal-overlay" onclick={handleClose} role="presentation">
+	<div class="modal-overlay" onclick={handleClose} role="presentation" data-testid={t('overlay')}>
 		<div
 			class="modal-content"
 			onclick={(e) => e.stopPropagation()}
 			role="dialog"
 			aria-modal="true"
 			tabindex="-1"
+			data-testid={t()}
 		>
-			<div class="modal-header">
+			<div class="modal-header" data-testid={t('header')}>
 				<h2>Create Category</h2>
-				<button class="close-btn" onclick={handleClose}>&times;</button>
+				<button class="close-btn" onclick={handleClose} data-testid={t('btn-close')}>
+					&times;
+				</button>
 			</div>
 
-			<div class="modal-body">
+			<div class="modal-body" data-testid={t('body')}>
 				<form
 					onsubmit={(e) => {
 						e.preventDefault();
@@ -98,6 +108,7 @@
 							class="form-input"
 							disabled={loading}
 							required
+							data-testid={t('input-name')}
 						/>
 					</div>
 
@@ -110,6 +121,7 @@
 							class="form-textarea"
 							disabled={loading}
 							rows="3"
+							data-testid={t('input-description')}
 						/>
 					</div>
 
@@ -140,16 +152,28 @@
 					</div>
 
 					{#if error}
-						<div class="error-message" role="alert">
+						<div class="error-message" role="alert" data-testid={t('error')}>
 							{error}
 						</div>
 					{/if}
 				</form>
 			</div>
 
-			<div class="modal-footer">
-				<button class="btn btn-secondary" onclick={handleClose} disabled={loading}> Cancel </button>
-				<button class="btn btn-primary" onclick={handleSubmit} disabled={loading}>
+			<div class="modal-footer" data-testid={t('footer')}>
+				<button
+					class="btn btn-secondary"
+					onclick={handleClose}
+					disabled={loading}
+					data-testid={t('btn-cancel')}
+				>
+					Cancel
+				</button>
+				<button
+					class="btn btn-primary"
+					onclick={handleSubmit}
+					disabled={loading}
+					data-testid={t('btn-submit')}
+				>
 					{loading ? 'Creating...' : 'Create Category'}
 				</button>
 			</div>

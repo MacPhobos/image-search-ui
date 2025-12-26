@@ -272,7 +272,9 @@
 		align-items: center;
 		justify-content: center;
 		color: #666;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 
 	.close-button:hover {
@@ -444,7 +446,9 @@
 		font-size: 0.95rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background-color 0.2s, opacity 0.2s;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
 	}
 
 	.cancel-button {

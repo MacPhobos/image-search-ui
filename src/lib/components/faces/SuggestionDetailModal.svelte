@@ -13,9 +13,7 @@
 
 	let isActionLoading = $state(false);
 
-	const confidencePercent = $derived(
-		suggestion ? Math.round(suggestion.confidence * 100) : 0
-	);
+	const confidencePercent = $derived(suggestion ? Math.round(suggestion.confidence * 100) : 0);
 	const confidenceColor = $derived(() => {
 		if (!suggestion) return '#94a3b8';
 		return suggestion.confidence >= 0.9
@@ -89,12 +87,7 @@
 		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
 			<header class="modal-header">
 				<h2 id="modal-title">Face Suggestion Details</h2>
-				<button
-					type="button"
-					class="close-button"
-					onclick={onClose}
-					aria-label="Close modal"
-				>
+				<button type="button" class="close-button" onclick={onClose} aria-label="Close modal">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<line x1="18" y1="6" x2="6" y2="18" />
 						<line x1="6" y1="6" x2="18" y2="18" />
@@ -205,7 +198,7 @@
 	.modal {
 		background: white;
 		border-radius: 12px;
-		max-width: 500px;
+		max-width: 800px;
 		width: 100%;
 		max-height: 90vh;
 		display: flex;
@@ -270,16 +263,17 @@
 	}
 
 	.face-image {
-		width: 200px;
-		height: 200px;
-		object-fit: cover;
+		max-width: 600px;
+		width: 100%;
+		height: auto;
+		object-fit: contain;
 		border-radius: 12px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	}
 
 	.image-placeholder {
-		width: 200px;
-		height: 200px;
+		width: 400px;
+		height: 400px;
 		border-radius: 12px;
 		background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
 		display: flex;
@@ -423,10 +417,13 @@
 			max-width: 100%;
 		}
 
-		.face-image,
+		.face-image {
+			max-width: 320px;
+		}
+
 		.image-placeholder {
-			width: 160px;
-			height: 160px;
+			width: 320px;
+			height: 320px;
 		}
 
 		.modal-footer {

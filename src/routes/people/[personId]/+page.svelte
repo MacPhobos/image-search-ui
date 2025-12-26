@@ -241,7 +241,13 @@
 		</div>
 	{:else if error}
 		<div class="error-state" role="alert">
-			<svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				class="error-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="12" cy="12" r="10" />
 				<line x1="12" y1="8" x2="12" y2="12" />
 				<line x1="12" y1="16" x2="12.01" y2="16" />
@@ -329,13 +335,10 @@
 						{#each photos as photo (photo.photoId)}
 							<article class="photo-card">
 								<div class="photo-image-container">
-									<img
-										src={photo.thumbnailUrl}
-										alt=""
-										loading="lazy"
-										class="photo-image"
-									/>
-									<span class="face-count-badge">{photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}</span>
+									<img src={photo.thumbnailUrl} alt="" loading="lazy" class="photo-image" />
+									<span class="face-count-badge"
+										>{photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}</span
+									>
 								</div>
 								<div class="photo-info">
 									<span class="photo-date">
@@ -397,8 +400,8 @@
 				{/if}
 
 				<p>
-					Select a person to merge <strong>{person.name}</strong> into.
-					All faces will be moved to the target person.
+					Select a person to merge <strong>{person.name}</strong> into. All faces will be moved to the
+					target person.
 				</p>
 
 				<div class="merge-targets">
@@ -424,7 +427,12 @@
 			</div>
 
 			<footer class="modal-footer">
-				<button type="button" class="cancel-button" onclick={handleCloseMergeModal} disabled={merging}>
+				<button
+					type="button"
+					class="cancel-button"
+					onclick={handleCloseMergeModal}
+					disabled={merging}
+				>
 					Cancel
 				</button>
 				<button

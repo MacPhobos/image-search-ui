@@ -43,7 +43,10 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('renders loading state initially', () => {
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', createMockPhotosResponse());
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			createMockPhotosResponse()
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -56,7 +59,10 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('displays photos after loading', async () => {
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', createMockPhotosResponse(3));
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			createMockPhotosResponse(3)
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -75,7 +81,10 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('shows empty state when no photos', async () => {
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', createMockPhotosResponse(0));
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			createMockPhotosResponse(0)
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -90,7 +99,11 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('shows error state on API failure', async () => {
-		mockError('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', 'Failed to load photos', 500);
+		mockError(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			'Failed to load photos',
+			500
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -107,7 +120,10 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('allows selecting and deselecting photos', async () => {
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', createMockPhotosResponse(3));
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			createMockPhotosResponse(3)
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -131,7 +147,10 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('select all toggles all photos', async () => {
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', createMockPhotosResponse(3));
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			createMockPhotosResponse(3)
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -167,7 +186,10 @@ describe('PersonPhotosTab', () => {
 		const response = createMockPhotosResponse(3);
 		response.total = 50; // More than pageSize (20)
 
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', response);
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			response
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -189,7 +211,10 @@ describe('PersonPhotosTab', () => {
 		response.items[0].hasNonPersonFaces = true;
 		response.items[0].faceCount = 3;
 
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', response);
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			response
+		);
 
 		render(PersonPhotosTab, {
 			props: {
@@ -206,7 +231,10 @@ describe('PersonPhotosTab', () => {
 	});
 
 	it('calls onPhotoClick when photo is clicked', async () => {
-		mockResponse('http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20', createMockPhotosResponse(1));
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/persons/person-123/photos?page=1&page_size=20',
+			createMockPhotosResponse(1)
+		);
 
 		const onPhotoClick = vi.fn();
 

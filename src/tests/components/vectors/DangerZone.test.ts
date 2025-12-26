@@ -31,9 +31,7 @@ describe('DangerZone', () => {
 		render(DangerZone, { props: { onOrphanCleanup, onFullReset } });
 
 		expect(screen.getByText(/reset all vectors/i)).toBeInTheDocument();
-		expect(
-			screen.getByText(/delete all vectors from the collection/i)
-		).toBeInTheDocument();
+		expect(screen.getByText(/delete all vectors from the collection/i)).toBeInTheDocument();
 	});
 
 	it('shows orphan cleanup details list', () => {

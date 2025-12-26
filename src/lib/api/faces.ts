@@ -292,7 +292,9 @@ export async function listClusters(
  * @param clusterId - The cluster ID
  */
 export async function getCluster(clusterId: string): Promise<ClusterDetailResponse> {
-	return apiRequest<ClusterDetailResponse>(`/api/v1/faces/clusters/${encodeURIComponent(clusterId)}`);
+	return apiRequest<ClusterDetailResponse>(
+		`/api/v1/faces/clusters/${encodeURIComponent(clusterId)}`
+	);
 }
 
 /**
@@ -531,7 +533,13 @@ export async function unassignFace(faceId: string): Promise<UnassignFaceResponse
 // ============ Face Detection Session Types ============
 
 /** Face detection session status. */
-export type FaceDetectionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'paused' | 'cancelled';
+export type FaceDetectionStatus =
+	| 'pending'
+	| 'processing'
+	| 'completed'
+	| 'failed'
+	| 'paused'
+	| 'cancelled';
 
 /** A face detection batch processing session. */
 export interface FaceDetectionSession {
@@ -603,16 +611,16 @@ export async function listFaceDetectionSessions(
 	if (status) {
 		params.set('status', status);
 	}
-	return apiRequest<FaceDetectionSessionListResponse>(`/api/v1/faces/sessions?${params.toString()}`);
+	return apiRequest<FaceDetectionSessionListResponse>(
+		`/api/v1/faces/sessions?${params.toString()}`
+	);
 }
 
 /**
  * Get a single face detection session.
  * @param sessionId - The session ID (UUID)
  */
-export async function getFaceDetectionSession(
-	sessionId: string
-): Promise<FaceDetectionSession> {
+export async function getFaceDetectionSession(sessionId: string): Promise<FaceDetectionSession> {
 	return apiRequest<FaceDetectionSession>(
 		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}`
 	);
@@ -640,9 +648,7 @@ export async function createFaceDetectionSession(
  * Pause a running face detection session.
  * @param sessionId - The session ID (UUID)
  */
-export async function pauseFaceDetectionSession(
-	sessionId: string
-): Promise<FaceDetectionSession> {
+export async function pauseFaceDetectionSession(sessionId: string): Promise<FaceDetectionSession> {
 	return apiRequest<FaceDetectionSession>(
 		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}/pause`,
 		{
@@ -655,9 +661,7 @@ export async function pauseFaceDetectionSession(
  * Resume a paused face detection session.
  * @param sessionId - The session ID (UUID)
  */
-export async function resumeFaceDetectionSession(
-	sessionId: string
-): Promise<FaceDetectionSession> {
+export async function resumeFaceDetectionSession(sessionId: string): Promise<FaceDetectionSession> {
 	return apiRequest<FaceDetectionSession>(
 		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}/resume`,
 		{
@@ -670,15 +674,10 @@ export async function resumeFaceDetectionSession(
  * Cancel a face detection session.
  * @param sessionId - The session ID (UUID)
  */
-export async function cancelFaceDetectionSession(
-	sessionId: string
-): Promise<{ status: string }> {
-	return apiRequest<{ status: string }>(
-		`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}`,
-		{
-			method: 'DELETE'
-		}
-	);
+export async function cancelFaceDetectionSession(sessionId: string): Promise<{ status: string }> {
+	return apiRequest<{ status: string }>(`/api/v1/faces/sessions/${encodeURIComponent(sessionId)}`, {
+		method: 'DELETE'
+	});
 }
 
 /**
@@ -779,9 +778,7 @@ export async function listSuggestions(
 	if (status) params.set('status', status);
 	if (personId) params.set('person_id', personId);
 
-	return apiRequest<FaceSuggestionListResponse>(
-		`/api/v1/faces/suggestions?${params.toString()}`
-	);
+	return apiRequest<FaceSuggestionListResponse>(`/api/v1/faces/suggestions?${params.toString()}`);
 }
 
 /**
@@ -789,13 +786,10 @@ export async function listSuggestions(
  * @param suggestionId - The suggestion ID
  */
 export async function acceptSuggestion(suggestionId: number): Promise<FaceSuggestion> {
-	return apiRequest<FaceSuggestion>(
-		`/api/v1/faces/suggestions/${suggestionId}/accept`,
-		{
-			method: 'POST',
-			body: JSON.stringify({})
-		}
-	);
+	return apiRequest<FaceSuggestion>(`/api/v1/faces/suggestions/${suggestionId}/accept`, {
+		method: 'POST',
+		body: JSON.stringify({})
+	});
 }
 
 /**
@@ -803,13 +797,10 @@ export async function acceptSuggestion(suggestionId: number): Promise<FaceSugges
  * @param suggestionId - The suggestion ID
  */
 export async function rejectSuggestion(suggestionId: number): Promise<FaceSuggestion> {
-	return apiRequest<FaceSuggestion>(
-		`/api/v1/faces/suggestions/${suggestionId}/reject`,
-		{
-			method: 'POST',
-			body: JSON.stringify({})
-		}
-	);
+	return apiRequest<FaceSuggestion>(`/api/v1/faces/suggestions/${suggestionId}/reject`, {
+		method: 'POST',
+		body: JSON.stringify({})
+	});
 }
 
 /**
@@ -821,11 +812,8 @@ export async function bulkSuggestionAction(
 	suggestionIds: number[],
 	action: 'accept' | 'reject'
 ): Promise<BulkSuggestionActionResponse> {
-	return apiRequest<BulkSuggestionActionResponse>(
-		'/api/v1/faces/suggestions/bulk-action',
-		{
-			method: 'POST',
-			body: JSON.stringify({ suggestionIds, action })
-		}
-	);
+	return apiRequest<BulkSuggestionActionResponse>('/api/v1/faces/suggestions/bulk-action', {
+		method: 'POST',
+		body: JSON.stringify({ suggestionIds, action })
+	});
 }

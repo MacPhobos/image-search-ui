@@ -269,8 +269,7 @@ export function createMultipleDirectories(count: number): DirectoryStats[] {
 		return createDirectoryStats({
 			pathPrefix: `/photos/dir-${i + 1}`,
 			vectorCount: (i + 1) * 50,
-			lastIndexed:
-				i % 2 === 0 ? new Date(2024, 11, 19 - i).toISOString() : null
+			lastIndexed: i % 2 === 0 ? new Date(2024, 11, 19 - i).toISOString() : null
 		});
 	});
 }

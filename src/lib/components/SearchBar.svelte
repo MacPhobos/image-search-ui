@@ -1,10 +1,18 @@
 <script lang="ts">
+	import { tid } from '$lib/testing/testid';
+
 	interface Props {
 		onSearch: (query: string) => void;
 		placeholder?: string;
+		testId?: string;
 	}
 
-	let { onSearch, placeholder = 'Search images...' }: Props = $props();
+	let { onSearch, placeholder = 'Search images...', testId = 'search-bar' }: Props = $props();
+
+	// Derived scoped test ID generator (reactive to testId changes)
+	const t = $derived((...segments: string[]) =>
+		segments.length === 0 ? testId : tid(testId, ...segments)
+	);
 
 	let query = $state('');
 
@@ -20,20 +28,29 @@
 	}
 </script>
 
-<form onsubmit={handleSubmit} class="search-bar">
+<form onsubmit={handleSubmit} class="search-bar" data-testid={t()}>
 	<input
 		type="text"
 		bind:value={query}
 		{placeholder}
 		class="search-input"
 		aria-label="Search query"
+		data-testid={t('input-query')}
 	/>
 	{#if query}
-		<button type="button" onclick={handleClear} class="clear-btn" aria-label="Clear search">
+		<button
+			type="button"
+			onclick={handleClear}
+			class="clear-btn"
+			aria-label="Clear search"
+			data-testid={t('btn-clear')}
+		>
 			×
 		</button>
 	{/if}
-	<button type="submit" class="search-btn" disabled={!query.trim()}>Search</button>
+	<button type="submit" class="search-btn" disabled={!query.trim()} data-testid={t('btn-submit')}>
+		Search
+	</button>
 </form>
 
 <style>

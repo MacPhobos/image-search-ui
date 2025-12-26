@@ -45,7 +45,8 @@
 	onkeydown={handleKeyDown}
 	role="button"
 	tabindex={0}
-	aria-label="Face suggestion for {suggestion.personName || 'Unknown'} with {confidencePercent}% confidence"
+	aria-label="Face suggestion for {suggestion.personName ||
+		'Unknown'} with {confidencePercent}% confidence"
 >
 	<!-- Selection checkbox (top-left, only for pending) -->
 	{#if suggestion.status === 'pending'}
@@ -63,7 +64,7 @@
 	<!-- Face thumbnail -->
 	<FaceThumbnail
 		thumbnailUrl={suggestion.faceThumbnailUrl || ''}
-		size={64}
+		size={128}
 		alt="Face for {suggestion.personName || 'Unknown'}"
 		square={true}
 	/>
@@ -96,8 +97,8 @@
 <style>
 	.thumbnail-container {
 		position: relative;
-		width: 64px;
-		height: 64px;
+		width: 128px;
+		height: 128px;
 		cursor: pointer;
 		transition:
 			transform 0.2s,

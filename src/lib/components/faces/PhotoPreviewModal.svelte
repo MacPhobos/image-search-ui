@@ -18,7 +18,14 @@
 		onNext?: () => void;
 	}
 
-	let { photo, currentPersonId = null, currentPersonName = null, onClose, onPrevious, onNext }: Props = $props();
+	let {
+		photo,
+		currentPersonId = null,
+		currentPersonName = null,
+		onClose,
+		onPrevious,
+		onNext
+	}: Props = $props();
 
 	// State
 	let imgElement: HTMLImageElement | undefined = $state();
@@ -90,7 +97,7 @@
 		'#14b8a6', // Teal
 		'#f97316', // Orange
 		'#06b6d4', // Cyan
-		'#84cc16', // Lime
+		'#84cc16' // Lime
 	];
 
 	function getFaceColorByIndex(index: number): string {
@@ -99,7 +106,7 @@
 
 	function getFaceColor(face: FaceInPhoto): string {
 		// Find the face index in the photo.faces array
-		const index = photo.faces.findIndex(f => f.faceInstanceId === face.faceInstanceId);
+		const index = photo.faces.findIndex((f) => f.faceInstanceId === face.faceInstanceId);
 		return getFaceColorByIndex(index >= 0 ? index : 0);
 	}
 
@@ -320,7 +327,8 @@
 									height={face.bboxH}
 									class="face-box"
 									class:current-person={currentPersonId && face.personId === currentPersonId}
-									class:other-person={face.personId && (!currentPersonId || face.personId !== currentPersonId)}
+									class:other-person={face.personId &&
+										(!currentPersonId || face.personId !== currentPersonId)}
 									class:unknown={!face.personId}
 									class:highlighted={highlightedFaceId === face.faceInstanceId}
 									style="stroke: {getFaceColor(face)};"
@@ -358,7 +366,8 @@
 									<span
 										class="face-indicator"
 										class:current-person={currentPersonId && face.personId === currentPersonId}
-										class:other-person={face.personId && (!currentPersonId || face.personId !== currentPersonId)}
+										class:other-person={face.personId &&
+											(!currentPersonId || face.personId !== currentPersonId)}
 										style="background-color: {getFaceColor(face)};"
 									></span>
 									<div class="face-info">
@@ -648,7 +657,9 @@
 		stroke-width: 3;
 		cursor: pointer;
 		pointer-events: auto;
-		transition: stroke-width 0.2s, opacity 0.2s;
+		transition:
+			stroke-width 0.2s,
+			opacity 0.2s;
 		opacity: 0.7;
 	}
 
@@ -664,7 +675,8 @@
 	}
 
 	@keyframes pulse-box {
-		0%, 100% {
+		0%,
+		100% {
 			stroke-width: 6;
 		}
 		50% {
@@ -698,7 +710,9 @@
 
 	.face-item {
 		border-radius: 6px;
-		transition: background-color 0.2s, box-shadow 0.2s;
+		transition:
+			background-color 0.2s,
+			box-shadow 0.2s;
 	}
 
 	.face-item:hover {

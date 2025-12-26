@@ -73,9 +73,7 @@ describe('RetrainModal', () => {
 		});
 
 		await waitFor(() => {
-			expect(
-				screen.getByLabelText(/select category for training session/i)
-			).toBeInTheDocument();
+			expect(screen.getByLabelText(/select category for training session/i)).toBeInTheDocument();
 		});
 	});
 

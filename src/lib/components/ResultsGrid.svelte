@@ -4,14 +4,21 @@
 	import PhotoPreviewModal from './faces/PhotoPreviewModal.svelte';
 	import { getFacesForAsset, transformFaceInstancesToFaceInPhoto } from '$lib/api/faces';
 	import type { PersonPhotoGroup, FaceInPhoto } from '$lib/api/faces';
+	import { tid } from '$lib/testing/testid';
 
 	interface Props {
 		results: SearchResult[];
 		loading?: boolean;
 		hasSearched?: boolean;
+		testId?: string;
 	}
 
-	let { results, loading = false, hasSearched = false }: Props = $props();
+	let { results, loading = false, hasSearched = false, testId = 'results-grid' }: Props = $props();
+
+	// Derived scoped test ID generator (reactive to testId changes)
+	const t = $derived((...segments: string[]) =>
+		segments.length === 0 ? testId : tid(testId, ...segments)
+	);
 
 	// Track image load errors per asset ID
 	let imageErrors = $state<Set<number>>(new Set());
@@ -92,14 +99,14 @@
 	}
 </script>
 
-<div class="results-container">
+<div class="results-container" data-testid={t()}>
 	{#if loading}
-		<div class="loading">
+		<div class="loading" data-testid={t('loading')}>
 			<div class="spinner"></div>
 			<p>Searching...</p>
 		</div>
 	{:else if results.length === 0}
-		<div class="empty-state">
+		<div class="empty-state" data-testid={t('empty')}>
 			{#if hasSearched}
 				<p>No results found. Try a different search query.</p>
 			{:else}
@@ -107,12 +114,12 @@
 			{/if}
 		</div>
 	{:else}
-		<div class="results-header">
+		<div class="results-header" data-testid={t('header')}>
 			<span class="results-count">{results.length} result{results.length !== 1 ? 's' : ''}</span>
 		</div>
-		<div class="results-grid">
+		<div class="results-grid" data-testid={t('grid')}>
 			{#each results as result, index (result.asset.id)}
-				<article class="result-card">
+				<article class="result-card" data-testid={t('card')}>
 					<button
 						type="button"
 						class="result-card-button"

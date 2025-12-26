@@ -129,9 +129,7 @@
 <main class="clusters-page">
 	<header class="page-header">
 		<h1>Face Clusters</h1>
-		<p class="subtitle">
-			Browse and label face clusters to identify people in your photos.
-		</p>
+		<p class="subtitle">Browse and label face clusters to identify people in your photos.</p>
 	</header>
 
 	<!-- Tabs -->
@@ -167,19 +165,29 @@
 			</div>
 		{:else if error}
 			<div class="error-state" role="alert">
-				<svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="error-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="12" cy="12" r="10" />
 					<line x1="12" y1="8" x2="12" y2="12" />
 					<line x1="12" y1="16" x2="12.01" y2="16" />
 				</svg>
 				<p>{error}</p>
-				<button type="button" class="retry-button" onclick={handleRetry}>
-					Try Again
-				</button>
+				<button type="button" class="retry-button" onclick={handleRetry}> Try Again </button>
 			</div>
 		{:else if clusters.length === 0}
 			<div class="empty-state">
-				<svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					class="empty-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<circle cx="12" cy="8" r="4" />
 					<path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
 				</svg>
@@ -188,7 +196,8 @@
 					{#if activeTab === 'unlabeled'}
 						All clusters have been labeled! Switch to "All Clusters" to view them.
 					{:else}
-						No face clusters have been detected yet. Run face detection on your photos to create clusters.
+						No face clusters have been detected yet. Run face detection on your photos to create
+						clusters.
 					{/if}
 				</p>
 			</div>
@@ -199,12 +208,7 @@
 				</span>
 				<div class="sort-controls">
 					<label for="sort-select" class="sort-label">Sort by:</label>
-					<select
-						id="sort-select"
-						class="sort-select"
-						value={sortBy}
-						onchange={handleSortChange}
-					>
+					<select id="sort-select" class="sort-select" value={sortBy} onchange={handleSortChange}>
 						<option value="faceCount">Number of Faces</option>
 						<option value="avgQuality">Average Quality</option>
 					</select>

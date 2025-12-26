@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { getCluster, splitCluster, getFacesForAsset, transformFaceInstancesToFaceInPhoto } from '$lib/api/faces';
+	import {
+		getCluster,
+		splitCluster,
+		getFacesForAsset,
+		transformFaceInstancesToFaceInPhoto
+	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import FaceThumbnail from '$lib/components/faces/FaceThumbnail.svelte';
 	import LabelClusterModal from '$lib/components/faces/LabelClusterModal.svelte';
@@ -12,7 +17,8 @@
 	import { env } from '$env/dynamic/public';
 
 	// Type assertion needed due to SvelteKit's dynamic env types
-	const API_BASE_URL = (env as Record<string, string | undefined>).VITE_API_BASE_URL || 'http://localhost:8000';
+	const API_BASE_URL =
+		(env as Record<string, string | undefined>).VITE_API_BASE_URL || 'http://localhost:8000';
 
 	// Get cluster ID from route params
 	let clusterId = $derived($page.params.clusterId as string);
@@ -170,7 +176,9 @@
 
 			// Calculate counts
 			const faceCount = facesInPhoto.length;
-			const hasNonPersonFaces = facesInPhoto.some(f => f.personId === null || (cluster?.personId && f.personId !== cluster.personId));
+			const hasNonPersonFaces = facesInPhoto.some(
+				(f) => f.personId === null || (cluster?.personId && f.personId !== cluster.personId)
+			);
 
 			// Build PersonPhotoGroup
 			selectedPhoto = {
@@ -196,11 +204,6 @@
 		showPhotoModal = false;
 		selectedPhoto = null;
 	}
-
-	function handlePersonAssignment() {
-		// Refresh cluster data after person assignment
-		loadCluster();
-	}
 </script>
 
 <svelte:head>
@@ -225,7 +228,13 @@
 		</div>
 	{:else if error}
 		<div class="error-state" role="alert">
-			<svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				class="error-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="12" cy="12" r="10" />
 				<line x1="12" y1="8" x2="12" y2="12" />
 				<line x1="12" y1="16" x2="12.01" y2="16" />
@@ -255,7 +264,9 @@
 				{#if !cluster.personName}
 					<button type="button" class="primary-button" onclick={handleOpenLabelModal}>
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+							<path
+								d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+							/>
 							<line x1="7" y1="7" x2="7.01" y2="7" />
 						</svg>
 						Label as Person
@@ -273,7 +284,9 @@
 					class="secondary-button"
 					onclick={handleSplit}
 					disabled={splitting || cluster.faces.length < 6}
-					title={cluster.faces.length < 6 ? 'Cluster too small to split' : 'Split into sub-clusters'}
+					title={cluster.faces.length < 6
+						? 'Cluster too small to split'
+						: 'Split into sub-clusters'}
 				>
 					{#if splitting}
 						Splitting...
@@ -498,7 +511,9 @@
 		font-size: 0.95rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background-color 0.2s, opacity 0.2s;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
 	}
 
 	.primary-button {
@@ -639,7 +654,9 @@
 		padding: 0.5rem;
 		cursor: pointer;
 		border-radius: 8px;
-		transition: background-color 0.2s, transform 0.1s;
+		transition:
+			background-color 0.2s,
+			transform 0.1s;
 	}
 
 	.face-item:hover:not(:disabled) {
@@ -676,7 +693,9 @@
 		font-size: 0.95rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background-color 0.2s, color 0.2s;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 
 	.load-more-button:hover {
