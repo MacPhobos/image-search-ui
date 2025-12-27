@@ -16,6 +16,14 @@
 	let subdirs = $state<SubdirectoryInfo[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
+	let filterText = $state('');
+
+	// Filtered subdirectories based on filter text
+	let filteredSubdirs = $derived(
+		filterText
+			? subdirs.filter((d) => d.path.toLowerCase().includes(filterText.toLowerCase()))
+			: subdirs
+	);
 
 	async function loadSubdirectories() {
 		if (!rootPath) return;
@@ -48,7 +56,9 @@
 	}
 
 	function selectAll() {
-		selectedSubdirs = subdirs.map((d) => d.path);
+		// Select only filtered subdirectories, preserving existing selections from other filter states
+		const pathsToSelect = filteredSubdirs.map((d) => d.path);
+		selectedSubdirs = [...new Set([...safeSelectedSubdirs, ...pathsToSelect])];
 		onSelectionChange(selectedSubdirs);
 	}
 
@@ -62,7 +72,7 @@
 	<div class="browser-header">
 		<h3>Select Subdirectories</h3>
 		<div class="actions">
-			<button class="btn-action" onclick={selectAll} disabled={loading || subdirs.length === 0}>
+			<button class="btn-action" onclick={selectAll} disabled={loading || filteredSubdirs.length === 0}>
 				Select All
 			</button>
 			<button
@@ -75,6 +85,23 @@
 		</div>
 	</div>
 
+	{#if !loading && subdirs.length > 0}
+		<div class="filter-container">
+			<input
+				type="text"
+				bind:value={filterText}
+				placeholder="Filter directories..."
+				class="filter-input"
+				aria-label="Filter directories"
+			/>
+			{#if filterText}
+				<div class="filter-count">
+					Showing {filteredSubdirs.length} of {subdirs.length} directories
+				</div>
+			{/if}
+		</div>
+	{/if}
+
 	{#if loading}
 		<div class="loading">Loading directories...</div>
 	{:else if error}
@@ -83,9 +110,11 @@
 		</div>
 	{:else if subdirs.length === 0}
 		<div class="empty">No subdirectories found.</div>
+	{:else if filteredSubdirs.length === 0}
+		<div class="empty">No directories match the filter.</div>
 	{:else}
 		<div class="subdirs-list">
-			{#each subdirs as subdir}
+			{#each filteredSubdirs as subdir}
 				<label class="subdir-item">
 					<input
 						type="checkbox"
@@ -153,6 +182,38 @@
 	.btn-action:disabled {
 		background-color: #d1d5db;
 		cursor: not-allowed;
+	}
+
+	.filter-container {
+		margin-bottom: 1rem;
+	}
+
+	.filter-input {
+		width: 100%;
+		padding: 0.625rem 0.875rem;
+		border: 1px solid #d1d5db;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		color: #1f2937;
+		background-color: white;
+		transition: border-color 0.2s;
+	}
+
+	.filter-input:focus {
+		outline: none;
+		border-color: #3b82f6;
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+	}
+
+	.filter-input::placeholder {
+		color: #9ca3af;
+	}
+
+	.filter-count {
+		margin-top: 0.5rem;
+		font-size: 0.8125rem;
+		color: #6b7280;
+		font-style: italic;
 	}
 
 	.loading,
