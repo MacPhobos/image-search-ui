@@ -44,6 +44,17 @@
 	let imgWidth = $state(0);
 	let imgHeight = $state(0);
 
+	// ============================================
+	// LABEL CONFIGURATION - Adjust this to change label text size
+	// ============================================
+	const LABEL_FONT_SIZE = 24; // Font size in pixels (default: 24, was 13-14)
+
+	// Derived label dimensions (calculated from font size)
+	const LABEL_HEIGHT = LABEL_FONT_SIZE + 10; // Label background height
+	const LABEL_GAP = 4; // Gap between bounding box and label
+	const LABEL_TEXT_Y_OFFSET = LABEL_GAP + LABEL_FONT_SIZE + 2; // Text baseline offset from bbox bottom
+	// ============================================
+
 	// Color palette for distinct face colors
 	const FACE_COLORS = [
 		'#3b82f6', // Blue
@@ -129,17 +140,17 @@
 					<g class="face-label assigned-label">
 						<rect
 							x={face.bboxX}
-							y={face.bboxY + face.bboxH + 4}
+							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={Math.max(face.bboxW, 100)}
-							height={24}
+							height={LABEL_HEIGHT}
 							rx={4}
 							fill="rgba(0, 0, 0, 0.75)"
 						/>
 						<text
 							x={face.bboxX + 8}
-							y={face.bboxY + face.bboxH + 20}
+							y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET}
 							fill="white"
-							font-size="14"
+							font-size={LABEL_FONT_SIZE}
 							font-weight="500"
 						>
 							{face.label}
@@ -150,13 +161,13 @@
 					<g class="face-label loading-label">
 						<rect
 							x={face.bboxX}
-							y={face.bboxY + face.bboxH + 4}
+							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={80}
-							height={24}
+							height={LABEL_HEIGHT}
 							rx={4}
 							fill="rgba(100, 116, 139, 0.6)"
 						/>
-						<text x={face.bboxX + 8} y={face.bboxY + face.bboxH + 20} fill="white" font-size="13">
+						<text x={face.bboxX + 8} y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET} fill="white" font-size={LABEL_FONT_SIZE}>
 							{face.label}
 						</text>
 					</g>
@@ -165,21 +176,21 @@
 					{@const labelText = face.suggestionConfidence
 						? `${face.label} (${Math.round(face.suggestionConfidence * 100)}%)`
 						: face.label}
-					{@const labelWidth = Math.max(face.bboxW, labelText.length * 7.5)}
+					{@const labelWidth = Math.max(face.bboxW, labelText.length * LABEL_FONT_SIZE * 0.6)}
 					<g class="face-label suggestion-label">
 						<rect
 							x={face.bboxX}
-							y={face.bboxY + face.bboxH + 4}
+							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={labelWidth}
-							height={24}
+							height={LABEL_HEIGHT}
 							rx={4}
 							fill="rgba(234, 179, 8, 0.9)"
 						/>
 						<text
 							x={face.bboxX + 8}
-							y={face.bboxY + face.bboxH + 20}
+							y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET}
 							fill="#422006"
-							font-size="13"
+							font-size={LABEL_FONT_SIZE}
 							font-weight="500"
 						>
 							{labelText}
@@ -190,17 +201,17 @@
 					<g class="face-label unknown-label">
 						<rect
 							x={face.bboxX}
-							y={face.bboxY + face.bboxH + 4}
+							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={Math.max(face.bboxW, 80)}
-							height={24}
+							height={LABEL_HEIGHT}
 							rx={4}
 							fill="rgba(100, 116, 139, 0.85)"
 						/>
 						<text
 							x={face.bboxX + 8}
-							y={face.bboxY + face.bboxH + 20}
+							y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET}
 							fill="white"
-							font-size="13"
+							font-size={LABEL_FONT_SIZE}
 							font-style="italic"
 						>
 							{face.label}
