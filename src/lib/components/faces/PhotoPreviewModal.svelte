@@ -9,6 +9,7 @@
 		getFaceSuggestions
 	} from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
+	import ImageWithFaceBoundingBoxes, { type FaceBox } from './ImageWithFaceBoundingBoxes.svelte';
 
 	interface Props {
 		/** The photo to display */
@@ -38,10 +39,6 @@
 	}: Props = $props();
 
 	// State
-	let imgElement: HTMLImageElement | undefined = $state();
-	let imageLoaded = $state(false);
-	let imgWidth = $state(0);
-	let imgHeight = $state(0);
 	let highlightedFaceId = $state<string | null>(null);
 
 	// Face assignment state
@@ -74,13 +71,68 @@
 
 	let showCreateOption = $derived(() => personSearchQuery.trim().length > 0);
 
-	function handleImageLoad() {
-		if (imgElement) {
-			imgWidth = imgElement.naturalWidth;
-			imgHeight = imgElement.naturalHeight;
-			imageLoaded = true;
-		}
+	// Color palette for distinct face colors (matches ImageWithFaceBoundingBoxes)
+	const FACE_COLORS = [
+		'#3b82f6', // Blue
+		'#22c55e', // Green
+		'#f59e0b', // Amber
+		'#ef4444', // Red
+		'#8b5cf6', // Purple
+		'#ec4899', // Pink
+		'#14b8a6', // Teal
+		'#f97316', // Orange
+		'#06b6d4', // Cyan
+		'#84cc16' // Lime
+	];
+
+	function getFaceColorByIndex(index: number): string {
+		return FACE_COLORS[index % FACE_COLORS.length];
 	}
+
+	function getFaceColor(face: FaceInPhoto): string {
+		const index = photo.faces.findIndex((f) => f.faceInstanceId === face.faceInstanceId);
+		return getFaceColorByIndex(index >= 0 ? index : 0);
+	}
+
+	// Map photo.faces to FaceBox[] for ImageWithFaceBoundingBoxes
+	let faceBoxes = $derived<FaceBox[]>(
+		photo.faces.map((face) => {
+			const suggestionState = faceSuggestions.get(face.faceInstanceId);
+			const topSuggestion = suggestionState?.suggestions?.[0];
+			const index = photo.faces.findIndex((f) => f.faceInstanceId === face.faceInstanceId);
+
+			let labelStyle: FaceBox['labelStyle'];
+			let label: string;
+			let suggestionConfidence: number | undefined;
+
+			if (face.personName) {
+				labelStyle = 'assigned';
+				label = face.personName;
+			} else if (suggestionState?.loading) {
+				labelStyle = 'loading';
+				label = 'Loading...';
+			} else if (topSuggestion) {
+				labelStyle = 'suggested';
+				label = `Suggested: ${topSuggestion.personName}`;
+				suggestionConfidence = topSuggestion.confidence;
+			} else {
+				labelStyle = 'unknown';
+				label = 'Unknown';
+			}
+
+			return {
+				id: face.faceInstanceId,
+				bboxX: face.bboxX,
+				bboxY: face.bboxY,
+				bboxW: face.bboxW,
+				bboxH: face.bboxH,
+				label,
+				labelStyle,
+				color: getFaceColorByIndex(index),
+				suggestionConfidence
+			};
+		})
+	);
 
 	// Load persons list and fetch suggestions when modal opens
 	onMount(() => {
@@ -138,32 +190,12 @@
 		}
 	}
 
-	function handleHighlightFace(faceId: string) {
+	function handleFaceClick(faceId: string) {
 		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
-	// Color palette for distinct face colors
-	const FACE_COLORS = [
-		'#3b82f6', // Blue
-		'#22c55e', // Green
-		'#f59e0b', // Amber
-		'#ef4444', // Red
-		'#8b5cf6', // Purple
-		'#ec4899', // Pink
-		'#14b8a6', // Teal
-		'#f97316', // Orange
-		'#06b6d4', // Cyan
-		'#84cc16' // Lime
-	];
-
-	function getFaceColorByIndex(index: number): string {
-		return FACE_COLORS[index % FACE_COLORS.length];
-	}
-
-	function getFaceColor(face: FaceInPhoto): string {
-		// Find the face index in the photo.faces array
-		const index = photo.faces.findIndex((f) => f.faceInstanceId === face.faceInstanceId);
-		return getFaceColorByIndex(index >= 0 ? index : 0);
+	function handleHighlightFace(faceId: string) {
+		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
 	function getFaceLabel(face: FaceInPhoto): string {
@@ -402,134 +434,12 @@
 					</button>
 				{/if}
 
-				<div class="photo-wrapper">
-					<img
-						src={photo.fullUrl}
-						alt="Photo with {photo.faceCount} detected faces"
-						bind:this={imgElement}
-						onload={handleImageLoad}
-					/>
-
-					<!-- SVG overlay for face bounding boxes -->
-					{#if imageLoaded && imgWidth > 0 && imgHeight > 0}
-						<svg class="face-overlay" viewBox="0 0 {imgWidth} {imgHeight}" aria-hidden="true">
-							{#each photo.faces as face (face.faceInstanceId)}
-								{@const faceColor = getFaceColor(face)}
-								{@const isHighlighted = highlightedFaceId === face.faceInstanceId}
-								{@const suggestionState = faceSuggestions.get(face.faceInstanceId)}
-								{@const suggestions = suggestionState?.suggestions ?? []}
-								{@const topSuggestion = suggestions[0]}
-
-								<!-- Face bounding box -->
-								<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-								<rect
-									x={face.bboxX}
-									y={face.bboxY}
-									width={face.bboxW}
-									height={face.bboxH}
-									class="face-box"
-									class:current-person={currentPersonId && face.personId === currentPersonId}
-									class:other-person={face.personId &&
-										(!currentPersonId || face.personId !== currentPersonId)}
-									class:unknown={!face.personId}
-									class:highlighted={isHighlighted}
-									style="stroke: {faceColor};"
-									onclick={() => handleHighlightFace(face.faceInstanceId)}
-								/>
-
-								<!-- Label below bounding box -->
-								{#if face.personName}
-									<!-- Assigned person label -->
-									<g class="face-label">
-										<rect
-											x={face.bboxX}
-											y={face.bboxY + face.bboxH + 4}
-											width={Math.max(face.bboxW, 100)}
-											height={24}
-											rx={4}
-											fill="rgba(0, 0, 0, 0.75)"
-										/>
-										<text
-											x={face.bboxX + 8}
-											y={face.bboxY + face.bboxH + 20}
-											fill="white"
-											font-size="14"
-											font-weight="500"
-										>
-											{face.personName}
-										</text>
-									</g>
-								{:else if suggestionState?.loading}
-									<!-- Loading state -->
-									<g class="face-label loading-label">
-										<rect
-											x={face.bboxX}
-											y={face.bboxY + face.bboxH + 4}
-											width={80}
-											height={24}
-											rx={4}
-											fill="rgba(100, 116, 139, 0.6)"
-										/>
-										<text
-											x={face.bboxX + 8}
-											y={face.bboxY + face.bboxH + 20}
-											fill="white"
-											font-size="13"
-										>
-											Loading...
-										</text>
-									</g>
-								{:else if topSuggestion}
-									<!-- Suggested person label -->
-									{@const labelText = `Suggested: ${topSuggestion.personName} (${Math.round(topSuggestion.confidence * 100)}%)`}
-									{@const labelWidth = Math.max(face.bboxW, labelText.length * 7.5)}
-									<g class="face-label suggestion-label">
-										<rect
-											x={face.bboxX}
-											y={face.bboxY + face.bboxH + 4}
-											width={labelWidth}
-											height={24}
-											rx={4}
-											fill="rgba(234, 179, 8, 0.9)"
-										/>
-										<text
-											x={face.bboxX + 8}
-											y={face.bboxY + face.bboxH + 20}
-											fill="#422006"
-											font-size="13"
-											font-weight="500"
-										>
-											Suggested: {topSuggestion.personName} ({Math.round(
-												topSuggestion.confidence * 100
-											)}%)
-										</text>
-									</g>
-								{:else}
-									<!-- Unknown label -->
-									<g class="face-label unknown-label">
-										<rect
-											x={face.bboxX}
-											y={face.bboxY + face.bboxH + 4}
-											width={Math.max(face.bboxW, 80)}
-											height={24}
-											rx={4}
-											fill="rgba(100, 116, 139, 0.85)"
-										/>
-										<text
-											x={face.bboxX + 8}
-											y={face.bboxY + face.bboxH + 20}
-											fill="white"
-											font-size="13"
-											font-style="italic"
-										>
-											Unknown
-										</text>
-									</g>
-								{/if}
-							{/each}
-						</svg>
-					{/if}
-				</div>
+				<ImageWithFaceBoundingBoxes
+					imageUrl={photo.fullUrl}
+					faces={faceBoxes}
+					highlightedFaceId={highlightedFaceId}
+					onFaceClick={handleFaceClick}
+				/>
 
 				{#if onNext}
 					<button type="button" class="nav-btn next" onclick={onNext} aria-label="Next photo">
@@ -846,76 +756,6 @@
 		min-height: 0;
 	}
 
-	.photo-wrapper {
-		position: relative;
-		max-width: 100%;
-		max-height: 80vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.photo-wrapper img {
-		max-width: 100%;
-		max-height: 80vh;
-		width: auto;
-		height: auto;
-		object-fit: contain;
-		display: block;
-	}
-
-	.face-overlay {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-	}
-
-	.face-box {
-		fill: none;
-		stroke-width: 3;
-		cursor: pointer;
-		pointer-events: auto;
-		transition:
-			stroke-width 0.2s,
-			opacity 0.2s;
-		opacity: 0.7;
-	}
-
-	.face-box:hover {
-		stroke-width: 4;
-		opacity: 1;
-	}
-
-	.face-box.highlighted {
-		stroke-width: 6;
-		opacity: 1;
-		animation: pulse-box 1.5s ease-in-out infinite;
-	}
-
-	@keyframes pulse-box {
-		0%,
-		100% {
-			stroke-width: 6;
-		}
-		50% {
-			stroke-width: 8;
-		}
-	}
-
-	.face-label {
-		pointer-events: none;
-		transition: opacity 0.2s ease;
-	}
-
-	.face-label text {
-		font-family:
-			system-ui,
-			-apple-system,
-			sans-serif;
-	}
 
 	.face-sidebar {
 		width: 280px;
@@ -1326,14 +1166,6 @@
 
 		.person-options {
 			max-height: min(200px, 30vh);
-		}
-
-		.photo-wrapper {
-			max-height: 60vh;
-		}
-
-		.photo-wrapper img {
-			max-height: 60vh;
 		}
 	}
 </style>

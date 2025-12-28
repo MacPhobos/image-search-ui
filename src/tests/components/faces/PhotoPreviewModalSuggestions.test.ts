@@ -447,7 +447,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		// Note: SVG text rendering may not work perfectly in happy-dom test environment
 		// We verify the component structure instead
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
-		const img = screen.getByAltText('Photo with 2 detected faces');
+		const img = screen.getByAltText('Image with 2 detected faces');
 		expect(img).toBeInTheDocument();
 	});
 
@@ -691,7 +691,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 
 		// Verify image is rendered
-		const img = screen.getByAltText('Photo with 2 detected faces');
+		const img = screen.getByAltText('Image with 2 detected faces');
 		expect(img).toBeInTheDocument();
 
 		// Note: SVG loading state may be too brief to capture in tests
