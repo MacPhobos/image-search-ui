@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.4.0
-> **Last Updated**: 2025-12-26
+> **Version**: 1.5.0
+> **Last Updated**: 2025-12-28
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -543,9 +543,9 @@ Create a new person entity.
 }
 ```
 
-| Field  | Type   | Required | Description          |
-| ------ | ------ | -------- | -------------------- |
-| `name` | string | Yes      | Person name (unique) |
+| Field  | Type   | Required | Description                    |
+| ------ | ------ | -------- | ------------------------------ |
+| `name` | string | Yes      | Person name (unique)           |
 
 **Response** `201 Created`
 
@@ -645,8 +645,8 @@ Assign a face instance to a person.
 
 **Path Parameters**
 
-| Parameter | Type   | Required | Description             |
-| --------- | ------ | -------- | ----------------------- |
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
 | `faceId`  | string | Yes      | Face instance ID (UUID) |
 
 **Request Body**
@@ -657,9 +657,9 @@ Assign a face instance to a person.
 }
 ```
 
-| Field      | Type   | Required | Description      |
-| ---------- | ------ | -------- | ---------------- |
-| `personId` | string | Yes      | Person ID (UUID) |
+| Field      | Type   | Required | Description        |
+| ---------- | ------ | -------- | ------------------ |
+| `personId` | string | Yes      | Person ID (UUID)   |
 
 **Response** `200 OK`
 
@@ -755,6 +755,14 @@ interface FaceSuggestion {
 	reviewedAt: string | null; // ISO 8601 timestamp when reviewed (null if pending)
 	faceThumbnailUrl: string | null; // Thumbnail URL for the suggested face
 	personName: string | null; // Name of the suggested person
+	// Bounding box and image data for face overlay display
+	fullImageUrl: string | null; // Full image URL (e.g., /api/v1/images/{assetId}/file)
+	bboxX: number | null; // Bounding box X coordinate (pixels)
+	bboxY: number | null; // Bounding box Y coordinate (pixels)
+	bboxW: number | null; // Bounding box width (pixels)
+	bboxH: number | null; // Bounding box height (pixels)
+	detectionConfidence: number | null; // Face detection confidence (0.0-1.0)
+	qualityScore: number | null; // Face quality score (0.0-1.0)
 }
 ```
 
@@ -805,12 +813,12 @@ List face suggestions with pagination and filtering.
 
 **Query Parameters**
 
-| Parameter  | Type    | Default | Description                                            |
-| ---------- | ------- | ------- | ------------------------------------------------------ |
-| `page`     | integer | 1       | Page number (1-indexed)                                |
-| `pageSize` | integer | 20      | Items per page (max: 100)                              |
+| Parameter  | Type    | Default | Description                                  |
+| ---------- | ------- | ------- | -------------------------------------------- |
+| `page`     | integer | 1       | Page number (1-indexed)                      |
+| `pageSize` | integer | 20      | Items per page (max: 100)                    |
 | `status`   | string  | -       | Filter by status: pending, accepted, rejected, expired |
-| `personId` | string  | -       | Filter by suggested person ID (UUID)                   |
+| `personId` | string  | -       | Filter by suggested person ID (UUID)         |
 
 **Response** `200 OK`
 
@@ -827,7 +835,14 @@ List face suggestions with pagination and filtering.
 			"createdAt": "2025-12-25T10:00:00Z",
 			"reviewedAt": null,
 			"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
-			"personName": "John Smith"
+			"personName": "John Smith",
+			"fullImageUrl": "/api/v1/images/1234/file",
+			"bboxX": 100,
+			"bboxY": 150,
+			"bboxW": 80,
+			"bboxH": 80,
+			"detectionConfidence": 0.95,
+			"qualityScore": 0.78
 		}
 	],
 	"pagination": {
@@ -875,9 +890,9 @@ Get a single face suggestion by ID.
 
 **Path Parameters**
 
-| Parameter | Type    | Required | Description   |
-| --------- | ------- | -------- | ------------- |
-| `id`      | integer | Yes      | Suggestion ID |
+| Parameter | Type    | Required | Description       |
+| --------- | ------- | -------- | ----------------- |
+| `id`      | integer | Yes      | Suggestion ID     |
 
 **Response** `200 OK` - FaceSuggestion object
 
@@ -898,9 +913,9 @@ Accept a face suggestion and assign the face to the suggested person.
 
 **Path Parameters**
 
-| Parameter | Type    | Required | Description   |
-| --------- | ------- | -------- | ------------- |
-| `id`      | integer | Yes      | Suggestion ID |
+| Parameter | Type    | Required | Description       |
+| --------- | ------- | -------- | ----------------- |
+| `id`      | integer | Yes      | Suggestion ID     |
 
 **Response** `200 OK`
 
@@ -915,7 +930,14 @@ Accept a face suggestion and assign the face to the suggested person.
 	"createdAt": "2025-12-25T10:00:00Z",
 	"reviewedAt": "2025-12-25T10:15:00Z",
 	"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
-	"personName": "John Smith"
+	"personName": "John Smith",
+	"fullImageUrl": "/api/v1/images/1234/file",
+	"bboxX": 100,
+	"bboxY": 150,
+	"bboxW": 80,
+	"bboxH": 80,
+	"detectionConfidence": 0.95,
+	"qualityScore": 0.78
 }
 ```
 
@@ -938,9 +960,9 @@ Reject a face suggestion without assigning the face.
 
 **Path Parameters**
 
-| Parameter | Type    | Required | Description   |
-| --------- | ------- | -------- | ------------- |
-| `id`      | integer | Yes      | Suggestion ID |
+| Parameter | Type    | Required | Description       |
+| --------- | ------- | -------- | ----------------- |
+| `id`      | integer | Yes      | Suggestion ID     |
 
 **Response** `200 OK`
 
@@ -976,10 +998,10 @@ Accept or reject multiple suggestions in a single request.
 }
 ```
 
-| Field           | Type      | Required | Description                  |
-| --------------- | --------- | -------- | ---------------------------- |
-| `suggestionIds` | integer[] | Yes      | Array of suggestion IDs      |
-| `action`        | string    | Yes      | Action: "accept" or "reject" |
+| Field           | Type     | Required | Description                      |
+| --------------- | -------- | -------- | -------------------------------- |
+| `suggestionIds` | integer[] | Yes     | Array of suggestion IDs          |
+| `action`        | string   | Yes      | Action: "accept" or "reject"     |
 
 **Response** `200 OK`
 
@@ -1196,25 +1218,25 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code                          | HTTP Status | Description                          |
-| ----------------------------- | ----------- | ------------------------------------ |
-| `VALIDATION_ERROR`            | 400         | Invalid request parameters           |
-| `ASSET_NOT_FOUND`             | 404         | Asset ID does not exist              |
-| `CATEGORY_NOT_FOUND`          | 404         | Category ID does not exist           |
-| `PERSON_NOT_FOUND`            | 404         | Person ID does not exist             |
-| `FACE_NOT_FOUND`              | 404         | Face ID does not exist               |
-| `FACE_NOT_ASSIGNED`           | 400         | Face is not assigned to any person   |
-| `JOB_NOT_FOUND`               | 404         | Job ID does not exist                |
-| `SUGGESTION_NOT_FOUND`        | 404         | Suggestion ID does not exist         |
-| `CATEGORY_NAME_EXISTS`        | 409         | Category name already exists         |
-| `PERSON_NAME_EXISTS`          | 409         | Person name already exists           |
-| `CATEGORY_HAS_SESSIONS`       | 409         | Category has training sessions       |
-| `CATEGORY_IS_DEFAULT`         | 400         | Cannot delete default category       |
-| `JOB_NOT_CANCELLABLE`         | 409         | Job already completed                |
-| `MERGE_CONFLICT`              | 409         | Cannot merge (e.g., same person)     |
-| `SUGGESTION_ALREADY_REVIEWED` | 409         | Suggestion already accepted/rejected |
-| `RATE_LIMITED`                | 429         | Too many requests                    |
-| `INTERNAL_ERROR`              | 500         | Server error                         |
+| Code                         | HTTP Status | Description                          |
+| ---------------------------- | ----------- | ------------------------------------ |
+| `VALIDATION_ERROR`           | 400         | Invalid request parameters           |
+| `ASSET_NOT_FOUND`            | 404         | Asset ID does not exist              |
+| `CATEGORY_NOT_FOUND`         | 404         | Category ID does not exist           |
+| `PERSON_NOT_FOUND`           | 404         | Person ID does not exist             |
+| `FACE_NOT_FOUND`             | 404         | Face ID does not exist               |
+| `FACE_NOT_ASSIGNED`          | 400         | Face is not assigned to any person   |
+| `JOB_NOT_FOUND`              | 404         | Job ID does not exist                |
+| `SUGGESTION_NOT_FOUND`       | 404         | Suggestion ID does not exist         |
+| `CATEGORY_NAME_EXISTS`       | 409         | Category name already exists         |
+| `PERSON_NAME_EXISTS`         | 409         | Person name already exists           |
+| `CATEGORY_HAS_SESSIONS`      | 409         | Category has training sessions       |
+| `CATEGORY_IS_DEFAULT`        | 400         | Cannot delete default category       |
+| `JOB_NOT_CANCELLABLE`        | 409         | Job already completed                |
+| `MERGE_CONFLICT`             | 409         | Cannot merge (e.g., same person)     |
+| `SUGGESTION_ALREADY_REVIEWED`| 409         | Suggestion already accepted/rejected |
+| `RATE_LIMITED`               | 429         | Too many requests                    |
+| `INTERNAL_ERROR`             | 500         | Server error                         |
 
 ---
 
@@ -1304,13 +1326,14 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                            |
-| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code.                                                                                                                                                                                                                                                                  |
+| Version | Date       | Changes                                                                                      |
+| ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.5.0   | 2025-12-28 | Enhanced FaceSuggestion schema with bounding box data: added fullImageUrl, bboxX, bboxY, bboxW, bboxH, detectionConfidence, qualityScore fields for face overlay display support. |
+| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code. |
 | 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes. |
-| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema                                                                                                                                                                                                                |
-| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions                                                                                                                                                                                                                                                                                      |
-| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                                                                                                                                                                                                                                                                                                            |
+| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema |
+| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |
+| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                      |
 
 ---
 
