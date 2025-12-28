@@ -888,3 +888,83 @@ export async function getFaceSuggestions(
 		signal: options?.signal
 	});
 }
+
+// ============ Face Suggestion Settings Types ============
+
+/** Face suggestion pagination settings. */
+export interface FaceSuggestionSettings {
+	groupsPerPage: number;
+	itemsPerGroup: number;
+}
+
+/** A suggestion group containing suggestions for a single person. */
+export interface SuggestionGroup {
+	personId: string;
+	personName: string | null;
+	suggestionCount: number;
+	maxConfidence: number;
+	suggestions: FaceSuggestion[];
+}
+
+/** Grouped suggestions response with pagination. */
+export interface GroupedSuggestionsResponse {
+	groups: SuggestionGroup[];
+	totalGroups: number;
+	totalSuggestions: number;
+	page: number;
+	groupsPerPage: number;
+	suggestionsPerGroup: number;
+}
+
+// ============ Face Suggestion Settings API Functions ============
+
+/**
+ * Get face suggestion pagination settings.
+ * @returns Promise with current settings
+ */
+export async function getFaceSuggestionSettings(): Promise<FaceSuggestionSettings> {
+	return apiRequest<FaceSuggestionSettings>('/api/v1/config/face-suggestions');
+}
+
+/**
+ * Update face suggestion pagination settings.
+ * @param settings - New settings to apply
+ * @returns Promise with updated settings
+ */
+export async function updateFaceSuggestionSettings(
+	settings: FaceSuggestionSettings
+): Promise<FaceSuggestionSettings> {
+	return apiRequest<FaceSuggestionSettings>('/api/v1/config/face-suggestions', {
+		method: 'PUT',
+		body: JSON.stringify({
+			groups_per_page: settings.groupsPerPage,
+			items_per_group: settings.itemsPerGroup
+		})
+	});
+}
+
+/**
+ * List grouped face suggestions with pagination.
+ * @param params - Query parameters
+ * @returns Promise with grouped suggestions
+ */
+export async function listGroupedSuggestions(params?: {
+	page?: number;
+	groupsPerPage?: number;
+	suggestionsPerGroup?: number;
+	status?: string;
+	personId?: string;
+}): Promise<GroupedSuggestionsResponse> {
+	const searchParams = new URLSearchParams();
+	searchParams.set('grouped', 'true');
+	if (params?.page) searchParams.set('page', String(params.page));
+	if (params?.groupsPerPage) searchParams.set('groupsPerPage', String(params.groupsPerPage));
+	if (params?.suggestionsPerGroup)
+		searchParams.set('suggestionsPerGroup', String(params.suggestionsPerGroup));
+	if (params?.status) searchParams.set('status', params.status);
+	if (params?.personId) searchParams.set('personId', params.personId);
+
+	return apiRequest<GroupedSuggestionsResponse>(
+		`/api/v1/faces/suggestions?${searchParams.toString()}`
+	);
+}

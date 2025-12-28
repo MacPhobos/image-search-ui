@@ -1,26 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { FaceSuggestion } from '$lib/api/faces';
+	import type { FaceSuggestion, SuggestionGroup } from '$lib/api/faces';
 	import {
-		listSuggestions,
+		listGroupedSuggestions,
+		getFaceSuggestionSettings,
 		bulkSuggestionAction,
 		acceptSuggestion,
-		rejectSuggestion
+		rejectSuggestion,
+		type GroupedSuggestionsResponse,
+		type FaceSuggestionSettings
 	} from '$lib/api/faces';
 	import SuggestionGroupCard from '$lib/components/faces/SuggestionGroupCard.svelte';
 	import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
 
-	interface SuggestionGroup {
-		personId: string;
-		personName: string | null;
-		suggestions: FaceSuggestion[];
-		pendingCount: number;
-	}
-
-	let suggestions = $state<FaceSuggestion[]>([]);
-	let total = $state(0);
+	let groupedResponse = $state<GroupedSuggestionsResponse | null>(null);
+	let settings = $state<FaceSuggestionSettings>({ groupsPerPage: 10, itemsPerGroup: 20 });
 	let page = $state(1);
-	let pageSize = $state(20);
 	let statusFilter = $state<string>('pending');
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
@@ -28,53 +23,16 @@
 	let bulkLoading = $state(false);
 	let selectedSuggestion = $state<FaceSuggestion | null>(null);
 
-	// Group suggestions by person ID, sorted by confidence descending within each group
-	let groupedSuggestions = $derived.by<SuggestionGroup[]>(() => {
-		// Group by personId
-		const groups = new Map<string, FaceSuggestion[]>();
-
-		for (const suggestion of suggestions) {
-			const personId = suggestion.suggestedPersonId;
-			if (!groups.has(personId)) {
-				groups.set(personId, []);
-			}
-			const group = groups.get(personId);
-			if (group) {
-				group.push(suggestion);
-			}
-		}
-
-		// Convert to array and sort suggestions within each group by confidence descending
-		const groupArray: SuggestionGroup[] = [];
-		for (const [personId, groupSuggestions] of groups) {
-			// Sort by confidence descending
-			const sortedSuggestions = [...groupSuggestions].sort((a, b) => b.confidence - a.confidence);
-
-			const pendingCount = sortedSuggestions.filter((s) => s.status === 'pending').length;
-
-			groupArray.push({
-				personId,
-				personName: sortedSuggestions[0]?.personName || null,
-				suggestions: sortedSuggestions,
-				pendingCount
-			});
-		}
-
-		// Sort groups by highest confidence first
-		return groupArray.sort((a, b) => {
-			const maxConfidenceA = Math.max(...a.suggestions.map((s) => s.confidence));
-			const maxConfidenceB = Math.max(...b.suggestions.map((s) => s.confidence));
-			return maxConfidenceB - maxConfidenceA;
-		});
-	});
-
 	async function loadSuggestions() {
 		isLoading = true;
 		error = null;
 		try {
-			const response = await listSuggestions(page, pageSize, statusFilter || undefined);
-			suggestions = response.items;
-			total = response.total;
+			groupedResponse = await listGroupedSuggestions({
+				page,
+				groupsPerPage: settings.groupsPerPage,
+				suggestionsPerGroup: settings.itemsPerGroup,
+				status: statusFilter || undefined
+			});
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load suggestions';
 		} finally {
@@ -83,7 +41,16 @@
 	}
 
 	function handleSuggestionUpdate(updated: FaceSuggestion) {
-		suggestions = suggestions.map((s) => (s.id === updated.id ? updated : s));
+		// Update suggestion in grouped response
+		if (groupedResponse) {
+			groupedResponse = {
+				...groupedResponse,
+				groups: groupedResponse.groups.map((group) => ({
+					...group,
+					suggestions: group.suggestions.map((s) => (s.id === updated.id ? updated : s))
+				}))
+			};
+		}
 		selectedIds.delete(updated.id);
 		selectedIds = new Set(selectedIds);
 	}
@@ -107,7 +74,15 @@
 	}
 
 	function selectAll() {
-		const pendingIds = suggestions.filter((s) => s.status === 'pending').map((s) => s.id);
+		if (!groupedResponse) return;
+		const pendingIds: number[] = [];
+		for (const group of groupedResponse.groups) {
+			for (const suggestion of group.suggestions) {
+				if (suggestion.status === 'pending') {
+					pendingIds.push(suggestion.id);
+				}
+			}
+		}
 		selectedIds = new Set(pendingIds);
 	}
 
@@ -174,8 +149,14 @@
 		}
 	}
 
-	onMount(() => {
-		loadSuggestions();
+	onMount(async () => {
+		try {
+			settings = await getFaceSuggestionSettings();
+		} catch (e) {
+			// Use defaults if settings fetch fails
+			console.error('Failed to load settings:', e);
+		}
+		await loadSuggestions();
 	});
 
 	$effect(() => {
@@ -185,8 +166,17 @@
 		}
 	});
 
-	const totalPages = $derived(Math.ceil(total / pageSize));
-	const pendingCount = $derived(suggestions.filter((s) => s.status === 'pending').length);
+	const totalPages = $derived(groupedResponse ? Math.ceil(groupedResponse.totalGroups / settings.groupsPerPage) : 0);
+	const pendingCount = $derived(() => {
+		if (!groupedResponse) return 0;
+		let count = 0;
+		for (const group of groupedResponse.groups) {
+			for (const suggestion of group.suggestions) {
+				if (suggestion.status === 'pending') count++;
+			}
+		}
+		return count;
+	});
 </script>
 
 <svelte:head>
@@ -197,7 +187,10 @@
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-2xl font-bold text-gray-900">Face Suggestions</h1>
 		<div class="text-sm text-gray-500">
-			{total} total suggestion{total === 1 ? '' : 's'}
+			{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions === 1 ? '' : 's'}
+			{#if groupedResponse}
+				· {groupedResponse.totalGroups} group{groupedResponse.totalGroups === 1 ? '' : 's'}
+			{/if}
 		</div>
 	</div>
 
@@ -255,14 +248,18 @@
 		<div class="flex justify-center py-12">
 			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
 		</div>
-	{:else if suggestions.length === 0}
+	{:else if !groupedResponse || groupedResponse.groups.length === 0}
 		<div class="text-center py-12 text-gray-500">No suggestions found</div>
 	{:else}
 		<!-- Grouped suggestions -->
 		<div class="grid gap-4">
-			{#each groupedSuggestions as group (group.personId)}
+			{#each groupedResponse.groups as group (group.personId)}
+				{@const groupWithPendingCount = {
+					...group,
+					pendingCount: group.suggestions.filter((s) => s.status === 'pending').length
+				}}
 				<SuggestionGroupCard
-					{group}
+					group={groupWithPendingCount}
 					{selectedIds}
 					onSelect={handleSelect}
 					onSelectAllInGroup={handleSelectAllInGroup}
@@ -285,6 +282,9 @@
 				</button>
 				<span class="text-sm text-gray-600">
 					Page {page} of {totalPages}
+					{#if groupedResponse}
+						· Showing {groupedResponse.groups.length} of {groupedResponse.totalGroups} groups
+					{/if}
 				</span>
 				<button
 					onclick={() => (page = Math.min(totalPages, page + 1))}

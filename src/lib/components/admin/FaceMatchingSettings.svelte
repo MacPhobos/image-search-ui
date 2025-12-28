@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import {
+		getFaceSuggestionSettings,
+		updateFaceSuggestionSettings,
+		type FaceSuggestionSettings
+	} from '$lib/api/faces';
 
 	interface FaceMatchingConfig {
 		autoAssignThreshold: number;
@@ -21,6 +26,11 @@
 		prototypeMaxExemplars: 5
 	});
 
+	let paginationSettings = $state<FaceSuggestionSettings>({
+		groupsPerPage: 10,
+		itemsPerGroup: 20
+	});
+
 	let loading = $state(false);
 	let saving = $state(false);
 	let error = $state<string | null>(null);
@@ -28,7 +38,13 @@
 	let validationError = $state<string | null>(null);
 
 	// Derived validation
-	let isValid = $derived(config.suggestionThreshold < config.autoAssignThreshold);
+	let isValid = $derived(
+		config.suggestionThreshold < config.autoAssignThreshold &&
+			paginationSettings.groupsPerPage >= 1 &&
+			paginationSettings.groupsPerPage <= 50 &&
+			paginationSettings.itemsPerGroup >= 1 &&
+			paginationSettings.itemsPerGroup <= 50
+	);
 
 	onMount(async () => {
 		await loadConfig();
@@ -39,18 +55,22 @@
 		error = null;
 
 		try {
-			const response = await fetch(`${API_BASE_URL}/api/v1/config/face-matching`);
-			if (!response.ok) throw new Error('Failed to load configuration');
+			// Load face matching config
+			const matchingResponse = await fetch(`${API_BASE_URL}/api/v1/config/face-matching`);
+			if (!matchingResponse.ok) throw new Error('Failed to load face matching configuration');
 
-			const data = await response.json();
+			const matchingData = await matchingResponse.json();
 			config = {
-				autoAssignThreshold: data.auto_assign_threshold,
-				suggestionThreshold: data.suggestion_threshold,
-				maxSuggestions: data.max_suggestions,
-				suggestionExpiryDays: data.suggestion_expiry_days,
-				prototypeMinQuality: data.prototype_min_quality,
-				prototypeMaxExemplars: data.prototype_max_exemplars
+				autoAssignThreshold: matchingData.auto_assign_threshold,
+				suggestionThreshold: matchingData.suggestion_threshold,
+				maxSuggestions: matchingData.max_suggestions,
+				suggestionExpiryDays: matchingData.suggestion_expiry_days,
+				prototypeMinQuality: matchingData.prototype_min_quality,
+				prototypeMaxExemplars: matchingData.prototype_max_exemplars
 			};
+
+			// Load pagination settings
+			paginationSettings = await getFaceSuggestionSettings();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load configuration';
 		} finally {
@@ -60,7 +80,7 @@
 
 	async function saveConfig() {
 		if (!isValid) {
-			validationError = 'Suggestion threshold must be less than auto-assign threshold';
+			validationError = 'Please check all validation requirements';
 			return;
 		}
 
@@ -69,7 +89,8 @@
 		validationError = null;
 
 		try {
-			const response = await fetch(`${API_BASE_URL}/api/v1/config/face-matching`, {
+			// Save face matching config
+			const matchingResponse = await fetch(`${API_BASE_URL}/api/v1/config/face-matching`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -82,10 +103,13 @@
 				})
 			});
 
-			if (!response.ok) {
-				const data = await response.json();
-				throw new Error(data.detail || 'Failed to save configuration');
+			if (!matchingResponse.ok) {
+				const data = await matchingResponse.json();
+				throw new Error(data.detail || 'Failed to save face matching configuration');
 			}
+
+			// Save pagination settings
+			await updateFaceSuggestionSettings(paginationSettings);
 
 			successMessage = 'Settings saved successfully';
 			setTimeout(() => {
@@ -288,6 +312,45 @@
 							min="1"
 							max="20"
 							bind:value={config.prototypeMaxExemplars}
+						/>
+					</div>
+				</div>
+			</div>
+
+			<!-- Pagination Settings -->
+			<div class="other-settings">
+				<h3>Suggestion Pagination</h3>
+				<p class="section-description">
+					Control how face suggestions are displayed on the review page. Groups organize
+					suggestions by person for easier batch processing.
+				</p>
+
+				<div class="form-grid">
+					<div class="form-field">
+						<label for="groupsPerPage">
+							Groups per Page
+							<span class="field-hint">Number of person groups shown per page (1-50)</span>
+						</label>
+						<input
+							id="groupsPerPage"
+							type="number"
+							min="1"
+							max="50"
+							bind:value={paginationSettings.groupsPerPage}
+						/>
+					</div>
+
+					<div class="form-field">
+						<label for="itemsPerGroup">
+							Suggestions per Group
+							<span class="field-hint">Maximum suggestions shown per person (1-50)</span>
+						</label>
+						<input
+							id="itemsPerGroup"
+							type="number"
+							min="1"
+							max="50"
+							bind:value={paginationSettings.itemsPerGroup}
 						/>
 					</div>
 				</div>
