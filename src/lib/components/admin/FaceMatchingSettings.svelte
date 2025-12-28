@@ -6,6 +6,8 @@
 		suggestionThreshold: number;
 		maxSuggestions: number;
 		suggestionExpiryDays: number;
+		prototypeMinQuality: number;
+		prototypeMaxExemplars: number;
 	}
 
 	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -14,7 +16,9 @@
 		autoAssignThreshold: 0.85,
 		suggestionThreshold: 0.7,
 		maxSuggestions: 50,
-		suggestionExpiryDays: 30
+		suggestionExpiryDays: 30,
+		prototypeMinQuality: 0.5,
+		prototypeMaxExemplars: 5
 	});
 
 	let loading = $state(false);
@@ -43,7 +47,9 @@
 				autoAssignThreshold: data.auto_assign_threshold,
 				suggestionThreshold: data.suggestion_threshold,
 				maxSuggestions: data.max_suggestions,
-				suggestionExpiryDays: data.suggestion_expiry_days
+				suggestionExpiryDays: data.suggestion_expiry_days,
+				prototypeMinQuality: data.prototype_min_quality,
+				prototypeMaxExemplars: data.prototype_max_exemplars
 			};
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load configuration';
@@ -70,7 +76,9 @@
 					auto_assign_threshold: config.autoAssignThreshold,
 					suggestion_threshold: config.suggestionThreshold,
 					max_suggestions: config.maxSuggestions,
-					suggestion_expiry_days: config.suggestionExpiryDays
+					suggestion_expiry_days: config.suggestionExpiryDays,
+					prototype_min_quality: config.prototypeMinQuality,
+					prototype_max_exemplars: config.prototypeMaxExemplars
 				})
 			});
 
@@ -235,6 +243,51 @@
 							min="1"
 							max="365"
 							bind:value={config.suggestionExpiryDays}
+						/>
+					</div>
+				</div>
+			</div>
+
+			<!-- Prototype Settings -->
+			<div class="other-settings">
+				<h3>Face Prototype Settings</h3>
+
+				<div class="form-grid">
+					<div class="form-field">
+						<label for="prototypeMinQuality">
+							Prototype Minimum Quality
+							<span class="field-hint"
+								>Minimum face quality score (0-1) required for a face to become a prototype.
+								Higher values create fewer but better quality prototypes for person matching.</span
+							>
+						</label>
+						<div class="slider-container">
+							<input
+								id="prototypeMinQuality"
+								type="range"
+								min="0.0"
+								max="1.0"
+								step="0.05"
+								bind:value={config.prototypeMinQuality}
+							/>
+							<output class="slider-value">{config.prototypeMinQuality.toFixed(2)}</output>
+						</div>
+					</div>
+
+					<div class="form-field">
+						<label for="prototypeMaxExemplars">
+							Max Prototypes Per Person
+							<span class="field-hint"
+								>Maximum number of prototype faces stored per person. More prototypes improve
+								matching accuracy but increase storage and search time.</span
+							>
+						</label>
+						<input
+							id="prototypeMaxExemplars"
+							type="number"
+							min="1"
+							max="20"
+							bind:value={config.prototypeMaxExemplars}
 						/>
 					</div>
 				</div>
