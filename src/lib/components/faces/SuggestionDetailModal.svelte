@@ -23,6 +23,13 @@
 				: '#f97316'; // orange-500
 	});
 
+	// Convert face thumbnail URL to full resolution URL
+	const fullImageUrl = $derived(() => {
+		if (!suggestion?.faceThumbnailUrl) return null;
+		// Replace /face_thumb, /thumbnail, or /thumb with /full
+		return suggestion.faceThumbnailUrl.replace(/\/(face_thumb|thumbnail|thumb)$/, '/full');
+	});
+
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
 			onClose();
@@ -98,9 +105,9 @@
 			<div class="modal-body">
 				<!-- Face Image -->
 				<div class="image-container">
-					{#if suggestion.faceThumbnailUrl}
+					{#if fullImageUrl()}
 						<img
-							src={getImageUrl(suggestion.faceThumbnailUrl)}
+							src={getImageUrl(fullImageUrl())}
 							alt="Face for {suggestion.personName || 'Unknown'}"
 							class="face-image"
 						/>
@@ -263,8 +270,9 @@
 	}
 
 	.face-image {
-		max-width: 600px;
-		width: 100%;
+		max-width: 100%;
+		max-height: 70vh;
+		width: auto;
 		height: auto;
 		object-fit: contain;
 		border-radius: 12px;
