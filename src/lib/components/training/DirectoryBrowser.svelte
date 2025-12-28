@@ -72,7 +72,11 @@
 	<div class="browser-header">
 		<h3>Select Subdirectories</h3>
 		<div class="actions">
-			<button class="btn-action" onclick={selectAll} disabled={loading || filteredSubdirs.length === 0}>
+			<button
+				class="btn-action"
+				onclick={selectAll}
+				disabled={loading || filteredSubdirs.length === 0}
+			>
 				Select All
 			</button>
 			<button

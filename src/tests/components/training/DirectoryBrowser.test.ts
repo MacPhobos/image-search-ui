@@ -14,10 +14,7 @@ const mockSubdirs: SubdirectoryInfo[] = [
 describe('DirectoryBrowser - Filter Functionality', () => {
 	beforeEach(() => {
 		// Mock the API response for directory listing
-		mockResponse(
-			'http://localhost:8000/api/v1/training/directories?path=%2Fphotos',
-			mockSubdirs
-		);
+		mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fphotos', mockSubdirs);
 	});
 
 	describe('Filter input rendering', () => {
