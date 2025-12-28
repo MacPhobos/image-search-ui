@@ -168,24 +168,31 @@
 
 		loadingPhoto = true;
 		try {
-			let facesInPhoto;
+			// Always fetch ALL faces for this asset from API
+			const facesData = await getFacesForAsset(face.assetId);
 
-			// Use cluster state if we have faces for this asset (already has updated assignments)
-			if (cluster) {
-				const facesForThisAsset = cluster.faces.filter((f) => f.assetId === face.assetId);
-				if (facesForThisAsset.length > 0) {
-					// Transform FaceInstance[] to FaceInPhoto[] using cluster data
-					facesInPhoto = transformFaceInstancesToFaceInPhoto(facesForThisAsset);
-				} else {
-					// Fallback to API if cluster doesn't have faces for this asset
-					const facesData = await getFacesForAsset(face.assetId);
-					facesInPhoto = transformFaceInstancesToFaceInPhoto(facesData.items);
+			// Merge with any updated assignments from cluster state
+			// (cluster.faces may have newer personId/personName from recent assignments)
+			const mergedFaces = facesData.items.map((apiFace) => {
+				if (cluster) {
+					const clusterFace = cluster.faces.find((cf) => cf.id === apiFace.id);
+					if (
+						clusterFace &&
+						(clusterFace.personId !== apiFace.personId ||
+							clusterFace.personName !== apiFace.personName)
+					) {
+						// Use cluster state's assignment (more recent)
+						return {
+							...apiFace,
+							personId: clusterFace.personId,
+							personName: clusterFace.personName
+						};
+					}
 				}
-			} else {
-				// No cluster, fetch from API
-				const facesData = await getFacesForAsset(face.assetId);
-				facesInPhoto = transformFaceInstancesToFaceInPhoto(facesData.items);
-			}
+				return apiFace;
+			});
+
+			const facesInPhoto = transformFaceInstancesToFaceInPhoto(mergedFaces);
 
 			// Calculate counts
 			const faceCount = facesInPhoto.length;
