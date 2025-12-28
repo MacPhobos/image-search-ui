@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { PersonPhotoGroup, FaceInPhoto, FaceSuggestionItem } from '$lib/api/faces';
 	import {
 		listPersons,
@@ -62,7 +63,7 @@
 		loading: boolean;
 		error: string | null;
 	}
-	let faceSuggestions = $state<Map<string, FaceSuggestionsState>>(new Map());
+	let faceSuggestions = $state.raw<Map<string, FaceSuggestionsState>>(new Map());
 
 	// Derived states
 	let filteredPersons = $derived(() => {
@@ -81,22 +82,17 @@
 		}
 	}
 
-	// Load persons list when modal opens
-	$effect(() => {
+	// Load persons list and fetch suggestions when modal opens
+	onMount(() => {
+		// Load persons if not already loaded
 		if (persons.length === 0) {
 			loadPersons();
 		}
-	});
 
-	// Fetch suggestions for unknown faces (non-blocking with cleanup)
-	$effect(() => {
-		// Get all faces without a personId
+		// Fetch suggestions for unknown faces
 		const unknownFaces = photo.faces.filter((f) => !f.personId);
-
-		// Create abort controller for cleanup
 		const controller = new AbortController();
 
-		// Fetch suggestions for each unknown face (non-blocking)
 		unknownFaces.forEach((face) => {
 			// Set loading state
 			faceSuggestions.set(face.faceInstanceId, { suggestions: [], loading: true, error: null });
@@ -120,7 +116,7 @@
 				});
 		});
 
-		// Cleanup: abort pending requests when modal closes
+		// Cleanup: abort pending requests when modal unmounts
 		return () => controller.abort();
 	});
 

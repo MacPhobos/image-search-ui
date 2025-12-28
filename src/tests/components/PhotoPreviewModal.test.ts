@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 import type { PersonPhotoGroup } from '$lib/api/faces';
@@ -48,6 +48,19 @@ describe('PhotoPreviewModal - Face Unassignment', () => {
 		mockOnClose.mockClear();
 		vi.clearAllMocks();
 		vi.unstubAllGlobals();
+
+		// Mock persons API (called on component mount)
+		mockResponse('/api/v1/faces/persons', {
+			items: [],
+			total: 0,
+			page: 1,
+			pageSize: 100
+		});
+
+		// Mock suggestions API (called for unknown faces on mount) - regex pattern to match any faceId
+		mockResponse('/api/v1/faces/faces/[^/]+/suggestions', {
+			suggestions: []
+		});
 	});
 
 	it('shows unassign button for labeled faces', () => {
@@ -149,8 +162,10 @@ describe('PhotoPreviewModal - Face Unassignment', () => {
 		// Verify confirmation dialog was shown
 		expect(confirmMock).toHaveBeenCalledWith('Unassign "John Smith" from this face?');
 
-		// Verify API was not called
-		expect(globalThis.fetch).not.toHaveBeenCalled();
+		// Verify DELETE API was not called (mount-time GET calls are expected)
+		const fetchCalls = (globalThis.fetch as Mock).mock.calls;
+		const deleteCalls = fetchCalls.filter((call) => call[1]?.method === 'DELETE');
+		expect(deleteCalls).toHaveLength(0);
 
 		vi.unstubAllGlobals();
 	});
