@@ -23,6 +23,7 @@
 	let error = $state<string | null>(null);
 	let tolerancePixels = $state(10);
 	let skipMissingImages = $state(true);
+	let autoIngestImages = $state(true);
 
 	let canProceed = $derived(exportData !== null);
 	let fileStats = $derived(
@@ -66,7 +67,8 @@
 			const preview = await importPersonMetadata(exportData, {
 				dryRun: true,
 				tolerancePixels: tolerancePixels,
-				skipMissingImages: skipMissingImages
+				skipMissingImages: skipMissingImages,
+				autoIngestImages: autoIngestImages
 			});
 			previewResult = preview;
 			step = 'preview';
@@ -87,7 +89,8 @@
 			const result = await importPersonMetadata(exportData, {
 				dryRun: false,
 				tolerancePixels: tolerancePixels,
-				skipMissingImages: skipMissingImages
+				skipMissingImages: skipMissingImages,
+				autoIngestImages: autoIngestImages
 			});
 			importResult = result;
 			step = 'results';
@@ -238,6 +241,22 @@
 								</label>
 								<p class="input-help">
 									Continue import even if some images are not found in the database
+								</p>
+							</div>
+
+							<div class="form-group">
+								<label class="checkbox-label">
+									<input
+										type="checkbox"
+										bind:checked={autoIngestImages}
+										disabled={loading}
+										class="form-checkbox"
+									/>
+									Auto-ingest missing images
+								</label>
+								<p class="input-help">
+									Automatically ingest images that exist on the filesystem but are not yet in the
+									database. This enables seamless seed data restoration.
 								</p>
 							</div>
 						</div>

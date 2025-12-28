@@ -117,6 +117,7 @@ export interface ImportOptions {
 	dryRun?: boolean;
 	tolerancePixels?: number;
 	skipMissingImages?: boolean;
+	autoIngestImages?: boolean;
 }
 
 export interface ImportRequest {
