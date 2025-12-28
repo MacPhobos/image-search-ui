@@ -168,11 +168,24 @@
 
 		loadingPhoto = true;
 		try {
-			// Fetch all faces for this asset
-			const facesData = await getFacesForAsset(face.assetId);
+			let facesInPhoto;
 
-			// Transform faces to FaceInPhoto format
-			const facesInPhoto = transformFaceInstancesToFaceInPhoto(facesData.items);
+			// Use cluster state if we have faces for this asset (already has updated assignments)
+			if (cluster) {
+				const facesForThisAsset = cluster.faces.filter((f) => f.assetId === face.assetId);
+				if (facesForThisAsset.length > 0) {
+					// Transform FaceInstance[] to FaceInPhoto[] using cluster data
+					facesInPhoto = transformFaceInstancesToFaceInPhoto(facesForThisAsset);
+				} else {
+					// Fallback to API if cluster doesn't have faces for this asset
+					const facesData = await getFacesForAsset(face.assetId);
+					facesInPhoto = transformFaceInstancesToFaceInPhoto(facesData.items);
+				}
+			} else {
+				// No cluster, fetch from API
+				const facesData = await getFacesForAsset(face.assetId);
+				facesInPhoto = transformFaceInstancesToFaceInPhoto(facesData.items);
+			}
 
 			// Calculate counts
 			const faceCount = facesInPhoto.length;
