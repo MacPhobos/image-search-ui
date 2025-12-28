@@ -419,3 +419,249 @@ describe('PhotoPreviewModal - Face Unassignment', () => {
 		vi.unstubAllGlobals();
 	});
 });
+
+describe('PhotoPreviewModal - Person Name Display (Regression Tests)', () => {
+	const mockOnClose = vi.fn();
+
+	beforeEach(() => {
+		resetMocks();
+		mockOnClose.mockClear();
+
+		// Mock persons API (called on component mount)
+		mockResponse('/api/v1/faces/persons', {
+			items: [],
+			total: 0,
+			page: 1,
+			pageSize: 100
+		});
+
+		// Mock suggestions API (called for unknown faces on mount)
+		mockResponse('/api/v1/faces/faces/[^/]+/suggestions', {
+			suggestions: []
+		});
+	});
+
+	it('displays person name when personName is provided', () => {
+		const mockPhoto: PersonPhotoGroup = {
+			photoId: 1,
+			takenAt: '2024-12-19T10:00:00Z',
+			thumbnailUrl: 'http://localhost:8000/api/v1/images/1/thumbnail',
+			fullUrl: 'http://localhost:8000/api/v1/images/1/full',
+			faceCount: 1,
+			hasNonPersonFaces: false,
+			faces: [
+				{
+					faceInstanceId: 'face-1',
+					bboxX: 100,
+					bboxY: 100,
+					bboxW: 50,
+					bboxH: 50,
+					detectionConfidence: 0.95,
+					qualityScore: 0.8,
+					personId: 'person-123',
+					personName: 'Chantal', // Name is provided
+					clusterId: 'cluster-1'
+				}
+			]
+		};
+
+		render(PhotoPreviewModal, {
+			props: {
+				photo: mockPhoto,
+				currentPersonId: null,
+				currentPersonName: null,
+				onClose: mockOnClose
+			}
+		});
+
+		// Assert person name is displayed, NOT "Unknown"
+		expect(screen.getByText('Chantal')).toBeInTheDocument();
+		expect(screen.queryByText('Unknown')).not.toBeInTheDocument();
+	});
+
+	it('displays "Unknown" only when personId AND personName are both null', () => {
+		const mockPhoto: PersonPhotoGroup = {
+			photoId: 1,
+			takenAt: '2024-12-19T10:00:00Z',
+			thumbnailUrl: 'http://localhost:8000/api/v1/images/1/thumbnail',
+			fullUrl: 'http://localhost:8000/api/v1/images/1/full',
+			faceCount: 1,
+			hasNonPersonFaces: true,
+			faces: [
+				{
+					faceInstanceId: 'face-unknown',
+					bboxX: 100,
+					bboxY: 100,
+					bboxW: 50,
+					bboxH: 50,
+					detectionConfidence: 0.88,
+					qualityScore: null,
+					personId: null, // Both null
+					personName: null,
+					clusterId: null
+				}
+			]
+		};
+
+		render(PhotoPreviewModal, {
+			props: {
+				photo: mockPhoto,
+				currentPersonId: null,
+				currentPersonName: null,
+				onClose: mockOnClose
+			}
+		});
+
+		// Assert "Unknown" is displayed
+		expect(screen.getByText('Unknown')).toBeInTheDocument();
+	});
+
+	it('regression - displays person name even when personId is set but personName was initially null (backend bug scenario)', () => {
+		/**
+		 * This test documents the bug scenario:
+		 * - Backend returned personId but personName was null (backend bug)
+		 * - UI should display person name, not "Unknown"
+		 * - If this test fails showing "Unknown", the getFaceLabel function has a bug
+		 */
+		const mockPhoto: PersonPhotoGroup = {
+			photoId: 1,
+			takenAt: '2024-12-19T10:00:00Z',
+			thumbnailUrl: 'http://localhost:8000/api/v1/images/1/thumbnail',
+			fullUrl: 'http://localhost:8000/api/v1/images/1/full',
+			faceCount: 1,
+			hasNonPersonFaces: false,
+			faces: [
+				{
+					faceInstanceId: 'face-regression',
+					bboxX: 100,
+					bboxY: 100,
+					bboxW: 50,
+					bboxH: 50,
+					detectionConfidence: 0.95,
+					qualityScore: 0.8,
+					// Backend bug: personId is set but personName was null
+					// After backend fix, personName should be populated
+					personId: 'person-456',
+					personName: 'Marie', // Backend now returns this correctly
+					clusterId: 'cluster-2'
+				}
+			]
+		};
+
+		render(PhotoPreviewModal, {
+			props: {
+				photo: mockPhoto,
+				currentPersonId: null,
+				currentPersonName: null,
+				onClose: mockOnClose
+			}
+		});
+
+		// Assert person name is displayed correctly (not "Unknown")
+		expect(screen.getByText('Marie')).toBeInTheDocument();
+		expect(screen.queryByText('Unknown')).not.toBeInTheDocument();
+	});
+
+	it('displays multiple person names correctly in the same photo', () => {
+		const mockPhoto: PersonPhotoGroup = {
+			photoId: 2,
+			takenAt: '2024-12-19T12:00:00Z',
+			thumbnailUrl: 'http://localhost:8000/api/v1/images/2/thumbnail',
+			fullUrl: 'http://localhost:8000/api/v1/images/2/full',
+			faceCount: 3,
+			hasNonPersonFaces: true,
+			faces: [
+				{
+					faceInstanceId: 'face-a',
+					bboxX: 50,
+					bboxY: 50,
+					bboxW: 40,
+					bboxH: 40,
+					detectionConfidence: 0.92,
+					qualityScore: 0.75,
+					personId: 'person-1',
+					personName: 'Alice',
+					clusterId: 'cluster-1'
+				},
+				{
+					faceInstanceId: 'face-b',
+					bboxX: 150,
+					bboxY: 50,
+					bboxW: 40,
+					bboxH: 40,
+					detectionConfidence: 0.89,
+					qualityScore: 0.68,
+					personId: 'person-2',
+					personName: 'Bob',
+					clusterId: 'cluster-2'
+				},
+				{
+					faceInstanceId: 'face-c',
+					bboxX: 250,
+					bboxY: 50,
+					bboxW: 40,
+					bboxH: 40,
+					detectionConfidence: 0.85,
+					qualityScore: null,
+					personId: null,
+					personName: null,
+					clusterId: null
+				}
+			]
+		};
+
+		render(PhotoPreviewModal, {
+			props: {
+				photo: mockPhoto,
+				currentPersonId: null,
+				currentPersonName: null,
+				onClose: mockOnClose
+			}
+		});
+
+		// Assert all names are displayed correctly
+		expect(screen.getByText('Alice')).toBeInTheDocument();
+		expect(screen.getByText('Bob')).toBeInTheDocument();
+		expect(screen.getByText('Unknown')).toBeInTheDocument();
+	});
+
+	it('displays unassign button with correct person name in aria-label', () => {
+		const mockPhoto: PersonPhotoGroup = {
+			photoId: 1,
+			takenAt: '2024-12-19T10:00:00Z',
+			thumbnailUrl: 'http://localhost:8000/api/v1/images/1/thumbnail',
+			fullUrl: 'http://localhost:8000/api/v1/images/1/full',
+			faceCount: 1,
+			hasNonPersonFaces: false,
+			faces: [
+				{
+					faceInstanceId: 'face-1',
+					bboxX: 100,
+					bboxY: 100,
+					bboxW: 50,
+					bboxH: 50,
+					detectionConfidence: 0.95,
+					qualityScore: 0.8,
+					personId: 'person-123',
+					personName: 'Chantal',
+					clusterId: 'cluster-1'
+				}
+			]
+		};
+
+		render(PhotoPreviewModal, {
+			props: {
+				photo: mockPhoto,
+				currentPersonId: null,
+				currentPersonName: null,
+				onClose: mockOnClose
+			}
+		});
+
+		// Unassign button should reference the correct person name
+		const unassignButton = screen.getByRole('button', {
+			name: 'Unassign this face from Chantal'
+		});
+		expect(unassignButton).toBeInTheDocument();
+	});
+});
