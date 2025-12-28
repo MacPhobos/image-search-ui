@@ -485,8 +485,9 @@
 											font-size="13"
 											font-weight="500"
 										>
-											Suggested: {topSuggestion.personName} ({Math.round(topSuggestion.confidence *
-												100)}%)
+											Suggested: {topSuggestion.personName} ({Math.round(
+												topSuggestion.confidence * 100
+											)}%)
 										</text>
 									</g>
 								{:else}
@@ -608,7 +609,9 @@
 									<div class="suggestion-hint">
 										<span class="suggestion-icon">💡</span>
 										<span class="suggestion-text">
-											Suggested: {topSuggestion.personName} ({Math.round(topSuggestion.confidence * 100)}%)
+											Suggested: {topSuggestion.personName} ({Math.round(
+												topSuggestion.confidence * 100
+											)}%)
 										</span>
 										<button
 											type="button"
@@ -894,13 +897,18 @@
 	}
 
 	.face-label text {
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
 	}
 
 	.face-sidebar {
 		width: 280px;
 		flex-shrink: 0;
-		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
 		border-left: 1px solid #e5e7eb;
 		padding-left: 1rem;
 	}
@@ -910,6 +918,7 @@
 		font-size: 1rem;
 		font-weight: 600;
 		color: #333;
+		flex-shrink: 0;
 	}
 
 	.face-list {
@@ -919,6 +928,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
 	}
 
 	.face-item {
@@ -1122,6 +1134,10 @@
 		padding: 0.75rem;
 		margin: 0.5rem 0.625rem;
 		border: 1px solid #e0e0e0;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.assignment-header {
@@ -1129,6 +1145,7 @@
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 0.625rem;
+		flex-shrink: 0;
 	}
 
 	.assignment-header h4 {
@@ -1163,6 +1180,7 @@
 		border-radius: 4px;
 		margin-bottom: 0.5rem;
 		font-size: 0.75rem;
+		flex-shrink: 0;
 	}
 
 	.person-search-input {
@@ -1173,6 +1191,7 @@
 		font-size: 0.875rem;
 		margin-bottom: 0.5rem;
 		transition: border-color 0.2s;
+		flex-shrink: 0;
 	}
 
 	.person-search-input:focus {
@@ -1181,7 +1200,9 @@
 	}
 
 	.person-options {
-		max-height: 150px;
+		flex: 1;
+		min-height: 100px;
+		max-height: min(400px, 50vh);
 		overflow-y: auto;
 		border: 1px solid #e0e0e0;
 		border-radius: 6px;
@@ -1282,11 +1303,15 @@
 
 		.face-sidebar {
 			width: 100%;
-			max-height: 200px;
+			max-height: 250px;
 			border-left: none;
 			border-top: 1px solid #e5e7eb;
 			padding-left: 0;
 			padding-top: 1rem;
+		}
+
+		.person-options {
+			max-height: min(200px, 30vh);
 		}
 
 		.photo-wrapper {

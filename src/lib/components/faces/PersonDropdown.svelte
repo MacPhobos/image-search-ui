@@ -270,12 +270,7 @@
 	</button>
 
 	{#if isOpen}
-		<div
-			id="person-dropdown-menu"
-			class="dropdown-menu"
-			bind:this={dropdownRef}
-			role="listbox"
-		>
+		<div id="person-dropdown-menu" class="dropdown-menu" bind:this={dropdownRef} role="listbox">
 			<!-- Search input -->
 			<div class="search-section">
 				<div class="search-input-wrapper">

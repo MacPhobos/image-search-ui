@@ -160,9 +160,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 
 		// Verify no suggestions endpoint was called
 		const fetchCalls = (globalThis.fetch as any).mock?.calls || [];
-		const suggestionCalls = fetchCalls.filter((call: any[]) =>
-			call[0].includes('/suggestions')
-		);
+		const suggestionCalls = fetchCalls.filter((call: any[]) => call[0].includes('/suggestions'));
 		expect(suggestionCalls).toHaveLength(0);
 	});
 
@@ -405,9 +403,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		// Verify fetch was called with abort signal
 		await waitFor(() => {
 			const fetchCalls = (globalThis.fetch as any).mock?.calls || [];
-			const suggestionCalls = fetchCalls.filter((call: any[]) =>
-				call[0].includes('/suggestions')
-			);
+			const suggestionCalls = fetchCalls.filter((call: any[]) => call[0].includes('/suggestions'));
 			if (suggestionCalls.length > 0) {
 				// Check that the request options include a signal
 				const options = suggestionCalls[0][1];

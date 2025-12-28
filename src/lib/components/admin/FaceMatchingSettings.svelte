@@ -128,10 +128,7 @@
 
 				<div class="threshold-visual">
 					<div class="threshold-bar">
-						<div
-							class="zone zone-unassigned"
-							style="width: {config.suggestionThreshold * 100}%"
-						>
+						<div class="zone zone-unassigned" style="width: {config.suggestionThreshold * 100}%">
 							{#if config.suggestionThreshold >= 0.15}
 								<span class="zone-label">Unassigned</span>
 							{/if}
@@ -144,10 +141,7 @@
 								<span class="zone-label">Suggestions</span>
 							{/if}
 						</div>
-						<div
-							class="zone zone-auto"
-							style="width: {(1 - config.autoAssignThreshold) * 100}%"
-						>
+						<div class="zone zone-auto" style="width: {(1 - config.autoAssignThreshold) * 100}%">
 							{#if 1 - config.autoAssignThreshold >= 0.08}
 								<span class="zone-label">Auto</span>
 							{/if}
@@ -251,9 +245,7 @@
 				<button class="btn btn-primary" onclick={saveConfig} disabled={saving || !isValid}>
 					{saving ? 'Saving...' : 'Save Settings'}
 				</button>
-				<button class="btn btn-secondary" onclick={loadConfig} disabled={loading}>
-					Reset
-				</button>
+				<button class="btn btn-secondary" onclick={loadConfig} disabled={loading}> Reset </button>
 			</div>
 		</div>
 	{/if}

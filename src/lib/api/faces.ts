@@ -560,6 +560,12 @@ export interface FaceDetectionSession {
 	completedAt: string | null;
 	jobId: string | null;
 	progressPercent: number;
+	// New fields (optional for backward compatibility with backend)
+	facesAssignedToPersons?: number;
+	clustersCreated?: number;
+	suggestionsCreated?: number;
+	currentBatch?: number;
+	totalBatches?: number;
 }
 
 /** Paginated list of face detection sessions. */
@@ -589,6 +595,12 @@ export interface FaceDetectionProgress {
 	facesAssigned: number;
 	progressPercent: number;
 	lastError: string | null;
+	// New fields (optional for backward compatibility)
+	facesAssignedToPersons?: number;
+	clustersCreated?: number;
+	suggestionsCreated?: number;
+	currentBatch?: number;
+	totalBatches?: number;
 }
 
 // ============ Face Detection Session API Functions ============

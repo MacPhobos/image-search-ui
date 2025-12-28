@@ -92,16 +92,12 @@
 							<li>Face bounding boxes and image paths</li>
 							<li>Detection confidence and quality scores</li>
 						</ul>
-						<p class="info-text">
-							Use this for backup or to migrate data between environments.
-						</p>
+						<p class="info-text">Use this for backup or to migrate data between environments.</p>
 					</div>
 				</div>
 
 				<div class="form-group">
-					<label for="max-faces-input">
-						Maximum faces per person (1-500):
-					</label>
+					<label for="max-faces-input"> Maximum faces per person (1-500): </label>
 					<input
 						id="max-faces-input"
 						type="number"

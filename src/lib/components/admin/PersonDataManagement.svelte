@@ -59,8 +59,8 @@
 	<div class="section-header">
 		<h2>Person Data Management</h2>
 		<p class="section-description">
-			Export and import person-to-face mappings for backup and migration. These operations allow
-			you to preserve manual person labeling and restore it across environments.
+			Export and import person-to-face mappings for backup and migration. These operations allow you
+			to preserve manual person labeling and restore it across environments.
 		</p>
 	</div>
 
@@ -75,8 +75,7 @@
 				<div class="stats-grid">
 					<div class="stat-item">
 						<span class="stat-label">Persons Exported:</span>
-						<span class="stat-value"
-							>{lastExportResult.metadata.totalPersons.toLocaleString()}</span
+						<span class="stat-value">{lastExportResult.metadata.totalPersons.toLocaleString()}</span
 						>
 					</div>
 					<div class="stat-item">
@@ -126,14 +125,11 @@
 					</div>
 					<div class="stat-item">
 						<span class="stat-label">Faces Not Found:</span>
-						<span class="stat-value"
-							>{lastImportResult.totalFacesNotFound.toLocaleString()}</span
-						>
+						<span class="stat-value">{lastImportResult.totalFacesNotFound.toLocaleString()}</span>
 					</div>
 					<div class="stat-item">
 						<span class="stat-label">Images Missing:</span>
-						<span class="stat-value">{lastImportResult.totalImagesMissing.toLocaleString()}</span
-						>
+						<span class="stat-value">{lastImportResult.totalImagesMissing.toLocaleString()}</span>
 					</div>
 					<div class="stat-item">
 						<span class="stat-label">Completed At:</span>
