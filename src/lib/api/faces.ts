@@ -751,6 +751,13 @@ export interface FaceSuggestion {
 	reviewedAt: string | null;
 	faceThumbnailUrl: string | null;
 	personName: string | null;
+	fullImageUrl: string | null;
+	bboxX: number | null;
+	bboxY: number | null;
+	bboxW: number | null;
+	bboxH: number | null;
+	detectionConfidence: number | null;
+	qualityScore: number | null;
 }
 
 /** A person suggestion item for a face based on face recognition. */

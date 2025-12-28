@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { FaceSuggestion } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
+	import ImageWithFaceBoundingBoxes, {
+		type FaceBox
+	} from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
 
 	interface Props {
 		suggestion: FaceSuggestion | null;
@@ -23,12 +26,40 @@
 				: '#f97316'; // orange-500
 	});
 
-	// Convert face thumbnail URL to full resolution URL
+	// Get full image URL (backend now provides this directly)
 	const fullImageUrl = $derived(() => {
-		if (!suggestion?.faceThumbnailUrl) return null;
-		// Replace /face_thumb, /thumbnail, or /thumb with /full
-		return suggestion.faceThumbnailUrl.replace(/\/(face_thumb|thumbnail|thumb)$/, '/full');
+		if (!suggestion?.fullImageUrl) return null;
+		return getImageUrl(suggestion.fullImageUrl);
 	});
+
+	// Create FaceBox array for the ImageWithFaceBoundingBoxes component
+	const faceBoxes = $derived<FaceBox[]>(() => {
+		if (!suggestion || !hasBoundingBox()) return [];
+
+		return [
+			{
+				id: suggestion.faceInstanceId,
+				bboxX: suggestion.bboxX ?? 0,
+				bboxY: suggestion.bboxY ?? 0,
+				bboxW: suggestion.bboxW ?? 0,
+				bboxH: suggestion.bboxH ?? 0,
+				label: suggestion.personName ?? 'Suggested',
+				labelStyle: 'suggested',
+				suggestionConfidence: suggestion.confidence
+			}
+		];
+	});
+
+	// Check if suggestion has valid bounding box data
+	function hasBoundingBox(): boolean {
+		if (!suggestion) return false;
+		return (
+			suggestion.bboxX !== null &&
+			suggestion.bboxY !== null &&
+			suggestion.bboxW !== null &&
+			suggestion.bboxH !== null
+		);
+	}
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.key === 'Escape') {
@@ -103,11 +134,19 @@
 			</header>
 
 			<div class="modal-body">
-				<!-- Face Image -->
+				<!-- Face Image with Bounding Box -->
 				<div class="image-container">
-					{#if fullImageUrl()}
+					{#if fullImageUrl() && hasBoundingBox()}
+						<ImageWithFaceBoundingBoxes
+							imageUrl={fullImageUrl() ?? ''}
+							faces={faceBoxes()}
+							primaryFaceId={suggestion.faceInstanceId}
+							maxHeight="70vh"
+						/>
+					{:else if fullImageUrl()}
+						<!-- Fallback to plain image if no bounding box data -->
 						<img
-							src={getImageUrl(fullImageUrl())}
+							src={fullImageUrl() ?? ''}
 							alt="Face for {suggestion.personName || 'Unknown'}"
 							class="face-image"
 						/>
@@ -161,6 +200,24 @@
 						<div class="detail-row">
 							<span class="detail-label">Reviewed:</span>
 							<span class="detail-value">{formatDate(suggestion.reviewedAt)}</span>
+						</div>
+					{/if}
+
+					{#if suggestion.detectionConfidence !== null}
+						<div class="detail-row">
+							<span class="detail-label">Detection Confidence:</span>
+							<span class="detail-value">
+								{Math.round(suggestion.detectionConfidence * 100)}%
+							</span>
+						</div>
+					{/if}
+
+					{#if suggestion.qualityScore !== null}
+						<div class="detail-row">
+							<span class="detail-label">Quality Score:</span>
+							<span class="detail-value">
+								{Math.round(suggestion.qualityScore * 100)}%
+							</span>
 						</div>
 					{/if}
 				</div>
