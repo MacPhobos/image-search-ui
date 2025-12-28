@@ -4,2639 +4,7044 @@
  */
 
 export interface paths {
-	'/health': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Health Check
-		 * @description Health check endpoint that works without external dependencies.
-		 *
-		 *     Returns:
-		 *         Status dictionary indicating service health
-		 */
-		get: operations['health_check_health_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/assets/ingest': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Ingest Assets
-		 * @description Scan filesystem and ingest images.
-		 *
-		 *     Args:
-		 *         request: Ingest request with path and options
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Ingest response with counts
-		 *
-		 *     Raises:
-		 *         HTTPException: If path doesn't exist or is not a directory
-		 */
-		post: operations['ingest_assets_api_v1_assets_ingest_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/assets': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List Assets
-		 * @description List assets with pagination and optional date filters.
-		 *
-		 *     Args:
-		 *         page: Page number (1-indexed)
-		 *         page_size: Number of items per page
-		 *         from_date: Optional start date filter (ISO format)
-		 *         to_date: Optional end date filter (ISO format)
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Paginated response with assets
-		 */
-		get: operations['list_assets_api_v1_assets_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/assets/{asset_id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Asset
-		 * @description Get a single asset by ID.
-		 *
-		 *     Args:
-		 *         asset_id: Asset ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Asset details
-		 *
-		 *     Raises:
-		 *         HTTPException: If asset not found
-		 */
-		get: operations['get_asset_api_v1_assets__asset_id__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/images/{asset_id}/thumbnail': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Thumbnail
-		 * @description Serve thumbnail for an asset.
-		 *
-		 *     Generates thumbnail on-the-fly if it doesn't exist.
-		 *
-		 *     Args:
-		 *         asset_id: Image asset ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Thumbnail image file
-		 *
-		 *     Raises:
-		 *         HTTPException: If asset not found or image file missing
-		 */
-		get: operations['get_thumbnail_api_v1_images__asset_id__thumbnail_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/images/{asset_id}/full': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Full Image
-		 * @description Serve full-size original image.
-		 *
-		 *     Args:
-		 *         asset_id: Image asset ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Original image file
-		 *
-		 *     Raises:
-		 *         HTTPException: If asset or file not found
-		 */
-		get: operations['get_full_image_api_v1_images__asset_id__full_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/images/{asset_id}/thumbnail/generate': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Generate Thumbnail
-		 * @description Force regenerate thumbnail for an asset.
-		 *
-		 *     Useful for updating thumbnails after image changes.
-		 *
-		 *     Args:
-		 *         asset_id: Image asset ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Thumbnail information
-		 *
-		 *     Raises:
-		 *         HTTPException: If asset not found or generation fails
-		 */
-		post: operations['generate_thumbnail_api_v1_images__asset_id__thumbnail_generate_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/search': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Search Assets
-		 * @description Semantic search for assets using text query.
-		 *
-		 *     Args:
-		 *         request: Search request with query and filters
-		 *         db: Database session
-		 *         qdrant: Qdrant client for vector search
-		 *
-		 *     Returns:
-		 *         Search response with matching assets and scores
-		 *
-		 *     Raises:
-		 *         HTTPException: If Qdrant is unavailable or embedding fails
-		 */
-		post: operations['search_assets_api_v1_search_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List Sessions
-		 * @description List training sessions with pagination.
-		 *
-		 *     Args:
-		 *         page: Page number (1-indexed)
-		 *         page_size: Number of items per page (max 100)
-		 *         status: Optional status filter
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Paginated list of training sessions
-		 */
-		get: operations['list_sessions_api_v1_training_sessions_get'];
-		put?: never;
-		/**
-		 * Create Session
-		 * @description Create a new training session.
-		 *
-		 *     Args:
-		 *         data: Session creation data
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Created training session
-		 *
-		 *     Raises:
-		 *         HTTPException: If path validation fails
-		 */
-		post: operations['create_session_api_v1_training_sessions_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Session
-		 * @description Get a single training session by ID.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Training session details
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		get: operations['get_session_api_v1_training_sessions__session_id__get'];
-		put?: never;
-		post?: never;
-		/**
-		 * Delete Session
-		 * @description Delete a training session.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		delete: operations['delete_session_api_v1_training_sessions__session_id__delete'];
-		options?: never;
-		head?: never;
-		/**
-		 * Update Session
-		 * @description Update a training session.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         data: Update data
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Updated training session
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		patch: operations['update_session_api_v1_training_sessions__session_id__patch'];
-		trace?: never;
-	};
-	'/api/v1/training/directories/scan': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Scan Directory
-		 * @description Scan a directory for subdirectories with image files.
-		 *
-		 *     Args:
-		 *         data: Directory scan request
-		 *
-		 *     Returns:
-		 *         Scan results with subdirectory information
-		 *
-		 *     Raises:
-		 *         HTTPException: If path validation fails
-		 */
-		post: operations['scan_directory_api_v1_training_directories_scan_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/directories': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List Directories
-		 * @description List subdirectories at a given path.
-		 *
-		 *     Args:
-		 *         path: Root directory path
-		 *
-		 *     Returns:
-		 *         List of subdirectory information
-		 *
-		 *     Raises:
-		 *         HTTPException: If path validation fails
-		 */
-		get: operations['list_directories_api_v1_training_directories_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/subdirectories': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Subdirectories
-		 * @description Get subdirectories for a training session.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         List of subdirectories for the session
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		get: operations['get_subdirectories_api_v1_training_sessions__session_id__subdirectories_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Update Subdirectories
-		 * @description Update subdirectory selections for a training session.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         selections: List of subdirectory selection updates
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Updated list of subdirectories
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found or subdirectory IDs invalid
-		 */
-		patch: operations['update_subdirectories_api_v1_training_sessions__session_id__subdirectories_patch'];
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/progress': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Progress
-		 * @description Get progress information for a training session.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Progress information with stats and job summary
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		get: operations['get_progress_api_v1_training_sessions__session_id__progress_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/start': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Start Training
-		 * @description Start or resume training for a session.
-		 *
-		 *     Valid state transitions:
-		 *     - pending → running (initial start)
-		 *     - paused → running (resume)
-		 *     - failed → running (retry after failure)
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Control response with updated session status
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found or invalid state transition
-		 */
-		post: operations['start_training_api_v1_training_sessions__session_id__start_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/pause': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Pause Training
-		 * @description Pause a running training session.
-		 *
-		 *     The background worker will detect the pause and stop gracefully.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Control response with updated session status
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found or not running
-		 */
-		post: operations['pause_training_api_v1_training_sessions__session_id__pause_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/cancel': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Cancel Training
-		 * @description Cancel a training session.
-		 *
-		 *     Cancels all pending jobs and updates session status.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Control response with updated session status
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found or invalid state
-		 */
-		post: operations['cancel_training_api_v1_training_sessions__session_id__cancel_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/restart': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Restart Training
-		 * @description Restart training for failed or all images.
-		 *
-		 *     By default, only restarts failed jobs. Set failed_only=False to restart all jobs.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         failed_only: If True, only restart failed jobs. If False, restart all jobs.
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Control response with updated session status
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		post: operations['restart_training_api_v1_training_sessions__session_id__restart_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/jobs': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List Jobs
-		 * @description List training jobs for a session with optional status filter.
-		 *
-		 *     Args:
-		 *         session_id: Session ID
-		 *         page: Page number (1-indexed)
-		 *         page_size: Number of items per page (max 100)
-		 *         job_status: Optional status filter
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Paginated list of training jobs
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		get: operations['list_jobs_api_v1_training_sessions__session_id__jobs_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/jobs/{job_id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Job
-		 * @description Get details of a specific training job.
-		 *
-		 *     Args:
-		 *         job_id: Training job ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Training job details
-		 *
-		 *     Raises:
-		 *         HTTPException: If job not found
-		 */
-		get: operations['get_job_api_v1_training_jobs__job_id__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/thumbnails': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Generate Session Thumbnails
-		 * @description Generate thumbnails for all images in a training session.
-		 *
-		 *     Enqueues background job for thumbnail generation.
-		 *
-		 *     Args:
-		 *         session_id: Training session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Job information with job ID and total images
-		 *
-		 *     Raises:
-		 *         HTTPException: If session not found
-		 */
-		post: operations['generate_session_thumbnails_api_v1_training_sessions__session_id__thumbnails_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/scan/incremental': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Trigger Incremental Scan
-		 * @description Trigger incremental scan of a directory for new images.
-		 *
-		 *     Scans directory for image files and creates ImageAsset records for new images only.
-		 *     Optionally enqueues newly detected images for training.
-		 *
-		 *     Args:
-		 *         directory: Directory path to scan
-		 *         auto_train: If True, auto-enqueue detected images for training
-		 *
-		 *     Returns:
-		 *         Dictionary with scan statistics (discovered, created, skipped)
-		 */
-		post: operations['trigger_incremental_scan_api_v1_training_scan_incremental_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/evidence': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List Evidence
-		 * @description List training evidence records.
-		 *
-		 *     Can filter by session_id, asset_id, or both.
-		 *
-		 *     Args:
-		 *         session_id: Optional session ID filter
-		 *         asset_id: Optional asset ID filter
-		 *         page: Page number (1-indexed)
-		 *         page_size: Number of items per page (max 100)
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Paginated list of evidence records
-		 */
-		get: operations['list_evidence_api_v1_evidence_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/evidence/{evidence_id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Evidence
-		 * @description Get specific evidence record.
-		 *
-		 *     Args:
-		 *         evidence_id: Evidence record ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Evidence record
-		 *
-		 *     Raises:
-		 *         HTTPException: If evidence not found
-		 */
-		get: operations['get_evidence_api_v1_evidence__evidence_id__get'];
-		put?: never;
-		post?: never;
-		/**
-		 * Delete Evidence
-		 * @description Delete a specific evidence record.
-		 *
-		 *     Args:
-		 *         evidence_id: Evidence record ID
-		 *         db: Database session
-		 *
-		 *     Raises:
-		 *         HTTPException: If evidence not found
-		 */
-		delete: operations['delete_evidence_api_v1_evidence__evidence_id__delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/assets/{asset_id}/training-history': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Asset Training History
-		 * @description Get complete training history for an asset.
-		 *
-		 *     Shows all training evidence records for this asset,
-		 *     ordered by creation time (most recent first).
-		 *
-		 *     Args:
-		 *         asset_id: Image asset ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         List of evidence records for the asset
-		 */
-		get: operations['get_asset_training_history_api_v1_assets__asset_id__training_history_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/training/sessions/{session_id}/evidence/stats': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Session Evidence Stats
-		 * @description Get aggregate statistics for session's training evidence.
-		 *
-		 *     Provides summary statistics including:
-		 *     - Total, successful, and failed evidence records
-		 *     - Processing time statistics (min, max, average)
-		 *     - Devices and model versions used
-		 *
-		 *     Args:
-		 *         session_id: Training session ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Evidence statistics for the session
-		 */
-		get: operations['get_session_evidence_stats_api_v1_training_sessions__session_id__evidence_stats_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/evidence/{evidence_id}/detail': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Evidence Detail
-		 * @description Get evidence with asset details.
-		 *
-		 *     Returns evidence record with asset path included.
-		 *
-		 *     Args:
-		 *         evidence_id: Evidence record ID
-		 *         db: Database session
-		 *
-		 *     Returns:
-		 *         Evidence record with asset information
-		 *
-		 *     Raises:
-		 *         HTTPException: If evidence not found
-		 */
-		get: operations['get_evidence_detail_api_v1_evidence__evidence_id__detail_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/system/watcher/status': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get Watcher Status
-		 * @description Get file watcher status.
-		 *
-		 *     Returns:
-		 *         Dictionary with watcher configuration and status
-		 */
-		get: operations['get_watcher_status_api_v1_system_watcher_status_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/system/watcher/start': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Start Watcher
-		 * @description Manually start file watcher.
-		 *
-		 *     Returns:
-		 *         Dictionary with updated watcher status
-		 */
-		post: operations['start_watcher_api_v1_system_watcher_start_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/api/v1/system/watcher/stop': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Stop Watcher
-		 * @description Manually stop file watcher.
-		 *
-		 *     Returns:
-		 *         Dictionary with updated watcher status
-		 */
-		post: operations['stop_watcher_api_v1_system_watcher_stop_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health Check
+         * @description Health check endpoint that works without external dependencies.
+         *
+         *     Returns:
+         *         Status dictionary indicating service health
+         */
+        get: operations["health_check_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/data/delete-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete All Data
+         * @description Delete all application data from Qdrant and PostgreSQL.
+         *
+         *     DANGER: This is irreversible and deletes ALL data except migrations.
+         *
+         *     This endpoint removes:
+         *     - All vectors from Qdrant collections (main + faces)
+         *     - All rows from application tables in PostgreSQL
+         *     - Preserves: alembic_version table for migration tracking
+         *
+         *     Safety requirements:
+         *     - Environment variable ALLOW_DESTRUCTIVE_ADMIN_OPS=true must be set
+         *     - Request must include confirm=true AND confirmation_text="DELETE ALL DATA"
+         *
+         *     Args:
+         *         request: Delete all data request with double confirmation
+         *         db: Database session
+         *
+         *     Returns:
+         *         Deletion summary with counts and preserved migration version
+         *
+         *     Raises:
+         *         HTTPException: 403 if environment variable not set
+         *         HTTPException: 400 if confirmation requirements not met
+         *
+         *     Example:
+         *         ```
+         *         # First, set environment variable:
+         *         export ALLOW_DESTRUCTIVE_ADMIN_OPS=true
+         *
+         *         POST /api/v1/admin/data/delete-all
+         *         {
+         *             "confirm": true,
+         *             "confirmationText": "DELETE ALL DATA",
+         *             "reason": "Resetting development environment"
+         *         }
+         *         ```
+         */
+        post: operations["delete_all_data_api_v1_admin_data_delete_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/persons/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Person Metadata
+         * @description Export all persons with their face-to-image mappings for backup.
+         *
+         *     Returns JSON structure with:
+         *     - Person names and status (active persons only)
+         *     - Up to max_faces_per_person face mappings per person
+         *     - Each face mapping includes normalized image path and bounding box
+         *     - All paths are normalized (absolute, symlinks resolved) for consistency
+         *
+         *     Use this export before "Delete All Data" to preserve face labels.
+         *     The export can be imported later to restore face-to-person mappings.
+         *
+         *     Args:
+         *         max_faces_per_person: Maximum face mappings per person (1-500)
+         *         verify_paths: If true, only export faces where image file exists (default: false)
+         *         db: Database session
+         *
+         *     Returns:
+         *         PersonMetadataExport with export metadata and person data
+         *
+         *     Example:
+         *         ```
+         *         POST /api/v1/admin/persons/export?max_faces_per_person=100&verify_paths=true
+         *         ```
+         */
+        post: operations["export_person_metadata_api_v1_admin_persons_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/persons/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Person Metadata
+         * @description Import persons and face mappings from export file.
+         *
+         *     Process:
+         *     1. Creates persons (or finds existing by name)
+         *     2. For each face mapping:
+         *        - Checks if image exists at stored path
+         *        - Finds faces in image from database
+         *        - Matches face by bounding box within tolerance
+         *        - Assigns matched face to person
+         *
+         *     Options:
+         *     - dry_run: If true, simulates import without making changes
+         *     - tolerance_pixels: Bounding box matching tolerance (default: 10)
+         *     - skip_missing_images: If true, skips faces with missing images
+         *
+         *     Use after "Delete All Data" to restore previously exported face labels.
+         *
+         *     Args:
+         *         request: Import request with export data and options
+         *         db: Database session
+         *
+         *     Returns:
+         *         ImportResponse with import results and statistics
+         *
+         *     Example:
+         *         ```
+         *         POST /api/v1/admin/persons/import
+         *         {
+         *             "data": { ... exported data ... },
+         *             "options": {
+         *                 "dryRun": false,
+         *                 "tolerancePixels": 10,
+         *                 "skipMissingImages": true
+         *             }
+         *         }
+         *         ```
+         */
+        post: operations["import_person_metadata_api_v1_admin_persons_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ingest Assets
+         * @description Scan filesystem and ingest images.
+         *
+         *     Args:
+         *         request: Ingest request with path and options
+         *         db: Database session
+         *
+         *     Returns:
+         *         Ingest response with counts
+         *
+         *     Raises:
+         *         HTTPException: If path doesn't exist or is not a directory
+         */
+        post: operations["ingest_assets_api_v1_assets_ingest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Assets
+         * @description List assets with pagination and optional date filters.
+         *
+         *     Args:
+         *         page: Page number (1-indexed)
+         *         page_size: Number of items per page
+         *         from_date: Optional start date filter (ISO format)
+         *         to_date: Optional end date filter (ISO format)
+         *         db: Database session
+         *
+         *     Returns:
+         *         Paginated response with assets
+         */
+        get: operations["list_assets_api_v1_assets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Asset
+         * @description Get a single asset by ID.
+         *
+         *     Args:
+         *         asset_id: Asset ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Asset details
+         *
+         *     Raises:
+         *         HTTPException: If asset not found
+         */
+        get: operations["get_asset_api_v1_assets__asset_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Categories
+         * @description List all categories with pagination.
+         *
+         *     Args:
+         *         page: Page number (1-indexed)
+         *         page_size: Number of items per page (max 100)
+         *         db: Database session
+         *
+         *     Returns:
+         *         Paginated list of categories with session counts
+         */
+        get: operations["list_categories_api_v1_categories_get"];
+        put?: never;
+        /**
+         * Create Category
+         * @description Create a new category.
+         *
+         *     Args:
+         *         data: Category creation data
+         *         db: Database session
+         *
+         *     Returns:
+         *         Created category
+         *
+         *     Raises:
+         *         HTTPException: 409 if category name already exists
+         */
+        post: operations["create_category_api_v1_categories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Category
+         * @description Get a single category by ID.
+         *
+         *     Args:
+         *         category_id: Category ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Category details with session count
+         *
+         *     Raises:
+         *         HTTPException: 404 if category not found
+         */
+        get: operations["get_category_api_v1_categories__category_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Category
+         * @description Delete a category.
+         *
+         *     Args:
+         *         category_id: Category ID
+         *         db: Database session
+         *
+         *     Raises:
+         *         HTTPException: 404 if not found, 400 if default category, 409 if has sessions
+         */
+        delete: operations["delete_category_api_v1_categories__category_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Category
+         * @description Update a category.
+         *
+         *     Args:
+         *         category_id: Category ID
+         *         data: Update data
+         *         db: Database session
+         *
+         *     Returns:
+         *         Updated category
+         *
+         *     Raises:
+         *         HTTPException: 404 if category not found, 409 if duplicate name
+         */
+        patch: operations["update_category_api_v1_categories__category_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/config/face-matching": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Face Matching Config
+         * @description Get face matching configuration settings.
+         *
+         *     Returns the current configuration for automatic face-to-person matching,
+         *     including confidence thresholds, suggestion limits, and prototype settings.
+         */
+        get: operations["get_face_matching_config_api_v1_config_face_matching_get"];
+        /**
+         * Update Face Matching Config
+         * @description Update face matching configuration settings.
+         *
+         *     Updates all face matching configuration values atomically.
+         *     Validates that suggestion_threshold < auto_assign_threshold.
+         */
+        put: operations["update_face_matching_config_api_v1_config_face_matching_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/config/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Config By Category
+         * @description Get all configuration items for a category.
+         *
+         *     Returns all configuration items belonging to the specified category,
+         *     including their current values and validation constraints.
+         */
+        get: operations["get_config_by_category_api_v1_config__category__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/config/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Config
+         * @description Update a single configuration value.
+         *
+         *     Updates the specified configuration key with the new value.
+         *     Validates the value against the configuration's constraints.
+         */
+        put: operations["update_config_api_v1_config__key__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/images/{asset_id}/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Thumbnail
+         * @description Serve thumbnail for an asset.
+         *
+         *     Generates thumbnail on-the-fly if it doesn't exist.
+         *
+         *     Args:
+         *         asset_id: Image asset ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Thumbnail image file
+         *
+         *     Raises:
+         *         HTTPException: If asset not found or image file missing
+         */
+        get: operations["get_thumbnail_api_v1_images__asset_id__thumbnail_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/images/{asset_id}/full": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Full Image
+         * @description Serve full-size original image.
+         *
+         *     Args:
+         *         asset_id: Image asset ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Original image file
+         *
+         *     Raises:
+         *         HTTPException: If asset or file not found
+         */
+        get: operations["get_full_image_api_v1_images__asset_id__full_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/images/{asset_id}/thumbnail/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Thumbnail
+         * @description Force regenerate thumbnail for an asset.
+         *
+         *     Useful for updating thumbnails after image changes.
+         *
+         *     Args:
+         *         asset_id: Image asset ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Thumbnail information
+         *
+         *     Raises:
+         *         HTTPException: If asset not found or generation fails
+         */
+        post: operations["generate_thumbnail_api_v1_images__asset_id__thumbnail_generate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search Assets
+         * @description Semantic search for assets using text query.
+         *
+         *     Args:
+         *         request: Search request with query and filters
+         *         db: Database session
+         *         qdrant: Qdrant client for vector search
+         *
+         *     Returns:
+         *         Search response with matching assets and scores
+         *
+         *     Raises:
+         *         HTTPException: If Qdrant is unavailable or embedding fails
+         */
+        post: operations["search_assets_api_v1_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sessions
+         * @description List training sessions with pagination.
+         *
+         *     Args:
+         *         page: Page number (1-indexed)
+         *         page_size: Number of items per page (max 100)
+         *         status: Optional status filter
+         *         db: Database session
+         *
+         *     Returns:
+         *         Paginated list of training sessions
+         */
+        get: operations["list_sessions_api_v1_training_sessions_get"];
+        put?: never;
+        /**
+         * Create Session
+         * @description Create a new training session.
+         *
+         *     Args:
+         *         data: Session creation data
+         *         db: Database session
+         *
+         *     Returns:
+         *         Created training session
+         *
+         *     Raises:
+         *         HTTPException: If path validation fails
+         */
+        post: operations["create_session_api_v1_training_sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session
+         * @description Get a single training session by ID.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Training session details
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        get: operations["get_session_api_v1_training_sessions__session_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Session
+         * @description Delete a training session.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        delete: operations["delete_session_api_v1_training_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Session
+         * @description Update a training session.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         data: Update data
+         *         db: Database session
+         *
+         *     Returns:
+         *         Updated training session
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        patch: operations["update_session_api_v1_training_sessions__session_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/training/directories/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Directory
+         * @description Scan a directory for subdirectories with image files.
+         *
+         *     Args:
+         *         data: Directory scan request
+         *
+         *     Returns:
+         *         Scan results with subdirectory information
+         *
+         *     Raises:
+         *         HTTPException: If path validation fails
+         */
+        post: operations["scan_directory_api_v1_training_directories_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/directories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Directories
+         * @description List subdirectories at a given path.
+         *
+         *     Args:
+         *         path: Root directory path
+         *
+         *     Returns:
+         *         List of subdirectory information
+         *
+         *     Raises:
+         *         HTTPException: If path validation fails
+         */
+        get: operations["list_directories_api_v1_training_directories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/subdirectories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Subdirectories
+         * @description Get subdirectories for a training session.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         List of subdirectories for the session
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        get: operations["get_subdirectories_api_v1_training_sessions__session_id__subdirectories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Subdirectories
+         * @description Update subdirectory selections for a training session.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         selections: List of subdirectory selection updates
+         *         db: Database session
+         *
+         *     Returns:
+         *         Updated list of subdirectories
+         *
+         *     Raises:
+         *         HTTPException: If session not found or subdirectory IDs invalid
+         */
+        patch: operations["update_subdirectories_api_v1_training_sessions__session_id__subdirectories_patch"];
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Progress
+         * @description Get progress information for a training session.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Progress information with stats and job summary
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        get: operations["get_progress_api_v1_training_sessions__session_id__progress_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Training
+         * @description Start or resume training for a session.
+         *
+         *     Valid state transitions:
+         *     - pending → running (initial start)
+         *     - paused → running (resume)
+         *     - failed → running (retry after failure)
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Control response with updated session status
+         *
+         *     Raises:
+         *         HTTPException: If session not found or invalid state transition
+         */
+        post: operations["start_training_api_v1_training_sessions__session_id__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Training
+         * @description Pause a running training session.
+         *
+         *     The background worker will detect the pause and stop gracefully.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Control response with updated session status
+         *
+         *     Raises:
+         *         HTTPException: If session not found or not running
+         */
+        post: operations["pause_training_api_v1_training_sessions__session_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Training
+         * @description Cancel a training session.
+         *
+         *     Cancels all pending jobs and updates session status.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Control response with updated session status
+         *
+         *     Raises:
+         *         HTTPException: If session not found or invalid state
+         */
+        post: operations["cancel_training_api_v1_training_sessions__session_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restart Training
+         * @description Restart training for failed or all images.
+         *
+         *     By default, only restarts failed jobs. Set failed_only=False to restart all jobs.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         failed_only: If True, only restart failed jobs. If False, restart all jobs.
+         *         db: Database session
+         *
+         *     Returns:
+         *         Control response with updated session status
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        post: operations["restart_training_api_v1_training_sessions__session_id__restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Jobs
+         * @description List training jobs for a session with optional status filter.
+         *
+         *     Args:
+         *         session_id: Session ID
+         *         page: Page number (1-indexed)
+         *         page_size: Number of items per page (max 100)
+         *         job_status: Optional status filter
+         *         db: Database session
+         *
+         *     Returns:
+         *         Paginated list of training jobs
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        get: operations["list_jobs_api_v1_training_sessions__session_id__jobs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job
+         * @description Get details of a specific training job.
+         *
+         *     Args:
+         *         job_id: Training job ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Training job details
+         *
+         *     Raises:
+         *         HTTPException: If job not found
+         */
+        get: operations["get_job_api_v1_training_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/thumbnails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Session Thumbnails
+         * @description Generate thumbnails for all images in a training session.
+         *
+         *     Enqueues background job for thumbnail generation.
+         *
+         *     Args:
+         *         session_id: Training session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Job information with job ID and total images
+         *
+         *     Raises:
+         *         HTTPException: If session not found
+         */
+        post: operations["generate_session_thumbnails_api_v1_training_sessions__session_id__thumbnails_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/scan/incremental": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger Incremental Scan
+         * @description Trigger incremental scan of a directory for new images.
+         *
+         *     Scans directory for image files and creates ImageAsset records for new images only.
+         *     Optionally enqueues newly detected images for training.
+         *
+         *     Args:
+         *         directory: Directory path to scan
+         *         auto_train: If True, auto-enqueue detected images for training
+         *
+         *     Returns:
+         *         Dictionary with scan statistics (discovered, created, skipped)
+         */
+        post: operations["trigger_incremental_scan_api_v1_training_scan_incremental_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Evidence
+         * @description List training evidence records.
+         *
+         *     Can filter by session_id, asset_id, or both.
+         *
+         *     Args:
+         *         session_id: Optional session ID filter
+         *         asset_id: Optional asset ID filter
+         *         page: Page number (1-indexed)
+         *         page_size: Number of items per page (max 100)
+         *         db: Database session
+         *
+         *     Returns:
+         *         Paginated list of evidence records
+         */
+        get: operations["list_evidence_api_v1_evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence/{evidence_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evidence
+         * @description Get specific evidence record.
+         *
+         *     Args:
+         *         evidence_id: Evidence record ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Evidence record
+         *
+         *     Raises:
+         *         HTTPException: If evidence not found
+         */
+        get: operations["get_evidence_api_v1_evidence__evidence_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Evidence
+         * @description Delete a specific evidence record.
+         *
+         *     Args:
+         *         evidence_id: Evidence record ID
+         *         db: Database session
+         *
+         *     Raises:
+         *         HTTPException: If evidence not found
+         */
+        delete: operations["delete_evidence_api_v1_evidence__evidence_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assets/{asset_id}/training-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Asset Training History
+         * @description Get complete training history for an asset.
+         *
+         *     Shows all training evidence records for this asset,
+         *     ordered by creation time (most recent first).
+         *
+         *     Args:
+         *         asset_id: Image asset ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         List of evidence records for the asset
+         */
+        get: operations["get_asset_training_history_api_v1_assets__asset_id__training_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training/sessions/{session_id}/evidence/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session Evidence Stats
+         * @description Get aggregate statistics for session's training evidence.
+         *
+         *     Provides summary statistics including:
+         *     - Total, successful, and failed evidence records
+         *     - Processing time statistics (min, max, average)
+         *     - Devices and model versions used
+         *
+         *     Args:
+         *         session_id: Training session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Evidence statistics for the session
+         */
+        get: operations["get_session_evidence_stats_api_v1_training_sessions__session_id__evidence_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/evidence/{evidence_id}/detail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evidence Detail
+         * @description Get evidence with asset details.
+         *
+         *     Returns evidence record with asset path included.
+         *
+         *     Args:
+         *         evidence_id: Evidence record ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Evidence record with asset information
+         *
+         *     Raises:
+         *         HTTPException: If evidence not found
+         */
+        get: operations["get_evidence_detail_api_v1_evidence__evidence_id__detail_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/watcher/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Watcher Status
+         * @description Get file watcher status.
+         *
+         *     Returns:
+         *         Dictionary with watcher configuration and status
+         */
+        get: operations["get_watcher_status_api_v1_system_watcher_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/watcher/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Watcher
+         * @description Manually start file watcher.
+         *
+         *     Returns:
+         *         Dictionary with updated watcher status
+         */
+        post: operations["start_watcher_api_v1_system_watcher_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/watcher/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Watcher
+         * @description Manually stop file watcher.
+         *
+         *     Returns:
+         *         Dictionary with updated watcher status
+         */
+        post: operations["stop_watcher_api_v1_system_watcher_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/by-directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete By Directory
+         * @description Delete vectors matching directory path prefix.
+         *
+         *     Safety: Requires confirm=true
+         *
+         *     Args:
+         *         request: Directory deletion request with path prefix and confirmation
+         *         db: Database session
+         *
+         *     Returns:
+         *         Deletion result with count and message
+         *
+         *     Raises:
+         *         HTTPException: 400 if confirmation not provided
+         */
+        delete: operations["delete_by_directory_api_v1_vectors_by_directory_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/retrain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retrain Directory
+         * @description Delete existing vectors and create new training session.
+         *
+         *     Safety: Validates category exists
+         *
+         *     Three-step operation:
+         *     1. Delete all vectors for directory
+         *     2. Create new training session with PENDING status
+         *     3. Return new session ID for training
+         *
+         *     Args:
+         *         request: Retrain request with path prefix and category ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Retrain result with deletion count and new session ID
+         *
+         *     Raises:
+         *         HTTPException: 404 if category not found
+         */
+        post: operations["retrain_directory_api_v1_vectors_retrain_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/directories/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Directory Stats
+         * @description Get statistics about directories with vectors.
+         *
+         *     Returns aggregated view of directory paths and vector counts.
+         *
+         *     Returns:
+         *         Directory statistics with vector counts
+         */
+        get: operations["get_directory_stats_api_v1_vectors_directories_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/by-asset/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete By Asset
+         * @description Delete vector for a single asset.
+         *
+         *     No confirmation required for single asset deletion.
+         *
+         *     Args:
+         *         asset_id: Asset ID to delete
+         *         db: Database session
+         *
+         *     Returns:
+         *         Deletion result
+         *
+         *     Raises:
+         *         HTTPException: 404 if asset not found
+         */
+        delete: operations["delete_by_asset_api_v1_vectors_by_asset__asset_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/by-session/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete By Session
+         * @description Delete all vectors from a training session.
+         *
+         *     Marks session as reset and deletes all associated vectors.
+         *
+         *     Args:
+         *         session_id: Training session ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Deletion result with count
+         *
+         *     Raises:
+         *         HTTPException: 404 if session not found
+         */
+        delete: operations["delete_by_session_api_v1_vectors_by_session__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/by-category/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete By Category
+         * @description Delete all vectors in a category.
+         *
+         *     Deletes vectors for all training sessions in the category.
+         *
+         *     Args:
+         *         category_id: Category ID
+         *         db: Database session
+         *
+         *     Returns:
+         *         Deletion result with count
+         *
+         *     Raises:
+         *         HTTPException: 404 if category not found
+         */
+        delete: operations["delete_by_category_api_v1_vectors_by_category__category_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/cleanup-orphans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cleanup Orphans
+         * @description Remove vectors without corresponding database records.
+         *
+         *     Safety: Requires confirm=true
+         *
+         *     Identifies vectors in Qdrant where asset_id no longer exists
+         *     in PostgreSQL and deletes them.
+         *
+         *     Args:
+         *         request: Cleanup request with confirmation
+         *         db: Database session
+         *
+         *     Returns:
+         *         Cleanup result with orphan count
+         *
+         *     Raises:
+         *         HTTPException: 400 if confirmation not provided
+         */
+        post: operations["cleanup_orphans_api_v1_vectors_cleanup_orphans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Collection
+         * @description Delete ALL vectors and recreate collection.
+         *
+         *     DANGER: This is irreversible and deletes all vector data.
+         *
+         *     Safety: Requires confirm=true AND confirmationText="DELETE ALL VECTORS"
+         *
+         *     Args:
+         *         request: Reset request with double confirmation
+         *         db: Database session
+         *
+         *     Returns:
+         *         Reset result with total deleted count
+         *
+         *     Raises:
+         *         HTTPException: 400 if confirmation requirements not met
+         */
+        post: operations["reset_collection_api_v1_vectors_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vectors/deletion-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Deletion Logs
+         * @description Get deletion history with pagination.
+         *
+         *     Args:
+         *         page: Page number (1-indexed)
+         *         page_size: Number of items per page (max 100)
+         *         db: Database session
+         *
+         *     Returns:
+         *         Paginated deletion logs
+         */
+        get: operations["get_deletion_logs_api_v1_vectors_deletion_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/clusters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Clusters
+         * @description List face clusters with pagination.
+         */
+        get: operations["list_clusters_api_v1_faces_clusters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/clusters/{cluster_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Cluster
+         * @description Get detailed info for a specific cluster.
+         */
+        get: operations["get_cluster_api_v1_faces_clusters__cluster_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/clusters/{cluster_id}/label": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Label Cluster
+         * @description Label a cluster with a person name, creating the person if needed.
+         */
+        post: operations["label_cluster_api_v1_faces_clusters__cluster_id__label_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/clusters/{cluster_id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Split Cluster
+         * @description Split a cluster into smaller sub-clusters using tighter HDBSCAN params.
+         */
+        post: operations["split_cluster_api_v1_faces_clusters__cluster_id__split_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Persons
+         * @description List persons with pagination.
+         */
+        get: operations["list_persons_api_v1_faces_persons_get"];
+        put?: never;
+        /**
+         * Create Person
+         * @description Create a new person entity.
+         */
+        post: operations["create_person_api_v1_faces_persons_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Person Photos
+         * @description Get photos containing faces assigned to this person, grouped by photo.
+         *
+         *     Returns photos with all faces in each photo, including faces belonging
+         *     to other persons or no person. This enables photo-level review workflow.
+         */
+        get: operations["get_person_photos_api_v1_faces_persons__person_id__photos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Persons
+         * @description Merge one person into another.
+         */
+        post: operations["merge_persons_api_v1_faces_persons__person_id__merge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/photos/bulk-remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Remove From Person
+         * @description Remove person assignment from all faces in selected photos.
+         *
+         *     Only affects faces currently assigned to the specified person.
+         *     Other faces in the same photos are not modified.
+         */
+        post: operations["bulk_remove_from_person_api_v1_faces_persons__person_id__photos_bulk_remove_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/photos/bulk-move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Move To Person
+         * @description Move faces from one person to another.
+         *
+         *     Only affects faces currently assigned to the specified person.
+         *     Creates a new person if to_person_name is provided.
+         */
+        post: operations["bulk_move_to_person_api_v1_faces_persons__person_id__photos_bulk_move_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/detect/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Detect Faces In Asset
+         * @description Detect faces in a specific asset.
+         */
+        post: operations["detect_faces_in_asset_api_v1_faces_detect__asset_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/cluster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger Clustering
+         * @description Trigger face clustering on unlabeled faces.
+         */
+        post: operations["trigger_clustering_api_v1_faces_cluster_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/assets/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Faces For Asset
+         * @description Get all detected faces for a specific asset.
+         */
+        get: operations["get_faces_for_asset_api_v1_faces_assets__asset_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/faces/{face_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign Face To Person
+         * @description Assign a single face instance to a person.
+         */
+        post: operations["assign_face_to_person_api_v1_faces_faces__face_id__assign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/faces/{face_id}/person": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unassign Face From Person
+         * @description Unassign a face instance from its currently assigned person.
+         */
+        delete: operations["unassign_face_from_person_api_v1_faces_faces__face_id__person_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/faces/{face_id}/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Face Suggestions
+         * @description Get person suggestions for a face based on similarity to person prototypes.
+         *
+         *     This endpoint compares the face's embedding against all person prototype embeddings
+         *     in Qdrant and returns the most similar persons above the confidence threshold.
+         *
+         *     Args:
+         *         face_id: UUID of the face instance
+         *         min_confidence: Minimum cosine similarity score (0.0-1.0, default 0.7)
+         *         limit: Maximum number of suggestions to return (1-10, default 5)
+         *         db: Database session
+         *
+         *     Returns:
+         *         List of person suggestions with confidence scores
+         */
+        get: operations["get_face_suggestions_api_v1_faces_faces__face_id__suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/cluster/dual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cluster Faces Dual
+         * @description Run dual-mode face clustering (supervised + unsupervised).
+         *
+         *     - Phase 1: Assigns unlabeled faces to known people (supervised matching)
+         *     - Phase 2: Clusters remaining unknown faces (unsupervised clustering)
+         *
+         *     Can run as background job (default) or synchronously.
+         */
+        post: operations["cluster_faces_dual_api_v1_faces_cluster_dual_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/train": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Train Face Matching
+         * @description Train face matching model using triplet loss.
+         *
+         *     Improves person separation for better clustering accuracy by fine-tuning
+         *     embeddings using labeled face data.
+         *
+         *     Can run as background job (default) or synchronously.
+         */
+        post: operations["train_face_matching_api_v1_faces_train_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sessions
+         * @description List face detection sessions with pagination.
+         */
+        get: operations["list_sessions_api_v1_faces_sessions_get"];
+        put?: never;
+        /**
+         * Create Session
+         * @description Create and start a new face detection session.
+         */
+        post: operations["create_session_api_v1_faces_sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session
+         * @description Get face detection session by ID.
+         */
+        get: operations["get_session_api_v1_faces_sessions__session_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Cancel Session
+         * @description Cancel a face detection session.
+         */
+        delete: operations["cancel_session_api_v1_faces_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/sessions/{session_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Session
+         * @description Pause a running face detection session.
+         */
+        post: operations["pause_session_api_v1_faces_sessions__session_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/sessions/{session_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume Session
+         * @description Resume a paused face detection session.
+         */
+        post: operations["resume_session_api_v1_faces_sessions__session_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/sessions/{session_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream Session Events
+         * @description Stream real-time progress updates for a face detection session.
+         *
+         *     Uses Server-Sent Events (SSE) format.
+         *     Sends updates every 2 seconds while session is processing.
+         *     Closes connection when session completes or fails.
+         */
+        get: operations["stream_session_events_api_v1_faces_sessions__session_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Suggestions
+         * @description List face suggestions with pagination and filtering.
+         */
+        get: operations["list_suggestions_api_v1_faces_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/suggestions/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Suggestion Stats
+         * @description Get suggestion statistics including acceptance rates.
+         */
+        get: operations["get_suggestion_stats_api_v1_faces_suggestions_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/suggestions/{suggestion_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Suggestion
+         * @description Get a face suggestion by ID.
+         */
+        get: operations["get_suggestion_api_v1_faces_suggestions__suggestion_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/suggestions/{suggestion_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Suggestion
+         * @description Accept a face suggestion and assign the face to the person.
+         */
+        post: operations["accept_suggestion_api_v1_faces_suggestions__suggestion_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/suggestions/{suggestion_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Suggestion
+         * @description Reject a face suggestion.
+         */
+        post: operations["reject_suggestion_api_v1_faces_suggestions__suggestion_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/suggestions/bulk-action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Suggestion Action
+         * @description Accept or reject multiple suggestions at once.
+         */
+        post: operations["bulk_suggestion_action_api_v1_faces_suggestions_bulk_action_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-	schemas: {
-		/**
-		 * Asset
-		 * @description Asset response schema.
-		 */
-		Asset: {
-			/** Id */
-			id: number;
-			/** Path */
-			path: string;
-			/**
-			 * Createdat
-			 * Format: date-time
-			 */
-			createdAt: string;
-			/** Indexedat */
-			indexedAt?: string | null;
-			/**
-			 * Url
-			 * @description Full-size image URL.
-			 */
-			readonly url: string;
-			/**
-			 * Thumbnailurl
-			 * @description Thumbnail image URL.
-			 */
-			readonly thumbnailUrl: string;
-			/**
-			 * Filename
-			 * @description Extracted filename from path.
-			 */
-			readonly filename: string;
-		};
-		/**
-		 * ControlResponse
-		 * @description Response from control operation.
-		 */
-		ControlResponse: {
-			/** Sessionid */
-			sessionId: number;
-			/** Status */
-			status: string;
-			/** Message */
-			message: string;
-		};
-		/**
-		 * DirectoryInfo
-		 * @description Information about a directory.
-		 */
-		DirectoryInfo: {
-			/** Path */
-			path: string;
-			/** Name */
-			name: string;
-			/** Imagecount */
-			imageCount: number;
-			/**
-			 * Selected
-			 * @default false
-			 */
-			selected: boolean;
-		};
-		/**
-		 * DirectoryScanRequest
-		 * @description Request to scan directory for images.
-		 */
-		DirectoryScanRequest: {
-			/** Rootpath */
-			rootPath: string;
-			/**
-			 * Recursive
-			 * @default true
-			 */
-			recursive: boolean;
-			/**
-			 * Extensions
-			 * @default [
-			 *       "jpg",
-			 *       "jpeg",
-			 *       "png",
-			 *       "webp"
-			 *     ]
-			 */
-			extensions: string[];
-		};
-		/**
-		 * DirectoryScanResponse
-		 * @description Response from directory scan operation.
-		 */
-		DirectoryScanResponse: {
-			/** Rootpath */
-			rootPath: string;
-			/** Subdirectories */
-			subdirectories: components['schemas']['DirectoryInfo'][];
-			/** Totalsubdirectories */
-			totalSubdirectories: number;
-			/** Totalimages */
-			totalImages: number;
-		};
-		/**
-		 * ErrorResponse
-		 * @description Error response schema.
-		 */
-		ErrorResponse: {
-			/** Error */
-			error: string;
-			/** Message */
-			message: string;
-			/** Details */
-			details?: {
-				[key: string]: string;
-			} | null;
-		};
-		/**
-		 * EvidenceStatsResponse
-		 * @description Aggregate statistics for session's training evidence.
-		 */
-		EvidenceStatsResponse: {
-			/** Total */
-			total: number;
-			/** Successful */
-			successful: number;
-			/** Failed */
-			failed: number;
-			/** Avgprocessingtimems */
-			avgProcessingTimeMs: number;
-			/** Minprocessingtimems */
-			minProcessingTimeMs: number;
-			/** Maxprocessingtimems */
-			maxProcessingTimeMs: number;
-			/** Devicesused */
-			devicesUsed: string[];
-			/** Modelversions */
-			modelVersions: string[];
-		};
-		/** HTTPValidationError */
-		HTTPValidationError: {
-			/** Detail */
-			detail?: components['schemas']['ValidationError'][];
-		};
-		/**
-		 * IngestRequest
-		 * @description Request to ingest images from filesystem.
-		 */
-		IngestRequest: {
-			/** Rootpath */
-			rootPath: string;
-			/**
-			 * Recursive
-			 * @default true
-			 */
-			recursive: boolean;
-			/**
-			 * Extensions
-			 * @default [
-			 *       "jpg",
-			 *       "jpeg",
-			 *       "png",
-			 *       "webp"
-			 *     ]
-			 */
-			extensions: string[];
-			/**
-			 * Dryrun
-			 * @default false
-			 */
-			dryRun: boolean;
-		};
-		/**
-		 * IngestResponse
-		 * @description Response from ingest operation.
-		 */
-		IngestResponse: {
-			/** Discovered */
-			discovered: number;
-			/** Enqueued */
-			enqueued: number;
-			/** Skipped */
-			skipped: number;
-		};
-		/**
-		 * JobStatus
-		 * @description Status enum for training jobs.
-		 * @enum {string}
-		 */
-		JobStatus: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
-		/**
-		 * JobsSummary
-		 * @description Summary of jobs for training session.
-		 */
-		JobsSummary: {
-			/** Pending */
-			pending: number;
-			/** Running */
-			running: number;
-			/** Completed */
-			completed: number;
-			/** Failed */
-			failed: number;
-			/** Cancelled */
-			cancelled: number;
-		};
-		/** PaginatedResponse[Asset] */
-		PaginatedResponse_Asset_: {
-			/** Items */
-			items: components['schemas']['Asset'][];
-			/** Total */
-			total: number;
-			/** Page */
-			page: number;
-			/** Pagesize */
-			pageSize: number;
-			/** Hasmore */
-			hasMore: boolean;
-		};
-		/** PaginatedResponse[TrainingEvidenceResponse] */
-		PaginatedResponse_TrainingEvidenceResponse_: {
-			/** Items */
-			items: components['schemas']['TrainingEvidenceResponse'][];
-			/** Total */
-			total: number;
-			/** Page */
-			page: number;
-			/** Pagesize */
-			pageSize: number;
-			/** Hasmore */
-			hasMore: boolean;
-		};
-		/** PaginatedResponse[TrainingJobResponse] */
-		PaginatedResponse_TrainingJobResponse_: {
-			/** Items */
-			items: components['schemas']['TrainingJobResponse'][];
-			/** Total */
-			total: number;
-			/** Page */
-			page: number;
-			/** Pagesize */
-			pageSize: number;
-			/** Hasmore */
-			hasMore: boolean;
-		};
-		/** PaginatedResponse[TrainingSessionResponse] */
-		PaginatedResponse_TrainingSessionResponse_: {
-			/** Items */
-			items: components['schemas']['TrainingSessionResponse'][];
-			/** Total */
-			total: number;
-			/** Page */
-			page: number;
-			/** Pagesize */
-			pageSize: number;
-			/** Hasmore */
-			hasMore: boolean;
-		};
-		/**
-		 * ProgressStats
-		 * @description Progress statistics for training session.
-		 */
-		ProgressStats: {
-			/** Current */
-			current: number;
-			/** Total */
-			total: number;
-			/** Percentage */
-			percentage: number;
-			/** Etaseconds */
-			etaSeconds?: number | null;
-			/** Imagesperminute */
-			imagesPerMinute?: number | null;
-		};
-		/**
-		 * SearchRequest
-		 * @description Request to search for assets.
-		 */
-		SearchRequest: {
-			/** Query */
-			query: string;
-			/**
-			 * Limit
-			 * @default 50
-			 */
-			limit: number;
-			/**
-			 * Offset
-			 * @default 0
-			 */
-			offset: number;
-			/** Filters */
-			filters?: {
-				[key: string]: string;
-			} | null;
-		};
-		/**
-		 * SearchResponse
-		 * @description Response from search operation.
-		 */
-		SearchResponse: {
-			/** Results */
-			results: components['schemas']['SearchResult'][];
-			/** Total */
-			total: number;
-			/** Query */
-			query: string;
-		};
-		/**
-		 * SearchResult
-		 * @description Single search result with asset and score.
-		 */
-		SearchResult: {
-			asset: components['schemas']['Asset'];
-			/** Score */
-			score: number;
-			/**
-			 * Highlights
-			 * @default []
-			 */
-			highlights: string[];
-		};
-		/**
-		 * SessionStatus
-		 * @description Status enum for training sessions.
-		 * @enum {string}
-		 */
-		SessionStatus: 'pending' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed';
-		/**
-		 * SubdirectorySelectionUpdate
-		 * @description Request to update subdirectory selection status.
-		 */
-		SubdirectorySelectionUpdate: {
-			/** Id */
-			id: number;
-			/** Selected */
-			selected: boolean;
-		};
-		/**
-		 * TrainingEvidenceDetailResponse
-		 * @description Extended evidence response with asset information.
-		 */
-		TrainingEvidenceDetailResponse: {
-			/** Id */
-			id: number;
-			/** Assetid */
-			assetId: number;
-			/** Assetpath */
-			assetPath: string;
-			/** Sessionid */
-			sessionId: number;
-			/** Modelname */
-			modelName: string;
-			/** Modelversion */
-			modelVersion: string;
-			/** Embeddingchecksum */
-			embeddingChecksum?: string | null;
-			/** Device */
-			device: string;
-			/** Processingtimems */
-			processingTimeMs: number;
-			/** Errormessage */
-			errorMessage?: string | null;
-			/** Metadatajson */
-			metadataJson?: {
-				[key: string]: unknown;
-			} | null;
-			/**
-			 * Createdat
-			 * Format: date-time
-			 */
-			createdAt: string;
-		};
-		/**
-		 * TrainingEvidenceResponse
-		 * @description Response schema for training evidence.
-		 */
-		TrainingEvidenceResponse: {
-			/** Id */
-			id: number;
-			/** Assetid */
-			assetId: number;
-			/** Sessionid */
-			sessionId: number;
-			/** Modelname */
-			modelName: string;
-			/** Modelversion */
-			modelVersion: string;
-			/** Embeddingchecksum */
-			embeddingChecksum?: string | null;
-			/** Device */
-			device: string;
-			/** Processingtimems */
-			processingTimeMs: number;
-			/** Errormessage */
-			errorMessage?: string | null;
-			/** Metadatajson */
-			metadataJson?: {
-				[key: string]: unknown;
-			} | null;
-			/**
-			 * Createdat
-			 * Format: date-time
-			 */
-			createdAt: string;
-		};
-		/**
-		 * TrainingJobResponse
-		 * @description Response schema for training job.
-		 */
-		TrainingJobResponse: {
-			/** Id */
-			id: number;
-			/** Sessionid */
-			sessionId: number;
-			/** Assetid */
-			assetId: number;
-			/** Status */
-			status: string;
-			/** Rqjobid */
-			rqJobId?: string | null;
-			/** Progress */
-			progress: number;
-			/** Errormessage */
-			errorMessage?: string | null;
-			/** Processingtimems */
-			processingTimeMs?: number | null;
-			/**
-			 * Createdat
-			 * Format: date-time
-			 */
-			createdAt: string;
-			/** Startedat */
-			startedAt?: string | null;
-			/** Completedat */
-			completedAt?: string | null;
-		};
-		/**
-		 * TrainingProgressResponse
-		 * @description Response schema for training progress.
-		 */
-		TrainingProgressResponse: {
-			/** Sessionid */
-			sessionId: number;
-			/** Status */
-			status: string;
-			progress: components['schemas']['ProgressStats'];
-			jobsSummary: components['schemas']['JobsSummary'];
-		};
-		/**
-		 * TrainingSessionConfig
-		 * @description Configuration for training session.
-		 */
-		TrainingSessionConfig: {
-			/**
-			 * Recursive
-			 * @default true
-			 */
-			recursive: boolean;
-			/**
-			 * Extensions
-			 * @default [
-			 *       "jpg",
-			 *       "jpeg",
-			 *       "png",
-			 *       "webp"
-			 *     ]
-			 */
-			extensions: string[];
-			/**
-			 * Batch Size
-			 * @default 32
-			 */
-			batch_size: number;
-		};
-		/**
-		 * TrainingSessionCreate
-		 * @description Request to create a new training session.
-		 */
-		TrainingSessionCreate: {
-			/** Name */
-			name: string;
-			/** Rootpath */
-			rootPath: string;
-			/** Subdirectories */
-			subdirectories?: string[];
-			config?: components['schemas']['TrainingSessionConfig'] | null;
-		};
-		/**
-		 * TrainingSessionResponse
-		 * @description Response schema for training session.
-		 */
-		TrainingSessionResponse: {
-			/** Id */
-			id: number;
-			/** Name */
-			name: string;
-			/** Status */
-			status: string;
-			/** Rootpath */
-			rootPath: string;
-			/** Config */
-			config?: {
-				[key: string]: unknown;
-			} | null;
-			/** Totalimages */
-			totalImages: number;
-			/** Processedimages */
-			processedImages: number;
-			/** Failedimages */
-			failedImages: number;
-			/**
-			 * Createdat
-			 * Format: date-time
-			 */
-			createdAt: string;
-			/** Startedat */
-			startedAt?: string | null;
-			/** Completedat */
-			completedAt?: string | null;
-			/** Pausedat */
-			pausedAt?: string | null;
-		};
-		/**
-		 * TrainingSessionUpdate
-		 * @description Request to update training session metadata.
-		 */
-		TrainingSessionUpdate: {
-			/** Name */
-			name?: string | null;
-			config?: components['schemas']['TrainingSessionConfig'] | null;
-		};
-		/**
-		 * TrainingSubdirectoryResponse
-		 * @description Response schema for training subdirectory.
-		 */
-		TrainingSubdirectoryResponse: {
-			/** Id */
-			id: number;
-			/** Sessionid */
-			sessionId: number;
-			/** Path */
-			path: string;
-			/** Name */
-			name: string;
-			/** Selected */
-			selected: boolean;
-			/** Imagecount */
-			imageCount: number;
-			/** Trainedcount */
-			trainedCount: number;
-			/** Status */
-			status: string;
-			/**
-			 * Createdat
-			 * Format: date-time
-			 */
-			createdAt: string;
-		};
-		/** ValidationError */
-		ValidationError: {
-			/** Location */
-			loc: (string | number)[];
-			/** Message */
-			msg: string;
-			/** Error Type */
-			type: string;
-		};
-	};
-	responses: never;
-	parameters: never;
-	requestBodies: never;
-	headers: never;
-	pathItems: never;
+    schemas: {
+        /**
+         * AcceptSuggestionRequest
+         * @description Request to accept a suggestion.
+         */
+        AcceptSuggestionRequest: Record<string, never>;
+        /**
+         * Asset
+         * @description Asset response schema.
+         */
+        Asset: {
+            /** Id */
+            id: number;
+            /** Path */
+            path: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Indexedat */
+            indexedAt?: string | null;
+            /**
+             * Url
+             * @description Full-size image URL.
+             */
+            readonly url: string;
+            /**
+             * Thumbnailurl
+             * @description Thumbnail image URL.
+             */
+            readonly thumbnailUrl: string;
+            /**
+             * Filename
+             * @description Extracted filename from path.
+             */
+            readonly filename: string;
+        };
+        /**
+         * AssetDeleteResponse
+         * @description Response schema for asset deletion.
+         */
+        AssetDeleteResponse: {
+            /** Assetid */
+            assetId: number;
+            /** Vectorsdeleted */
+            vectorsDeleted: number;
+            /** Message */
+            message: string;
+        };
+        /**
+         * AssignFaceRequest
+         * @description Request to assign a face to a person.
+         */
+        AssignFaceRequest: {
+            /**
+             * Personid
+             * Format: uuid
+             */
+            personId: string;
+        };
+        /**
+         * AssignFaceResponse
+         * @description Response from assigning a face.
+         */
+        AssignFaceResponse: {
+            /**
+             * Faceid
+             * Format: uuid
+             */
+            faceId: string;
+            /**
+             * Personid
+             * Format: uuid
+             */
+            personId: string;
+            /** Personname */
+            personName: string;
+        };
+        /**
+         * BoundingBox
+         * @description Face bounding box coordinates.
+         */
+        BoundingBox: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+        };
+        /**
+         * BoundingBoxExport
+         * @description Bounding box coordinates for face export/import.
+         */
+        BoundingBoxExport: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+        };
+        /**
+         * BulkMoveRequest
+         * @description Request to move faces from one person to another.
+         */
+        BulkMoveRequest: {
+            /** Photoids */
+            photoIds: number[];
+            /** Topersonid */
+            toPersonId?: string | null;
+            /** Topersonname */
+            toPersonName?: string | null;
+        };
+        /**
+         * BulkMoveResponse
+         * @description Response from bulk move operation.
+         */
+        BulkMoveResponse: {
+            /**
+             * Topersonid
+             * Format: uuid
+             */
+            toPersonId: string;
+            /** Topersonname */
+            toPersonName: string;
+            /** Updatedfaces */
+            updatedFaces: number;
+            /** Updatedphotos */
+            updatedPhotos: number;
+            /** Skippedfaces */
+            skippedFaces: number;
+            /** Personcreated */
+            personCreated: boolean;
+        };
+        /**
+         * BulkRemoveRequest
+         * @description Request to remove person assignment from faces in selected photos.
+         */
+        BulkRemoveRequest: {
+            /** Photoids */
+            photoIds: number[];
+        };
+        /**
+         * BulkRemoveResponse
+         * @description Response from bulk remove operation.
+         */
+        BulkRemoveResponse: {
+            /** Updatedfaces */
+            updatedFaces: number;
+            /** Updatedphotos */
+            updatedPhotos: number;
+            /** Skippedfaces */
+            skippedFaces: number;
+        };
+        /**
+         * BulkSuggestionActionRequest
+         * @description Request for bulk accept/reject of suggestions.
+         */
+        BulkSuggestionActionRequest: {
+            /** Suggestionids */
+            suggestionIds: number[];
+            /** Action */
+            action: string;
+        };
+        /**
+         * BulkSuggestionActionResponse
+         * @description Response for bulk suggestion action.
+         */
+        BulkSuggestionActionResponse: {
+            /** Processed */
+            processed: number;
+            /** Failed */
+            failed: number;
+            /**
+             * Errors
+             * @default []
+             */
+            errors: string[];
+        };
+        /**
+         * CategoryCreate
+         * @description Request schema for creating a category.
+         */
+        CategoryCreate: {
+            /**
+             * Name
+             * @description Category name
+             */
+            name: string;
+            /**
+             * Description
+             * @description Category description
+             */
+            description?: string | null;
+            /**
+             * Color
+             * @description Hex color code
+             */
+            color?: string | null;
+        };
+        /**
+         * CategoryDeleteResponse
+         * @description Response schema for category deletion.
+         */
+        CategoryDeleteResponse: {
+            /** Categoryid */
+            categoryId: number;
+            /** Vectorsdeleted */
+            vectorsDeleted: number;
+            /** Message */
+            message: string;
+        };
+        /**
+         * CategoryResponse
+         * @description Response schema for category.
+         */
+        CategoryResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+            /** Color */
+            color?: string | null;
+            /** Isdefault */
+            isDefault: boolean;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Sessioncount */
+            sessionCount?: number | null;
+        };
+        /**
+         * CategoryUpdate
+         * @description Request schema for updating a category.
+         */
+        CategoryUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Color */
+            color?: string | null;
+        };
+        /**
+         * ClusterDetailResponse
+         * @description Detailed cluster info with all faces.
+         */
+        ClusterDetailResponse: {
+            /** Clusterid */
+            clusterId: string;
+            /** Faces */
+            faces: components["schemas"]["FaceInstanceResponse"][];
+            /** Personid */
+            personId?: string | null;
+            /** Personname */
+            personName?: string | null;
+        };
+        /**
+         * ClusterDualRequest
+         * @description Request to run dual-mode clustering (supervised + unsupervised).
+         */
+        ClusterDualRequest: {
+            /**
+             * Personthreshold
+             * @default 0.7
+             */
+            personThreshold: number;
+            /**
+             * Unknownmethod
+             * @default hdbscan
+             */
+            unknownMethod: string;
+            /**
+             * Unknownminsize
+             * @default 3
+             */
+            unknownMinSize: number;
+            /**
+             * Unknowneps
+             * @default 0.5
+             */
+            unknownEps: number;
+            /** Maxfaces */
+            maxFaces?: number | null;
+            /**
+             * Queue
+             * @description Run as background job
+             * @default true
+             */
+            queue: boolean;
+        };
+        /**
+         * ClusterDualResponse
+         * @description Response from dual-mode clustering.
+         */
+        ClusterDualResponse: {
+            /** Jobid */
+            jobId?: string | null;
+            /** Status */
+            status: string;
+            /** Result */
+            result?: {
+                [key: string]: number;
+            } | null;
+        };
+        /**
+         * ClusterListResponse
+         * @description Paginated list of clusters.
+         */
+        ClusterListResponse: {
+            /** Items */
+            items: components["schemas"]["ClusterSummary"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
+        /**
+         * ClusterSummary
+         * @description Summary of a face cluster.
+         */
+        ClusterSummary: {
+            /** Clusterid */
+            clusterId: string;
+            /** Facecount */
+            faceCount: number;
+            /** Samplefaceids */
+            sampleFaceIds: string[];
+            /** Avgquality */
+            avgQuality?: number | null;
+            /** Personid */
+            personId?: string | null;
+            /** Personname */
+            personName?: string | null;
+        };
+        /**
+         * ClusteringResultResponse
+         * @description Response from clustering operation.
+         */
+        ClusteringResultResponse: {
+            /** Totalfaces */
+            totalFaces: number;
+            /** Clustersfound */
+            clustersFound: number;
+            /** Noisecount */
+            noiseCount: number;
+            /**
+             * Status
+             * @default completed
+             */
+            status: string;
+        };
+        /**
+         * ConfigItemResponse
+         * @description Single configuration item response.
+         */
+        ConfigItemResponse: {
+            /** Key */
+            key: string;
+            /** Value */
+            value: string;
+            /** Data Type */
+            data_type: string;
+            /** Description */
+            description: string | null;
+            /** Min Value */
+            min_value: string | null;
+            /** Max Value */
+            max_value: string | null;
+            /** Allowed Values */
+            allowed_values: string[] | null;
+            /** Category */
+            category: string;
+        };
+        /**
+         * ConfigListResponse
+         * @description List of configuration items.
+         */
+        ConfigListResponse: {
+            /** Items */
+            items: components["schemas"]["ConfigItemResponse"][];
+            /** Category */
+            category: string;
+        };
+        /**
+         * ConfigUpdateRequest
+         * @description Request to update a configuration value.
+         */
+        ConfigUpdateRequest: {
+            /**
+             * Value
+             * @description New value for the configuration
+             */
+            value: unknown;
+        };
+        /**
+         * ConfigUpdateResponse
+         * @description Response after updating configuration.
+         */
+        ConfigUpdateResponse: {
+            /** Key */
+            key: string;
+            /** Value */
+            value: string;
+            /** Updated */
+            updated: boolean;
+        };
+        /**
+         * ControlResponse
+         * @description Response from control operation.
+         */
+        ControlResponse: {
+            /** Sessionid */
+            sessionId: number;
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+        };
+        /**
+         * CreateFaceDetectionSessionRequest
+         * @description Request to create a new face detection session.
+         */
+        CreateFaceDetectionSessionRequest: {
+            /** Trainingsessionid */
+            trainingSessionId?: number | null;
+            /**
+             * Minconfidence
+             * @default 0.5
+             */
+            minConfidence: number;
+            /**
+             * Minfacesize
+             * @default 20
+             */
+            minFaceSize: number;
+            /**
+             * Batchsize
+             * @default 16
+             */
+            batchSize: number;
+        };
+        /**
+         * CreatePersonRequest
+         * @description Request to create a new person.
+         */
+        CreatePersonRequest: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * CreatePersonResponse
+         * @description Response from creating a person.
+         */
+        CreatePersonResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * DeleteAllDataRequest
+         * @description Request schema for deleting all application data.
+         *
+         *     DANGER: This is a highly destructive operation that deletes ALL data
+         *     from both Qdrant and PostgreSQL (except Alembic migration tracking).
+         *
+         *     Requires double confirmation for safety.
+         */
+        DeleteAllDataRequest: {
+            /**
+             * Confirm
+             * @description First confirmation flag - must be true
+             */
+            confirm: boolean;
+            /**
+             * Confirmationtext
+             * @description Second confirmation - must exactly match 'DELETE ALL DATA'
+             */
+            confirmationText: string;
+            /**
+             * Reason
+             * @description Optional reason for deletion (for audit trail)
+             */
+            reason?: string | null;
+        };
+        /**
+         * DeleteAllDataResponse
+         * @description Response schema for delete all data operation.
+         */
+        DeleteAllDataResponse: {
+            /**
+             * Qdrantcollectionsdeleted
+             * @description Map of collection name to number of vectors deleted
+             */
+            qdrantCollectionsDeleted: {
+                [key: string]: number;
+            };
+            /**
+             * Postgrestablestruncated
+             * @description Map of table name to number of rows deleted
+             */
+            postgresTablesTruncated: {
+                [key: string]: number;
+            };
+            /**
+             * Alembicversionpreserved
+             * @description Alembic migration version that was preserved
+             */
+            alembicVersionPreserved: string;
+            /**
+             * Message
+             * @description Human-readable status message
+             */
+            message: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             * @description Timestamp when operation completed
+             */
+            timestamp: string;
+        };
+        /**
+         * DeletionLogEntry
+         * @description Schema for a deletion log entry.
+         */
+        DeletionLogEntry: {
+            /** Id */
+            id: number;
+            /** Deletiontype */
+            deletionType: string;
+            /** Deletiontarget */
+            deletionTarget: string;
+            /** Vectorcount */
+            vectorCount: number;
+            /** Deletionreason */
+            deletionReason?: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * DeletionLogsResponse
+         * @description Response schema for deletion logs.
+         */
+        DeletionLogsResponse: {
+            /** Logs */
+            logs: components["schemas"]["DeletionLogEntry"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
+        /**
+         * DetectFacesRequest
+         * @description Request to detect faces in an asset.
+         */
+        DetectFacesRequest: {
+            /**
+             * Minconfidence
+             * @default 0.5
+             */
+            minConfidence: number;
+            /**
+             * Minfacesize
+             * @default 20
+             */
+            minFaceSize: number;
+        };
+        /**
+         * DetectFacesResponse
+         * @description Response from face detection.
+         */
+        DetectFacesResponse: {
+            /** Assetid */
+            assetId: number;
+            /** Facesdetected */
+            facesDetected: number;
+            /** Faceids */
+            faceIds: string[];
+        };
+        /**
+         * DirectoryDeleteRequest
+         * @description Request schema for deleting vectors by directory prefix.
+         */
+        DirectoryDeleteRequest: {
+            /**
+             * Pathprefix
+             * @description Directory path prefix to delete
+             */
+            pathPrefix: string;
+            /**
+             * Deletionreason
+             * @description Optional reason for deletion
+             */
+            deletionReason?: string | null;
+            /**
+             * Confirm
+             * @description Must be True to proceed with deletion
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * DirectoryDeleteResponse
+         * @description Response schema for directory deletion.
+         */
+        DirectoryDeleteResponse: {
+            /** Pathprefix */
+            pathPrefix: string;
+            /** Vectorsdeleted */
+            vectorsDeleted: number;
+            /** Message */
+            message: string;
+        };
+        /**
+         * DirectoryInfo
+         * @description Information about a directory.
+         */
+        DirectoryInfo: {
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Imagecount */
+            imageCount: number;
+            /**
+             * Selected
+             * @default false
+             */
+            selected: boolean;
+        };
+        /**
+         * DirectoryScanRequest
+         * @description Request to scan directory for images.
+         */
+        DirectoryScanRequest: {
+            /** Rootpath */
+            rootPath: string;
+            /**
+             * Recursive
+             * @default true
+             */
+            recursive: boolean;
+            /**
+             * Extensions
+             * @default [
+             *       "jpg",
+             *       "jpeg",
+             *       "png",
+             *       "webp"
+             *     ]
+             */
+            extensions: string[];
+        };
+        /**
+         * DirectoryScanResponse
+         * @description Response from directory scan operation.
+         */
+        DirectoryScanResponse: {
+            /** Rootpath */
+            rootPath: string;
+            /** Subdirectories */
+            subdirectories: components["schemas"]["DirectoryInfo"][];
+            /** Totalsubdirectories */
+            totalSubdirectories: number;
+            /** Totalimages */
+            totalImages: number;
+        };
+        /**
+         * DirectoryStats
+         * @description Statistics for a single directory.
+         */
+        DirectoryStats: {
+            /** Pathprefix */
+            pathPrefix: string;
+            /** Vectorcount */
+            vectorCount: number;
+            /** Lastindexed */
+            lastIndexed?: string | null;
+        };
+        /**
+         * DirectoryStatsResponse
+         * @description Response schema for directory statistics.
+         */
+        DirectoryStatsResponse: {
+            /** Directories */
+            directories: components["schemas"]["DirectoryStats"][];
+            /** Totalvectors */
+            totalVectors: number;
+        };
+        /**
+         * ErrorResponse
+         * @description Error response schema.
+         */
+        ErrorResponse: {
+            /** Error */
+            error: string;
+            /** Message */
+            message: string;
+            /** Details */
+            details?: {
+                [key: string]: string;
+            } | null;
+        };
+        /**
+         * EvidenceStatsResponse
+         * @description Aggregate statistics for session's training evidence.
+         */
+        EvidenceStatsResponse: {
+            /** Total */
+            total: number;
+            /** Successful */
+            successful: number;
+            /** Failed */
+            failed: number;
+            /** Avgprocessingtimems */
+            avgProcessingTimeMs: number;
+            /** Minprocessingtimems */
+            minProcessingTimeMs: number;
+            /** Maxprocessingtimems */
+            maxProcessingTimeMs: number;
+            /** Devicesused */
+            devicesUsed: string[];
+            /** Modelversions */
+            modelVersions: string[];
+        };
+        /**
+         * ExportMetadata
+         * @description Metadata about the export.
+         */
+        ExportMetadata: {
+            /** Totalpersons */
+            totalPersons: number;
+            /** Totalfacemappings */
+            totalFaceMappings: number;
+            /**
+             * Exportformat
+             * @default seed
+             */
+            exportFormat: string;
+        };
+        /**
+         * FaceDetectionSessionListResponse
+         * @description Paginated list of face detection sessions.
+         */
+        FaceDetectionSessionListResponse: {
+            /** Items */
+            items: components["schemas"]["FaceDetectionSessionResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
+        /**
+         * FaceDetectionSessionResponse
+         * @description Response schema for a face detection session.
+         */
+        FaceDetectionSessionResponse: {
+            /** Id */
+            id: string;
+            /** Trainingsessionid */
+            trainingSessionId: number | null;
+            /** Status */
+            status: string;
+            /** Totalimages */
+            totalImages: number;
+            /** Processedimages */
+            processedImages: number;
+            /** Failedimages */
+            failedImages: number;
+            /** Facesdetected */
+            facesDetected: number;
+            /** Facesassigned */
+            facesAssigned: number;
+            /** Minconfidence */
+            minConfidence: number;
+            /** Minfacesize */
+            minFaceSize: number;
+            /** Batchsize */
+            batchSize: number;
+            /** Lasterror */
+            lastError: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Startedat */
+            startedAt: string | null;
+            /** Completedat */
+            completedAt: string | null;
+            /** Jobid */
+            jobId: string | null;
+            /**
+             * Facesassignedtopersons
+             * @default 0
+             */
+            facesAssignedToPersons: number;
+            /**
+             * Clusterscreated
+             * @default 0
+             */
+            clustersCreated: number;
+            /**
+             * Suggestionscreated
+             * @default 0
+             */
+            suggestionsCreated: number;
+            /**
+             * Currentbatch
+             * @default 0
+             */
+            currentBatch: number;
+            /**
+             * Totalbatches
+             * @default 0
+             */
+            totalBatches: number;
+            /**
+             * Progresspercent
+             * @description Calculate progress percentage.
+             */
+            readonly progressPercent: number;
+        };
+        /**
+         * FaceInPhoto
+         * @description Face instance info for photo grouping.
+         */
+        FaceInPhoto: {
+            /**
+             * Faceinstanceid
+             * Format: uuid
+             */
+            faceInstanceId: string;
+            /** Bboxx */
+            bboxX: number;
+            /** Bboxy */
+            bboxY: number;
+            /** Bboxw */
+            bboxW: number;
+            /** Bboxh */
+            bboxH: number;
+            /** Detectionconfidence */
+            detectionConfidence: number;
+            /** Qualityscore */
+            qualityScore?: number | null;
+            /** Personid */
+            personId?: string | null;
+            /** Personname */
+            personName?: string | null;
+            /** Clusterid */
+            clusterId?: string | null;
+        };
+        /**
+         * FaceInstanceListResponse
+         * @description Paginated list of face instances.
+         */
+        FaceInstanceListResponse: {
+            /** Items */
+            items: components["schemas"]["FaceInstanceResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
+        /**
+         * FaceInstanceResponse
+         * @description Response schema for a face instance.
+         */
+        FaceInstanceResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Assetid */
+            assetId: number;
+            bbox: components["schemas"]["BoundingBox"];
+            /** Detectionconfidence */
+            detectionConfidence: number;
+            /** Qualityscore */
+            qualityScore?: number | null;
+            /** Clusterid */
+            clusterId?: string | null;
+            /** Personid */
+            personId?: string | null;
+            /** Personname */
+            personName?: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * FaceMappingExport
+         * @description Face mapping data for export/import.
+         */
+        FaceMappingExport: {
+            /** Imagepath */
+            imagePath: string;
+            boundingBox: components["schemas"]["BoundingBoxExport"];
+            /** Detectionconfidence */
+            detectionConfidence: number;
+            /** Qualityscore */
+            qualityScore?: number | null;
+        };
+        /**
+         * FaceMappingResult
+         * @description Result of attempting to match a single face mapping.
+         */
+        FaceMappingResult: {
+            /** Imagepath */
+            imagePath: string;
+            /** Status */
+            status: string;
+            /** Matchedfaceid */
+            matchedFaceId?: string | null;
+            /** Error */
+            error?: string | null;
+        };
+        /**
+         * FaceMatchingConfigResponse
+         * @description Face matching specific configuration.
+         */
+        FaceMatchingConfigResponse: {
+            /** Auto Assign Threshold */
+            auto_assign_threshold: number;
+            /** Suggestion Threshold */
+            suggestion_threshold: number;
+            /** Max Suggestions */
+            max_suggestions: number;
+            /** Suggestion Expiry Days */
+            suggestion_expiry_days: number;
+            /** Prototype Min Quality */
+            prototype_min_quality: number;
+            /** Prototype Max Exemplars */
+            prototype_max_exemplars: number;
+        };
+        /**
+         * FaceMatchingConfigUpdateRequest
+         * @description Request to update face matching configuration.
+         */
+        FaceMatchingConfigUpdateRequest: {
+            /** Auto Assign Threshold */
+            auto_assign_threshold: number;
+            /** Suggestion Threshold */
+            suggestion_threshold: number;
+            /**
+             * Max Suggestions
+             * @default 50
+             */
+            max_suggestions: number;
+            /**
+             * Suggestion Expiry Days
+             * @default 30
+             */
+            suggestion_expiry_days: number;
+            /**
+             * Prototype Min Quality
+             * @default 0.5
+             */
+            prototype_min_quality: number;
+            /**
+             * Prototype Max Exemplars
+             * @default 5
+             */
+            prototype_max_exemplars: number;
+        };
+        /**
+         * FaceSuggestionItem
+         * @description A single person suggestion for a face.
+         */
+        FaceSuggestionItem: {
+            /**
+             * Personid
+             * Format: uuid
+             */
+            personId: string;
+            /** Personname */
+            personName: string;
+            /**
+             * Confidence
+             * @description Similarity confidence score (0.0-1.0)
+             */
+            confidence: number;
+        };
+        /**
+         * FaceSuggestionListResponse
+         * @description Paginated list of face suggestions.
+         */
+        FaceSuggestionListResponse: {
+            /** Items */
+            items: components["schemas"]["FaceSuggestionResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
+        /**
+         * FaceSuggestionResponse
+         * @description Response schema for a face suggestion.
+         */
+        FaceSuggestionResponse: {
+            /** Id */
+            id: number;
+            /** Faceinstanceid */
+            faceInstanceId: string;
+            /** Suggestedpersonid */
+            suggestedPersonId: string;
+            /** Confidence */
+            confidence: number;
+            /** Sourcefaceid */
+            sourceFaceId: string;
+            /** Status */
+            status: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Reviewedat */
+            reviewedAt: string | null;
+            /** Facethumbnailurl */
+            faceThumbnailUrl?: string | null;
+            /** Personname */
+            personName?: string | null;
+            /** Fullimageurl */
+            fullImageUrl?: string | null;
+            /** Bboxx */
+            bboxX?: number | null;
+            /** Bboxy */
+            bboxY?: number | null;
+            /** Bboxw */
+            bboxW?: number | null;
+            /** Bboxh */
+            bboxH?: number | null;
+            /** Detectionconfidence */
+            detectionConfidence?: number | null;
+            /** Qualityscore */
+            qualityScore?: number | null;
+        };
+        /**
+         * FaceSuggestionsResponse
+         * @description Response with person suggestions for a face.
+         */
+        FaceSuggestionsResponse: {
+            /**
+             * Faceid
+             * Format: uuid
+             */
+            faceId: string;
+            /** Suggestions */
+            suggestions: components["schemas"]["FaceSuggestionItem"][];
+            /** Thresholdused */
+            thresholdUsed: number;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ImportOptions
+         * @description Options for importing person metadata.
+         */
+        ImportOptions: {
+            /**
+             * Dryrun
+             * @default false
+             */
+            dryRun: boolean;
+            /**
+             * Tolerancepixels
+             * @default 10
+             */
+            tolerancePixels: number;
+            /**
+             * Skipmissingimages
+             * @default true
+             */
+            skipMissingImages: boolean;
+            /**
+             * Autoingestimages
+             * @description Automatically ingest images that exist on filesystem but not in database
+             * @default true
+             */
+            autoIngestImages: boolean;
+        };
+        /**
+         * ImportRequest
+         * @description Request to import person metadata.
+         */
+        ImportRequest: {
+            data: components["schemas"]["PersonMetadataExport-Input"];
+            options?: components["schemas"]["ImportOptions"];
+        };
+        /**
+         * ImportResponse
+         * @description Response from person metadata import operation.
+         */
+        ImportResponse: {
+            /** Success */
+            success: boolean;
+            /** Dryrun */
+            dryRun: boolean;
+            /**
+             * Personscreated
+             * @default 0
+             */
+            personsCreated: number;
+            /**
+             * Personsexisting
+             * @default 0
+             */
+            personsExisting: number;
+            /**
+             * Totalfacesmatched
+             * @default 0
+             */
+            totalFacesMatched: number;
+            /**
+             * Totalfacesnotfound
+             * @default 0
+             */
+            totalFacesNotFound: number;
+            /**
+             * Totalimagesmissing
+             * @default 0
+             */
+            totalImagesMissing: number;
+            /** Personresults */
+            personResults?: components["schemas"]["PersonImportResult"][];
+            /** Errors */
+            errors?: string[];
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+        };
+        /**
+         * IngestRequest
+         * @description Request to ingest images from filesystem.
+         */
+        IngestRequest: {
+            /** Rootpath */
+            rootPath: string;
+            /**
+             * Recursive
+             * @default true
+             */
+            recursive: boolean;
+            /**
+             * Extensions
+             * @default [
+             *       "jpg",
+             *       "jpeg",
+             *       "png",
+             *       "webp"
+             *     ]
+             */
+            extensions: string[];
+            /**
+             * Dryrun
+             * @default false
+             */
+            dryRun: boolean;
+        };
+        /**
+         * IngestResponse
+         * @description Response from ingest operation.
+         */
+        IngestResponse: {
+            /** Discovered */
+            discovered: number;
+            /** Enqueued */
+            enqueued: number;
+            /** Skipped */
+            skipped: number;
+        };
+        /**
+         * JobStatus
+         * @description Status enum for training jobs.
+         * @enum {string}
+         */
+        JobStatus: "pending" | "running" | "completed" | "failed" | "cancelled";
+        /**
+         * JobsSummary
+         * @description Summary of jobs for training session.
+         */
+        JobsSummary: {
+            /** Pending */
+            pending: number;
+            /** Running */
+            running: number;
+            /** Completed */
+            completed: number;
+            /** Failed */
+            failed: number;
+            /** Cancelled */
+            cancelled: number;
+        };
+        /**
+         * LabelClusterRequest
+         * @description Request to label a cluster with a person name.
+         */
+        LabelClusterRequest: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * LabelClusterResponse
+         * @description Response from labeling a cluster.
+         */
+        LabelClusterResponse: {
+            /**
+             * Personid
+             * Format: uuid
+             */
+            personId: string;
+            /** Personname */
+            personName: string;
+            /** Faceslabeled */
+            facesLabeled: number;
+            /** Prototypescreated */
+            prototypesCreated: number;
+        };
+        /**
+         * MergePersonsRequest
+         * @description Request to merge one person into another.
+         */
+        MergePersonsRequest: {
+            /**
+             * Intopersonid
+             * Format: uuid
+             */
+            intoPersonId: string;
+        };
+        /**
+         * MergePersonsResponse
+         * @description Response from merging persons.
+         */
+        MergePersonsResponse: {
+            /**
+             * Sourcepersonid
+             * Format: uuid
+             */
+            sourcePersonId: string;
+            /**
+             * Targetpersonid
+             * Format: uuid
+             */
+            targetPersonId: string;
+            /** Facesmoved */
+            facesMoved: number;
+        };
+        /**
+         * OrphanCleanupRequest
+         * @description Request schema for orphan cleanup.
+         */
+        OrphanCleanupRequest: {
+            /**
+             * Confirm
+             * @description Must be True to proceed
+             * @default false
+             */
+            confirm: boolean;
+            /** Deletionreason */
+            deletionReason?: string | null;
+        };
+        /**
+         * OrphanCleanupResponse
+         * @description Response schema for orphan cleanup.
+         */
+        OrphanCleanupResponse: {
+            /** Orphansdeleted */
+            orphansDeleted: number;
+            /** Message */
+            message: string;
+        };
+        /** PaginatedResponse[Asset] */
+        PaginatedResponse_Asset_: {
+            /** Items */
+            items: components["schemas"]["Asset"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Hasmore */
+            hasMore: boolean;
+        };
+        /** PaginatedResponse[CategoryResponse] */
+        PaginatedResponse_CategoryResponse_: {
+            /** Items */
+            items: components["schemas"]["CategoryResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Hasmore */
+            hasMore: boolean;
+        };
+        /** PaginatedResponse[TrainingEvidenceResponse] */
+        PaginatedResponse_TrainingEvidenceResponse_: {
+            /** Items */
+            items: components["schemas"]["TrainingEvidenceResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Hasmore */
+            hasMore: boolean;
+        };
+        /** PaginatedResponse[TrainingJobResponse] */
+        PaginatedResponse_TrainingJobResponse_: {
+            /** Items */
+            items: components["schemas"]["TrainingJobResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Hasmore */
+            hasMore: boolean;
+        };
+        /** PaginatedResponse[TrainingSessionResponse] */
+        PaginatedResponse_TrainingSessionResponse_: {
+            /** Items */
+            items: components["schemas"]["TrainingSessionResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /** Hasmore */
+            hasMore: boolean;
+        };
+        /**
+         * PersonExport
+         * @description Person data for export.
+         */
+        "PersonExport-Input": {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Facemappings */
+            faceMappings: components["schemas"]["FaceMappingExport"][];
+        };
+        /**
+         * PersonExport
+         * @description Person data for export.
+         */
+        "PersonExport-Output": {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Facemappings */
+            faceMappings: components["schemas"]["FaceMappingExport"][];
+        };
+        /**
+         * PersonImportResult
+         * @description Result of importing a single person.
+         */
+        PersonImportResult: {
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Personid */
+            personId?: string | null;
+            /**
+             * Facesmatched
+             * @default 0
+             */
+            facesMatched: number;
+            /**
+             * Facesnotfound
+             * @default 0
+             */
+            facesNotFound: number;
+            /**
+             * Imagesmissing
+             * @default 0
+             */
+            imagesMissing: number;
+            /** Details */
+            details?: components["schemas"]["FaceMappingResult"][];
+        };
+        /**
+         * PersonListResponse
+         * @description Paginated list of persons.
+         */
+        PersonListResponse: {
+            /** Items */
+            items: components["schemas"]["PersonResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
+        /**
+         * PersonMetadataExport
+         * @description Complete person metadata export structure.
+         */
+        "PersonMetadataExport-Input": {
+            /**
+             * Version
+             * @default 1.0
+             */
+            version: string;
+            /**
+             * Exportedat
+             * Format: date-time
+             */
+            exportedAt: string;
+            metadata: components["schemas"]["ExportMetadata"];
+            /** Persons */
+            persons: components["schemas"]["PersonExport-Input"][];
+        };
+        /**
+         * PersonMetadataExport
+         * @description Complete person metadata export structure.
+         */
+        "PersonMetadataExport-Output": {
+            /**
+             * Version
+             * @default 1.0
+             */
+            version: string;
+            /**
+             * Exportedat
+             * Format: date-time
+             */
+            exportedAt: string;
+            metadata: components["schemas"]["ExportMetadata"];
+            /** Persons */
+            persons: components["schemas"]["PersonExport-Output"][];
+        };
+        /**
+         * PersonPhotoGroup
+         * @description A photo with its faces, grouped for person review.
+         */
+        PersonPhotoGroup: {
+            /** Photoid */
+            photoId: number;
+            /** Takenat */
+            takenAt?: string | null;
+            /** Thumbnailurl */
+            thumbnailUrl: string;
+            /** Fullurl */
+            fullUrl: string;
+            /** Faces */
+            faces: components["schemas"]["FaceInPhoto"][];
+            /** Facecount */
+            faceCount: number;
+            /** Hasnonpersonfaces */
+            hasNonPersonFaces: boolean;
+        };
+        /**
+         * PersonPhotosResponse
+         * @description Paginated response for person's photos.
+         */
+        PersonPhotosResponse: {
+            /** Items */
+            items: components["schemas"]["PersonPhotoGroup"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+            /**
+             * Personid
+             * Format: uuid
+             */
+            personId: string;
+            /** Personname */
+            personName: string;
+        };
+        /**
+         * PersonResponse
+         * @description Response schema for a person.
+         */
+        PersonResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Facecount */
+            faceCount: number;
+            /** Prototypecount */
+            prototypeCount: number;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+        };
+        /**
+         * ProgressStats
+         * @description Progress statistics for training session.
+         */
+        ProgressStats: {
+            /** Current */
+            current: number;
+            /** Total */
+            total: number;
+            /** Percentage */
+            percentage: number;
+            /** Etaseconds */
+            etaSeconds?: number | null;
+            /** Imagesperminute */
+            imagesPerMinute?: number | null;
+        };
+        /**
+         * RejectSuggestionRequest
+         * @description Request to reject a suggestion.
+         */
+        RejectSuggestionRequest: Record<string, never>;
+        /**
+         * ResetRequest
+         * @description Request schema for collection reset.
+         */
+        ResetRequest: {
+            /**
+             * Confirm
+             * @description Must be True to proceed
+             * @default false
+             */
+            confirm: boolean;
+            /**
+             * Confirmationtext
+             * @description Must be 'DELETE ALL VECTORS'
+             */
+            confirmationText: string;
+            /** Deletionreason */
+            deletionReason?: string | null;
+        };
+        /**
+         * ResetResponse
+         * @description Response schema for collection reset.
+         */
+        ResetResponse: {
+            /** Vectorsdeleted */
+            vectorsDeleted: number;
+            /** Message */
+            message: string;
+        };
+        /**
+         * RetrainRequest
+         * @description Request schema for retraining a directory.
+         */
+        RetrainRequest: {
+            /** Pathprefix */
+            pathPrefix: string;
+            /** Categoryid */
+            categoryId: number;
+            /** Deletionreason */
+            deletionReason?: string | null;
+        };
+        /**
+         * RetrainResponse
+         * @description Response schema for retrain operation.
+         */
+        RetrainResponse: {
+            /** Pathprefix */
+            pathPrefix: string;
+            /** Vectorsdeleted */
+            vectorsDeleted: number;
+            /** Newsessionid */
+            newSessionId: number;
+            /** Message */
+            message: string;
+        };
+        /**
+         * SearchRequest
+         * @description Request to search for assets.
+         */
+        SearchRequest: {
+            /** Query */
+            query: string;
+            /**
+             * Limit
+             * @default 50
+             */
+            limit: number;
+            /**
+             * Offset
+             * @default 0
+             */
+            offset: number;
+            /** Filters */
+            filters?: {
+                [key: string]: string;
+            } | null;
+            /**
+             * Categoryid
+             * @description Filter by category ID
+             */
+            categoryId?: number | null;
+        };
+        /**
+         * SearchResponse
+         * @description Response from search operation.
+         */
+        SearchResponse: {
+            /** Results */
+            results: components["schemas"]["SearchResult"][];
+            /** Total */
+            total: number;
+            /** Query */
+            query: string;
+        };
+        /**
+         * SearchResult
+         * @description Single search result with asset and score.
+         */
+        SearchResult: {
+            asset: components["schemas"]["Asset"];
+            /** Score */
+            score: number;
+            /**
+             * Highlights
+             * @default []
+             */
+            highlights: string[];
+        };
+        /**
+         * SessionDeleteResponse
+         * @description Response schema for session deletion.
+         */
+        SessionDeleteResponse: {
+            /** Sessionid */
+            sessionId: number;
+            /** Vectorsdeleted */
+            vectorsDeleted: number;
+            /** Message */
+            message: string;
+        };
+        /**
+         * SessionStatus
+         * @description Status enum for training sessions.
+         * @enum {string}
+         */
+        SessionStatus: "pending" | "running" | "paused" | "completed" | "cancelled" | "failed";
+        /**
+         * SplitClusterRequest
+         * @description Request to split a cluster.
+         */
+        SplitClusterRequest: {
+            /**
+             * Minclustersize
+             * @default 3
+             */
+            minClusterSize: number;
+        };
+        /**
+         * SplitClusterResponse
+         * @description Response from splitting a cluster.
+         */
+        SplitClusterResponse: {
+            /** Originalclusterid */
+            originalClusterId: string;
+            /** Newclusters */
+            newClusters: string[];
+            /** Status */
+            status: string;
+        };
+        /**
+         * SubdirectorySelectionUpdate
+         * @description Request to update subdirectory selection status.
+         */
+        SubdirectorySelectionUpdate: {
+            /** Id */
+            id: number;
+            /** Selected */
+            selected: boolean;
+        };
+        /**
+         * TrainMatchingRequest
+         * @description Request to train face matching model using triplet loss.
+         */
+        TrainMatchingRequest: {
+            /**
+             * Epochs
+             * @default 20
+             */
+            epochs: number;
+            /**
+             * Margin
+             * @default 0.2
+             */
+            margin: number;
+            /**
+             * Batchsize
+             * @default 32
+             */
+            batchSize: number;
+            /**
+             * Learningrate
+             * @default 0.0001
+             */
+            learningRate: number;
+            /**
+             * Minfaces
+             * @default 5
+             */
+            minFaces: number;
+            /** Checkpointpath */
+            checkpointPath?: string | null;
+            /**
+             * Queue
+             * @description Run as background job
+             * @default true
+             */
+            queue: boolean;
+        };
+        /**
+         * TrainMatchingResponse
+         * @description Response from face training.
+         */
+        TrainMatchingResponse: {
+            /** Jobid */
+            jobId?: string | null;
+            /** Status */
+            status: string;
+            /** Result */
+            result?: {
+                [key: string]: number;
+            } | null;
+        };
+        /**
+         * TrainingEvidenceDetailResponse
+         * @description Extended evidence response with asset information.
+         */
+        TrainingEvidenceDetailResponse: {
+            /** Id */
+            id: number;
+            /** Assetid */
+            assetId: number;
+            /** Assetpath */
+            assetPath: string;
+            /** Sessionid */
+            sessionId: number;
+            /** Modelname */
+            modelName: string;
+            /** Modelversion */
+            modelVersion: string;
+            /** Embeddingchecksum */
+            embeddingChecksum?: string | null;
+            /** Device */
+            device: string;
+            /** Processingtimems */
+            processingTimeMs: number;
+            /** Errormessage */
+            errorMessage?: string | null;
+            /** Metadatajson */
+            metadataJson?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * TrainingEvidenceResponse
+         * @description Response schema for training evidence.
+         */
+        TrainingEvidenceResponse: {
+            /** Id */
+            id: number;
+            /** Assetid */
+            assetId: number;
+            /** Sessionid */
+            sessionId: number;
+            /** Modelname */
+            modelName: string;
+            /** Modelversion */
+            modelVersion: string;
+            /** Embeddingchecksum */
+            embeddingChecksum?: string | null;
+            /** Device */
+            device: string;
+            /** Processingtimems */
+            processingTimeMs: number;
+            /** Errormessage */
+            errorMessage?: string | null;
+            /** Metadatajson */
+            metadataJson?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * TrainingJobResponse
+         * @description Response schema for training job.
+         */
+        TrainingJobResponse: {
+            /** Id */
+            id: number;
+            /** Sessionid */
+            sessionId: number;
+            /** Assetid */
+            assetId: number;
+            /** Status */
+            status: string;
+            /** Rqjobid */
+            rqJobId?: string | null;
+            /** Progress */
+            progress: number;
+            /** Errormessage */
+            errorMessage?: string | null;
+            /** Processingtimems */
+            processingTimeMs?: number | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Startedat */
+            startedAt?: string | null;
+            /** Completedat */
+            completedAt?: string | null;
+        };
+        /**
+         * TrainingProgressResponse
+         * @description Response schema for training progress.
+         */
+        TrainingProgressResponse: {
+            /** Sessionid */
+            sessionId: number;
+            /** Status */
+            status: string;
+            progress: components["schemas"]["ProgressStats"];
+            jobsSummary: components["schemas"]["JobsSummary"];
+        };
+        /**
+         * TrainingSessionConfig
+         * @description Configuration for training session.
+         */
+        TrainingSessionConfig: {
+            /**
+             * Recursive
+             * @default true
+             */
+            recursive: boolean;
+            /**
+             * Extensions
+             * @default [
+             *       "jpg",
+             *       "jpeg",
+             *       "png",
+             *       "webp"
+             *     ]
+             */
+            extensions: string[];
+            /**
+             * Batch Size
+             * @default 32
+             */
+            batch_size: number;
+        };
+        /**
+         * TrainingSessionCreate
+         * @description Request to create a new training session.
+         */
+        TrainingSessionCreate: {
+            /** Name */
+            name: string;
+            /** Rootpath */
+            rootPath: string;
+            /**
+             * Categoryid
+             * @description Category ID for this session
+             */
+            categoryId: number;
+            /** Subdirectories */
+            subdirectories?: string[];
+            config?: components["schemas"]["TrainingSessionConfig"] | null;
+        };
+        /**
+         * TrainingSessionResponse
+         * @description Response schema for training session.
+         */
+        TrainingSessionResponse: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Rootpath */
+            rootPath: string;
+            /** Categoryid */
+            categoryId?: number | null;
+            category?: components["schemas"]["CategoryResponse"] | null;
+            /** Config */
+            config?: {
+                [key: string]: unknown;
+            } | null;
+            /** Totalimages */
+            totalImages: number;
+            /** Processedimages */
+            processedImages: number;
+            /** Failedimages */
+            failedImages: number;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Startedat */
+            startedAt?: string | null;
+            /** Completedat */
+            completedAt?: string | null;
+            /** Pausedat */
+            pausedAt?: string | null;
+        };
+        /**
+         * TrainingSessionUpdate
+         * @description Request to update training session metadata.
+         */
+        TrainingSessionUpdate: {
+            /** Name */
+            name?: string | null;
+            config?: components["schemas"]["TrainingSessionConfig"] | null;
+        };
+        /**
+         * TrainingSubdirectoryResponse
+         * @description Response schema for training subdirectory.
+         */
+        TrainingSubdirectoryResponse: {
+            /** Id */
+            id: number;
+            /** Sessionid */
+            sessionId: number;
+            /** Path */
+            path: string;
+            /** Name */
+            name: string;
+            /** Selected */
+            selected: boolean;
+            /** Imagecount */
+            imageCount: number;
+            /** Trainedcount */
+            trainedCount: number;
+            /** Status */
+            status: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * TriggerClusteringRequest
+         * @description Request to trigger clustering.
+         */
+        TriggerClusteringRequest: {
+            /**
+             * Qualitythreshold
+             * @default 0.5
+             */
+            qualityThreshold: number;
+            /**
+             * Maxfaces
+             * @default 50000
+             */
+            maxFaces: number;
+            /**
+             * Minclustersize
+             * @default 5
+             */
+            minClusterSize: number;
+        };
+        /**
+         * UnassignFaceResponse
+         * @description Response from unassigning a face from a person.
+         */
+        UnassignFaceResponse: {
+            /**
+             * Faceid
+             * Format: uuid
+             */
+            faceId: string;
+            /**
+             * Previouspersonid
+             * Format: uuid
+             */
+            previousPersonId: string;
+            /** Previouspersonname */
+            previousPersonName: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-	health_check_health_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: string;
-					};
-				};
-			};
-		};
-	};
-	ingest_assets_api_v1_assets_ingest_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['IngestRequest'];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['IngestResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	list_assets_api_v1_assets_get: {
-		parameters: {
-			query?: {
-				page?: number;
-				page_size?: number;
-				from_date?: string | null;
-				to_date?: string | null;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['PaginatedResponse_Asset_'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_asset_api_v1_assets__asset_id__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				asset_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['Asset'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_thumbnail_api_v1_images__asset_id__thumbnail_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				asset_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_full_image_api_v1_images__asset_id__full_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				asset_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	generate_thumbnail_api_v1_images__asset_id__thumbnail_generate_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				asset_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: unknown;
-					};
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	search_assets_api_v1_search_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['SearchRequest'];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['SearchResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-			/** @description Service Unavailable */
-			503: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorResponse'];
-				};
-			};
-		};
-	};
-	list_sessions_api_v1_training_sessions_get: {
-		parameters: {
-			query?: {
-				page?: number;
-				page_size?: number;
-				status?: components['schemas']['SessionStatus'] | null;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['PaginatedResponse_TrainingSessionResponse_'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	create_session_api_v1_training_sessions_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['TrainingSessionCreate'];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingSessionResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_session_api_v1_training_sessions__session_id__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingSessionResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	delete_session_api_v1_training_sessions__session_id__delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	update_session_api_v1_training_sessions__session_id__patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['TrainingSessionUpdate'];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingSessionResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	scan_directory_api_v1_training_directories_scan_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['DirectoryScanRequest'];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['DirectoryScanResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	list_directories_api_v1_training_directories_get: {
-		parameters: {
-			query: {
-				path: string;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['DirectoryInfo'][];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_subdirectories_api_v1_training_sessions__session_id__subdirectories_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingSubdirectoryResponse'][];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	update_subdirectories_api_v1_training_sessions__session_id__subdirectories_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['SubdirectorySelectionUpdate'][];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingSubdirectoryResponse'][];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_progress_api_v1_training_sessions__session_id__progress_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingProgressResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	start_training_api_v1_training_sessions__session_id__start_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ControlResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	pause_training_api_v1_training_sessions__session_id__pause_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ControlResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	cancel_training_api_v1_training_sessions__session_id__cancel_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ControlResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	restart_training_api_v1_training_sessions__session_id__restart_post: {
-		parameters: {
-			query?: {
-				/** @description Only restart failed images */
-				failed_only?: boolean;
-			};
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ControlResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	list_jobs_api_v1_training_sessions__session_id__jobs_get: {
-		parameters: {
-			query?: {
-				page?: number;
-				page_size?: number;
-				status?: components['schemas']['JobStatus'] | null;
-			};
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['PaginatedResponse_TrainingJobResponse_'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_job_api_v1_training_jobs__job_id__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				job_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingJobResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	generate_session_thumbnails_api_v1_training_sessions__session_id__thumbnails_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: unknown;
-					};
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	trigger_incremental_scan_api_v1_training_scan_incremental_post: {
-		parameters: {
-			query: {
-				/** @description Directory to scan */
-				directory: string;
-				/** @description Auto-enqueue detected images for training */
-				auto_train?: boolean;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: unknown;
-					};
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	list_evidence_api_v1_evidence_get: {
-		parameters: {
-			query?: {
-				/** @description Filter by session ID */
-				session_id?: number | null;
-				/** @description Filter by asset ID */
-				asset_id?: number | null;
-				page?: number;
-				page_size?: number;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['PaginatedResponse_TrainingEvidenceResponse_'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_evidence_api_v1_evidence__evidence_id__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				evidence_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingEvidenceResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	delete_evidence_api_v1_evidence__evidence_id__delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				evidence_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_asset_training_history_api_v1_assets__asset_id__training_history_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				asset_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingEvidenceResponse'][];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_session_evidence_stats_api_v1_training_sessions__session_id__evidence_stats_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				session_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['EvidenceStatsResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_evidence_detail_api_v1_evidence__evidence_id__detail_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				evidence_id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['TrainingEvidenceDetailResponse'];
-				};
-			};
-			/** @description Validation Error */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['HTTPValidationError'];
-				};
-			};
-		};
-	};
-	get_watcher_status_api_v1_system_watcher_status_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: unknown;
-					};
-				};
-			};
-		};
-	};
-	start_watcher_api_v1_system_watcher_start_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: unknown;
-					};
-				};
-			};
-		};
-	};
-	stop_watcher_api_v1_system_watcher_stop_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': {
-						[key: string]: unknown;
-					};
-				};
-			};
-		};
-	};
+    health_check_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    delete_all_data_api_v1_admin_data_delete_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAllDataRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteAllDataResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_person_metadata_api_v1_admin_persons_export_post: {
+        parameters: {
+            query?: {
+                /** @description Maximum face mappings per person */
+                max_faces_per_person?: number;
+                /** @description If true, only export faces where image file exists on filesystem */
+                verify_paths?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonMetadataExport-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_person_metadata_api_v1_admin_persons_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ingest_assets_api_v1_assets_ingest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IngestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_assets_api_v1_assets_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                from_date?: string | null;
+                to_date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_Asset_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_asset_api_v1_assets__asset_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Asset"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_categories_api_v1_categories_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_CategoryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_category_api_v1_categories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_category_api_v1_categories__category_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_category_api_v1_categories__category_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_category_api_v1_categories__category_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_face_matching_config_api_v1_config_face_matching_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceMatchingConfigResponse"];
+                };
+            };
+        };
+    };
+    update_face_matching_config_api_v1_config_face_matching_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaceMatchingConfigUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceMatchingConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_config_by_category_api_v1_config__category__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_config_api_v1_config__key__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfigUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigUpdateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_thumbnail_api_v1_images__asset_id__thumbnail_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_full_image_api_v1_images__asset_id__full_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_thumbnail_api_v1_images__asset_id__thumbnail_generate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_assets_api_v1_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_sessions_api_v1_training_sessions_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                status?: components["schemas"]["SessionStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_TrainingSessionResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_session_api_v1_training_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrainingSessionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_session_api_v1_training_sessions__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_session_api_v1_training_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_session_api_v1_training_sessions__session_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrainingSessionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scan_directory_api_v1_training_directories_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DirectoryScanRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryScanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_directories_api_v1_training_directories_get: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_subdirectories_api_v1_training_sessions__session_id__subdirectories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSubdirectoryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_subdirectories_api_v1_training_sessions__session_id__subdirectories_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubdirectorySelectionUpdate"][];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingSubdirectoryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_progress_api_v1_training_sessions__session_id__progress_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingProgressResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_training_api_v1_training_sessions__session_id__start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_training_api_v1_training_sessions__session_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_training_api_v1_training_sessions__session_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restart_training_api_v1_training_sessions__session_id__restart_post: {
+        parameters: {
+            query?: {
+                /** @description Only restart failed images */
+                failed_only?: boolean;
+            };
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_jobs_api_v1_training_sessions__session_id__jobs_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                status?: components["schemas"]["JobStatus"] | null;
+            };
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_TrainingJobResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_api_v1_training_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingJobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_session_thumbnails_api_v1_training_sessions__session_id__thumbnails_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_incremental_scan_api_v1_training_scan_incremental_post: {
+        parameters: {
+            query: {
+                /** @description Directory to scan */
+                directory: string;
+                /** @description Auto-enqueue detected images for training */
+                auto_train?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_evidence_api_v1_evidence_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by session ID */
+                session_id?: number | null;
+                /** @description Filter by asset ID */
+                asset_id?: number | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_TrainingEvidenceResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_api_v1_evidence__evidence_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidence_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingEvidenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_evidence_api_v1_evidence__evidence_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidence_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_asset_training_history_api_v1_assets__asset_id__training_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingEvidenceResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_session_evidence_stats_api_v1_training_sessions__session_id__evidence_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceStatsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_detail_api_v1_evidence__evidence_id__detail_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidence_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingEvidenceDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_watcher_status_api_v1_system_watcher_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    start_watcher_api_v1_system_watcher_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    stop_watcher_api_v1_system_watcher_stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    delete_by_directory_api_v1_vectors_by_directory_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DirectoryDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryDeleteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retrain_directory_api_v1_vectors_retrain_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetrainRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrainResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_directory_stats_api_v1_vectors_directories_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryStatsResponse"];
+                };
+            };
+        };
+    };
+    delete_by_asset_api_v1_vectors_by_asset__asset_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetDeleteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_by_session_api_v1_vectors_by_session__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDeleteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_by_category_api_v1_vectors_by_category__category_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryDeleteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cleanup_orphans_api_v1_vectors_cleanup_orphans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrphanCleanupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrphanCleanupResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_collection_api_v1_vectors_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResetResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_deletion_logs_api_v1_vectors_deletion_logs_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionLogsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_clusters_api_v1_faces_clusters_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                /** @description Include clusters already assigned to persons */
+                include_labeled?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cluster_api_v1_faces_clusters__cluster_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cluster_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    label_cluster_api_v1_faces_clusters__cluster_id__label_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cluster_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelClusterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelClusterResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    split_cluster_api_v1_faces_clusters__cluster_id__split_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cluster_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitClusterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SplitClusterResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_persons_api_v1_faces_persons_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                /** @description Filter by status: active, merged, hidden */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_person_api_v1_faces_persons_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePersonRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatePersonResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_person_photos_api_v1_faces_persons__person_id__photos_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PersonPhotosResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    merge_persons_api_v1_faces_persons__person_id__merge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergePersonsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MergePersonsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bulk_remove_from_person_api_v1_faces_persons__person_id__photos_bulk_remove_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkRemoveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkRemoveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bulk_move_to_person_api_v1_faces_persons__person_id__photos_bulk_move_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkMoveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_faces_in_asset_api_v1_faces_detect__asset_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DetectFacesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectFacesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_clustering_api_v1_faces_cluster_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TriggerClusteringRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusteringResultResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_faces_for_asset_api_v1_faces_assets__asset_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceInstanceListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_face_to_person_api_v1_faces_faces__face_id__assign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                face_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignFaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignFaceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unassign_face_from_person_api_v1_faces_faces__face_id__person_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                face_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnassignFaceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_face_suggestions_api_v1_faces_faces__face_id__suggestions_get: {
+        parameters: {
+            query?: {
+                /** @description Minimum confidence threshold */
+                min_confidence?: number;
+                /** @description Maximum number of suggestions */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                face_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cluster_faces_dual_api_v1_faces_cluster_dual_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClusterDualRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterDualResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    train_face_matching_api_v1_faces_train_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrainMatchingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainMatchingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sessions_api_v1_faces_sessions_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                /** @description Filter by status: pending, processing, completed, failed */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceDetectionSessionListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_session_api_v1_faces_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFaceDetectionSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceDetectionSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_session_api_v1_faces_sessions__session_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceDetectionSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_session_api_v1_faces_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_session_api_v1_faces_sessions__session_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceDetectionSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_session_api_v1_faces_sessions__session_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceDetectionSessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_session_events_api_v1_faces_sessions__session_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_suggestions_api_v1_faces_suggestions_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                /** @description Filter by status: pending, accepted, rejected */
+                status?: string | null;
+                /** @description Filter by suggested person ID */
+                person_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_suggestion_stats_api_v1_faces_suggestions_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_suggestion_api_v1_faces_suggestions__suggestion_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestion_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_suggestion_api_v1_faces_suggestions__suggestion_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestion_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptSuggestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_suggestion_api_v1_faces_suggestions__suggestion_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suggestion_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectSuggestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bulk_suggestion_action_api_v1_faces_suggestions_bulk_action_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkSuggestionActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkSuggestionActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
 }
