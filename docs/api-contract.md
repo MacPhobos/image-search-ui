@@ -756,7 +756,7 @@ interface FaceSuggestion {
 	faceThumbnailUrl: string | null; // Thumbnail URL for the suggested face
 	personName: string | null; // Name of the suggested person
 	// Bounding box and image data for face overlay display
-	fullImageUrl: string | null; // Full image URL (e.g., /api/v1/images/{assetId}/file)
+	fullImageUrl: string | null; // Full image URL (e.g., /api/v1/images/{assetId}/full)
 	bboxX: number | null; // Bounding box X coordinate (pixels)
 	bboxY: number | null; // Bounding box Y coordinate (pixels)
 	bboxW: number | null; // Bounding box width (pixels)
@@ -836,7 +836,7 @@ List face suggestions with pagination and filtering.
 			"reviewedAt": null,
 			"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
 			"personName": "John Smith",
-			"fullImageUrl": "/api/v1/images/1234/file",
+			"fullImageUrl": "/api/v1/images/1234/full",
 			"bboxX": 100,
 			"bboxY": 150,
 			"bboxW": 80,
@@ -931,7 +931,7 @@ Accept a face suggestion and assign the face to the suggested person.
 	"reviewedAt": "2025-12-25T10:15:00Z",
 	"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
 	"personName": "John Smith",
-	"fullImageUrl": "/api/v1/images/1234/file",
+	"fullImageUrl": "/api/v1/images/1234/full",
 	"bboxX": 100,
 	"bboxY": 150,
 	"bboxW": 80,
