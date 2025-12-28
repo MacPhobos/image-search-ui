@@ -204,6 +204,24 @@
 		showPhotoModal = false;
 		selectedPhoto = null;
 	}
+
+	function handleFaceAssigned(faceId: string, personId: string | null, personName: string | null) {
+		if (!cluster) return;
+
+		// Find and update the face in the cluster's faces array
+		const faceIndex = cluster.faces.findIndex((f) => f.id === faceId);
+		if (faceIndex !== -1) {
+			// Update the face with new assignment
+			cluster.faces[faceIndex] = {
+				...cluster.faces[faceIndex],
+				personId,
+				personName
+			};
+
+			// Trigger Svelte reactivity by reassigning cluster
+			cluster = { ...cluster };
+		}
+	}
 </script>
 
 <svelte:head>
@@ -378,6 +396,7 @@
 		currentPersonId={cluster?.personId ?? null}
 		currentPersonName={cluster?.personName ?? null}
 		onClose={handleClosePhotoModal}
+		onFaceAssigned={handleFaceAssigned}
 	/>
 {/if}
 

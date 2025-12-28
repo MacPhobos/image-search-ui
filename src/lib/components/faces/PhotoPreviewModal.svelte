@@ -22,6 +22,8 @@
 		onPrevious?: () => void;
 		/** Optional: navigate to next photo */
 		onNext?: () => void;
+		/** Optional: called when a face is assigned/unassigned */
+		onFaceAssigned?: (faceId: string, personId: string | null, personName: string | null) => void;
 	}
 
 	let {
@@ -30,7 +32,8 @@
 		currentPersonName = null,
 		onClose,
 		onPrevious,
-		onNext
+		onNext,
+		onFaceAssigned
 	}: Props = $props();
 
 	// State
@@ -222,6 +225,9 @@
 
 			// Clear suggestions for this face
 			faceSuggestions.delete(faceId);
+
+			// Notify parent
+			onFaceAssigned?.(faceId, personId, personName);
 		} catch (error) {
 			console.error('Failed to assign face:', error);
 			unassignmentError =
@@ -236,10 +242,12 @@
 		assignmentSubmitting = true;
 		assignmentError = null;
 
-		try {
-			await assignFaceToPerson(assigningFaceId, person.id);
+		const faceId = assigningFaceId;
 
-			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === assigningFaceId);
+		try {
+			await assignFaceToPerson(faceId, person.id);
+
+			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
 			if (faceIndex !== -1) {
 				photo.faces[faceIndex] = {
 					...photo.faces[faceIndex],
@@ -250,6 +258,9 @@
 
 			assigningFaceId = null;
 			personSearchQuery = '';
+
+			// Notify parent
+			onFaceAssigned?.(faceId, person.id, person.name);
 		} catch (err) {
 			console.error('Failed to assign face:', err);
 			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
@@ -265,10 +276,11 @@
 		assignmentError = null;
 
 		const newName = personSearchQuery.trim();
+		const faceId = assigningFaceId;
 
 		try {
 			const newPerson = await createPerson(newName);
-			await assignFaceToPerson(assigningFaceId, newPerson.id);
+			await assignFaceToPerson(faceId, newPerson.id);
 
 			persons = [
 				...persons,
@@ -283,7 +295,7 @@
 				}
 			];
 
-			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === assigningFaceId);
+			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
 			if (faceIndex !== -1) {
 				photo.faces[faceIndex] = {
 					...photo.faces[faceIndex],
@@ -294,6 +306,9 @@
 
 			assigningFaceId = null;
 			personSearchQuery = '';
+
+			// Notify parent
+			onFaceAssigned?.(faceId, newPerson.id, newPerson.name);
 		} catch (err) {
 			console.error('Failed to create person and assign:', err);
 			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';
@@ -324,6 +339,9 @@
 					personName: null
 				};
 			}
+
+			// Notify parent about unassignment
+			onFaceAssigned?.(faceId, null, null);
 		} catch (err) {
 			console.error('Failed to unassign face:', err);
 			unassignmentError = err instanceof Error ? err.message : 'Failed to unassign face.';

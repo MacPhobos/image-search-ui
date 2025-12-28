@@ -366,4 +366,41 @@ describe('PhotoPreviewModal - Face Unassignment', () => {
 		const unassignButtons = screen.getAllByRole('button', { name: /Unassign this face from/i });
 		expect(unassignButtons).toHaveLength(1);
 	});
+
+	it('calls onFaceAssigned callback when face is unassigned', async () => {
+		// Mock confirm dialog
+		const confirmMock = vi.fn().mockReturnValue(true);
+		vi.stubGlobal('confirm', confirmMock);
+
+		// Mock successful unassign response
+		mockResponse('/api/v1/faces/faces/face-1/person', {
+			faceId: 'face-1',
+			previousPersonId: 'person-1',
+			previousPersonName: 'John Smith'
+		});
+
+		const onFaceAssignedMock = vi.fn();
+
+		render(PhotoPreviewModal, {
+			props: {
+				photo: createMockPhoto(),
+				currentPersonId: null,
+				currentPersonName: null,
+				onClose: mockOnClose,
+				onFaceAssigned: onFaceAssignedMock
+			}
+		});
+
+		const unassignButton = screen.getByRole('button', {
+			name: 'Unassign this face from John Smith'
+		});
+		await fireEvent.click(unassignButton);
+
+		// Wait for callback to be called
+		await waitFor(() => {
+			expect(onFaceAssignedMock).toHaveBeenCalledWith('face-1', null, null);
+		});
+
+		vi.unstubAllGlobals();
+	});
 });
