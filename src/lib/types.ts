@@ -90,5 +90,12 @@ export type {
 	MergePersonsResponse,
 	SplitClusterResponse,
 	DetectFacesResponse,
-	ClusteringResultResponse
+	ClusteringResultResponse,
+	Prototype,
+	AgeEraBucket,
+	TemporalCoverage,
+	PrototypeListResponse,
+	PinPrototypeRequest,
+	RecomputePrototypesRequest,
+	RecomputePrototypesResponse
 } from '$lib/api/faces';

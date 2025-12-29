@@ -968,3 +968,126 @@ export async function listGroupedSuggestions(params?: {
 		`/api/v1/faces/suggestions?${searchParams.toString()}`
 	);
 }
+
+// ============ Temporal Prototype Types ============
+
+/** Age era bucket for temporal prototypes. */
+export type AgeEraBucket = 'infant' | 'child' | 'teen' | 'young_adult' | 'adult' | 'senior';
+
+/** Temporal prototype representing a person at a specific age era. */
+export interface Prototype {
+	id: string;
+	faceInstanceId: string | null;
+	role: 'primary' | 'temporal' | 'exemplar' | 'fallback';
+	ageEraBucket: AgeEraBucket | null;
+	decadeBucket: string | null;
+	isPinned: boolean;
+	qualityScore: number | null;
+	createdAt: string;
+}
+
+/** Temporal coverage statistics. */
+export interface TemporalCoverage {
+	coveredEras: AgeEraBucket[];
+	missingEras: AgeEraBucket[];
+	coveragePercentage: number;
+	totalPrototypes: number;
+}
+
+/** List of prototypes with coverage info. */
+export interface PrototypeListResponse {
+	items: Prototype[];
+	coverage: TemporalCoverage;
+}
+
+/** Request to pin a prototype. */
+export interface PinPrototypeRequest {
+	faceInstanceId: string;
+	ageEraBucket?: AgeEraBucket;
+	role?: 'primary' | 'temporal';
+}
+
+/** Request to recompute prototypes. */
+export interface RecomputePrototypesRequest {
+	preservePins?: boolean;
+}
+
+/** Response from recompute operation. */
+export interface RecomputePrototypesResponse {
+	prototypesCreated: number;
+	prototypesRemoved: number;
+	coverage: TemporalCoverage;
+}
+
+// ============ Temporal Prototype API Functions ============
+
+/**
+ * Get prototypes for a person with temporal coverage.
+ * @param personId - The person ID (UUID)
+ * @returns Promise with prototypes and coverage
+ */
+export async function getPrototypes(personId: string): Promise<PrototypeListResponse> {
+	return apiRequest<PrototypeListResponse>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/prototypes`
+	);
+}
+
+/**
+ * Pin a face instance as a prototype for a specific age era.
+ * @param personId - The person ID (UUID)
+ * @param faceInstanceId - The face instance to pin
+ * @param options - Optional age era and role
+ * @returns Promise with the created prototype
+ */
+export async function pinPrototype(
+	personId: string,
+	faceInstanceId: string,
+	options?: { ageEraBucket?: AgeEraBucket; role?: 'primary' | 'temporal' }
+): Promise<Prototype> {
+	const requestBody: PinPrototypeRequest = {
+		faceInstanceId,
+		ageEraBucket: options?.ageEraBucket,
+		role: options?.role ?? 'temporal'
+	};
+
+	return apiRequest<Prototype>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/prototypes/pin`,
+		{
+			method: 'POST',
+			body: JSON.stringify(requestBody)
+		}
+	);
+}
+
+/**
+ * Unpin (delete) a prototype.
+ * @param personId - The person ID (UUID)
+ * @param prototypeId - The prototype ID to delete
+ */
+export async function unpinPrototype(personId: string, prototypeId: string): Promise<undefined> {
+	return apiRequest<undefined>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/prototypes/${encodeURIComponent(prototypeId)}/pin`,
+		{
+			method: 'DELETE'
+		}
+	);
+}
+
+/**
+ * Recompute prototypes for a person.
+ * @param personId - The person ID (UUID)
+ * @param preservePins - Whether to preserve pinned prototypes
+ * @returns Promise with operation results and updated coverage
+ */
+export async function recomputePrototypes(
+	personId: string,
+	preservePins: boolean = true
+): Promise<RecomputePrototypesResponse> {
+	return apiRequest<RecomputePrototypesResponse>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/prototypes/recompute`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ preservePins })
+		}
+	);
+}
