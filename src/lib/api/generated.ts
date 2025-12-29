@@ -397,6 +397,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/config/face-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Face Suggestion Settings
+         * @description Get face suggestion pagination settings.
+         *
+         *     Returns the current configuration for group-based pagination
+         *     of face suggestions.
+         */
+        get: operations["get_face_suggestion_settings_api_v1_config_face_suggestions_get"];
+        /**
+         * Update Face Suggestion Settings
+         * @description Update face suggestion pagination settings.
+         *
+         *     Updates the group-based pagination configuration for face suggestions.
+         */
+        put: operations["update_face_suggestion_settings_api_v1_config_face_suggestions_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/config/{category}": {
         parameters: {
             query?: never;
@@ -1955,6 +1984,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/faces/persons/{person_id}/prototypes/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pin face as prototype
+         * @description Pin a face as prototype with optional era assignment.
+         *
+         *     Quotas:
+         *     - Max 3 PRIMARY pins per person
+         *     - Max 1 TEMPORAL pin per era bucket
+         */
+        post: operations["pin_prototype_endpoint_api_v1_faces_persons__person_id__prototypes_pin_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/prototypes/{prototype_id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unpin prototype
+         * @description Unpin a prototype. The slot may be filled automatically.
+         */
+        delete: operations["unpin_prototype_endpoint_api_v1_faces_persons__person_id__prototypes__prototype_id__pin_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/prototypes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List prototypes
+         * @description List all prototypes with temporal breakdown and coverage stats.
+         */
+        get: operations["list_prototypes_endpoint_api_v1_faces_persons__person_id__prototypes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/temporal-coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get temporal coverage
+         * @description Get detailed temporal coverage report for a person.
+         */
+        get: operations["get_temporal_coverage_endpoint_api_v1_faces_persons__person_id__temporal_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/faces/persons/{person_id}/prototypes/recompute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recompute prototypes
+         * @description Trigger temporal re-diversification of prototypes.
+         *
+         *     This endpoint recomputes prototypes with temporal diversity:
+         *     - Ensures coverage across age eras
+         *     - Respects pinned prototypes (if preserve_pins=True)
+         *     - Prunes excess prototypes while maintaining quality
+         */
+        post: operations["recompute_prototypes_endpoint_api_v1_faces_persons__person_id__prototypes_recompute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/faces/sessions": {
         parameters: {
             query?: never;
@@ -2077,6 +2215,10 @@ export interface paths {
         /**
          * List Suggestions
          * @description List face suggestions with pagination and filtering.
+         *
+         *     Supports two pagination modes:
+         *     - grouped=true (default): Group-based pagination by person
+         *     - grouped=false: Legacy flat pagination
          */
         get: operations["list_suggestions_api_v1_faces_suggestions_get"];
         put?: never;
@@ -3215,7 +3357,7 @@ export interface components {
         };
         /**
          * FaceSuggestionListResponse
-         * @description Paginated list of face suggestions.
+         * @description Paginated list of face suggestions (legacy flat pagination).
          */
         FaceSuggestionListResponse: {
             /** Items */
@@ -3269,6 +3411,50 @@ export interface components {
             detectionConfidence?: number | null;
             /** Qualityscore */
             qualityScore?: number | null;
+        };
+        /**
+         * FaceSuggestionSettingsResponse
+         * @description Face suggestion pagination settings.
+         */
+        FaceSuggestionSettingsResponse: {
+            /**
+             * Groupsperpage
+             * @description Number of person groups per page
+             */
+            groupsPerPage: number;
+            /**
+             * Itemspergroup
+             * @description Number of suggestions per group
+             */
+            itemsPerGroup: number;
+        };
+        /**
+         * FaceSuggestionSettingsUpdateRequest
+         * @description Request to update face suggestion pagination settings.
+         */
+        FaceSuggestionSettingsUpdateRequest: {
+            /** Groupsperpage */
+            groupsPerPage: number;
+            /** Itemspergroup */
+            itemsPerGroup: number;
+        };
+        /**
+         * FaceSuggestionsGroupedResponse
+         * @description Group-based paginated response for face suggestions.
+         */
+        FaceSuggestionsGroupedResponse: {
+            /** Groups */
+            groups: components["schemas"]["SuggestionGroup"][];
+            /** Totalgroups */
+            totalGroups: number;
+            /** Totalsuggestions */
+            totalSuggestions: number;
+            /** Page */
+            page: number;
+            /** Groupsperpage */
+            groupsPerPage: number;
+            /** Suggestionspergroup */
+            suggestionsPerGroup: number;
         };
         /**
          * FaceSuggestionsResponse
@@ -3750,6 +3936,48 @@ export interface components {
             updatedAt: string;
         };
         /**
+         * PinPrototypeRequest
+         * @description Request to pin a face as prototype.
+         */
+        PinPrototypeRequest: {
+            /**
+             * Faceinstanceid
+             * Format: uuid
+             */
+            faceInstanceId: string;
+            /** Ageerabucket */
+            ageEraBucket?: string | null;
+            /**
+             * Role
+             * @default temporal
+             */
+            role: string;
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * PinPrototypeResponse
+         * @description Response from pinning a prototype.
+         */
+        PinPrototypeResponse: {
+            /**
+             * Prototypeid
+             * Format: uuid
+             */
+            prototypeId: string;
+            /** Role */
+            role: string;
+            /** Ageerabucket */
+            ageEraBucket: string | null;
+            /** Ispinned */
+            isPinned: boolean;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
          * ProgressStats
          * @description Progress statistics for training session.
          */
@@ -3764,6 +3992,65 @@ export interface components {
             etaSeconds?: number | null;
             /** Imagesperminute */
             imagesPerMinute?: number | null;
+        };
+        /**
+         * PrototypeListItem
+         * @description Single prototype in listing.
+         */
+        PrototypeListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Faceinstanceid */
+            faceInstanceId: string | null;
+            /** Role */
+            role: string;
+            /** Ageerabucket */
+            ageEraBucket: string | null;
+            /** Decadebucket */
+            decadeBucket: string | null;
+            /** Ispinned */
+            isPinned: boolean;
+            /** Qualityscore */
+            qualityScore: number | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+        };
+        /**
+         * PrototypeListResponse
+         * @description Response with prototypes and coverage.
+         */
+        PrototypeListResponse: {
+            /** Items */
+            items: components["schemas"]["PrototypeListItem"][];
+            coverage: components["schemas"]["TemporalCoverage"];
+        };
+        /**
+         * RecomputePrototypesRequest
+         * @description Request to recompute prototypes.
+         */
+        RecomputePrototypesRequest: {
+            /**
+             * Preservepins
+             * @default true
+             */
+            preservePins: boolean;
+        };
+        /**
+         * RecomputePrototypesResponse
+         * @description Response from prototype recomputation.
+         */
+        RecomputePrototypesResponse: {
+            /** Prototypescreated */
+            prototypesCreated: number;
+            /** Prototypesremoved */
+            prototypesRemoved: number;
+            coverage: components["schemas"]["TemporalCoverage"];
         };
         /**
          * RejectSuggestionRequest
@@ -3928,6 +4215,36 @@ export interface components {
             id: number;
             /** Selected */
             selected: boolean;
+        };
+        /**
+         * SuggestionGroup
+         * @description Group of suggestions for a single person.
+         */
+        SuggestionGroup: {
+            /** Personid */
+            personId: string;
+            /** Personname */
+            personName: string | null;
+            /** Suggestioncount */
+            suggestionCount: number;
+            /** Maxconfidence */
+            maxConfidence: number;
+            /** Suggestions */
+            suggestions: components["schemas"]["FaceSuggestionResponse"][];
+        };
+        /**
+         * TemporalCoverage
+         * @description Temporal coverage information.
+         */
+        TemporalCoverage: {
+            /** Coverederas */
+            coveredEras: string[];
+            /** Missingeras */
+            missingEras: string[];
+            /** Coveragepercentage */
+            coveragePercentage: number;
+            /** Totalprototypes */
+            totalPrototypes: number;
         };
         /**
          * TrainMatchingRequest
@@ -4688,6 +5005,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FaceMatchingConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_face_suggestion_settings_api_v1_config_face_suggestions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionSettingsResponse"];
+                };
+            };
+        };
+    };
+    update_face_suggestion_settings_api_v1_config_face_suggestions_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FaceSuggestionSettingsUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FaceSuggestionSettingsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6628,6 +6998,174 @@ export interface operations {
             };
         };
     };
+    pin_prototype_endpoint_api_v1_faces_persons__person_id__prototypes_pin_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PinPrototypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PinPrototypeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unpin_prototype_endpoint_api_v1_faces_persons__person_id__prototypes__prototype_id__pin_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+                prototype_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_prototypes_endpoint_api_v1_faces_persons__person_id__prototypes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrototypeListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_temporal_coverage_endpoint_api_v1_faces_persons__person_id__temporal_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string[] | number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recompute_prototypes_endpoint_api_v1_faces_persons__person_id__prototypes_recompute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecomputePrototypesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecomputePrototypesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_sessions_api_v1_faces_sessions_get: {
         parameters: {
             query?: {
@@ -6856,11 +7394,17 @@ export interface operations {
         parameters: {
             query?: {
                 page?: number;
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by status: pending, accepted, rejected */
                 status?: string | null;
                 /** @description Filter by suggested person ID */
-                person_id?: string | null;
+                personId?: string | null;
+                /** @description Use group-based pagination (default: true) */
+                grouped?: boolean;
+                /** @description Groups per page (uses config if not provided) */
+                groupsPerPage?: number | null;
+                /** @description Suggestions per group (uses config if not provided) */
+                suggestionsPerGroup?: number | null;
             };
             header?: never;
             path?: never;
@@ -6874,7 +7418,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FaceSuggestionListResponse"];
+                    "application/json": components["schemas"]["FaceSuggestionListResponse"] | components["schemas"]["FaceSuggestionsGroupedResponse"];
                 };
             };
             /** @description Validation Error */
