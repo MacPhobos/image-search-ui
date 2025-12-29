@@ -12,7 +12,7 @@ const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
  * Prefixes a relative URL with the API base URL.
  * Returns absolute URLs unchanged.
  */
-function toAbsoluteUrl(relativeUrl: string): string {
+export function toAbsoluteUrl(relativeUrl: string): string {
 	if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
 		return relativeUrl;
 	}
@@ -984,6 +984,7 @@ export interface Prototype {
 	isPinned: boolean;
 	qualityScore: number | null;
 	createdAt: string;
+	thumbnailUrl: string | null;
 }
 
 /** Temporal coverage statistics. */

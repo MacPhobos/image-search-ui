@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes } from '$lib/api/faces';
-	import { ApiError, API_BASE_URL } from '$lib/api/client';
+	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes, toAbsoluteUrl } from '$lib/api/faces';
+	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
@@ -266,9 +266,9 @@
 		}
 	}
 
-	function handleImageError(faceInstanceId: string) {
+	function handleImageError(prototypeId: string) {
 		const newErrors = new Set(imageErrors);
-		newErrors.add(faceInstanceId);
+		newErrors.add(prototypeId);
 		imageErrors = newErrors;
 	}
 </script>
@@ -459,12 +459,12 @@
 										<div class="prototype-card" class:pinned={proto.isPinned}>
 											<!-- Face thumbnail -->
 											<div class="proto-thumbnail">
-												{#if proto.faceInstanceId && !imageErrors.has(proto.faceInstanceId)}
+												{#if proto.thumbnailUrl}
 													<img
-														src="{API_BASE_URL}/files/{proto.faceInstanceId}/face_thumb"
+														src={toAbsoluteUrl(proto.thumbnailUrl)}
 														alt="Prototype face"
 														loading="lazy"
-														onerror={() => proto.faceInstanceId && handleImageError(proto.faceInstanceId)}
+														onerror={() => handleImageError(proto.id)}
 													/>
 												{:else}
 													<div class="no-thumbnail">No image</div>
