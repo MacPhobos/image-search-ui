@@ -63,8 +63,9 @@ describe('UnifiedPersonCard', () => {
 
 			expect(screen.getByText('Unknown Faces')).toBeInTheDocument();
 			expect(screen.getByText('Review')).toBeInTheDocument();
-			expect(screen.getByText('312', { exact: false })).toBeInTheDocument();
-			expect(screen.getByText(/faces/)).toBeInTheDocument();
+			// Check that face count is displayed (312 faces)
+			const faceCountElement = screen.getByText('312');
+			expect(faceCountElement.parentElement?.textContent).toContain('faces');
 		});
 
 		it('should display singular "face" for count of 1', () => {
@@ -139,7 +140,7 @@ describe('UnifiedPersonCard', () => {
 	});
 
 	describe('Click Handlers', () => {
-		it('should call onClick when card is clicked', async () => {
+		it('should call onClick when clickable card is clicked', async () => {
 			const onClick = vi.fn();
 			render(UnifiedPersonCard, {
 				props: { person: identifiedPerson, onClick }
@@ -208,6 +209,43 @@ describe('UnifiedPersonCard', () => {
 			const card = screen.getByRole('button');
 			expect(card).toBeInTheDocument();
 		});
+
+		it('should NOT call onClick for noise faces even when onClick is provided', async () => {
+			const onClick = vi.fn();
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson, onClick }
+			});
+
+			// Noise faces should have role="article" not "button"
+			const card = screen.getByRole('article');
+			await fireEvent.click(card);
+
+			expect(onClick).not.toHaveBeenCalled();
+		});
+
+		it('should have role="article" for noise faces even with onClick', () => {
+			const onClick = vi.fn();
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson, onClick }
+			});
+
+			const card = screen.getByRole('article');
+			expect(card).toBeInTheDocument();
+			expect(screen.queryByRole('button', { name: /Person:/ })).not.toBeInTheDocument();
+		});
+
+		it('should not respond to keyboard events for noise faces', async () => {
+			const onClick = vi.fn();
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson, onClick }
+			});
+
+			const card = screen.getByRole('article');
+			await fireEvent.keyDown(card, { key: 'Enter' });
+			await fireEvent.keyDown(card, { key: ' ' });
+
+			expect(onClick).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('Assign Button', () => {
@@ -219,12 +257,12 @@ describe('UnifiedPersonCard', () => {
 			expect(screen.getByText('Assign Name')).toBeInTheDocument();
 		});
 
-		it('should show assign button for noise when enabled', () => {
+		it('should NOT show assign button for noise faces even when enabled', () => {
 			render(UnifiedPersonCard, {
 				props: { person: noisePerson, showAssignButton: true }
 			});
 
-			expect(screen.getByText('Assign Name')).toBeInTheDocument();
+			expect(screen.queryByText('Assign Name')).not.toBeInTheDocument();
 		});
 
 		it('should not show assign button for identified persons', () => {
@@ -322,12 +360,12 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('article');
-			expect(card).toHaveAttribute('tabindex', '-1');
+			expect(card).not.toHaveAttribute('tabindex');
 		});
 	});
 
 	describe('CSS Classes', () => {
-		it('should apply clickable class when onClick is provided', () => {
+		it('should apply clickable class when onClick is provided for non-noise', () => {
 			const onClick = vi.fn();
 			render(UnifiedPersonCard, {
 				props: { person: identifiedPerson, onClick }
@@ -344,6 +382,58 @@ describe('UnifiedPersonCard', () => {
 
 			const card = screen.getByRole('article');
 			expect(card.className).not.toContain('clickable');
+		});
+
+		it('should apply noise class for noise faces', () => {
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson }
+			});
+
+			const card = screen.getByRole('article');
+			expect(card.className).toContain('noise');
+		});
+
+		it('should NOT apply clickable class for noise faces even with onClick', () => {
+			const onClick = vi.fn();
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson, onClick }
+			});
+
+			const card = screen.getByRole('article');
+			expect(card.className).not.toContain('clickable');
+			expect(card.className).toContain('noise');
+		});
+	});
+
+	describe('Noise Faces', () => {
+		it('should display hint message for noise faces', () => {
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson }
+			});
+
+			expect(
+				screen.getByText('These faces need individual review and manual grouping.')
+			).toBeInTheDocument();
+		});
+
+		it('should not display hint message for non-noise faces', () => {
+			render(UnifiedPersonCard, {
+				props: { person: identifiedPerson }
+			});
+
+			expect(
+				screen.queryByText('These faces need individual review and manual grouping.')
+			).not.toBeInTheDocument();
+		});
+
+		it('should not be focusable for noise faces', () => {
+			const onClick = vi.fn();
+			render(UnifiedPersonCard, {
+				props: { person: noisePerson, onClick }
+			});
+
+			const card = screen.getByRole('article');
+			expect(card).not.toHaveAttribute('tabindex');
 		});
 	});
 });

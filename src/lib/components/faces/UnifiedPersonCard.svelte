@@ -16,19 +16,33 @@
 
 	let { person, showAssignButton = false, onClick, onAssign, selected = false }: Props = $props();
 
+	// Noise faces are not clickable (no cluster detail page)
+	let isClickable = $derived(person.type !== 'noise' && !!onClick);
+
+	// Only add tabindex for clickable elements
+	let tabIndexAttr = $derived(isClickable ? { tabindex: 0 } : {});
+
 	function handleClick() {
-		onClick?.(person);
+		// Only trigger onClick if not a noise face
+		if (isClickable) {
+			onClick?.(person);
+		}
 	}
 
 	function handleAssign(event: Event) {
 		event.stopPropagation();
-		onAssign?.(person);
+		// Noise faces can't be assigned (no cluster page)
+		if (person.type !== 'noise') {
+			onAssign?.(person);
+		}
 	}
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
-			onClick?.(person);
+			if (isClickable) {
+				onClick?.(person);
+			}
 		}
 	}
 
@@ -70,11 +84,12 @@
 <article
 	class="unified-person-card"
 	class:selected
-	class:clickable={!!onClick}
+	class:clickable={isClickable}
+	class:noise={person.type === 'noise'}
 	onclick={handleClick}
 	onkeydown={handleKeyDown}
-	role={onClick ? 'button' : 'article'}
-	tabindex={onClick ? 0 : -1}
+	role={isClickable ? 'button' : 'article'}
+	{...tabIndexAttr}
 	aria-label="Person: {person.name}, {person.faceCount} faces"
 >
 	<!-- Thumbnail/Avatar -->
@@ -107,7 +122,11 @@
 			{/if}
 		</div>
 
-		{#if showAssignButton && person.type !== 'identified'}
+		{#if person.type === 'noise'}
+			<p class="noise-hint">These faces need individual review and manual grouping.</p>
+		{/if}
+
+		{#if showAssignButton && person.type !== 'identified' && person.type !== 'noise'}
 			<button class="assign-button" onclick={handleAssign} aria-label="Assign name to {person.name}">
 				Assign Name
 			</button>
@@ -139,6 +158,17 @@
 		transform: translateY(-2px);
 	}
 
+	.unified-person-card.noise {
+		opacity: 0.85;
+		cursor: default;
+	}
+
+	.unified-person-card.noise:hover {
+		border-color: #e0e0e0;
+		box-shadow: none;
+		transform: none;
+	}
+
 	.unified-person-card.selected {
 		border-color: #4a90e2;
 		background-color: #f0f7ff;
@@ -147,6 +177,10 @@
 	.unified-person-card:focus {
 		outline: 2px solid #4a90e2;
 		outline-offset: 2px;
+	}
+
+	.unified-person-card.noise:focus {
+		outline: none;
 	}
 
 	.person-thumbnail {
@@ -247,6 +281,14 @@
 	.face-count strong,
 	.confidence strong {
 		color: #333;
+	}
+
+	.noise-hint {
+		font-size: 0.8rem;
+		color: #999;
+		font-style: italic;
+		margin: 0;
+		line-height: 1.4;
 	}
 
 	.assign-button {

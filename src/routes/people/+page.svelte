@@ -2,11 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { listUnifiedPeople } from '$lib/api/faces';
-	import type {
-		UnifiedPeopleListResponse,
-		UnifiedPersonResponse,
-		PersonType
-	} from '$lib/api/faces';
+	import type { UnifiedPeopleListResponse, UnifiedPersonResponse } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import UnifiedPersonCard from '$lib/components/faces/UnifiedPersonCard.svelte';
 
@@ -53,16 +49,26 @@
 	}
 
 	function handlePersonClick(person: UnifiedPersonResponse) {
+		// Noise faces don't have a cluster detail page (cluster_id = "-1" or similar)
+		if (person.type === 'noise') {
+			// No navigation for noise faces - they need individual review
+			return;
+		}
+
 		// Navigate to person detail page based on type
 		if (person.type === 'identified') {
 			goto(`/people/${person.id}`);
 		} else {
-			// For unidentified/noise, go to cluster detail page
+			// For unidentified clusters, go to cluster detail page
 			goto(`/faces/clusters/${person.id}`);
 		}
 	}
 
 	function handleAssign(person: UnifiedPersonResponse) {
+		// Noise faces can't be assigned (no cluster page)
+		if (person.type === 'noise') {
+			return;
+		}
 		// Open assign modal or navigate to assign page
 		goto(`/faces/clusters/${person.id}?action=label`);
 	}
@@ -73,12 +79,12 @@
 
 	// Reload when filters change
 	$effect(() => {
-		// Track all filter dependencies
-		showIdentified;
-		showUnidentified;
-		showNoise;
-		sortBy;
-		sortOrder;
+		// Track all filter dependencies and reload
+		void showIdentified;
+		void showUnidentified;
+		void showNoise;
+		void sortBy;
+		void sortOrder;
 		loadPeople();
 	});
 </script>
