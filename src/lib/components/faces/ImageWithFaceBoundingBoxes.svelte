@@ -47,7 +47,7 @@
 	// ============================================
 	// LABEL CONFIGURATION - Adjust this to change label text size
 	// ============================================
-	const LABEL_FONT_SIZE = 24; // Font size in pixels (default: 24, was 13-14)
+	const LABEL_FONT_SIZE = 48; // Font size in pixels
 
 	// Derived label dimensions (calculated from font size)
 	const LABEL_HEIGHT = LABEL_FONT_SIZE + 10; // Label background height
