@@ -80,7 +80,25 @@ describe('listUnifiedPeople', () => {
 		);
 	});
 
-	it('should pass sortBy parameter', async () => {
+	it('should pass sortBy parameter and convert faceCount to face_count', async () => {
+		const mockData = createUnifiedPeopleResponse();
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/people?sort_by=face_count',
+			mockData
+		);
+
+		await listUnifiedPeople({
+			sortBy: 'faceCount'
+		});
+
+		const fetchMock = getFetchMock();
+		expect(fetchMock).toHaveBeenCalledWith(
+			expect.stringContaining('sort_by=face_count'),
+			expect.any(Object)
+		);
+	});
+
+	it('should pass sortBy parameter with name unchanged', async () => {
 		const mockData = createUnifiedPeopleResponse();
 		mockResponse(
 			'http://localhost:8000/api/v1/faces/people?sort_by=name',
@@ -116,10 +134,10 @@ describe('listUnifiedPeople', () => {
 		);
 	});
 
-	it('should pass multiple filter parameters', async () => {
+	it('should pass multiple filter parameters with faceCount conversion', async () => {
 		const mockData = createUnifiedPeopleResponse();
 		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?include_identified=true&include_unidentified=false&include_noise=false&sort_by=name&sort_order=asc',
+			'http://localhost:8000/api/v1/faces/people?include_identified=true&include_unidentified=false&include_noise=false&sort_by=face_count&sort_order=desc',
 			mockData
 		);
 
@@ -127,8 +145,8 @@ describe('listUnifiedPeople', () => {
 			includeIdentified: true,
 			includeUnidentified: false,
 			includeNoise: false,
-			sortBy: 'name',
-			sortOrder: 'asc'
+			sortBy: 'faceCount',
+			sortOrder: 'desc'
 		});
 
 		const fetchMock = getFetchMock();
@@ -136,8 +154,8 @@ describe('listUnifiedPeople', () => {
 		expect(callUrl).toContain('include_identified=true');
 		expect(callUrl).toContain('include_unidentified=false');
 		expect(callUrl).toContain('include_noise=false');
-		expect(callUrl).toContain('sort_by=name');
-		expect(callUrl).toContain('sort_order=asc');
+		expect(callUrl).toContain('sort_by=face_count');
+		expect(callUrl).toContain('sort_order=desc');
 	});
 
 	it('should transform relative thumbnail URLs to absolute URLs', async () => {

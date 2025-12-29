@@ -1072,7 +1072,9 @@ export async function listUnifiedPeople(
 		searchParams.set('include_noise', String(params.includeNoise));
 	}
 	if (params?.sortBy) {
-		searchParams.set('sort_by', params.sortBy);
+		// Convert camelCase to snake_case for API
+		const sortByValue = params.sortBy === 'faceCount' ? 'face_count' : params.sortBy;
+		searchParams.set('sort_by', sortByValue);
 	}
 	if (params?.sortOrder) {
 		searchParams.set('sort_order', params.sortOrder);
