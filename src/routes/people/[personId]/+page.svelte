@@ -287,8 +287,13 @@
 		}
 
 		// Find the photo containing this face
+		// Handle both camelCase and snake_case field names (API inconsistency)
 		const photo = photos.find((p) =>
-			p.faces?.some((f) => f.faceInstanceId === proto.faceInstanceId)
+			p.faces?.some((f) => {
+				const faceId =
+					f.faceInstanceId || (f as Record<string, unknown>).face_instance_id;
+				return faceId === proto.faceInstanceId;
+			})
 		);
 
 		if (photo) {
