@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes } from '$lib/api/faces';
-	import { ApiError } from '$lib/api/client';
+	import { ApiError, API_BASE_URL } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
@@ -32,6 +32,7 @@
 	let coverage = $state<TemporalCoverage | null>(null);
 	let prototypesLoading = $state(true);
 	let prototypesError = $state<string | null>(null);
+	let imageErrors = $state<Set<string>>(new Set());
 
 	// Merge modal state
 	let showMergeModal = $state(false);
@@ -264,6 +265,12 @@
 			alert('Failed to recompute prototypes');
 		}
 	}
+
+	function handleImageError(faceInstanceId: string) {
+		const newErrors = new Set(imageErrors);
+		newErrors.add(faceInstanceId);
+		imageErrors = newErrors;
+	}
 </script>
 
 <svelte:head>
@@ -450,6 +457,21 @@
 								<div class="prototype-grid">
 									{#each prototypes as proto}
 										<div class="prototype-card" class:pinned={proto.isPinned}>
+											<!-- Face thumbnail -->
+											<div class="proto-thumbnail">
+												{#if proto.faceInstanceId && !imageErrors.has(proto.faceInstanceId)}
+													<img
+														src="{API_BASE_URL}/files/{proto.faceInstanceId}/face_thumb"
+														alt="Prototype face"
+														loading="lazy"
+														onerror={() => proto.faceInstanceId && handleImageError(proto.faceInstanceId)}
+													/>
+												{:else}
+													<div class="no-thumbnail">No image</div>
+												{/if}
+											</div>
+
+											<!-- Metadata -->
 											<div class="proto-info">
 												<span class="proto-role">{proto.role}</span>
 												{#if proto.ageEraBucket}
@@ -1133,15 +1155,45 @@
 	}
 
 	.prototype-card {
-		padding: 1rem;
+		padding: 0;
 		border: 1px solid #e0e0e0;
 		border-radius: 8px;
 		background: #f9f9f9;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.prototype-card.pinned {
 		border-color: #2196F3;
 		background: #e3f2fd;
+	}
+
+	.proto-thumbnail {
+		width: 100%;
+		aspect-ratio: 1;
+		background: #e0e0e0;
+		overflow: hidden;
+		position: relative;
+		flex-shrink: 0;
+	}
+
+	.proto-thumbnail img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.no-thumbnail {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #999;
+		font-size: 0.8rem;
+		background: #f0f0f0;
 	}
 
 	.proto-info {
@@ -1150,6 +1202,7 @@
 		gap: 0.5rem;
 		flex-wrap: wrap;
 		margin-bottom: 0.5rem;
+		padding: 0.75rem 0.75rem 0;
 	}
 
 	.proto-role {
@@ -1175,6 +1228,11 @@
 	.proto-decade {
 		font-size: 0.8rem;
 		color: #888;
+		padding: 0 0.75rem;
+	}
+
+	.proto-decade {
+		padding-bottom: 0.75rem;
 	}
 
 	.no-coverage {
