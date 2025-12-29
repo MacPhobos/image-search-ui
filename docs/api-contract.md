@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.5.0
-> **Last Updated**: 2025-12-28
+> **Version**: 1.6.0
+> **Last Updated**: 2025-12-29
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -20,6 +20,7 @@ This document defines the API contract between `image-search-service` (backend) 
    - [Search](#search)
    - [People/Faces](#peoplefaces)
    - [Face Suggestions](#face-suggestions)
+   - [Temporal Prototypes](#temporal-prototypes)
    - [Jobs](#jobs)
    - [Corrections](#corrections)
 5. [Pagination](#pagination)
@@ -1031,6 +1032,318 @@ Accept or reject multiple suggestions in a single request.
 
 ---
 
+### Temporal Prototypes
+
+Manage person prototypes with temporal diversity. Prototypes are exemplar faces representing a person across different age eras. The system supports pinned (user-selected) and automatic prototypes with temporal coverage reporting.
+
+#### Prototype Concepts
+
+**Age Era Buckets**: Photos are categorized into 6 age eras based on estimated age:
+- `infant`: 0-3 years
+- `child`: 4-12 years
+- `teen`: 13-19 years
+- `young_adult`: 20-35 years
+- `adult`: 36-55 years
+- `senior`: 56+ years
+
+**Prototype Roles**: Four role types determine prototype selection:
+- `primary`: User-pinned definitive photo (max 3 per person)
+- `temporal`: Age-era based exemplar (max 1 per era, auto or pinned)
+- `exemplar`: High-quality auto-selected (fills remaining slots)
+- `fallback`: Lower quality, fills era gaps when needed
+
+**Pin Quotas**:
+- Max 3 PRIMARY pins per person
+- Max 1 TEMPORAL pin per era bucket (6 possible eras)
+- Total prototype limit: 12 per person
+
+#### Prototype Schema
+
+```typescript
+interface Prototype {
+	id: string; // UUID
+	faceInstanceId: string; // UUID of the face instance
+	role: 'primary' | 'temporal' | 'exemplar' | 'fallback'; // Prototype role
+	ageEraBucket?: string; // Age era: infant|child|teen|young_adult|adult|senior
+	decadeBucket?: string; // Decade: 1990s, 2000s, 2010s, etc.
+	isPinned: boolean; // Whether user manually pinned this prototype
+	qualityScore: number; // Face quality score (0.0-1.0)
+	createdAt: string; // ISO 8601 timestamp
+}
+```
+
+#### TemporalCoverage Schema
+
+```typescript
+interface TemporalCoverage {
+	coveredEras: string[]; // Age eras with prototypes
+	missingEras: string[]; // Age eras without prototypes
+	coveragePercentage: number; // Percentage of eras covered (0-100)
+	totalPrototypes: number; // Total number of prototypes
+}
+```
+
+#### PrototypeListResponse Schema
+
+```typescript
+interface PrototypeListResponse {
+	items: Prototype[]; // Array of prototypes
+	coverage: TemporalCoverage; // Coverage statistics
+}
+```
+
+#### `POST /api/v1/faces/persons/{personId}/prototypes/pin`
+
+Pin a face as a prototype with optional era assignment.
+
+**Path Parameters**
+
+| Parameter  | Type   | Required | Description |
+| ---------- | ------ | -------- | ----------- |
+| `personId` | string | Yes      | Person ID (UUID) |
+
+**Request Body**
+
+```json
+{
+	"faceInstanceId": "550e8400-e29b-41d4-a716-446655440000",
+	"ageEraBucket": "child",
+	"role": "temporal",
+	"note": "Best childhood photo"
+}
+```
+
+| Field            | Type   | Required | Description                                    |
+| ---------------- | ------ | -------- | ---------------------------------------------- |
+| `faceInstanceId` | string | Yes      | Face instance ID (UUID)                        |
+| `ageEraBucket`   | string | No       | Age era: infant\|child\|teen\|young_adult\|adult\|senior |
+| `role`           | string | Yes      | Prototype role: "primary" or "temporal"        |
+| `note`           | string | No       | Optional note about this prototype             |
+
+**Response** `200 OK`
+
+```json
+{
+	"prototypeId": "660e8400-e29b-41d4-a716-446655440111",
+	"role": "temporal",
+	"ageEraBucket": "child",
+	"isPinned": true,
+	"createdAt": "2025-12-29T10:00:00Z"
+}
+```
+
+**Response** `400 Bad Request` - Pin quota exceeded
+
+```json
+{
+	"error": {
+		"code": "PROTOTYPE_QUOTA_EXCEEDED",
+		"message": "Maximum 3 PRIMARY prototypes allowed per person"
+	}
+}
+```
+
+or
+
+```json
+{
+	"error": {
+		"code": "TEMPORAL_QUOTA_EXCEEDED",
+		"message": "Only 1 TEMPORAL prototype allowed per age era"
+	}
+}
+```
+
+**Response** `400 Bad Request` - Face does not belong to person
+
+```json
+{
+	"error": {
+		"code": "FACE_PERSON_MISMATCH",
+		"message": "Face does not belong to the specified person"
+	}
+}
+```
+
+**Response** `404 Not Found` - Person or face not found
+
+```json
+{
+	"error": {
+		"code": "PERSON_NOT_FOUND",
+		"message": "Person with ID '550e8400-...' not found"
+	}
+}
+```
+
+#### `DELETE /api/v1/faces/persons/{personId}/prototypes/{prototypeId}/pin`
+
+Unpin a prototype. The slot may be filled automatically by the system.
+
+**Path Parameters**
+
+| Parameter     | Type   | Required | Description        |
+| ------------- | ------ | -------- | ------------------ |
+| `personId`    | string | Yes      | Person ID (UUID)   |
+| `prototypeId` | string | Yes      | Prototype ID (UUID)|
+
+**Response** `200 OK`
+
+```json
+{
+	"success": true
+}
+```
+
+**Response** `404 Not Found` - Prototype not found
+
+```json
+{
+	"error": {
+		"code": "PROTOTYPE_NOT_FOUND",
+		"message": "Prototype with ID '660e8400-...' not found"
+	}
+}
+```
+
+#### `GET /api/v1/faces/persons/{personId}/prototypes`
+
+List all prototypes for a person with temporal breakdown and coverage statistics.
+
+**Path Parameters**
+
+| Parameter  | Type   | Required | Description      |
+| ---------- | ------ | -------- | ---------------- |
+| `personId` | string | Yes      | Person ID (UUID) |
+
+**Response** `200 OK`
+
+```json
+{
+	"items": [
+		{
+			"id": "660e8400-e29b-41d4-a716-446655440111",
+			"faceInstanceId": "550e8400-e29b-41d4-a716-446655440000",
+			"role": "primary",
+			"ageEraBucket": "child",
+			"decadeBucket": "2000s",
+			"isPinned": true,
+			"qualityScore": 0.95,
+			"createdAt": "2025-12-29T10:00:00Z"
+		},
+		{
+			"id": "770e8400-e29b-41d4-a716-446655440222",
+			"faceInstanceId": "660e8400-e29b-41d4-a716-446655440111",
+			"role": "temporal",
+			"ageEraBucket": "teen",
+			"decadeBucket": "2010s",
+			"isPinned": false,
+			"qualityScore": 0.88,
+			"createdAt": "2025-12-29T10:05:00Z"
+		}
+	],
+	"coverage": {
+		"coveredEras": ["child", "teen", "young_adult", "adult"],
+		"missingEras": ["infant", "senior"],
+		"coveragePercentage": 66.7,
+		"totalPrototypes": 8
+	}
+}
+```
+
+**Response** `404 Not Found` - Person not found
+
+```json
+{
+	"error": {
+		"code": "PERSON_NOT_FOUND",
+		"message": "Person with ID '550e8400-...' not found"
+	}
+}
+```
+
+#### `GET /api/v1/faces/persons/{personId}/temporal-coverage`
+
+Get detailed temporal coverage report for a person.
+
+**Path Parameters**
+
+| Parameter  | Type   | Required | Description      |
+| ---------- | ------ | -------- | ---------------- |
+| `personId` | string | Yes      | Person ID (UUID) |
+
+**Response** `200 OK`
+
+```json
+{
+	"coveredEras": ["child", "teen", "young_adult", "adult"],
+	"missingEras": ["infant", "senior"],
+	"coveragePercentage": 66.7,
+	"totalPrototypes": 8
+}
+```
+
+**Response** `404 Not Found` - Person not found
+
+```json
+{
+	"error": {
+		"code": "PERSON_NOT_FOUND",
+		"message": "Person with ID '550e8400-...' not found"
+	}
+}
+```
+
+#### `POST /api/v1/faces/persons/{personId}/prototypes/recompute`
+
+Trigger temporal re-diversification of prototypes. This recomputes automatic prototypes while optionally preserving user-pinned selections.
+
+**Path Parameters**
+
+| Parameter  | Type   | Required | Description      |
+| ---------- | ------ | -------- | ---------------- |
+| `personId` | string | Yes      | Person ID (UUID) |
+
+**Request Body**
+
+```json
+{
+	"preservePins": true
+}
+```
+
+| Field          | Type    | Required | Description                                   |
+| -------------- | ------- | -------- | --------------------------------------------- |
+| `preservePins` | boolean | No       | Keep pinned prototypes during recomputation (default: true) |
+
+**Response** `200 OK`
+
+```json
+{
+	"prototypesCreated": 3,
+	"prototypesRemoved": 1,
+	"coverage": {
+		"coveredEras": ["infant", "child", "adult"],
+		"missingEras": ["teen", "young_adult", "senior"],
+		"coveragePercentage": 50.0,
+		"totalPrototypes": 8
+	}
+}
+```
+
+**Response** `404 Not Found` - Person not found
+
+```json
+{
+	"error": {
+		"code": "PERSON_NOT_FOUND",
+		"message": "Person with ID '550e8400-...' not found"
+	}
+}
+```
+
+---
+
 ### Jobs
 
 Background job management for long-running operations.
@@ -1228,6 +1541,7 @@ All errors return JSON with consistent structure.
 | `FACE_NOT_ASSIGNED`          | 400         | Face is not assigned to any person   |
 | `JOB_NOT_FOUND`              | 404         | Job ID does not exist                |
 | `SUGGESTION_NOT_FOUND`       | 404         | Suggestion ID does not exist         |
+| `PROTOTYPE_NOT_FOUND`        | 404         | Prototype ID does not exist          |
 | `CATEGORY_NAME_EXISTS`       | 409         | Category name already exists         |
 | `PERSON_NAME_EXISTS`         | 409         | Person name already exists           |
 | `CATEGORY_HAS_SESSIONS`      | 409         | Category has training sessions       |
@@ -1235,6 +1549,9 @@ All errors return JSON with consistent structure.
 | `JOB_NOT_CANCELLABLE`        | 409         | Job already completed                |
 | `MERGE_CONFLICT`             | 409         | Cannot merge (e.g., same person)     |
 | `SUGGESTION_ALREADY_REVIEWED`| 409         | Suggestion already accepted/rejected |
+| `PROTOTYPE_QUOTA_EXCEEDED`   | 400         | Maximum PRIMARY prototypes exceeded  |
+| `TEMPORAL_QUOTA_EXCEEDED`    | 400         | Era already has TEMPORAL prototype   |
+| `FACE_PERSON_MISMATCH`       | 400         | Face does not belong to person       |
 | `RATE_LIMITED`               | 429         | Too many requests                    |
 | `INTERNAL_ERROR`             | 500         | Server error                         |
 
@@ -1328,6 +1645,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.6.0   | 2025-12-29 | Added Temporal Prototypes section with 5 new endpoints: POST /api/v1/faces/persons/{personId}/prototypes/pin (pin prototype), DELETE /api/v1/faces/persons/{personId}/prototypes/{prototypeId}/pin (unpin), GET /api/v1/faces/persons/{personId}/prototypes (list), GET /api/v1/faces/persons/{personId}/temporal-coverage (coverage report), POST /api/v1/faces/persons/{personId}/prototypes/recompute (recompute). Added Prototype, TemporalCoverage, and PrototypeListResponse schemas. Added PROTOTYPE_NOT_FOUND, PROTOTYPE_QUOTA_EXCEEDED, TEMPORAL_QUOTA_EXCEEDED, and FACE_PERSON_MISMATCH error codes. Documented age era buckets (infant, child, teen, young_adult, adult, senior) and prototype roles (primary, temporal, exemplar, fallback). |
 | 1.5.0   | 2025-12-28 | Enhanced FaceSuggestion schema with bounding box data: added fullImageUrl, bboxX, bboxY, bboxW, bboxH, detectionConfidence, qualityScore fields for face overlay display support. |
 | 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code. |
 | 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes. |
