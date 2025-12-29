@@ -271,6 +271,36 @@
 		newErrors.add(prototypeId);
 		imageErrors = newErrors;
 	}
+
+	async function handlePrototypeClick(proto: Prototype) {
+		if (!proto.faceInstanceId || !person) return;
+
+		// Ensure photos are loaded
+		if (photos.length === 0) {
+			try {
+				const response = await getPersonPhotos(person.id, 1, 100);
+				photos = response.items;
+			} catch (err) {
+				console.error('Failed to load photos for lightbox:', err);
+				return;
+			}
+		}
+
+		// Find the photo containing this face
+		const photo = photos.find((p) =>
+			p.faces?.some((f) => f.faceInstanceId === proto.faceInstanceId)
+		);
+
+		if (photo) {
+			// Set up lightbox
+			lightboxPhotos = photos;
+			lightboxIndex = photos.findIndex((p) => p.photoId === photo.photoId);
+			lightboxPhoto = photo;
+			showLightbox = true;
+		} else {
+			console.warn('Photo not found for prototype face:', proto.faceInstanceId);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -456,13 +486,20 @@
 							{:else}
 								<div class="prototype-grid">
 									{#each prototypes as proto}
-										<div class="prototype-card" class:pinned={proto.isPinned}>
+										<button
+											type="button"
+											class="prototype-card"
+											class:pinned={proto.isPinned}
+											onclick={() => handlePrototypeClick(proto)}
+											onkeydown={(e) => e.key === 'Enter' && handlePrototypeClick(proto)}
+											aria-label="View photo for {proto.ageEraBucket || 'unknown'} era prototype"
+										>
 											<!-- Face thumbnail -->
 											<div class="proto-thumbnail">
 												{#if proto.thumbnailUrl}
 													<img
 														src={toAbsoluteUrl(proto.thumbnailUrl)}
-														alt="Prototype face"
+														alt="Prototype face for {proto.ageEraBucket || 'unknown'} era"
 														loading="lazy"
 														onerror={() => handleImageError(proto.id)}
 													/>
@@ -487,7 +524,7 @@
 											{#if proto.decadeBucket}
 												<div class="proto-decade">{proto.decadeBucket}</div>
 											{/if}
-										</div>
+										</button>
 									{/each}
 								</div>
 							{/if}
@@ -1162,6 +1199,20 @@
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+		cursor: pointer;
+		transition: transform 0.15s, box-shadow 0.15s;
+		text-align: left;
+		width: 100%;
+	}
+
+	.prototype-card:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	}
+
+	.prototype-card:focus {
+		outline: 2px solid #2196F3;
+		outline-offset: 2px;
 	}
 
 	.prototype-card.pinned {
