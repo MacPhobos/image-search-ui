@@ -15,8 +15,8 @@
 	let personId = $derived($page.params.personId);
 
 	// Initialize tab from URL
-	let activeTab = $state<'faces' | 'photos'>(
-		($page.url.searchParams.get('tab') as 'faces' | 'photos') || 'faces'
+	let activeTab = $state<'faces' | 'photos' | 'prototypes'>(
+		($page.url.searchParams.get('tab') as 'faces' | 'photos' | 'prototypes') || 'faces'
 	);
 
 	// State
@@ -194,7 +194,7 @@
 	}
 
 	// Update URL when tab changes
-	function setTab(tab: 'faces' | 'photos') {
+	function setTab(tab: 'faces' | 'photos' | 'prototypes') {
 		activeTab = tab;
 		const url = new URL($page.url);
 		url.searchParams.set('tab', tab);
@@ -330,35 +330,6 @@
 			</div>
 		</header>
 
-		<!-- Prototype Coverage Section -->
-		{#if !prototypesLoading && coverage}
-			<section class="prototype-section">
-				<div class="prototype-header">
-					<h3>Prototype Coverage</h3>
-					<div class="prototype-actions">
-						<CoverageIndicator {coverage} compact />
-						<button
-							class="recompute-btn"
-							onclick={handleRecomputePrototypes}
-							title="Recompute prototypes for optimal temporal coverage"
-							type="button"
-						>
-							↻ Recompute
-						</button>
-					</div>
-				</div>
-				<TemporalTimeline
-					{prototypes}
-					{coverage}
-					onUnpinClick={handleUnpinPrototype}
-				/>
-			</section>
-		{:else if prototypesLoading}
-			<div class="prototype-loading">Loading prototype coverage...</div>
-		{:else if prototypesError}
-			<div class="prototype-error">{prototypesError}</div>
-		{/if}
-
 		<!-- Tab Navigation -->
 		<div class="tabs">
 			<button
@@ -376,6 +347,14 @@
 				onclick={() => setTab('photos')}
 			>
 				Photos
+			</button>
+			<button
+				type="button"
+				class="tab"
+				class:active={activeTab === 'prototypes'}
+				onclick={() => setTab('prototypes')}
+			>
+				Prototypes
 			</button>
 		</div>
 
@@ -426,13 +405,76 @@
 					</div>
 				{/if}
 			</section>
-		{:else}
+		{:else if activeTab === 'photos'}
 			<!-- Photos Tab (New Person Photos Review) -->
 			<PersonPhotosTab
 				personId={person.id}
 				personName={person.name}
 				onPhotoClick={handlePhotoClick}
 			/>
+		{:else if activeTab === 'prototypes'}
+			<!-- Prototypes Tab -->
+			<div class="prototypes-tab">
+				{#if prototypesLoading}
+					<div class="prototype-loading">Loading prototype coverage...</div>
+				{:else if prototypesError}
+					<div class="prototype-error">{prototypesError}</div>
+				{:else if coverage}
+					<div class="prototype-content">
+						<div class="prototype-header">
+							<h3>Temporal Coverage</h3>
+							<div class="prototype-actions">
+								<CoverageIndicator {coverage} />
+								<button
+									class="recompute-btn"
+									onclick={handleRecomputePrototypes}
+									title="Recompute prototypes for optimal temporal coverage"
+									type="button"
+								>
+									↻ Recompute
+								</button>
+							</div>
+						</div>
+						<TemporalTimeline
+							{prototypes}
+							{coverage}
+							onUnpinClick={handleUnpinPrototype}
+						/>
+
+						<!-- Prototype list -->
+						<div class="prototype-list">
+							<h4>All Prototypes ({prototypes.length})</h4>
+							{#if prototypes.length === 0}
+								<p class="no-prototypes">No prototypes yet. Assign faces to this person to create prototypes.</p>
+							{:else}
+								<div class="prototype-grid">
+									{#each prototypes as proto}
+										<div class="prototype-card" class:pinned={proto.isPinned}>
+											<div class="proto-info">
+												<span class="proto-role">{proto.role}</span>
+												{#if proto.ageEraBucket}
+													<span class="proto-era">{proto.ageEraBucket.replace('_', ' ')}</span>
+												{/if}
+												{#if proto.isPinned}
+													<span class="proto-pinned">📌</span>
+												{/if}
+											</div>
+											<div class="proto-quality">
+												Quality: {proto.qualityScore ? (proto.qualityScore * 100).toFixed(0) + '%' : 'N/A'}
+											</div>
+											{#if proto.decadeBucket}
+												<div class="proto-decade">{proto.decadeBucket}</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
+				{:else}
+					<div class="no-coverage">No prototype data available.</div>
+				{/if}
+			</div>
 		{/if}
 	{/if}
 </main>
@@ -1039,32 +1081,106 @@
 		}
 	}
 
-	/* Prototype Section */
-	.prototype-section {
-		margin: 1.5rem 0;
-		padding: 1rem;
-		background: #f9f9f9;
-		border: 1px solid #e0e0e0;
-		border-radius: 8px;
+	/* Prototypes Tab */
+	.prototypes-tab {
+		padding: 1rem 0;
+	}
+
+	.prototype-content {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
 	}
 
 	.prototype-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 1rem;
+		flex-wrap: wrap;
+		gap: 1rem;
 	}
 
 	.prototype-header h3 {
 		margin: 0;
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: 1.1rem;
 	}
 
 	.prototype-actions {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+	}
+
+	.prototype-list {
+		margin-top: 1rem;
+	}
+
+	.prototype-list h4 {
+		margin: 0 0 1rem 0;
+		font-size: 1rem;
+		color: #333;
+	}
+
+	.no-prototypes {
+		color: #666;
+		font-style: italic;
+	}
+
+	.prototype-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 1rem;
+	}
+
+	.prototype-card {
+		padding: 1rem;
+		border: 1px solid #e0e0e0;
+		border-radius: 8px;
+		background: #f9f9f9;
+	}
+
+	.prototype-card.pinned {
+		border-color: #2196F3;
+		background: #e3f2fd;
+	}
+
+	.proto-info {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.5rem;
+	}
+
+	.proto-role {
+		font-size: 0.75rem;
+		padding: 0.15rem 0.4rem;
+		background: #e0e0e0;
+		border-radius: 3px;
+		text-transform: uppercase;
+		font-weight: 600;
+	}
+
+	.proto-era {
+		font-size: 0.85rem;
+		color: #666;
+		text-transform: capitalize;
+	}
+
+	.proto-pinned {
+		font-size: 0.9rem;
+	}
+
+	.proto-quality,
+	.proto-decade {
+		font-size: 0.8rem;
+		color: #888;
+	}
+
+	.no-coverage {
+		padding: 2rem;
+		text-align: center;
+		color: #666;
 	}
 
 	.recompute-btn {
