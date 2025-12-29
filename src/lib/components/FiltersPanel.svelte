@@ -27,8 +27,8 @@
 	let categories = $state<Category[]>([]);
 	let categoriesLoading = $state(true);
 
-	// Person filter (multi-select)
-	let selectedPersonIds = $state<string[]>([]);
+	// Person filter (single-select)
+	let selectedPersonId = $state<string | null>(null);
 	let persons = $state<Person[]>([]);
 	let personsLoading = $state(true);
 	let personSearchQuery = $state('');
@@ -43,9 +43,9 @@
 		return persons?.filter((p) => p.name.toLowerCase().includes(query)) ?? [];
 	});
 
-	// Selected persons for display
-	let selectedPersons = $derived.by<Person[]>(
-		() => persons?.filter((p) => selectedPersonIds.includes(p.id)) ?? []
+	// Selected person for display
+	let selectedPerson = $derived.by<Person | null>(
+		() => (selectedPersonId ? persons?.find((p) => p.id === selectedPersonId) ?? null : null)
 	);
 
 	// Load data on mount
@@ -76,12 +76,12 @@
 		}
 	}
 
-	// Reactive filters object - include first personId for backward compatibility
+	// Reactive filters object
 	let filters = $derived<SearchFilters>({
 		...(dateFrom && { dateFrom }),
 		...(dateTo && { dateTo }),
 		...(categoryId && { categoryId }),
-		...(selectedPersonIds.length > 0 && { personId: selectedPersonIds[0] })
+		...(selectedPersonId && { personId: selectedPersonId })
 	});
 
 	// Notify parent when filters change (skip initial render)
@@ -101,11 +101,11 @@
 		dateFrom = '';
 		dateTo = '';
 		categoryId = null;
-		selectedPersonIds = [];
+		selectedPersonId = null;
 	}
 
 	function hasActiveFilters(): boolean {
-		return Boolean(dateFrom || dateTo || categoryId || selectedPersonIds.length > 0);
+		return Boolean(dateFrom || dateTo || categoryId || selectedPersonId);
 	}
 
 	function handleCategoryChange(event: Event) {
@@ -115,17 +115,18 @@
 	}
 
 	function handlePersonSelect(person: Person) {
-		if (selectedPersonIds.includes(person.id)) {
-			// Remove if already selected
-			selectedPersonIds = selectedPersonIds.filter((id) => id !== person.id);
+		if (selectedPersonId === person.id) {
+			// Clicking selected person clears selection
+			selectedPersonId = null;
 		} else {
-			// Add to selection
-			selectedPersonIds = [...selectedPersonIds, person.id];
+			// Select the person (replaces any previous selection)
+			selectedPersonId = person.id;
 		}
+		showPersonDropdown = false; // Close dropdown after selection
 	}
 
-	function handleRemovePerson(personId: string) {
-		selectedPersonIds = selectedPersonIds.filter((id) => id !== personId);
+	function clearPersonFilter() {
+		selectedPersonId = null;
 	}
 
 	function handlePersonInputFocus() {
@@ -209,25 +210,21 @@
 	<div class="filter-group">
 		<label for="personFilter">People Filter</label>
 
-		<!-- Selected persons as chips -->
-		{#if selectedPersons.length > 0}
-			<div class="selected-chips">
-				{#each selectedPersons as person (person.id)}
-					<span class="person-chip">
-						{person.name}
-						<button
-							type="button"
-							class="chip-remove"
-							onclick={() => handleRemovePerson(person.id)}
-							aria-label="Remove {person.name}"
-						>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<line x1="18" y1="6" x2="6" y2="18" />
-								<line x1="6" y1="6" x2="18" y2="18" />
-							</svg>
-						</button>
-					</span>
-				{/each}
+		<!-- Selected person display -->
+		{#if selectedPerson}
+			<div class="selected-person">
+				<span class="person-name-display">{selectedPerson.name}</span>
+				<button
+					type="button"
+					class="clear-person-btn"
+					onclick={clearPersonFilter}
+					aria-label="Clear person filter"
+				>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<line x1="18" y1="6" x2="6" y2="18" />
+						<line x1="6" y1="6" x2="18" y2="18" />
+					</svg>
+				</button>
 			</div>
 		{/if}
 
@@ -265,14 +262,14 @@
 								<button
 									type="button"
 									class="person-option"
-									class:selected={selectedPersonIds.includes(person.id)}
+									class:selected={selectedPersonId === person.id}
 									onmousedown={() => handlePersonSelect(person)}
 									role="option"
-									aria-selected={selectedPersonIds.includes(person.id)}
+									aria-selected={selectedPersonId === person.id}
 								>
 									<span class="person-name">{person.name}</span>
 									<span class="person-count">{person.faceCount} faces</span>
-									{#if selectedPersonIds.includes(person.id)}
+									{#if selectedPersonId === person.id}
 										<svg
 											class="check-icon"
 											viewBox="0 0 24 24"
@@ -398,31 +395,30 @@
 	}
 
 	/* Person filter styles */
-	.selected-chips {
+	.selected-person {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-bottom: 0.5rem;
-	}
-
-	.person-chip {
-		display: inline-flex;
 		align-items: center;
-		gap: 0.25rem;
+		justify-content: space-between;
+		gap: 0.5rem;
 		background-color: #e8f4fd;
 		color: #1565c0;
-		padding: 0.25rem 0.5rem;
-		border-radius: 16px;
-		font-size: 0.8rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 4px;
+		margin-bottom: 0.5rem;
 		font-weight: 500;
 	}
 
-	.chip-remove {
+	.person-name-display {
+		flex: 1;
+		font-size: 0.95rem;
+	}
+
+	.clear-person-btn {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 16px;
-		height: 16px;
+		width: 20px;
+		height: 20px;
 		padding: 0;
 		border: none;
 		background: none;
@@ -430,15 +426,16 @@
 		cursor: pointer;
 		border-radius: 50%;
 		transition: background-color 0.2s;
+		flex-shrink: 0;
 	}
 
-	.chip-remove:hover {
+	.clear-person-btn:hover {
 		background-color: rgba(21, 101, 192, 0.2);
 	}
 
-	.chip-remove svg {
-		width: 12px;
-		height: 12px;
+	.clear-person-btn svg {
+		width: 14px;
+		height: 14px;
 	}
 
 	.person-select-container {

@@ -31,11 +31,11 @@ export interface HealthResponse {
 	status: string;
 }
 
-// Search filters for UI (date range + future face filter)
+// Search filters for UI (date range + person filter)
 export interface SearchFilters {
 	dateFrom?: string; // ISO 8601 date
 	dateTo?: string; // ISO 8601 date
-	personId?: string; // Face filter (future)
+	personId?: string; // Filter by person ID (single-select)
 	categoryId?: number; // Category filter
 }
 

@@ -291,3 +291,62 @@ export function createMultipleDeletionLogs(count: number): DeletionLogEntry[] {
 		});
 	});
 }
+
+// Person Fixtures (for face recognition)
+
+import type { Person, PersonListResponse } from '$lib/api/faces';
+
+/**
+ * Create a test Person with sensible defaults
+ */
+export function createPerson(overrides?: Partial<Person>): Person {
+	const id = overrides?.id ?? 'person-uuid-1';
+	const name = overrides?.name ?? 'John Doe';
+
+	const defaults: Person = {
+		id,
+		name,
+		status: 'active',
+		faceCount: 10,
+		prototypeCount: 2,
+		createdAt: '2024-12-19T10:00:00Z',
+		updatedAt: '2024-12-19T10:00:00Z'
+	};
+
+	return { ...defaults, ...overrides };
+}
+
+/**
+ * Create a paginated person response
+ */
+export function createPersonResponse(
+	persons?: Person[],
+	page: number = 1,
+	pageSize: number = 20
+): PersonListResponse {
+	const items = persons ?? [createPerson()];
+
+	return {
+		items,
+		total: items.length,
+		page,
+		pageSize
+	};
+}
+
+/**
+ * Create multiple persons for testing
+ */
+export function createMultiplePersons(count: number, startId: number = 1): Person[] {
+	const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
+	return Array.from({ length: count }, (_, i) => {
+		const id = `person-uuid-${startId + i}`;
+		const name = names[i % names.length] || `Person ${startId + i}`;
+		return createPerson({
+			id,
+			name,
+			faceCount: (i + 1) * 5,
+			prototypeCount: i % 3 === 0 ? 3 : 2
+		});
+	});
+}
