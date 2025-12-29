@@ -446,6 +446,7 @@
 		onClose={closeLightbox}
 		onNext={lightboxIndex < lightboxPhotos.length - 1 ? handleLightboxNext : undefined}
 		onPrevious={lightboxIndex > 0 ? handleLightboxPrev : undefined}
+		onPrototypePinned={loadPrototypes}
 	/>
 {/if}
 
