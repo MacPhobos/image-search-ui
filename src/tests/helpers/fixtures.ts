@@ -350,3 +350,135 @@ export function createMultiplePersons(count: number, startId: number = 1): Perso
 		});
 	});
 }
+
+// Unified People Fixtures (for unified people view)
+
+import type {
+	UnifiedPersonResponse,
+	UnifiedPeopleListResponse,
+	PersonType
+} from '$lib/api/faces';
+
+/**
+ * Create a test UnifiedPersonResponse with sensible defaults
+ */
+export function createUnifiedPerson(
+	overrides?: Partial<UnifiedPersonResponse>
+): UnifiedPersonResponse {
+	const id = overrides?.id ?? 'uuid-1';
+	const type: PersonType = overrides?.type ?? 'identified';
+	const name =
+		overrides?.name ??
+		(type === 'identified' ? 'John Doe' : type === 'noise' ? 'Unknown Faces' : 'Unidentified Person 1');
+
+	const defaults: UnifiedPersonResponse = {
+		id,
+		name,
+		type,
+		faceCount: 10,
+		thumbnailUrl: type === 'identified' ? `http://localhost:8000/api/v1/images/${id}/thumbnail` : null,
+		confidence: type === 'unidentified' ? 0.85 : null
+	};
+
+	return { ...defaults, ...overrides };
+}
+
+/**
+ * Create an identified person
+ */
+export function createIdentifiedPerson(
+	overrides?: Partial<UnifiedPersonResponse>
+): UnifiedPersonResponse {
+	return createUnifiedPerson({
+		type: 'identified',
+		confidence: null,
+		...overrides
+	});
+}
+
+/**
+ * Create an unidentified person (cluster)
+ */
+export function createUnidentifiedPerson(
+	overrides?: Partial<UnifiedPersonResponse>
+): UnifiedPersonResponse {
+	return createUnifiedPerson({
+		id: 'clu_' + (overrides?.id ?? 'abc123'),
+		type: 'unidentified',
+		name: 'Unidentified Person 1',
+		thumbnailUrl: null,
+		confidence: 0.85,
+		...overrides
+	});
+}
+
+/**
+ * Create a noise person
+ */
+export function createNoisePerson(
+	overrides?: Partial<UnifiedPersonResponse>
+): UnifiedPersonResponse {
+	return createUnifiedPerson({
+		id: 'noise',
+		type: 'noise',
+		name: 'Unknown Faces',
+		thumbnailUrl: null,
+		confidence: null,
+		faceCount: 312,
+		...overrides
+	});
+}
+
+/**
+ * Create a unified people list response
+ */
+export function createUnifiedPeopleResponse(
+	people?: UnifiedPersonResponse[]
+): UnifiedPeopleListResponse {
+	const allPeople = people ?? [
+		createIdentifiedPerson({ id: 'uuid-1', name: 'Alice', faceCount: 50 }),
+		createIdentifiedPerson({ id: 'uuid-2', name: 'Bob', faceCount: 30 }),
+		createUnidentifiedPerson({ id: 'clu_1', faceCount: 100, confidence: 0.9 }),
+		createNoisePerson()
+	];
+
+	const identifiedCount = allPeople.filter((p) => p.type === 'identified').length;
+	const unidentifiedCount = allPeople.filter((p) => p.type === 'unidentified').length;
+	const noiseCount = allPeople.filter((p) => p.type === 'noise').length;
+
+	return {
+		people: allPeople,
+		total: allPeople.length,
+		identifiedCount,
+		unidentifiedCount,
+		noiseCount
+	};
+}
+
+/**
+ * Create multiple identified persons for testing
+ */
+export function createMultipleIdentifiedPersons(count: number): UnifiedPersonResponse[] {
+	const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
+	return Array.from({ length: count }, (_, i) => {
+		return createIdentifiedPerson({
+			id: `uuid-${i + 1}`,
+			name: names[i % names.length] || `Person ${i + 1}`,
+			faceCount: (i + 1) * 10
+		});
+	});
+}
+
+/**
+ * Create multiple unidentified persons for testing
+ */
+export function createMultipleUnidentifiedPersons(count: number): UnifiedPersonResponse[] {
+	return Array.from({ length: count }, (_, i) => {
+		return createUnidentifiedPerson({
+			id: `clu_${i + 1}`,
+			name: `Unidentified Person ${i + 1}`,
+			faceCount: (count - i) * 15,
+			confidence: 0.9 - i * 0.05
+		});
+	});
+}

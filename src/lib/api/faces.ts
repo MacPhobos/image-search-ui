@@ -1020,6 +1020,79 @@ export interface RecomputePrototypesResponse {
 	coverage: TemporalCoverage;
 }
 
+// ============ Unified People API Functions ============
+
+/** Type classification for unified person view. */
+export type PersonType = 'identified' | 'unidentified' | 'noise';
+
+/** Unified response for both identified persons and unidentified clusters. */
+export interface UnifiedPersonResponse {
+	id: string;
+	name: string;
+	type: PersonType;
+	faceCount: number;
+	thumbnailUrl?: string | null;
+	confidence?: number | null;
+}
+
+/** Response for unified people listing endpoint. */
+export interface UnifiedPeopleListResponse {
+	people: UnifiedPersonResponse[];
+	total: number;
+	identifiedCount: number;
+	unidentifiedCount: number;
+	noiseCount: number;
+}
+
+/** Parameters for listing unified people. */
+export interface ListUnifiedPeopleParams {
+	includeIdentified?: boolean;
+	includeUnidentified?: boolean;
+	includeNoise?: boolean;
+	sortBy?: 'faceCount' | 'name';
+	sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * List all people (identified and unidentified) in a unified view.
+ * @param params - Query parameters for filtering and sorting
+ * @returns Promise with unified people list
+ */
+export async function listUnifiedPeople(
+	params?: ListUnifiedPeopleParams
+): Promise<UnifiedPeopleListResponse> {
+	const searchParams = new URLSearchParams();
+	if (params?.includeIdentified !== undefined) {
+		searchParams.set('include_identified', String(params.includeIdentified));
+	}
+	if (params?.includeUnidentified !== undefined) {
+		searchParams.set('include_unidentified', String(params.includeUnidentified));
+	}
+	if (params?.includeNoise !== undefined) {
+		searchParams.set('include_noise', String(params.includeNoise));
+	}
+	if (params?.sortBy) {
+		searchParams.set('sort_by', params.sortBy);
+	}
+	if (params?.sortOrder) {
+		searchParams.set('sort_order', params.sortOrder);
+	}
+
+	const queryString = searchParams.toString();
+	const endpoint = `/api/v1/faces/people${queryString ? `?${queryString}` : ''}`;
+
+	const response = await apiRequest<UnifiedPeopleListResponse>(endpoint);
+
+	// Transform relative thumbnail URLs to absolute URLs
+	return {
+		...response,
+		people: response.people.map((person) => ({
+			...person,
+			thumbnailUrl: person.thumbnailUrl ? toAbsoluteUrl(person.thumbnailUrl) : null
+		}))
+	};
+}
+
 // ============ Temporal Prototype API Functions ============
 
 /**

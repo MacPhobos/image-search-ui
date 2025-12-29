@@ -1,96 +1,86 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { listPersons } from '$lib/api/faces';
-	import { ApiError } from '$lib/api/client';
-	import PersonCard from '$lib/components/faces/PersonCard.svelte';
-	import type { Person } from '$lib/types';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { listUnifiedPeople } from '$lib/api/faces';
+	import type {
+		UnifiedPeopleListResponse,
+		UnifiedPersonResponse,
+		PersonType
+	} from '$lib/api/faces';
+	import { ApiError } from '$lib/api/client';
+	import UnifiedPersonCard from '$lib/components/faces/UnifiedPersonCard.svelte';
 
 	// State
-	let persons = $state<Person[]>([]);
 	let loading = $state(true);
-	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
-	let currentPage = $state(1);
-	let totalPersons = $state(0);
-	let hasMore = $state(false);
+	let data = $state<UnifiedPeopleListResponse | null>(null);
 
-	// Filter state
-	let statusFilter = $state<'active' | 'merged' | 'hidden' | 'all'>('active');
-	let searchQuery = $state('');
+	// Filters
+	let showIdentified = $state(true);
+	let showUnidentified = $state(true);
+	let showNoise = $state(false);
+	let sortBy = $state<'faceCount' | 'name'>('faceCount');
+	let sortOrder = $state<'asc' | 'desc'>('desc');
 
-	const PAGE_SIZE = 20;
+	// Derived - filter people by type
+	let identifiedPeople = $derived(data?.people.filter((p) => p.type === 'identified') ?? []);
+	let unidentifiedPeople = $derived(
+		data?.people.filter((p) => p.type === 'unidentified') ?? []
+	);
+	let noisePeople = $derived(data?.people.filter((p) => p.type === 'noise') ?? []);
 
-	// Filtered persons (client-side search)
-	let filteredPersons = $derived.by<Person[]>(() => {
-		if (!searchQuery.trim()) return persons;
-		const query = searchQuery.toLowerCase();
-		return persons.filter((p) => p.name.toLowerCase().includes(query));
-	});
-
-	onMount(() => {
-		loadPersons(true);
-	});
-
-	// Reload when status filter changes
-	$effect(() => {
-		const status = statusFilter;
-		loadPersons(true);
-	});
-
-	async function loadPersons(reset: boolean = false) {
-		if (reset) {
-			currentPage = 1;
-			persons = [];
-		}
-
-		loading = reset;
-		loadingMore = !reset;
+	async function loadPeople() {
+		loading = true;
 		error = null;
-
 		try {
-			const status = statusFilter === 'all' ? undefined : statusFilter;
-			const response = await listPersons(currentPage, PAGE_SIZE, status);
-
-			if (reset) {
-				persons = response.items;
-			} else {
-				persons = [...persons, ...response.items];
-			}
-
-			totalPersons = response.total;
-			hasMore = persons.length < response.total;
+			data = await listUnifiedPeople({
+				includeIdentified: showIdentified,
+				includeUnidentified: showUnidentified,
+				includeNoise: showNoise,
+				sortBy,
+				sortOrder
+			});
 		} catch (err) {
-			console.error('Failed to load persons:', err);
+			console.error('Failed to load people:', err);
 			if (err instanceof ApiError) {
 				error = err.message;
 			} else {
-				error = 'Failed to load persons. Please try again.';
+				error = 'Failed to load people. Please try again.';
 			}
 		} finally {
 			loading = false;
-			loadingMore = false;
 		}
 	}
 
-	function handleLoadMore() {
-		if (loadingMore || !hasMore) return;
-		currentPage += 1;
-		loadPersons(false);
+	function handlePersonClick(person: UnifiedPersonResponse) {
+		// Navigate to person detail page based on type
+		if (person.type === 'identified') {
+			goto(`/people/${person.id}`);
+		} else {
+			// For unidentified/noise, go to cluster detail page
+			goto(`/faces/clusters/${person.id}`);
+		}
 	}
 
-	function handlePersonClick(person: Person) {
-		goto(`/people/${person.id}`);
+	function handleAssign(person: UnifiedPersonResponse) {
+		// Open assign modal or navigate to assign page
+		goto(`/faces/clusters/${person.id}?action=label`);
 	}
 
-	function handleStatusChange(event: Event) {
-		const target = event.target as HTMLSelectElement;
-		statusFilter = target.value as 'active' | 'merged' | 'hidden' | 'all';
-	}
+	onMount(() => {
+		loadPeople();
+	});
 
-	function handleRetry() {
-		loadPersons(true);
-	}
+	// Reload when filters change
+	$effect(() => {
+		// Track all filter dependencies
+		showIdentified;
+		showUnidentified;
+		showNoise;
+		sortBy;
+		sortOrder;
+		loadPeople();
+	});
 </script>
 
 <svelte:head>
@@ -101,51 +91,64 @@
 	<header class="page-header">
 		<div class="header-content">
 			<h1>People</h1>
-			<p class="subtitle">Browse and manage identified people in your photos.</p>
+			<p class="subtitle">Browse identified people and face groups in your photos.</p>
 		</div>
-		<a href="/faces/clusters" class="clusters-link">
-			View Clusters
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M5 12h14M12 5l7 7-7 7" />
-			</svg>
-		</a>
+
+		{#if data}
+			<div class="stats-summary">
+				<div class="stat-item stat-success">
+					<span class="stat-label">Identified</span>
+					<span class="stat-value">{data.identifiedCount}</span>
+				</div>
+				<div class="stat-item stat-warning">
+					<span class="stat-label">Unidentified</span>
+					<span class="stat-value">{data.unidentifiedCount}</span>
+				</div>
+				{#if showNoise}
+					<div class="stat-item stat-error">
+						<span class="stat-label">Unknown</span>
+						<span class="stat-value">{data.noiseCount}</span>
+					</div>
+				{/if}
+			</div>
+		{/if}
 	</header>
 
 	<!-- Filters -->
-	<div class="filters-bar">
-		<div class="search-container">
-			<svg
-				class="search-icon"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<circle cx="11" cy="11" r="8" />
-				<path d="m21 21-4.35-4.35" />
-			</svg>
-			<input
-				type="text"
-				placeholder="Search people..."
-				bind:value={searchQuery}
-				class="search-input"
-				aria-label="Search people by name"
-			/>
+	<section class="filters-bar">
+		<div class="filter-group">
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={showIdentified} />
+				<span>Show Identified</span>
+			</label>
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={showUnidentified} />
+				<span>Show Unidentified</span>
+			</label>
+			<label class="checkbox-label">
+				<input type="checkbox" bind:checked={showNoise} />
+				<span>Show Unknown Faces</span>
+			</label>
 		</div>
 
-		<div class="filter-group">
-			<label for="statusFilter">Status:</label>
-			<select id="statusFilter" value={statusFilter} onchange={handleStatusChange}>
-				<option value="active">Active</option>
-				<option value="merged">Merged</option>
-				<option value="hidden">Hidden</option>
-				<option value="all">All</option>
+		<div class="divider"></div>
+
+		<div class="sort-controls">
+			<label for="sortBy" class="sort-label">Sort by:</label>
+			<select id="sortBy" bind:value={sortBy} class="sort-select">
+				<option value="faceCount">Face Count</option>
+				<option value="name">Name</option>
+			</select>
+
+			<select bind:value={sortOrder} class="sort-select" aria-label="Sort order">
+				<option value="desc">Descending</option>
+				<option value="asc">Ascending</option>
 			</select>
 		</div>
-	</div>
+	</section>
 
 	<!-- Content -->
-	<section class="content" aria-live="polite">
+	<section class="content">
 		{#if loading}
 			<div class="loading-state">
 				<div class="spinner"></div>
@@ -165,9 +168,9 @@
 					<line x1="12" y1="16" x2="12.01" y2="16" />
 				</svg>
 				<p>{error}</p>
-				<button type="button" class="retry-button" onclick={handleRetry}> Try Again </button>
+				<button type="button" class="retry-button" onclick={loadPeople}>Try Again</button>
 			</div>
-		{:else if filteredPersons.length === 0}
+		{:else if data?.total === 0}
 			<div class="empty-state">
 				<svg
 					class="empty-icon"
@@ -180,50 +183,78 @@
 					<path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
 				</svg>
 				<h2>No people found</h2>
-				<p>
-					{#if searchQuery}
-						No people match your search. Try a different query.
-					{:else}
-						No people have been identified yet. Label face clusters to create people.
-					{/if}
-				</p>
-				{#if !searchQuery}
-					<a href="/faces/clusters" class="action-link">Go to Clusters</a>
-				{/if}
+				<p>Upload images with faces to get started.</p>
+				<a href="/faces/sessions" class="action-link">Start Face Detection</a>
 			</div>
 		{:else}
-			<div class="results-header">
-				<span class="results-count">
-					{#if searchQuery}
-						{filteredPersons.length} results for "{searchQuery}"
-					{:else}
-						Showing {persons.length} of {totalPersons} people
-					{/if}
-				</span>
-			</div>
+			<!-- Identified People Section -->
+			{#if showIdentified && identifiedPeople.length > 0}
+				<section class="people-section">
+					<div class="section-header">
+						<h2 class="section-title">
+							<span class="badge badge-success">Identified</span>
+							<span class="section-count">{identifiedPeople.length} people</span>
+						</h2>
+					</div>
+					<div class="people-grid">
+						{#each identifiedPeople as person (person.id)}
+							<UnifiedPersonCard {person} onClick={() => handlePersonClick(person)} />
+						{/each}
+					</div>
+				</section>
+			{/if}
 
-			<div class="people-grid">
-				{#each filteredPersons as person (person.id)}
-					<PersonCard {person} onClick={() => handlePersonClick(person)} />
-				{/each}
-			</div>
+			<!-- Unidentified People Section -->
+			{#if showUnidentified && unidentifiedPeople.length > 0}
+				<section class="people-section">
+					<div class="section-header">
+						<h2 class="section-title">
+							<span class="badge badge-warning">Needs Names</span>
+							<span class="section-count">{unidentifiedPeople.length} groups</span>
+						</h2>
+						<p class="section-description">
+							These are groups of similar faces detected in your photos. Assign names to help the
+							system recognize them.
+						</p>
+					</div>
+					<div class="people-grid">
+						{#each unidentifiedPeople as person (person.id)}
+							<UnifiedPersonCard
+								{person}
+								showAssignButton={true}
+								onClick={() => handlePersonClick(person)}
+								onAssign={() => handleAssign(person)}
+							/>
+						{/each}
+					</div>
+				</section>
+			{/if}
 
-			{#if hasMore && !searchQuery}
-				<div class="load-more">
-					<button
-						type="button"
-						class="load-more-button"
-						onclick={handleLoadMore}
-						disabled={loadingMore}
-					>
-						{#if loadingMore}
-							<span class="button-spinner"></span>
-							Loading...
-						{:else}
-							Load More
-						{/if}
-					</button>
-				</div>
+			<!-- Noise/Unknown Faces Section -->
+			{#if showNoise && noisePeople.length > 0}
+				<section class="people-section">
+					<div class="section-header">
+						<h2 class="section-title">
+							<span class="badge badge-error">Unknown Faces</span>
+							<span class="section-count"
+								>{noisePeople[0]?.faceCount ?? 0} ungrouped faces</span
+							>
+						</h2>
+						<p class="section-description">
+							These faces couldn't be confidently grouped. Review and assign manually.
+						</p>
+					</div>
+					<div class="people-grid">
+						{#each noisePeople as person (person.id)}
+							<UnifiedPersonCard
+								{person}
+								showAssignButton={true}
+								onClick={() => handlePersonClick(person)}
+								onAssign={() => handleAssign(person)}
+							/>
+						{/each}
+					</div>
+				</section>
 			{/if}
 		{/if}
 	</section>
@@ -237,12 +268,7 @@
 	}
 
 	.page-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: 1rem;
 		margin-bottom: 2rem;
-		flex-wrap: wrap;
 	}
 
 	.header-content h1 {
@@ -254,89 +280,104 @@
 
 	.subtitle {
 		color: #666;
-		margin: 0;
+		margin: 0 0 1rem 0;
 		font-size: 1rem;
 	}
 
-	.clusters-link {
+	.stats-summary {
 		display: flex;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.stat-item {
+		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.625rem 1.25rem;
-		background-color: white;
-		color: #4a90e2;
-		border: 1px solid #4a90e2;
-		border-radius: 6px;
-		font-size: 0.95rem;
+		padding: 0.75rem 1.5rem;
+		border-radius: 8px;
+		background: white;
+		border: 1px solid #e0e0e0;
+		min-width: 100px;
+	}
+
+	.stat-label {
+		font-size: 0.75rem;
+		color: #666;
+		text-transform: uppercase;
 		font-weight: 500;
-		text-decoration: none;
-		transition:
-			background-color 0.2s,
-			color 0.2s;
+		margin-bottom: 0.25rem;
 	}
 
-	.clusters-link:hover {
-		background-color: #4a90e2;
-		color: white;
+	.stat-value {
+		font-size: 1.5rem;
+		font-weight: 700;
 	}
 
-	.clusters-link svg {
-		width: 18px;
-		height: 18px;
+	.stat-success .stat-value {
+		color: #2e7d32;
+	}
+
+	.stat-warning .stat-value {
+		color: #e65100;
+	}
+
+	.stat-error .stat-value {
+		color: #c62828;
 	}
 
 	/* Filters */
 	.filters-bar {
 		display: flex;
-		gap: 1rem;
-		margin-bottom: 1.5rem;
-		flex-wrap: wrap;
-	}
-
-	.search-container {
-		position: relative;
-		flex: 1;
-		min-width: 200px;
-		max-width: 400px;
-	}
-
-	.search-icon {
-		position: absolute;
-		left: 0.75rem;
-		top: 50%;
-		transform: translateY(-50%);
-		width: 18px;
-		height: 18px;
-		color: #999;
-		pointer-events: none;
-	}
-
-	.search-input {
-		width: 100%;
-		padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-		border: 1px solid #ddd;
+		gap: 1.5rem;
+		padding: 1rem;
+		background: white;
 		border-radius: 8px;
-		font-size: 0.95rem;
-		transition: border-color 0.2s;
-	}
-
-	.search-input:focus {
-		outline: none;
-		border-color: #4a90e2;
+		border: 1px solid #e0e0e0;
+		margin-bottom: 2rem;
+		flex-wrap: wrap;
+		align-items: center;
 	}
 
 	.filter-group {
 		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+		gap: 1rem;
+		flex-wrap: wrap;
 	}
 
-	.filter-group label {
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		cursor: pointer;
+		font-size: 0.95rem;
+		color: #333;
+	}
+
+	.checkbox-label input[type='checkbox'] {
+		cursor: pointer;
+		width: 16px;
+		height: 16px;
+	}
+
+	.divider {
+		width: 1px;
+		height: 24px;
+		background-color: #e0e0e0;
+	}
+
+	.sort-controls {
+		display: flex;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.sort-label {
 		font-size: 0.875rem;
 		color: #666;
 	}
 
-	.filter-group select {
+	.sort-select {
 		padding: 0.5rem 0.75rem;
 		border: 1px solid #ddd;
 		border-radius: 6px;
@@ -405,6 +446,11 @@
 		border: none;
 		border-radius: 6px;
 		cursor: pointer;
+		font-size: 0.95rem;
+	}
+
+	.retry-button:hover {
+		background-color: #3a7bc8;
 	}
 
 	/* Empty state */
@@ -441,20 +487,72 @@
 		color: #4a90e2;
 		text-decoration: none;
 		font-weight: 500;
+		padding: 0.5rem 1rem;
+		border: 1px solid #4a90e2;
+		border-radius: 6px;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
 	}
 
 	.action-link:hover {
-		text-decoration: underline;
+		background-color: #4a90e2;
+		color: white;
 	}
 
-	/* Results */
-	.results-header {
+	/* People sections */
+	.people-section {
+		margin-bottom: 3rem;
+	}
+
+	.section-header {
 		margin-bottom: 1rem;
 	}
 
-	.results-count {
-		font-size: 0.875rem;
+	.section-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: #333;
+		margin: 0 0 0.5rem 0;
+	}
+
+	.section-count {
+		font-size: 1rem;
+		font-weight: 400;
 		color: #666;
+	}
+
+	.section-description {
+		color: #666;
+		font-size: 0.875rem;
+		margin: 0;
+		max-width: 600px;
+	}
+
+	.badge {
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		padding: 0.25rem 0.75rem;
+		border-radius: 12px;
+	}
+
+	.badge-success {
+		background-color: #e8f5e9;
+		color: #2e7d32;
+	}
+
+	.badge-warning {
+		background-color: #fff3e0;
+		color: #e65100;
+	}
+
+	.badge-error {
+		background-color: #ffebee;
+		color: #c62828;
 	}
 
 	.people-grid {
@@ -463,57 +561,22 @@
 		gap: 1rem;
 	}
 
-	/* Load more */
-	.load-more {
-		display: flex;
-		justify-content: center;
-		margin-top: 2rem;
-	}
-
-	.load-more-button {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 2rem;
-		background-color: white;
-		color: #4a90e2;
-		border: 2px solid #4a90e2;
-		border-radius: 8px;
-		font-size: 1rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition:
-			background-color 0.2s,
-			color 0.2s;
-	}
-
-	.load-more-button:hover:not(:disabled) {
-		background-color: #4a90e2;
-		color: white;
-	}
-
-	.load-more-button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.button-spinner {
-		width: 16px;
-		height: 16px;
-		border: 2px solid transparent;
-		border-top-color: currentColor;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-	}
-
 	@media (max-width: 640px) {
-		.page-header {
-			flex-direction: column;
+		.people-page {
+			padding: 1rem;
 		}
 
-		.clusters-link {
-			width: 100%;
-			justify-content: center;
+		.filters-bar {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.divider {
+			display: none;
+		}
+
+		.people-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

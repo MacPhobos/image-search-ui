@@ -1689,6 +1689,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/faces/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Unified People
+         * @description List all people (identified and unidentified) in a unified view.
+         *
+         *     This endpoint combines:
+         *     - Identified people (with names from Person table)
+         *     - Unidentified clusters (face groups without names)
+         *     - Optionally noise faces (ungrouped faces)
+         *
+         *     The unified view eliminates the "Clusters" vs "People" distinction,
+         *     treating both as "people" with different types (identified/unidentified/noise).
+         *
+         *     Args:
+         *         include_identified: Include persons with assigned names
+         *         include_unidentified: Include face clusters without person assignment
+         *         include_noise: Include noise/outlier faces (cluster_id = '-1' or NULL)
+         *         sort_by: Field to sort by (face_count or name)
+         *         sort_order: Sort order (asc or desc)
+         *
+         *     Returns:
+         *         Unified list of people with counts broken down by type
+         */
+        get: operations["list_unified_people_api_v1_faces_people_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/faces/persons": {
         parameters: {
             query?: never;
@@ -3936,6 +3974,12 @@ export interface components {
             updatedAt: string;
         };
         /**
+         * PersonType
+         * @description Type classification for unified person view.
+         * @enum {string}
+         */
+        PersonType: "identified" | "unidentified" | "noise";
+        /**
          * PinPrototypeRequest
          * @description Request to pin a face as prototype.
          */
@@ -4020,6 +4064,8 @@ export interface components {
              * Format: date-time
              */
             createdAt: string;
+            /** Thumbnailurl */
+            thumbnailUrl?: string | null;
         };
         /**
          * PrototypeListResponse
@@ -4566,6 +4612,39 @@ export interface components {
             previousPersonId: string;
             /** Previouspersonname */
             previousPersonName: string;
+        };
+        /**
+         * UnifiedPeopleListResponse
+         * @description Response for unified people listing endpoint.
+         */
+        UnifiedPeopleListResponse: {
+            /** People */
+            people: components["schemas"]["UnifiedPersonResponse"][];
+            /** Total */
+            total: number;
+            /** Identifiedcount */
+            identifiedCount: number;
+            /** Unidentifiedcount */
+            unidentifiedCount: number;
+            /** Noisecount */
+            noiseCount: number;
+        };
+        /**
+         * UnifiedPersonResponse
+         * @description Unified response for both identified persons and unidentified clusters.
+         */
+        UnifiedPersonResponse: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            type: components["schemas"]["PersonType"];
+            /** Facecount */
+            faceCount: number;
+            /** Thumbnailurl */
+            thumbnailUrl?: string | null;
+            /** Confidence */
+            confidence?: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -6512,6 +6591,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SplitClusterResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_unified_people_api_v1_faces_people_get: {
+        parameters: {
+            query?: {
+                /** @description Include identified persons */
+                include_identified?: boolean;
+                /** @description Include unidentified clusters */
+                include_unidentified?: boolean;
+                /** @description Include noise/unknown faces */
+                include_noise?: boolean;
+                /** @description Sort by: face_count, name */
+                sort_by?: string;
+                /** @description Sort order */
+                sort_order?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiedPeopleListResponse"];
                 };
             };
             /** @description Validation Error */
