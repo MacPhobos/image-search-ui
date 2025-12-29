@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { listPersons, mergePersons, getPersonPhotos } from '$lib/api/faces';
+	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
-	import type { Person } from '$lib/types';
+	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
+	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
+	import type { Person, Prototype, TemporalCoverage } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
 
@@ -24,6 +26,12 @@
 	let loadingPhotos = $state(true);
 	let error = $state<string | null>(null);
 	let photoError = $state<string | null>(null);
+
+	// Prototype state
+	let prototypes = $state<Prototype[]>([]);
+	let coverage = $state<TemporalCoverage | null>(null);
+	let prototypesLoading = $state(true);
+	let prototypesError = $state<string | null>(null);
 
 	// Merge modal state
 	let showMergeModal = $state(false);
@@ -47,6 +55,7 @@
 		const id = personId;
 		if (id) {
 			loadPerson();
+			loadPrototypes();
 		}
 	});
 
@@ -103,6 +112,22 @@
 			}
 		} finally {
 			loadingPhotos = false;
+		}
+	}
+
+	async function loadPrototypes() {
+		if (!personId) return;
+		prototypesLoading = true;
+		prototypesError = null;
+		try {
+			const response = await getPrototypes(personId);
+			prototypes = response.items;
+			coverage = response.coverage;
+		} catch (err) {
+			console.error('Failed to load prototypes:', err);
+			prototypesError = err instanceof Error ? err.message : 'Failed to load prototypes';
+		} finally {
+			prototypesLoading = false;
 		}
 	}
 
@@ -217,6 +242,28 @@
 		showLightbox = false;
 		lightboxPhoto = null;
 	}
+
+	async function handleUnpinPrototype(prototype: Prototype) {
+		if (!confirm('Remove this pinned prototype? The slot may be filled automatically.')) return;
+		try {
+			await unpinPrototype(personId, prototype.id);
+			await loadPrototypes(); // Refresh the list
+		} catch (err) {
+			console.error('Failed to unpin prototype:', err);
+			alert('Failed to unpin prototype');
+		}
+	}
+
+	async function handleRecomputePrototypes() {
+		if (!confirm('Recompute all prototypes? This will optimize for temporal coverage while preserving pinned prototypes.')) return;
+		try {
+			await recomputePrototypes(personId, true);
+			await loadPrototypes(); // Refresh the list
+		} catch (err) {
+			console.error('Failed to recompute prototypes:', err);
+			alert('Failed to recompute prototypes');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -282,6 +329,35 @@
 				{/if}
 			</div>
 		</header>
+
+		<!-- Prototype Coverage Section -->
+		{#if !prototypesLoading && coverage}
+			<section class="prototype-section">
+				<div class="prototype-header">
+					<h3>Prototype Coverage</h3>
+					<div class="prototype-actions">
+						<CoverageIndicator {coverage} compact />
+						<button
+							class="recompute-btn"
+							onclick={handleRecomputePrototypes}
+							title="Recompute prototypes for optimal temporal coverage"
+							type="button"
+						>
+							↻ Recompute
+						</button>
+					</div>
+				</div>
+				<TemporalTimeline
+					{prototypes}
+					{coverage}
+					onUnpinClick={handleUnpinPrototype}
+				/>
+			</section>
+		{:else if prototypesLoading}
+			<div class="prototype-loading">Loading prototype coverage...</div>
+		{:else if prototypesError}
+			<div class="prototype-error">{prototypesError}</div>
+		{/if}
 
 		<!-- Tab Navigation -->
 		<div class="tabs">
@@ -960,5 +1036,60 @@
 			width: 100%;
 			justify-content: center;
 		}
+	}
+
+	/* Prototype Section */
+	.prototype-section {
+		margin: 1.5rem 0;
+		padding: 1rem;
+		background: #f9f9f9;
+		border: 1px solid #e0e0e0;
+		border-radius: 8px;
+	}
+
+	.prototype-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.prototype-header h3 {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+
+	.prototype-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.recompute-btn {
+		padding: 0.35rem 0.75rem;
+		font-size: 0.85rem;
+		background: #6c757d;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.recompute-btn:hover {
+		background: #5a6268;
+	}
+
+	.prototype-loading,
+	.prototype-error {
+		padding: 1rem;
+		text-align: center;
+		color: #666;
+		font-size: 0.9rem;
+	}
+
+	.prototype-error {
+		color: #dc3545;
 	}
 </style>
