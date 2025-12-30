@@ -49,6 +49,7 @@
 			<a href="/faces/clusters">Clusters</a>
 			<a href="/categories">Categories</a>
 			<a href="/training">Training</a>
+			<a href="/queues">Queues</a>
 			<a href="/vectors">Vectors</a>
 			<a href="/admin">Admin</a>
 		</nav>

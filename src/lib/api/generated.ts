@@ -2367,6 +2367,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/queues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Queues Overview
+         * @description Get overview of all queues.
+         *
+         *     Returns summary counts for all RQ queues including jobs in queue,
+         *     started/failed/finished counts, worker totals, and Redis connection status.
+         */
+        get: operations["get_queues_overview_api_v1_queues_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/queues/{queue_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Queue Detail
+         * @description Get detailed information for a specific queue.
+         *
+         *     Valid queues: training-high, training-normal, training-low, default
+         */
+        get: operations["get_queue_detail_api_v1_queues__queue_name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job Detail
+         * @description Get detailed information for a specific RQ job.
+         */
+        get: operations["get_job_detail_api_v1_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Workers
+         * @description Get information about all RQ workers.
+         */
+        get: operations["get_workers_api_v1_workers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2856,6 +2941,28 @@ export interface components {
              * Format: date-time
              */
             createdAt: string;
+        };
+        /**
+         * CurrentJobInfo
+         * @description Information about a worker's current job.
+         */
+        CurrentJobInfo: {
+            /**
+             * Jobid
+             * @description Job ID
+             */
+            jobId: string;
+            /**
+             * Funcname
+             * @description Function name
+             */
+            funcName: string;
+            /**
+             * Startedat
+             * Format: date-time
+             * @description Job start timestamp
+             */
+            startedAt: string;
         };
         /**
          * DeleteAllDataRequest
@@ -3634,11 +3741,178 @@ export interface components {
             skipped: number;
         };
         /**
-         * JobStatus
-         * @description Status enum for training jobs.
-         * @enum {string}
+         * JobDetailResponse
+         * @description Extended job information with additional details.
          */
-        JobStatus: "pending" | "running" | "completed" | "failed" | "cancelled";
+        JobDetailResponse: {
+            /**
+             * Id
+             * @description Job ID
+             */
+            id: string;
+            /**
+             * Funcname
+             * @description Function name
+             */
+            funcName: string;
+            /** @description Current job status */
+            status: components["schemas"]["image_search_service__api__queue_schemas__JobStatus"];
+            /**
+             * Queuename
+             * @description Queue name
+             */
+            queueName: string;
+            /**
+             * Args
+             * @description Job arguments
+             */
+            args?: string[];
+            /**
+             * Kwargs
+             * @description Job keyword arguments
+             */
+            kwargs?: {
+                [key: string]: string;
+            };
+            /**
+             * Createdat
+             * @description Job creation timestamp
+             */
+            createdAt?: string | null;
+            /**
+             * Enqueuedat
+             * @description Job enqueue timestamp
+             */
+            enqueuedAt?: string | null;
+            /**
+             * Startedat
+             * @description Job start timestamp
+             */
+            startedAt?: string | null;
+            /**
+             * Endedat
+             * @description Job end timestamp
+             */
+            endedAt?: string | null;
+            /**
+             * Timeout
+             * @description Job timeout in seconds
+             */
+            timeout?: number | null;
+            /**
+             * Result
+             * @description Job result (serialized)
+             */
+            result?: string | null;
+            /**
+             * Errormessage
+             * @description Error message if failed
+             */
+            errorMessage?: string | null;
+            /**
+             * Workername
+             * @description Worker name that processed job
+             */
+            workerName?: string | null;
+            /**
+             * Excinfo
+             * @description Exception traceback if failed
+             */
+            excInfo?: string | null;
+            /**
+             * Meta
+             * @description Job metadata
+             */
+            meta?: {
+                [key: string]: string;
+            };
+            /**
+             * Retrycount
+             * @description Number of retry attempts
+             * @default 0
+             */
+            retryCount: number;
+            /**
+             * Origin
+             * @description Queue origin
+             */
+            origin?: string | null;
+        };
+        /**
+         * JobInfo
+         * @description Basic job information.
+         */
+        JobInfo: {
+            /**
+             * Id
+             * @description Job ID
+             */
+            id: string;
+            /**
+             * Funcname
+             * @description Function name
+             */
+            funcName: string;
+            /** @description Current job status */
+            status: components["schemas"]["image_search_service__api__queue_schemas__JobStatus"];
+            /**
+             * Queuename
+             * @description Queue name
+             */
+            queueName: string;
+            /**
+             * Args
+             * @description Job arguments
+             */
+            args?: string[];
+            /**
+             * Kwargs
+             * @description Job keyword arguments
+             */
+            kwargs?: {
+                [key: string]: string;
+            };
+            /**
+             * Createdat
+             * @description Job creation timestamp
+             */
+            createdAt?: string | null;
+            /**
+             * Enqueuedat
+             * @description Job enqueue timestamp
+             */
+            enqueuedAt?: string | null;
+            /**
+             * Startedat
+             * @description Job start timestamp
+             */
+            startedAt?: string | null;
+            /**
+             * Endedat
+             * @description Job end timestamp
+             */
+            endedAt?: string | null;
+            /**
+             * Timeout
+             * @description Job timeout in seconds
+             */
+            timeout?: number | null;
+            /**
+             * Result
+             * @description Job result (serialized)
+             */
+            result?: string | null;
+            /**
+             * Errormessage
+             * @description Error message if failed
+             */
+            errorMessage?: string | null;
+            /**
+             * Workername
+             * @description Worker name that processed job
+             */
+            workerName?: string | null;
+        };
         /**
          * JobsSummary
          * @description Summary of jobs for training session.
@@ -4075,6 +4349,129 @@ export interface components {
             /** Items */
             items: components["schemas"]["PrototypeListItem"][];
             coverage: components["schemas"]["TemporalCoverage"];
+        };
+        /**
+         * QueueDetailResponse
+         * @description Detailed information about a specific queue.
+         */
+        QueueDetailResponse: {
+            /**
+             * Name
+             * @description Queue name
+             */
+            name: string;
+            /**
+             * Count
+             * @description Total number of jobs in queue
+             */
+            count: number;
+            /**
+             * Isempty
+             * @description Whether queue is empty
+             */
+            isEmpty: boolean;
+            /**
+             * Jobs
+             * @description List of jobs in queue
+             */
+            jobs: components["schemas"]["JobInfo"][];
+            /**
+             * Startedjobs
+             * @description Number of started jobs
+             */
+            startedJobs: number;
+            /**
+             * Failedjobs
+             * @description Number of failed jobs
+             */
+            failedJobs: number;
+            /**
+             * Page
+             * @description Current page number
+             */
+            page: number;
+            /**
+             * Pagesize
+             * @description Page size
+             */
+            pageSize: number;
+            /**
+             * Hasmore
+             * @description Whether more jobs exist
+             */
+            hasMore: boolean;
+        };
+        /**
+         * QueueSummary
+         * @description Summary information for a single queue.
+         */
+        QueueSummary: {
+            /**
+             * Name
+             * @description Queue name
+             */
+            name: string;
+            /**
+             * Count
+             * @description Total number of jobs in queue
+             */
+            count: number;
+            /**
+             * Isempty
+             * @description Whether queue is empty
+             */
+            isEmpty: boolean;
+            /**
+             * Startedcount
+             * @description Number of started jobs
+             */
+            startedCount: number;
+            /**
+             * Failedcount
+             * @description Number of failed jobs
+             */
+            failedCount: number;
+            /**
+             * Finishedcount
+             * @description Number of finished jobs
+             */
+            finishedCount: number;
+            /**
+             * Scheduledcount
+             * @description Number of scheduled jobs
+             */
+            scheduledCount: number;
+        };
+        /**
+         * QueuesOverviewResponse
+         * @description Overview of all queues and workers.
+         */
+        QueuesOverviewResponse: {
+            /**
+             * Queues
+             * @description List of queue summaries
+             */
+            queues: components["schemas"]["QueueSummary"][];
+            /**
+             * Totaljobs
+             * @description Total jobs across all queues
+             */
+            totalJobs: number;
+            /**
+             * Totalworkers
+             * @description Total number of workers
+             */
+            totalWorkers: number;
+            /**
+             * Workersbusy
+             * @description Number of busy workers
+             */
+            workersBusy: number;
+            /**
+             * Redisconnected
+             * @description Redis connection status
+             */
+            redisConnected: boolean;
         };
         /**
          * RecomputePrototypesRequest
@@ -4655,6 +5052,107 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /**
+         * WorkerInfo
+         * @description Information about a worker.
+         */
+        WorkerInfo: {
+            /**
+             * Name
+             * @description Worker name
+             */
+            name: string;
+            /** @description Worker state */
+            state: components["schemas"]["WorkerState"];
+            /**
+             * Queues
+             * @description Queues worker is listening to
+             */
+            queues: string[];
+            /** @description Currently executing job */
+            currentJob?: components["schemas"]["CurrentJobInfo"] | null;
+            /**
+             * Successfuljobcount
+             * @description Number of successful jobs
+             */
+            successfulJobCount: number;
+            /**
+             * Failedjobcount
+             * @description Number of failed jobs
+             */
+            failedJobCount: number;
+            /**
+             * Totalworkingtime
+             * @description Total working time in seconds
+             */
+            totalWorkingTime: number;
+            /**
+             * Birthdate
+             * Format: date-time
+             * @description Worker start time
+             */
+            birthDate: string;
+            /**
+             * Lastheartbeat
+             * Format: date-time
+             * @description Last heartbeat timestamp
+             */
+            lastHeartbeat: string;
+            /**
+             * Pid
+             * @description Process ID
+             */
+            pid: number;
+            /**
+             * Hostname
+             * @description Hostname
+             */
+            hostname: string;
+        };
+        /**
+         * WorkerState
+         * @description RQ worker state enumeration.
+         * @enum {string}
+         */
+        WorkerState: "idle" | "busy" | "suspended";
+        /**
+         * WorkersResponse
+         * @description List of workers with summary statistics.
+         */
+        WorkersResponse: {
+            /**
+             * Workers
+             * @description List of workers
+             */
+            workers: components["schemas"]["WorkerInfo"][];
+            /**
+             * Total
+             * @description Total number of workers
+             */
+            total: number;
+            /**
+             * Active
+             * @description Number of active (busy) workers
+             */
+            active: number;
+            /**
+             * Idle
+             * @description Number of idle workers
+             */
+            idle: number;
+        };
+        /**
+         * JobStatus
+         * @description RQ job status enumeration.
+         * @enum {string}
+         */
+        image_search_service__api__queue_schemas__JobStatus: "queued" | "started" | "deferred" | "finished" | "stopped" | "scheduled" | "canceled" | "failed";
+        /**
+         * JobStatus
+         * @description Status enum for training jobs.
+         * @enum {string}
+         */
+        image_search_service__db__models__JobStatus: "pending" | "running" | "completed" | "failed" | "cancelled";
     };
     responses: never;
     parameters: never;
@@ -5807,7 +6305,7 @@ export interface operations {
             query?: {
                 page?: number;
                 page_size?: number;
-                status?: components["schemas"]["JobStatus"] | null;
+                status?: components["schemas"]["image_search_service__db__models__JobStatus"] | null;
             };
             header?: never;
             path: {
@@ -7703,6 +8201,113 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_queues_overview_api_v1_queues_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueuesOverviewResponse"];
+                };
+            };
+        };
+    };
+    get_queue_detail_api_v1_queues__queue_name__get: {
+        parameters: {
+            query?: {
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Items per page */
+                pageSize?: number;
+            };
+            header?: never;
+            path: {
+                queue_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_detail_api_v1_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workers_api_v1_workers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkersResponse"];
                 };
             };
         };
