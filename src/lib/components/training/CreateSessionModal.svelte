@@ -4,6 +4,7 @@
 	import DirectoryBrowser from './DirectoryBrowser.svelte';
 	import CategorySelector from '../CategorySelector.svelte';
 	import CategoryCreateModal from '../CategoryCreateModal.svelte';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -11,6 +12,12 @@
 	}
 
 	let { onClose, onSessionCreated }: Props = $props();
+
+	// Storage keys for persisting last used values (per-user scope for future auth)
+	const STORAGE_KEYS = {
+		LAST_ROOT_PATH: 'training.lastRootPath',
+		LAST_CATEGORY_ID: 'training.lastCategoryId'
+	};
 
 	let sessionName = $state('');
 	let rootPath = $state('');
@@ -20,6 +27,28 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let showCategoryModal = $state(false);
+	let categorySelectorRef: any; // Component reference for refresh
+
+	// Load last-used values from localStorage on mount
+	onMount(() => {
+		try {
+			const lastRootPath = localStorage.getItem(STORAGE_KEYS.LAST_ROOT_PATH);
+			if (lastRootPath) {
+				rootPath = lastRootPath;
+			}
+
+			const lastCategoryId = localStorage.getItem(STORAGE_KEYS.LAST_CATEGORY_ID);
+			if (lastCategoryId) {
+				const categoryIdNum = parseInt(lastCategoryId, 10);
+				if (!isNaN(categoryIdNum)) {
+					categoryId = categoryIdNum;
+				}
+			}
+		} catch (err) {
+			// Ignore localStorage errors (private browsing, quota exceeded)
+			console.warn('Failed to load last-used values from localStorage:', err);
+		}
+	});
 
 	async function handleNextStep() {
 		if (!sessionName || !rootPath) {
@@ -56,6 +85,17 @@
 		error = null;
 
 		try {
+			// Save to localStorage for next time
+			try {
+				localStorage.setItem(STORAGE_KEYS.LAST_ROOT_PATH, rootPath);
+				if (categoryId !== null) {
+					localStorage.setItem(STORAGE_KEYS.LAST_CATEGORY_ID, categoryId.toString());
+				}
+			} catch (err) {
+				// Ignore save errors
+				console.warn('Failed to save last-used values to localStorage:', err);
+			}
+
 			const session = await createSession({
 				name: sessionName,
 				rootPath: rootPath,
@@ -74,6 +114,11 @@
 	function handleCategoryCreated(category: Category) {
 		categoryId = category.id;
 		showCategoryModal = false;
+
+		// Refresh the category dropdown to show the new category
+		if (categorySelectorRef?.refresh) {
+			categorySelectorRef.refresh();
+		}
 	}
 
 	function handleBack() {
@@ -123,6 +168,7 @@
 
 				<div class="form-group">
 					<CategorySelector
+						bind:this={categorySelectorRef}
 						selectedId={categoryId}
 						onSelect={(id) => (categoryId = id)}
 						onCreateNew={() => (showCategoryModal = true)}
@@ -197,12 +243,17 @@
 	.modal-content {
 		background-color: white;
 		border-radius: 8px;
-		max-width: 700px;
 		width: 90%;
 		max-height: 90vh;
 		display: flex;
 		flex-direction: column;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	}
+
+	@media (max-width: 480px) {
+		.modal-content {
+			width: 95%;
+		}
 	}
 
 	.modal-header {

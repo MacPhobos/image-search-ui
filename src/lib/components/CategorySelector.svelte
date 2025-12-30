@@ -25,8 +25,10 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
-	onMount(async () => {
+	async function loadCategories() {
 		try {
+			loading = true;
+			error = null;
 			const response = await listCategories(1, 100);
 			categories = response.items;
 		} catch (err) {
@@ -34,6 +36,15 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	// Public method to refresh categories (called after creating new category)
+	export function refresh() {
+		loadCategories();
+	}
+
+	onMount(() => {
+		loadCategories();
 	});
 
 	function handleChange(event: Event) {

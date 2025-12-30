@@ -13,16 +13,39 @@
 	// Ensure selectedSubdirs is always an array (defensive for undefined/null)
 	let safeSelectedSubdirs = $derived(selectedSubdirs ?? []);
 
-	let subdirs = $state<SubdirectoryInfo[]>([]);
+	// Extended SubdirectoryInfo with training status (will come from backend after deployment)
+	interface ExtendedSubdirectoryInfo extends SubdirectoryInfo {
+		trainedCount?: number;
+		lastTrainedAt?: string;
+		trainingStatus?: 'never' | 'partial' | 'complete';
+	}
+
+	let subdirs = $state<ExtendedSubdirectoryInfo[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let filterText = $state('');
+	let hideTrainedDirs = $state(false);
 
-	// Filtered subdirectories based on filter text
-	let filteredSubdirs = $derived(
-		filterText
-			? subdirs.filter((d) => d.path.toLowerCase().includes(filterText.toLowerCase()))
-			: subdirs
+	// Filtered subdirectories based on filter text and training status
+	let filteredSubdirs = $derived.by(() => {
+		let results = subdirs;
+
+		// Text filter
+		if (filterText) {
+			results = results.filter((d) => d.path.toLowerCase().includes(filterText.toLowerCase()));
+		}
+
+		// Training status filter (hide FULLY trained only, show partial)
+		if (hideTrainedDirs) {
+			results = results.filter((d) => d.trainingStatus !== 'complete');
+		}
+
+		return results;
+	});
+
+	// Count of fully trained directories for display
+	let fullyTrainedCount = $derived.by(() =>
+		subdirs.filter((d) => d.trainingStatus === 'complete').length
 	);
 
 	async function loadSubdirectories() {
@@ -66,6 +89,21 @@
 		selectedSubdirs = [];
 		onSelectionChange(selectedSubdirs);
 	}
+
+	function formatRelativeTime(isoString: string): string {
+		const date = new Date(isoString);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMins = Math.floor(diffMs / 60000);
+		const diffHours = Math.floor(diffMs / 3600000);
+		const diffDays = Math.floor(diffMs / 86400000);
+
+		if (diffMins < 60) return `${diffMins} min ago`;
+		if (diffHours < 24) return `${diffHours} hours ago`;
+		if (diffDays < 7) return `${diffDays} days ago`;
+
+		return date.toLocaleDateString();
+	}
 </script>
 
 <div class="directory-browser">
@@ -98,9 +136,19 @@
 				class="filter-input"
 				aria-label="Filter directories"
 			/>
-			{#if filterText}
+
+			<!-- Hide fully trained checkbox -->
+			<label class="checkbox-filter">
+				<input type="checkbox" bind:checked={hideTrainedDirs} />
+				<span>Hide fully trained directories</span>
+			</label>
+
+			{#if filterText || hideTrainedDirs}
 				<div class="filter-count">
 					Showing {filteredSubdirs.length} of {subdirs.length} directories
+					{#if hideTrainedDirs && fullyTrainedCount > 0}
+						({fullyTrainedCount} hidden)
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -119,15 +167,43 @@
 	{:else}
 		<div class="subdirs-list">
 			{#each filteredSubdirs as subdir}
-				<label class="subdir-item">
+				<label
+					class="subdir-item"
+					class:fully-trained={subdir.trainingStatus === 'complete'}
+					class:partially-trained={subdir.trainingStatus === 'partial'}
+				>
 					<input
 						type="checkbox"
 						checked={safeSelectedSubdirs.includes(subdir.path)}
 						onchange={() => toggleSubdir(subdir.path)}
 					/>
 					<div class="subdir-info">
-						<div class="subdir-path">{subdir.path}</div>
-						<div class="subdir-count">{subdir.imageCount} images</div>
+						<div class="subdir-header">
+							<span class="subdir-path">{subdir.path}</span>
+
+							{#if subdir.trainedCount && subdir.trainedCount > 0}
+								<span
+									class="training-badge"
+									class:complete={subdir.trainingStatus === 'complete'}
+								>
+									{#if subdir.trainingStatus === 'complete'}
+										✓ Fully Trained
+									{:else}
+										⚠ {subdir.trainedCount}/{subdir.imageCount} trained
+									{/if}
+								</span>
+							{/if}
+						</div>
+
+						<div class="subdir-meta">
+							<span class="image-count">{subdir.imageCount} images</span>
+
+							{#if subdir.lastTrainedAt}
+								<span class="last-trained">
+									Last trained: {formatRelativeTime(subdir.lastTrainedAt)}
+								</span>
+							{/if}
+						</div>
 					</div>
 				</label>
 			{/each}
@@ -213,6 +289,28 @@
 		color: #9ca3af;
 	}
 
+	.checkbox-filter {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 0.875rem;
+		color: #4b5563;
+		cursor: pointer;
+		user-select: none;
+		padding: 8px 0;
+		margin-top: 0.5rem;
+	}
+
+	.checkbox-filter input[type='checkbox'] {
+		cursor: pointer;
+		width: 16px;
+		height: 16px;
+	}
+
+	.checkbox-filter:hover {
+		color: #1f2937;
+	}
+
 	.filter-count {
 		margin-top: 0.5rem;
 		font-size: 0.8125rem;
@@ -244,31 +342,51 @@
 
 	.subdir-item {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		gap: 0.75rem;
 		padding: 0.75rem;
 		background-color: white;
 		border: 1px solid #e5e7eb;
 		border-radius: 4px;
 		cursor: pointer;
-		transition: background-color 0.2s;
+		transition: all 0.2s;
 	}
 
 	.subdir-item:hover {
 		background-color: #f9fafb;
+		border-color: #d1d5db;
+	}
+
+	/* Training status background colors */
+	.subdir-item.fully-trained {
+		background-color: #f0fdf4;
+		border-left: 3px solid #22c55e;
+	}
+
+	.subdir-item.partially-trained {
+		background-color: #fffbeb;
+		border-left: 3px solid #f59e0b;
 	}
 
 	.subdir-item input[type='checkbox'] {
 		width: 18px;
 		height: 18px;
 		cursor: pointer;
+		margin-top: 2px;
 	}
 
 	.subdir-info {
 		flex: 1;
 		display: flex;
-		justify-content: space-between;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.subdir-header {
+		display: flex;
 		align-items: center;
+		gap: 8px;
+		justify-content: space-between;
 	}
 
 	.subdir-path {
@@ -277,9 +395,38 @@
 		font-weight: 500;
 	}
 
-	.subdir-count {
-		font-size: 0.8125rem;
+	.training-badge {
+		font-size: 0.75rem;
+		padding: 2px 8px;
+		border-radius: 12px;
+		background-color: #fef3c7;
+		color: #92400e;
+		font-weight: 500;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		white-space: nowrap;
+	}
+
+	.training-badge.complete {
+		background-color: #d1fae5;
+		color: #065f46;
+	}
+
+	.subdir-meta {
+		display: flex;
+		gap: 12px;
+		font-size: 0.875rem;
 		color: #6b7280;
+	}
+
+	.image-count {
+		font-size: 0.8125rem;
+	}
+
+	.last-trained {
+		font-size: 0.8125rem;
+		font-style: italic;
 	}
 
 	.selection-summary {
