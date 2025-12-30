@@ -37,6 +37,9 @@
 	let assignmentSubmitting = $state(false);
 	let assignmentError = $state<string | null>(null);
 
+	// Face highlight state
+	let highlightedFaceId = $state<string | null>(null);
+
 	// Face suggestions state
 	interface FaceSuggestionsState {
 		suggestions: FaceSuggestionItem[];
@@ -102,7 +105,7 @@
 	}
 
 	// Create FaceBox array for all faces in image
-	const allFaceBoxes = $derived<FaceBox[]>(() => {
+	const allFaceBoxes = $derived<FaceBox[]>((() => {
 		if (!suggestion) return [];
 
 		return allFaces.map((face, index) => {
@@ -145,7 +148,7 @@
 				suggestionConfidence
 			};
 		});
-	});
+	})());
 
 	// Derived states for assignment panel
 	let filteredPersons = $derived(() => {
@@ -433,6 +436,14 @@
 			assignmentSubmitting = false;
 		}
 	}
+
+	function handleHighlightFace(faceId: string) {
+		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+	}
+
+	function handleFaceClick(faceId: string) {
+		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -457,8 +468,10 @@
 					{#if fullImageUrl()}
 						<ImageWithFaceBoundingBoxes
 							imageUrl={fullImageUrl() ?? ''}
-							faces={allFaceBoxes()}
+							faces={allFaceBoxes}
 							primaryFaceId={suggestion.faceInstanceId}
+							highlightedFaceId={highlightedFaceId}
+							onFaceClick={handleFaceClick}
 							maxHeight="75vh"
 						/>
 					{:else}
@@ -486,27 +499,42 @@
 								{@const suggestionState = faceSuggestions.get(face.id)}
 								{@const topSuggestion = suggestionState?.suggestions?.[0]}
 
-								<li class="face-item">
+								<li
+									class="face-item"
+									class:highlighted={highlightedFaceId === face.id}
+									style="--highlight-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
+								>
 									<div class="face-item-content">
-										<div class="face-info">
-											<span class="face-name">
-												{#if isPrimary}
-													<span class="primary-badge">Primary</span>
-												{/if}
-												{getFaceLabel(face)}
-												{#if isPrimary}
-													<span class="confidence-text">
-														({confidencePercent}%)
-													</span>
-												{/if}
-											</span>
-											<span class="face-meta">
-												Conf: {(face.detectionConfidence * 100).toFixed(0)}%
-												{#if face.qualityScore !== null}
-													| Q: {face.qualityScore.toFixed(1)}
-												{/if}
-											</span>
-										</div>
+										<button
+											type="button"
+											class="face-item-button"
+											onclick={() => handleHighlightFace(face.id)}
+											aria-label="Highlight face of {getFaceLabel(face)}"
+										>
+											<span
+												class="face-indicator"
+												style="background-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
+											></span>
+											<div class="face-info">
+												<span class="face-name">
+													{#if isPrimary}
+														<span class="primary-badge">Primary</span>
+													{/if}
+													{getFaceLabel(face)}
+													{#if isPrimary}
+														<span class="confidence-text">
+															({confidencePercent}%)
+														</span>
+													{/if}
+												</span>
+												<span class="face-meta">
+													Conf: {(face.detectionConfidence * 100).toFixed(0)}%
+													{#if face.qualityScore !== null}
+														| Q: {face.qualityScore.toFixed(1)}
+													{/if}
+												</span>
+											</div>
+										</button>
 
 										<!-- Assign button for non-primary unknown faces -->
 										{#if !isPrimary && !face.personName && assigningFaceId !== face.id}
@@ -831,18 +859,49 @@
 		border-radius: 6px;
 		border: 1px solid #e5e7eb;
 		background: #fafafa;
-		transition: background-color 0.2s;
+		transition:
+			background-color 0.2s,
+			box-shadow 0.2s;
 	}
 
 	.face-item:hover {
 		background-color: #f3f4f6;
 	}
 
+	.face-item.highlighted {
+		background-color: #e0f2fe;
+		box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
+	}
+
 	.face-item-content {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+	}
+
+	.face-item-button {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		flex: 1;
 		padding: 0.75rem;
+		border: none;
+		background: none;
+		cursor: pointer;
+		text-align: left;
+		font: inherit;
+		color: inherit;
+	}
+
+	.face-item-button:hover {
+		background-color: #f1f5f9;
+	}
+
+	.face-indicator {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		flex-shrink: 0;
 	}
 
 	.face-info {
