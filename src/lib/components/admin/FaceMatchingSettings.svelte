@@ -37,7 +37,7 @@
 	});
 
 	let clusteringConfig = $state<UnknownFaceClusteringConfig>({
-		minConfidence: 0.70,
+		minConfidence: 0.50,
 		minClusterSize: 2
 	});
 
@@ -393,7 +393,7 @@
 							<input
 								id="clusterMinConfidence"
 								type="range"
-								min="0.70"
+								min="0.60"
 								max="0.95"
 								step="0.05"
 								bind:value={clusteringConfig.minConfidence}
