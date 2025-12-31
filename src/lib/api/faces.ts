@@ -1181,3 +1181,33 @@ export async function recomputePrototypes(
 		}
 	);
 }
+
+// ============ Batch Thumbnail Types ============
+
+/** Request for batch thumbnail retrieval. */
+export interface BatchThumbnailRequest {
+	assetIds: number[];
+}
+
+/** Response containing batch thumbnails as data URIs. */
+export interface BatchThumbnailResponse {
+	thumbnails: Record<string, string | null>;
+	found: number;
+	notFound: number[];
+}
+
+// ============ Batch Thumbnail API Function ============
+
+/**
+ * Fetch multiple thumbnails in a single request.
+ * @param assetIds - Array of asset IDs to fetch thumbnails for (max 100)
+ * @returns Promise with thumbnails map and stats
+ */
+export async function getBatchThumbnails(
+	assetIds: number[]
+): Promise<BatchThumbnailResponse> {
+	return apiRequest<BatchThumbnailResponse>('/api/v1/images/thumbnails/batch', {
+		method: 'POST',
+		body: JSON.stringify({ assetIds })
+	});
+}

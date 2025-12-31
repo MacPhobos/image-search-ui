@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import type { FaceSuggestion, SuggestionGroup } from '$lib/api/faces';
 	import {
 		listGroupedSuggestions,
@@ -12,6 +12,7 @@
 	} from '$lib/api/faces';
 	import SuggestionGroupCard from '$lib/components/faces/SuggestionGroupCard.svelte';
 	import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
+	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 
 	let groupedResponse = $state<GroupedSuggestionsResponse | null>(null);
 	let settings = $state<FaceSuggestionSettings>({ groupsPerPage: 10, itemsPerGroup: 20 });
@@ -149,6 +150,26 @@
 		}
 	}
 
+	/**
+	 * Extract all asset IDs from suggestions for batch thumbnail loading.
+	 * Returns unique asset IDs from all faceThumbnailUrls.
+	 */
+	function extractAssetIds(response: GroupedSuggestionsResponse | null): number[] {
+		if (!response) return [];
+		const assetIds: number[] = [];
+		for (const group of response.groups) {
+			for (const suggestion of group.suggestions) {
+				if (suggestion.faceThumbnailUrl) {
+					const match = suggestion.faceThumbnailUrl.match(/\/images\/(\d+)\/thumbnail/);
+					if (match) {
+						assetIds.push(parseInt(match[1], 10));
+					}
+				}
+			}
+		}
+		return [...new Set(assetIds)]; // Remove duplicates
+	}
+
 	onMount(async () => {
 		try {
 			settings = await getFaceSuggestionSettings();
@@ -159,10 +180,25 @@
 		await loadSuggestions();
 	});
 
+	onDestroy(() => {
+		// Clear cache when page unmounts
+		thumbnailCache.clear();
+	});
+
 	$effect(() => {
 		// Reload when filter or page changes
 		if (statusFilter !== undefined || page) {
 			loadSuggestions();
+		}
+	});
+
+	$effect(() => {
+		// Batch-load thumbnails when suggestions change
+		if (groupedResponse) {
+			const assetIds = extractAssetIds(groupedResponse);
+			if (assetIds.length > 0) {
+				thumbnailCache.fetchBatch(assetIds);
+			}
 		}
 	});
 

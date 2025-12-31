@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { FaceSuggestion } from '$lib/api/faces';
 	import FaceThumbnail from './FaceThumbnail.svelte';
+	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 
 	interface Props {
 		suggestion: FaceSuggestion;
@@ -19,6 +20,17 @@
 				? '#eab308' // yellow-500
 				: '#f97316' // orange-500
 	);
+
+	// Extract asset ID from faceThumbnailUrl (e.g., /api/v1/images/123/thumbnail)
+	const assetId = $derived.by(() => {
+		if (!suggestion.faceThumbnailUrl) return null;
+		const match = suggestion.faceThumbnailUrl.match(/\/images\/(\d+)\/thumbnail/);
+		return match ? parseInt(match[1], 10) : null;
+	});
+
+	// Get cached thumbnail data URI
+	const cachedThumbnail = $derived(assetId ? thumbnailCache.get(assetId) : undefined);
+	const isLoading = $derived(assetId ? thumbnailCache.isPending(assetId) : false);
 
 	function handleCheckbox(e: Event) {
 		e.stopPropagation();
@@ -64,6 +76,8 @@
 	<!-- Face thumbnail -->
 	<FaceThumbnail
 		thumbnailUrl={suggestion.faceThumbnailUrl || ''}
+		dataUri={cachedThumbnail}
+		isLoading={isLoading}
 		size={128}
 		alt="Face for {suggestion.personName || 'Unknown'}"
 		square={true}

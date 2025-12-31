@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.8.0
-> **Last Updated**: 2025-12-30
+> **Version**: 1.9.0
+> **Last Updated**: 2025-12-31
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -424,6 +424,56 @@ Trigger a directory scan to discover new assets.
 Remove asset from index (does not delete source file).
 
 **Response** `204 No Content`
+
+#### `POST /api/v1/images/thumbnails/batch`
+
+Fetch multiple thumbnails in a single request, returning base64-encoded data URIs.
+
+**Request Body**
+
+```json
+{
+	"assetIds": [1, 2, 3, 4, 5]
+}
+```
+
+| Field      | Type      | Required | Description                      |
+| ---------- | --------- | -------- | -------------------------------- |
+| `assetIds` | integer[] | Yes      | Array of asset IDs (max: 100)    |
+
+**Response** `200 OK`
+
+```json
+{
+	"thumbnails": {
+		"1": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+		"2": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+		"3": null
+	},
+	"found": 2,
+	"notFound": [3]
+}
+```
+
+| Field        | Type      | Description                                                   |
+| ------------ | --------- | ------------------------------------------------------------- |
+| `thumbnails` | object    | Map of asset ID (string) to base64 data URI or null if not found |
+| `found`      | integer   | Count of successfully retrieved thumbnails                    |
+| `notFound`   | integer[] | Array of asset IDs that were not found or failed             |
+
+**Response** `422 Unprocessable Entity` - Validation error
+
+```json
+{
+	"detail": [
+		{
+			"loc": ["body", "assetIds"],
+			"msg": "ensure this value has at most 100 items",
+			"type": "value_error.list.max_items"
+		}
+	]
+}
+```
 
 ---
 
@@ -2039,6 +2089,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses. |
 | 1.8.0   | 2025-12-30 | Added Face Clusters section with GET /api/v1/faces/clusters endpoint supporting optional filtering by min_confidence and min_cluster_size query parameters. Enhanced ClusterSummary schema with clusterConfidence (average pairwise similarity) and representativeFaceId (highest quality face) fields. Added Configuration section with GET /api/v1/config/face-clustering-unknown and PUT /api/v1/config/face-clustering-unknown endpoints for managing unknown face clustering display settings. |
 | 1.7.0   | 2025-12-30 | Added Queue Monitoring section with 3 new endpoints: GET /api/v1/queues (overview), GET /api/v1/queues/{queue_name} (queue details), GET /api/v1/jobs/{job_id} (job details), GET /api/v1/workers (worker information). Added QUEUE_NOT_FOUND error code. Read-only endpoints for monitoring RQ queue status, jobs, and worker health. |
 | 1.6.0   | 2025-12-29 | Added Temporal Prototypes section with 5 new endpoints: POST /api/v1/faces/persons/{personId}/prototypes/pin (pin prototype), DELETE /api/v1/faces/persons/{personId}/prototypes/{prototypeId}/pin (unpin), GET /api/v1/faces/persons/{personId}/prototypes (list), GET /api/v1/faces/persons/{personId}/temporal-coverage (coverage report), POST /api/v1/faces/persons/{personId}/prototypes/recompute (recompute). Added Prototype, TemporalCoverage, and PrototypeListResponse schemas. Added PROTOTYPE_NOT_FOUND, PROTOTYPE_QUOTA_EXCEEDED, TEMPORAL_QUOTA_EXCEEDED, and FACE_PERSON_MISMATCH error codes. Documented age era buckets (infant, child, teen, young_adult, adult, senior) and prototype roles (primary, temporal, exemplar, fallback). |

@@ -15,6 +15,10 @@
 		class?: string;
 		/** Whether to show a square instead of circle */
 		square?: boolean;
+		/** Base64 data URI (takes precedence over thumbnailUrl) */
+		dataUri?: string | null;
+		/** Show loading state */
+		isLoading?: boolean;
 	}
 
 	let {
@@ -23,12 +27,16 @@
 		size = 64,
 		alt = 'Face',
 		class: className = '',
-		square = false
+		square = false,
+		dataUri = null,
+		isLoading = false
 	}: Props = $props();
 
 	let hasError = $state(false);
 
 	function getImageUrl(): string {
+		// Data URI takes precedence over thumbnailUrl
+		if (dataUri) return dataUri;
 		if (!thumbnailUrl) return '';
 		// If thumbnailUrl is already absolute, use it directly
 		if (thumbnailUrl.startsWith('http://') || thumbnailUrl.startsWith('https://')) {
@@ -76,7 +84,14 @@
 	role="img"
 	aria-label={alt}
 >
-	{#if hasError || !thumbnailUrl}
+	{#if isLoading}
+		<div class="loading-spinner">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
+				<path d="M12 2 A10 10 0 0 1 22 12" stroke-linecap="round" />
+			</svg>
+		</div>
+	{:else if hasError || !thumbnailUrl}
 		<div class="placeholder">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<circle cx="12" cy="8" r="4" />
@@ -129,5 +144,30 @@
 		width: 50%;
 		height: 50%;
 		opacity: 0.8;
+	}
+
+	.loading-spinner {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+		color: #6366f1;
+	}
+
+	.loading-spinner svg {
+		width: 50%;
+		height: 50%;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>
