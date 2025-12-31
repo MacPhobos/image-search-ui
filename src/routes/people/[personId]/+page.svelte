@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes, toAbsoluteUrl } from '$lib/api/faces';
+	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes, pinPrototype, toAbsoluteUrl } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
 	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
-	import type { Person, Prototype, TemporalCoverage } from '$lib/types';
+	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
 
@@ -33,6 +33,11 @@
 	let prototypesLoading = $state(true);
 	let prototypesError = $state<string | null>(null);
 	let imageErrors = $state<Set<string>>(new Set());
+
+	// Pin prototype state
+	let pinningPrototypeId = $state<string | null>(null);
+	let selectedPinEra = $state<AgeEraBucket | null>(null);
+	let pinningInProgress = $state(false);
 
 	// Merge modal state
 	let showMergeModal = $state(false);
@@ -266,6 +271,55 @@
 		}
 	}
 
+	// Pin prototype handlers
+	const ageEras: { value: AgeEraBucket; label: string }[] = [
+		{ value: 'infant', label: 'Infant (0-3)' },
+		{ value: 'child', label: 'Child (4-12)' },
+		{ value: 'teen', label: 'Teen (13-19)' },
+		{ value: 'young_adult', label: 'Young Adult (20-35)' },
+		{ value: 'adult', label: 'Adult (36-55)' },
+		{ value: 'senior', label: 'Senior (56+)' }
+	];
+
+	function startGridPinning(prototypeId: string) {
+		pinningPrototypeId = prototypeId;
+		selectedPinEra = null;
+	}
+
+	function cancelGridPinning() {
+		pinningPrototypeId = null;
+		selectedPinEra = null;
+	}
+
+	async function handlePinPrototypeFromGrid() {
+		if (!pinningPrototypeId || !selectedPinEra) return;
+
+		const prototype = prototypes.find((p) => p.id === pinningPrototypeId);
+		if (!prototype?.faceInstanceId) {
+			alert('Cannot pin: prototype has no face instance');
+			return;
+		}
+
+		pinningInProgress = true;
+		try {
+			await pinPrototype(personId, prototype.faceInstanceId, {
+				ageEraBucket: selectedPinEra,
+				role: 'temporal'
+			});
+
+			// Reset state
+			cancelGridPinning();
+
+			// Refresh prototypes
+			await loadPrototypes();
+		} catch (err) {
+			console.error('Failed to pin prototype:', err);
+			alert('Failed to pin as prototype');
+		} finally {
+			pinningInProgress = false;
+		}
+	}
+
 	function handleImageError(prototypeId: string) {
 		const newErrors = new Set(imageErrors);
 		newErrors.add(prototypeId);
@@ -491,45 +545,93 @@
 							{:else}
 								<div class="prototype-grid">
 									{#each prototypes as proto}
-										<button
-											type="button"
-											class="prototype-card"
-											class:pinned={proto.isPinned}
-											onclick={() => handlePrototypeClick(proto)}
-											onkeydown={(e) => e.key === 'Enter' && handlePrototypeClick(proto)}
-											aria-label="View photo for {proto.ageEraBucket || 'unknown'} era prototype"
-										>
-											<!-- Face thumbnail -->
-											<div class="proto-thumbnail">
-												{#if proto.thumbnailUrl}
-													<img
-														src={toAbsoluteUrl(proto.thumbnailUrl)}
-														alt="Prototype face for {proto.ageEraBucket || 'unknown'} era"
-														loading="lazy"
-														onerror={() => handleImageError(proto.id)}
-													/>
-												{:else}
-													<div class="no-thumbnail">No image</div>
-												{/if}
-											</div>
+										<div class="prototype-card-wrapper" class:pinned={proto.isPinned}>
+											<button
+												type="button"
+												class="prototype-card"
+												class:pinned={proto.isPinned}
+												onclick={() => handlePrototypeClick(proto)}
+												onkeydown={(e) => e.key === 'Enter' && handlePrototypeClick(proto)}
+												aria-label="View photo for {proto.ageEraBucket || 'unknown'} era prototype"
+											>
+												<!-- Face thumbnail -->
+												<div class="proto-thumbnail">
+													{#if proto.thumbnailUrl}
+														<img
+															src={toAbsoluteUrl(proto.thumbnailUrl)}
+															alt="Prototype face for {proto.ageEraBucket || 'unknown'} era"
+															loading="lazy"
+															onerror={() => handleImageError(proto.id)}
+														/>
+													{:else}
+														<div class="no-thumbnail">No image</div>
+													{/if}
+												</div>
 
-											<!-- Metadata -->
-											<div class="proto-info">
-												<span class="proto-role">{proto.role}</span>
-												{#if proto.ageEraBucket}
-													<span class="proto-era">{proto.ageEraBucket.replace('_', ' ')}</span>
+												<!-- Metadata -->
+												<div class="proto-info">
+													<span class="proto-role">{proto.role}</span>
+													{#if proto.ageEraBucket}
+														<span class="proto-era">{proto.ageEraBucket.replace('_', ' ')}</span>
+													{/if}
+													{#if proto.isPinned}
+														<span class="proto-pinned">📌</span>
+													{/if}
+												</div>
+												<div class="proto-quality">
+													Quality: {proto.qualityScore ? (proto.qualityScore * 100).toFixed(0) + '%' : 'N/A'}
+												</div>
+												{#if proto.decadeBucket}
+													<div class="proto-decade">{proto.decadeBucket}</div>
 												{/if}
-												{#if proto.isPinned}
-													<span class="proto-pinned">📌</span>
-												{/if}
-											</div>
-											<div class="proto-quality">
-												Quality: {proto.qualityScore ? (proto.qualityScore * 100).toFixed(0) + '%' : 'N/A'}
-											</div>
-											{#if proto.decadeBucket}
-												<div class="proto-decade">{proto.decadeBucket}</div>
+											</button>
+
+											<!-- Pin functionality for unpinned prototypes -->
+											{#if !proto.isPinned}
+												<div class="pin-prototype-section">
+													{#if pinningPrototypeId === proto.id}
+														<div class="pin-options">
+															<label>
+																Age Era:
+																<select bind:value={selectedPinEra}>
+																	<option value={null} disabled selected>Select age era...</option>
+																	{#each ageEras as era}
+																		<option value={era.value}>{era.label}</option>
+																	{/each}
+																</select>
+															</label>
+															<div class="pin-actions">
+																<button
+																	type="button"
+																	class="pin-confirm-btn"
+																	onclick={handlePinPrototypeFromGrid}
+																	disabled={pinningInProgress || !selectedPinEra}
+																>
+																	{pinningInProgress ? 'Pinning...' : 'Confirm'}
+																</button>
+																<button
+																	type="button"
+																	class="pin-cancel-btn"
+																	onclick={cancelGridPinning}
+																	disabled={pinningInProgress}
+																>
+																	Cancel
+																</button>
+															</div>
+														</div>
+													{:else}
+														<button
+															type="button"
+															class="pin-prototype-btn"
+															onclick={() => startGridPinning(proto.id)}
+															title="Pin this prototype to a specific age era"
+														>
+															📌 Pin
+														</button>
+													{/if}
+												</div>
 											{/if}
-										</button>
+										</div>
 									{/each}
 								</div>
 							{/if}
@@ -1322,5 +1424,106 @@
 
 	.prototype-error {
 		color: #dc3545;
+	}
+
+	/* Pin prototype styles */
+	.prototype-card-wrapper {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.pin-prototype-section {
+		margin-top: 0.5rem;
+	}
+
+	.pin-prototype-btn {
+		width: 100%;
+		padding: 0.35rem 0.5rem;
+		font-size: 0.85rem;
+		background: #2196F3;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.pin-prototype-btn:hover {
+		background: #1976D2;
+	}
+
+	.pin-options {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		background: #f5f5f5;
+		border-radius: 4px;
+		border: 1px solid #ddd;
+	}
+
+	.pin-options label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.85rem;
+		color: #333;
+	}
+
+	.pin-options select {
+		padding: 0.35rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 0.85rem;
+		background: white;
+	}
+
+	.pin-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.pin-confirm-btn {
+		flex: 1;
+		padding: 0.35rem 0.5rem;
+		font-size: 0.85rem;
+		background: #28a745;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.pin-confirm-btn:hover:not(:disabled) {
+		background: #218838;
+	}
+
+	.pin-confirm-btn:disabled {
+		background: #6c757d;
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+
+	.pin-cancel-btn {
+		flex: 1;
+		padding: 0.35rem 0.5rem;
+		font-size: 0.85rem;
+		background: #6c757d;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.pin-cancel-btn:hover:not(:disabled) {
+		background: #5a6268;
+	}
+
+	.pin-cancel-btn:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
 	}
 </style>
