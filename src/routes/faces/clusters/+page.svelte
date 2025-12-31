@@ -49,8 +49,8 @@
 			config = await getUnknownClusteringConfig();
 		} catch (err) {
 			console.error('Failed to load configuration:', err);
-			// Use default values if config load fails
-			config = { minConfidence: 0.85, minClusterSize: 5 };
+			// Use default values if config load fails (more permissive)
+			config = { minConfidence: 0.70, minClusterSize: 2 };
 		}
 		loadClusters(true);
 	});
@@ -126,7 +126,7 @@
 		<h1>Unknown Faces</h1>
 		<p class="subtitle">
 			Review and label face clusters to identify people in your photos. Showing clusters with at
-			least {config?.minClusterSize ?? 5} faces and {((config?.minConfidence ?? 0.85) * 100).toFixed(0)}%
+			least {config?.minClusterSize ?? 2} faces and {((config?.minConfidence ?? 0.70) * 100).toFixed(0)}%
 			similarity.
 		</p>
 	</header>

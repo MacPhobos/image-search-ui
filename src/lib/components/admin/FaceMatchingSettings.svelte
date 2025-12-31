@@ -37,8 +37,8 @@
 	});
 
 	let clusteringConfig = $state<UnknownFaceClusteringConfig>({
-		minConfidence: 0.85,
-		minClusterSize: 5
+		minConfidence: 0.70,
+		minClusterSize: 2
 	});
 
 	let loading = $state(false);
