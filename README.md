@@ -1,5 +1,33 @@
 # Image Search UI
 
+## Why
+
+- You might have accumulated hundreds of thousands of images over time. Finding the right one is a pain. 
+- You also might not care to use expensive cloud services for image storage and search.
+- You might want to keep your images private.
+- Do all of this on your local machine without using any external LLMs or other services.
+- Be able to:
+  - Do semantic search on images using natural language queries like: "Sunset over the ocean"
+  - Detect faces and assign them to a specific person
+  - Do a search by person name and semantic query at the same time: "Mac + Sunset over the ocean"
+
+## Why
+
+Managing a large personal photo library is hard: filenames, folders, and timestamps don’t describe what’s \*in\* an image. Once you have tens (or hundreds) of thousands of photos, finding “that one shot” becomes slow and frustrating.
+
+This project provides a local\-first UI for exploring and searching your image collection without paying for cloud services or sending your data to third parties.
+
+It lets you:
+
+- Run semantic image search using natural language queries (e\.g\. `Sunset over the ocean`)
+- Filter results by detected people (face grouping / person assignment)
+- Combine filters (e\.g\. `Mac + Sunset over the ocean`)
+- Keep everything on your own machine for privacy and offline use
+- Use a simple SvelteKit dashboard that talks to a backend API (configured via `VITE_API_BASE_URL`)
+- Avoid external LLMs or hosted services for core functionality
+
+
+## Stack
 SvelteKit + TypeScript dashboard for image search.
 
 ## Quick Start
