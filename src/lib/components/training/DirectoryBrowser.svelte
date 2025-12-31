@@ -17,7 +17,7 @@
 	interface ExtendedSubdirectoryInfo extends SubdirectoryInfo {
 		trainedCount?: number;
 		lastTrainedAt?: string;
-		trainingStatus?: 'never' | 'partial' | 'complete';
+		trainingStatus?: 'never' | 'partial' | 'complete' | 'in_progress';
 	}
 
 	let subdirs = $state<ExtendedSubdirectoryInfo[]>([]);
@@ -35,7 +35,7 @@
 			results = results.filter((d) => d.path.toLowerCase().includes(filterText.toLowerCase()));
 		}
 
-		// Training status filter (hide FULLY trained only, show partial)
+		// Training status filter (hide FULLY trained only, show partial and in_progress)
 		if (hideTrainedDirs) {
 			results = results.filter((d) => d.trainingStatus !== 'complete');
 		}
@@ -171,6 +171,7 @@
 					class="subdir-item"
 					class:fully-trained={subdir.trainingStatus === 'complete'}
 					class:partially-trained={subdir.trainingStatus === 'partial'}
+					class:in-progress={subdir.trainingStatus === 'in_progress'}
 				>
 					<input
 						type="checkbox"
@@ -181,7 +182,15 @@
 						<div class="subdir-header">
 							<span class="subdir-path">{subdir.path}</span>
 
-							{#if subdir.trainedCount && subdir.trainedCount > 0}
+							{#if subdir.trainingStatus === 'in_progress'}
+								<span class="training-badge in-progress" aria-label="Training in progress">
+									<svg class="spinner-icon" viewBox="0 0 24 24" fill="none">
+										<circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+										<circle class="spinner-head" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+									</svg>
+									Training...
+								</span>
+							{:else if subdir.trainedCount && subdir.trainedCount > 0}
 								<span
 									class="training-badge"
 									class:complete={subdir.trainingStatus === 'complete'}
@@ -368,6 +377,11 @@
 		border-left: 3px solid #f59e0b;
 	}
 
+	.subdir-item.in-progress {
+		background-color: #eff6ff;
+		border-left: 3px solid #3b82f6;
+	}
+
 	.subdir-item input[type='checkbox'] {
 		width: 18px;
 		height: 18px;
@@ -411,6 +425,46 @@
 	.training-badge.complete {
 		background-color: #d1fae5;
 		color: #065f46;
+	}
+
+	.training-badge.in-progress {
+		background-color: #dbeafe;
+		color: #1e40af;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.7;
+		}
+	}
+
+	.spinner-icon {
+		width: 12px;
+		height: 12px;
+		animation: spin 1s linear infinite;
+	}
+
+	.spinner-track {
+		opacity: 0.25;
+	}
+
+	.spinner-head {
+		transform-origin: center;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.subdir-meta {
