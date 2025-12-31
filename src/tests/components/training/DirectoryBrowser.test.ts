@@ -13,8 +13,8 @@ const mockSubdirs: SubdirectoryInfo[] = [
 
 describe('DirectoryBrowser - Filter Functionality', () => {
 	beforeEach(() => {
-		// Mock the API response for directory listing
-		mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fphotos', mockSubdirs);
+		// Mock the API response for directory listing (with include_training_status=true)
+		mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fphotos&include_training_status=true', mockSubdirs);
 	});
 
 	describe('Filter input rendering', () => {
@@ -61,7 +61,7 @@ describe('DirectoryBrowser - Filter Functionality', () => {
 		});
 
 		it('should not render filter input when no directories exist', async () => {
-			mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fempty', []);
+			mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fempty&include_training_status=true', []);
 
 			render(DirectoryBrowser, {
 				props: {

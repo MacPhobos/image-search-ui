@@ -136,9 +136,17 @@ export async function scanDirectory(
 
 /**
  * List subdirectories at a given path.
+ * @param path - Root directory path
+ * @param includeTrainingStatus - Whether to include training status metadata (default: true)
  */
-export async function listDirectories(path: string): Promise<SubdirectoryInfo[]> {
-	const params = new URLSearchParams({ path: path.trim() });
+export async function listDirectories(
+	path: string,
+	includeTrainingStatus: boolean = true
+): Promise<SubdirectoryInfo[]> {
+	const params = new URLSearchParams({
+		path: path.trim(),
+		include_training_status: includeTrainingStatus.toString()
+	});
 	// API returns array directly, not wrapped in an object
 	return apiRequest<SubdirectoryInfo[]>(`/api/v1/training/directories?${params.toString()}`);
 }
