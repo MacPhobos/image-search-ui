@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { listUnifiedPeople } from '$lib/api/faces';
 	import type { UnifiedPeopleListResponse, UnifiedPersonResponse } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import UnifiedPersonCard from '$lib/components/faces/UnifiedPersonCard.svelte';
+	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 
 	// State
 	let loading = $state(true);
@@ -73,8 +74,30 @@
 		goto(`/faces/clusters/${person.id}?action=label`);
 	}
 
+	/**
+	 * Extract all asset IDs from people for batch thumbnail loading.
+	 * Returns unique asset IDs from all thumbnailUrls.
+	 */
+	function extractAssetIds(people: UnifiedPersonResponse[]): number[] {
+		const ids: number[] = [];
+		for (const person of people) {
+			if (person.thumbnailUrl) {
+				const match = person.thumbnailUrl.match(/\/images\/(\d+)\/thumbnail/);
+				if (match) {
+					ids.push(parseInt(match[1], 10));
+				}
+			}
+		}
+		return [...new Set(ids)]; // Remove duplicates
+	}
+
 	onMount(() => {
 		loadPeople();
+	});
+
+	onDestroy(() => {
+		// Clear cache when page unmounts
+		thumbnailCache.clear();
 	});
 
 	// Reload when filters change
@@ -86,6 +109,16 @@
 		void sortBy;
 		void sortOrder;
 		loadPeople();
+	});
+
+	// Batch-load thumbnails when people data changes
+	$effect(() => {
+		if (data && data.people.length > 0) {
+			const assetIds = extractAssetIds(data.people);
+			if (assetIds.length > 0) {
+				thumbnailCache.fetchBatch(assetIds);
+			}
+		}
 	});
 </script>
 

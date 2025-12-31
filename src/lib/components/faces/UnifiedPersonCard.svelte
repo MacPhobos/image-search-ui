@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { UnifiedPersonResponse } from '$lib/api/faces';
+	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 
 	interface Props {
 		/** Person data (identified, unidentified, or noise) */
@@ -21,6 +22,17 @@
 
 	// Only add tabindex for clickable elements
 	let tabIndexAttr = $derived(isClickable ? { tabindex: 0 } : {});
+
+	// Extract asset ID from thumbnailUrl
+	const assetId = $derived.by(() => {
+		if (!person.thumbnailUrl) return null;
+		const match = person.thumbnailUrl.match(/\/images\/(\d+)\/thumbnail/);
+		return match ? parseInt(match[1], 10) : null;
+	});
+
+	// Get cached thumbnail
+	const cachedThumbnail = $derived(assetId ? thumbnailCache.get(assetId) : undefined);
+	const isLoading = $derived(assetId ? thumbnailCache.isPending(assetId) : false);
 
 	function handleClick() {
 		// Only trigger onClick if not a noise face
@@ -94,7 +106,16 @@
 >
 	<!-- Thumbnail/Avatar -->
 	<div class="person-thumbnail">
-		{#if person.thumbnailUrl}
+		{#if isLoading}
+			<div class="thumbnail-loading">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
+					<path d="M12 2 A10 10 0 0 1 22 12" stroke-linecap="round" />
+				</svg>
+			</div>
+		{:else if cachedThumbnail}
+			<img src={cachedThumbnail} alt={person.name} class="thumbnail-image" />
+		{:else if person.thumbnailUrl}
 			<img src={person.thumbnailUrl} alt={person.name} class="thumbnail-image" />
 		{:else}
 			<div class="thumbnail-placeholder">{getInitials(person.name)}</div>
@@ -208,6 +229,31 @@
 		color: white;
 		font-weight: 600;
 		font-size: 1.5rem;
+	}
+
+	.thumbnail-loading {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+		color: #6366f1;
+	}
+
+	.thumbnail-loading svg {
+		width: 50%;
+		height: 50%;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.person-content {
