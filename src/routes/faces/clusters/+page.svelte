@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { listClusters } from '$lib/api/faces';
+	import { getUnknownClusteringConfig } from '$lib/api/admin';
+	import type { UnknownFaceClusteringConfig } from '$lib/api/admin';
 	import { ApiError } from '$lib/api/client';
 	import ClusterCard from '$lib/components/faces/ClusterCard.svelte';
 	import type { ClusterSummary } from '$lib/types';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// State
 	let clusters = $state<ClusterSummary[]>([]);
@@ -15,8 +17,8 @@
 	let totalClusters = $state(0);
 	let hasMore = $state(false);
 
-	// Tab state: 'unlabeled' or 'all'
-	let activeTab = $state<'unlabeled' | 'all'>('unlabeled');
+	// Configuration state
+	let config = $state<UnknownFaceClusteringConfig | null>(null);
 
 	// Sort state: 'faceCount' (default) or 'avgQuality'
 	type SortOption = 'faceCount' | 'avgQuality';
@@ -41,25 +43,16 @@
 
 	const PAGE_SIZE = 100;
 
-	// Track previous tab to detect actual changes
-	let previousTab = $state<'unlabeled' | 'all' | null>(null);
-
-	// Load clusters on mount
-	onMount(() => {
-		loadClusters(true);
-		previousTab = activeTab;
-	});
-
-	$effect(() => {
-		// Track activeTab for changes
-		const tab = activeTab;
-
-		// Only reload when tab actually changes (not on mount or pagination)
-		if (previousTab !== null && tab !== previousTab) {
-			previousTab = tab;
-			// Use untrack to prevent tracking currentPage and other state inside loadClusters
-			untrack(() => loadClusters(true));
+	// Load configuration and clusters on mount
+	onMount(async () => {
+		try {
+			config = await getUnknownClusteringConfig();
+		} catch (err) {
+			console.error('Failed to load configuration:', err);
+			// Use default values if config load fails
+			config = { minConfidence: 0.85, minClusterSize: 5 };
 		}
+		loadClusters(true);
 	});
 
 	async function loadClusters(reset: boolean = false) {
@@ -73,8 +66,15 @@
 		error = null;
 
 		try {
-			const includeLabeled = activeTab === 'all';
-			const response = await listClusters(currentPage, PAGE_SIZE, includeLabeled);
+			// Always show only unlabeled clusters
+			const includeLabeled = false;
+			const response = await listClusters(
+				currentPage,
+				PAGE_SIZE,
+				includeLabeled,
+				config?.minConfidence,
+				config?.minClusterSize
+			);
 
 			if (reset) {
 				clusters = response.items;
@@ -107,11 +107,6 @@
 		goto(`/faces/clusters/${encodeURIComponent(cluster.clusterId)}`);
 	}
 
-	function handleTabChange(tab: 'unlabeled' | 'all') {
-		if (activeTab === tab) return;
-		activeTab = tab;
-	}
-
 	function handleSortChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
 		sortBy = target.value as SortOption;
@@ -123,38 +118,18 @@
 </script>
 
 <svelte:head>
-	<title>Face Clusters | Image Search</title>
+	<title>Unknown Faces | Image Search</title>
 </svelte:head>
 
 <main class="clusters-page">
 	<header class="page-header">
-		<h1>Face Clusters</h1>
-		<p class="subtitle">Browse and label face clusters to identify people in your photos.</p>
+		<h1>Unknown Faces</h1>
+		<p class="subtitle">
+			Review and label face clusters to identify people in your photos. Showing clusters with at
+			least {config?.minClusterSize ?? 5} faces and {((config?.minConfidence ?? 0.85) * 100).toFixed(0)}%
+			similarity.
+		</p>
 	</header>
-
-	<!-- Tabs -->
-	<nav class="tabs" role="tablist">
-		<button
-			type="button"
-			role="tab"
-			class="tab"
-			class:active={activeTab === 'unlabeled'}
-			aria-selected={activeTab === 'unlabeled'}
-			onclick={() => handleTabChange('unlabeled')}
-		>
-			Unlabeled
-		</button>
-		<button
-			type="button"
-			role="tab"
-			class="tab"
-			class:active={activeTab === 'all'}
-			aria-selected={activeTab === 'all'}
-			onclick={() => handleTabChange('all')}
-		>
-			All Clusters
-		</button>
-	</nav>
 
 	<!-- Content -->
 	<section class="content" aria-live="polite">
@@ -191,15 +166,14 @@
 					<circle cx="12" cy="8" r="4" />
 					<path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
 				</svg>
-				<h2>No clusters found</h2>
+				<h2>No Unknown Face Clusters</h2>
 				<p>
-					{#if activeTab === 'unlabeled'}
-						All clusters have been labeled! Switch to "All Clusters" to view them.
-					{:else}
-						No face clusters have been detected yet. Run face detection on your photos to create
-						clusters.
-					{/if}
+					All faces have been labeled, or no clusters meet the current confidence threshold. Try
+					adjusting the settings to see more clusters.
 				</p>
+				{#if config}
+					<a href="/admin" class="settings-link">Adjust Settings</a>
+				{/if}
 			</div>
 		{:else}
 			<div class="results-header">
@@ -264,50 +238,6 @@
 		color: #666;
 		margin: 0;
 		font-size: 1rem;
-	}
-
-	/* Tabs */
-	.tabs {
-		display: flex;
-		gap: 0.5rem;
-		margin-bottom: 1.5rem;
-		border-bottom: 1px solid #e0e0e0;
-		padding-bottom: 0;
-	}
-
-	.tab {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		background: none;
-		font-size: 0.95rem;
-		font-weight: 500;
-		color: #666;
-		cursor: pointer;
-		position: relative;
-		transition: color 0.2s;
-	}
-
-	.tab:hover {
-		color: #333;
-	}
-
-	.tab.active {
-		color: #4a90e2;
-	}
-
-	.tab.active::after {
-		content: '';
-		position: absolute;
-		bottom: -1px;
-		left: 0;
-		right: 0;
-		height: 2px;
-		background-color: #4a90e2;
-	}
-
-	.tab:focus {
-		outline: 2px solid #4a90e2;
-		outline-offset: 2px;
 	}
 
 	/* Content */
@@ -404,8 +334,23 @@
 
 	.empty-state p {
 		color: #666;
-		margin: 0;
+		margin: 0 0 1rem 0;
 		max-width: 400px;
+	}
+
+	.settings-link {
+		display: inline-block;
+		padding: 0.5rem 1.5rem;
+		background-color: #4a90e2;
+		color: white;
+		text-decoration: none;
+		border-radius: 6px;
+		font-size: 0.95rem;
+		transition: background-color 0.2s;
+	}
+
+	.settings-link:hover {
+		background-color: #3a7bc8;
 	}
 
 	/* Results */

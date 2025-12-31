@@ -201,3 +201,38 @@ export async function importPersonMetadata(
 		body: JSON.stringify(request)
 	});
 }
+
+// Configuration Types
+
+export interface UnknownFaceClusteringConfig {
+	minConfidence: number;
+	minClusterSize: number;
+}
+
+// Configuration API Functions
+
+/**
+ * Get unknown face clustering configuration.
+ * Returns filtering thresholds for the Unknown Faces view.
+ *
+ * @returns Current configuration settings
+ */
+export async function getUnknownClusteringConfig(): Promise<UnknownFaceClusteringConfig> {
+	return apiRequest<UnknownFaceClusteringConfig>('/api/v1/config/face-clustering-unknown');
+}
+
+/**
+ * Update unknown face clustering configuration.
+ * Updates filtering thresholds for the Unknown Faces view.
+ *
+ * @param config - New configuration values
+ * @returns Updated configuration settings
+ */
+export async function updateUnknownClusteringConfig(
+	config: UnknownFaceClusteringConfig
+): Promise<UnknownFaceClusteringConfig> {
+	return apiRequest<UnknownFaceClusteringConfig>('/api/v1/config/face-clustering-unknown', {
+		method: 'PUT',
+		body: JSON.stringify(config)
+	});
+}

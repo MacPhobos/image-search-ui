@@ -426,6 +426,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/config/face-clustering-unknown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Unknown Clustering Config
+         * @description Get configuration for unknown face clustering display.
+         *
+         *     Returns the current filtering configuration for the Unknown Faces view,
+         *     including confidence threshold and minimum cluster size settings.
+         */
+        get: operations["get_unknown_clustering_config_api_v1_config_face_clustering_unknown_get"];
+        /**
+         * Update Unknown Clustering Config
+         * @description Update configuration for unknown face clustering display.
+         *
+         *     Updates filtering thresholds for the Unknown Faces view. Note that these
+         *     settings are currently stored in environment variables and will require
+         *     service restart to take effect. Future versions will support runtime updates.
+         *
+         *     Args:
+         *         request: Updated configuration values
+         *         db: Database session (for future database-backed config)
+         *
+         *     Returns:
+         *         Updated configuration values
+         */
+        put: operations["update_unknown_clustering_config_api_v1_config_face_clustering_unknown_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/config/{category}": {
         parameters: {
             query?: never;
@@ -738,6 +776,8 @@ export interface paths {
          *
          *     Args:
          *         path: Root directory path
+         *         include_training_status: If True, include training status metadata
+         *         db: Database session
          *
          *     Returns:
          *         List of subdirectory information
@@ -1618,7 +1658,15 @@ export interface paths {
         };
         /**
          * List Clusters
-         * @description List face clusters with pagination.
+         * @description List face clusters with pagination and optional filtering.
+         *
+         *     Supports filtering by:
+         *     - include_labeled: Whether to include clusters assigned to persons
+         *     - min_confidence: Minimum average pairwise similarity within cluster
+         *     - min_cluster_size: Minimum number of faces in cluster
+         *
+         *     When min_confidence is specified, cluster confidence is calculated on-the-fly
+         *     by comparing face embeddings in Qdrant. This may add latency for large clusters.
          */
         get: operations["list_clusters_api_v1_faces_clusters_get"];
         put?: never;
@@ -2802,6 +2850,16 @@ export interface components {
             sampleFaceIds: string[];
             /** Avgquality */
             avgQuality?: number | null;
+            /**
+             * Clusterconfidence
+             * @description Intra-cluster confidence score (average pairwise similarity)
+             */
+            clusterConfidence?: number | null;
+            /**
+             * Representativefaceid
+             * @description Highest quality face ID in cluster
+             */
+            representativeFaceId?: string | null;
             /** Personid */
             personId?: string | null;
             /** Personname */
@@ -3139,6 +3197,12 @@ export interface components {
              * @default false
              */
             selected: boolean;
+            /** Trainedcount */
+            trainedCount?: number | null;
+            /** Lasttrainedat */
+            lastTrainedAt?: string | null;
+            /** Trainingstatus */
+            trainingStatus?: string | null;
         };
         /**
          * DirectoryScanRequest
@@ -5043,6 +5107,32 @@ export interface components {
             /** Confidence */
             confidence?: number | null;
         };
+        /**
+         * UnknownFaceClusteringConfigResponse
+         * @description Unknown face clustering display configuration.
+         */
+        UnknownFaceClusteringConfigResponse: {
+            /**
+             * Minconfidence
+             * @description Minimum intra-cluster confidence threshold
+             */
+            minConfidence: number;
+            /**
+             * Minclustersize
+             * @description Minimum number of faces required per cluster
+             */
+            minClusterSize: number;
+        };
+        /**
+         * UnknownFaceClusteringConfigUpdateRequest
+         * @description Request to update unknown face clustering configuration.
+         */
+        UnknownFaceClusteringConfigUpdateRequest: {
+            /** Minconfidence */
+            minConfidence: number;
+            /** Minclustersize */
+            minClusterSize: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -5648,6 +5738,59 @@ export interface operations {
             };
         };
     };
+    get_unknown_clustering_config_api_v1_config_face_clustering_unknown_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnknownFaceClusteringConfigResponse"];
+                };
+            };
+        };
+    };
+    update_unknown_clustering_config_api_v1_config_face_clustering_unknown_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnknownFaceClusteringConfigUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnknownFaceClusteringConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_config_by_category_api_v1_config__category__get: {
         parameters: {
             query?: never;
@@ -6048,7 +6191,10 @@ export interface operations {
     list_directories_api_v1_training_directories_get: {
         parameters: {
             query: {
+                /** @description Root directory path */
                 path: string;
+                /** @description Include training status metadata (requires DB lookup) */
+                include_training_status?: boolean;
             };
             header?: never;
             path?: never;
@@ -6974,6 +7120,10 @@ export interface operations {
                 page_size?: number;
                 /** @description Include clusters already assigned to persons */
                 include_labeled?: boolean;
+                /** @description Minimum intra-cluster confidence threshold */
+                min_confidence?: number | null;
+                /** @description Minimum number of faces per cluster */
+                min_cluster_size?: number | null;
             };
             header?: never;
             path?: never;

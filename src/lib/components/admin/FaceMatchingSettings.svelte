@@ -5,6 +5,11 @@
 		updateFaceSuggestionSettings,
 		type FaceSuggestionSettings
 	} from '$lib/api/faces';
+	import {
+		getUnknownClusteringConfig,
+		updateUnknownClusteringConfig,
+		type UnknownFaceClusteringConfig
+	} from '$lib/api/admin';
 
 	interface FaceMatchingConfig {
 		autoAssignThreshold: number;
@@ -29,6 +34,11 @@
 	let paginationSettings = $state<FaceSuggestionSettings>({
 		groupsPerPage: 10,
 		itemsPerGroup: 20
+	});
+
+	let clusteringConfig = $state<UnknownFaceClusteringConfig>({
+		minConfidence: 0.85,
+		minClusterSize: 5
 	});
 
 	let loading = $state(false);
@@ -71,6 +81,9 @@
 
 			// Load pagination settings
 			paginationSettings = await getFaceSuggestionSettings();
+
+			// Load unknown clustering config
+			clusteringConfig = await getUnknownClusteringConfig();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load configuration';
 		} finally {
@@ -110,6 +123,9 @@
 
 			// Save pagination settings
 			await updateFaceSuggestionSettings(paginationSettings);
+
+			// Save unknown clustering config
+			await updateUnknownClusteringConfig(clusteringConfig);
 
 			successMessage = 'Settings saved successfully';
 			setTimeout(() => {
@@ -351,6 +367,57 @@
 							min="1"
 							max="50"
 							bind:value={paginationSettings.itemsPerGroup}
+						/>
+					</div>
+				</div>
+			</div>
+
+			<!-- Unknown Face Clustering Settings -->
+			<div class="other-settings">
+				<h3>Unknown Face Clustering</h3>
+				<p class="section-description">
+					Configure filtering for the Unknown Faces view. Only clusters meeting these thresholds
+					will be shown for labeling.
+				</p>
+
+				<div class="form-grid">
+					<div class="form-field">
+						<label for="clusterMinConfidence">
+							Minimum Cluster Confidence
+							<span class="field-hint"
+								>Minimum intra-cluster similarity required (0.70-0.95). Higher values show only
+								more cohesive clusters.</span
+							>
+						</label>
+						<div class="slider-container">
+							<input
+								id="clusterMinConfidence"
+								type="range"
+								min="0.70"
+								max="0.95"
+								step="0.05"
+								bind:value={clusteringConfig.minConfidence}
+							/>
+							<output class="slider-value"
+								>{(clusteringConfig.minConfidence * 100).toFixed(0)}%</output
+							>
+						</div>
+					</div>
+
+					<div class="form-field">
+						<label for="clusterMinSize">
+							Minimum Cluster Size
+							<span class="field-hint"
+								>Minimum number of faces required per cluster (2-50). Smaller clusters are
+								hidden.</span
+							>
+						</label>
+						<input
+							id="clusterMinSize"
+							type="number"
+							min="2"
+							max="50"
+							bind:value={clusteringConfig.minClusterSize}
 						/>
 					</div>
 				</div>

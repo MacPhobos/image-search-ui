@@ -85,6 +85,8 @@ export interface ClusterSummary {
 	faceCount: number;
 	sampleFaceIds: string[]; // UUIDs
 	avgQuality: number | null;
+	clusterConfidence?: number | null; // Intra-cluster confidence score
+	representativeFaceId?: string | null; // Highest quality face ID
 	personId: string | null; // UUID
 	personName: string | null;
 }
@@ -273,17 +275,29 @@ export function transformFaceInstancesToFaceInPhoto(faces: FaceInstance[]): Face
  * @param page - Page number (1-indexed)
  * @param pageSize - Items per page (1-100)
  * @param includeLabeled - Include clusters already assigned to persons
+ * @param minConfidence - Minimum intra-cluster confidence threshold (0.0-1.0)
+ * @param minClusterSize - Minimum number of faces per cluster
  */
 export async function listClusters(
 	page: number = 1,
 	pageSize: number = 20,
-	includeLabeled: boolean = false
+	includeLabeled: boolean = false,
+	minConfidence?: number,
+	minClusterSize?: number
 ): Promise<ClusterListResponse> {
 	const params = new URLSearchParams({
 		page: page.toString(),
 		page_size: pageSize.toString(),
 		include_labeled: includeLabeled.toString()
 	});
+
+	if (minConfidence !== undefined) {
+		params.set('min_confidence', minConfidence.toString());
+	}
+	if (minClusterSize !== undefined) {
+		params.set('min_cluster_size', minClusterSize.toString());
+	}
+
 	return apiRequest<ClusterListResponse>(`/api/v1/faces/clusters?${params.toString()}`);
 }
 

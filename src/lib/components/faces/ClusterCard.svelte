@@ -20,17 +20,30 @@
 
 	let { cluster, faceThumbnails, onClick, selected = false }: Props = $props();
 
-	// Get up to 6 sample faces with thumbnails
+	// Get sample faces with representative face first if available
 	let sampleFaces = $derived<FaceWithThumbnail[]>(() => {
+		// Start with representative face if available
+		let faceIds = cluster.sampleFaceIds.slice();
+		if (cluster.representativeFaceId && faceIds.includes(cluster.representativeFaceId)) {
+			// Move representative face to the front
+			faceIds = [
+				cluster.representativeFaceId,
+				...faceIds.filter((id) => id !== cluster.representativeFaceId)
+			];
+		}
+
+		// Take up to 6 faces
+		const selectedIds = faceIds.slice(0, 6);
+
 		if (!faceThumbnails || faceThumbnails.size === 0) {
 			// Return empty array if no thumbnails available - will show placeholders
-			return cluster.sampleFaceIds.slice(0, 6).map((id) => ({
+			return selectedIds.map((id) => ({
 				id,
 				thumbnailUrl: ''
 			}));
 		}
 
-		return cluster.sampleFaceIds.slice(0, 6).map((id) => ({
+		return selectedIds.map((id) => ({
 			id,
 			thumbnailUrl: faceThumbnails.get(id) || ''
 		}));
@@ -71,10 +84,10 @@
 	<div class="card-header">
 		<div class="cluster-info">
 			<span class="face-count">{cluster.faceCount} faces</span>
-			{#if cluster.personName}
-				<span class="person-badge">{cluster.personName}</span>
-			{:else}
-				<span class="unlabeled-badge">Unlabeled</span>
+			{#if cluster.clusterConfidence}
+				<span class="confidence-badge" title="Intra-cluster similarity">
+					{(cluster.clusterConfidence * 100).toFixed(0)}% match
+				</span>
 			{/if}
 		</div>
 		<span class="cluster-id" title={cluster.clusterId}>
@@ -149,20 +162,10 @@
 		color: #333;
 	}
 
-	.person-badge {
+	.confidence-badge {
 		display: inline-block;
-		background-color: #e8f5e9;
-		color: #2e7d32;
-		padding: 0.125rem 0.5rem;
-		border-radius: 12px;
-		font-size: 0.75rem;
-		font-weight: 500;
-	}
-
-	.unlabeled-badge {
-		display: inline-block;
-		background-color: #fff3e0;
-		color: #e65100;
+		background-color: #e3f2fd;
+		color: #1565c0;
 		padding: 0.125rem 0.5rem;
 		border-radius: 12px;
 		font-size: 0.75rem;
