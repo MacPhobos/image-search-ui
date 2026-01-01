@@ -43,16 +43,25 @@
 	let imageLoaded = $state(false);
 	let imgWidth = $state(0);
 	let imgHeight = $state(0);
+	let displayHeight = $state(0);
 
 	// ============================================
-	// LABEL CONFIGURATION - Adjust this to change label text size
+	// LABEL CONFIGURATION - Responsive font sizing
 	// ============================================
-	const LABEL_FONT_SIZE = 48; // Font size in pixels
+	// Target: 3% of displayed image height, converted to SVG coordinates
+	const labelFontSize = $derived.by(() => {
+		if (!displayHeight || !imgHeight || displayHeight === 0 || imgHeight === 0) {
+			return 48; // Fallback for initial render or if dimensions unavailable
+		}
+		const targetDisplayFontSize = displayHeight * 0.03;
+		const scaleFactor = imgHeight / displayHeight;
+		return targetDisplayFontSize * scaleFactor;
+	});
 
 	// Derived label dimensions (calculated from font size)
-	const LABEL_HEIGHT = LABEL_FONT_SIZE + 10; // Label background height
+	const labelHeight = $derived(labelFontSize + 10);
 	const LABEL_GAP = 4; // Gap between bounding box and label
-	const LABEL_TEXT_Y_OFFSET = LABEL_GAP + LABEL_FONT_SIZE + 2; // Text baseline offset from bbox bottom
+	const labelTextYOffset = $derived(LABEL_GAP + labelFontSize + 2);
 	// ============================================
 
 	// Color palette for distinct face colors
@@ -78,6 +87,7 @@
 		if (imgElement) {
 			imgWidth = imgElement.naturalWidth;
 			imgHeight = imgElement.naturalHeight;
+			displayHeight = imgElement.clientHeight;
 			imageLoaded = true;
 		}
 	}
@@ -142,15 +152,15 @@
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={Math.max(face.bboxW, 100)}
-							height={LABEL_HEIGHT}
+							height={labelHeight}
 							rx={4}
 							fill="rgba(0, 0, 0, 0.75)"
 						/>
 						<text
 							x={face.bboxX + 8}
-							y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET}
+							y={face.bboxY + face.bboxH + labelTextYOffset}
 							fill="white"
-							font-size={LABEL_FONT_SIZE}
+							font-size={labelFontSize}
 							font-weight="500"
 						>
 							{face.label}
@@ -163,11 +173,11 @@
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={80}
-							height={LABEL_HEIGHT}
+							height={labelHeight}
 							rx={4}
 							fill="rgba(100, 116, 139, 0.6)"
 						/>
-						<text x={face.bboxX + 8} y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET} fill="white" font-size={LABEL_FONT_SIZE}>
+						<text x={face.bboxX + 8} y={face.bboxY + face.bboxH + labelTextYOffset} fill="white" font-size={labelFontSize}>
 							{face.label}
 						</text>
 					</g>
@@ -176,21 +186,21 @@
 					{@const labelText = face.suggestionConfidence
 						? `${face.label} (${Math.round(face.suggestionConfidence * 100)}%)`
 						: face.label}
-					{@const labelWidth = Math.max(face.bboxW, labelText.length * LABEL_FONT_SIZE * 0.6)}
+					{@const labelWidth = Math.max(face.bboxW, labelText.length * labelFontSize * 0.6)}
 					<g class="face-label suggestion-label">
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={labelWidth}
-							height={LABEL_HEIGHT}
+							height={labelHeight}
 							rx={4}
 							fill="rgba(234, 179, 8, 0.9)"
 						/>
 						<text
 							x={face.bboxX + 8}
-							y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET}
+							y={face.bboxY + face.bboxH + labelTextYOffset}
 							fill="#422006"
-							font-size={LABEL_FONT_SIZE}
+							font-size={labelFontSize}
 							font-weight="500"
 						>
 							{labelText}
@@ -203,15 +213,15 @@
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
 							width={Math.max(face.bboxW, 80)}
-							height={LABEL_HEIGHT}
+							height={labelHeight}
 							rx={4}
 							fill="rgba(100, 116, 139, 0.85)"
 						/>
 						<text
 							x={face.bboxX + 8}
-							y={face.bboxY + face.bboxH + LABEL_TEXT_Y_OFFSET}
+							y={face.bboxY + face.bboxH + labelTextYOffset}
 							fill="white"
-							font-size={LABEL_FONT_SIZE}
+							font-size={labelFontSize}
 							font-style="italic"
 						>
 							{face.label}
