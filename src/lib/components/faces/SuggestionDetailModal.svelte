@@ -153,8 +153,8 @@
 	// Derived states for assignment panel
 	let filteredPersons = $derived(() => {
 		const query = personSearchQuery.toLowerCase().trim();
-		if (!query) return persons.slice(0, 10);
-		return persons.filter((p) => p.name.toLowerCase().includes(query)).slice(0, 10);
+		if (!query) return persons;
+		return persons.filter((p) => p.name.toLowerCase().includes(query));
 	});
 
 	let showCreateOption = $derived(
@@ -1011,6 +1011,8 @@
 		padding: 0.75rem;
 		display: flex;
 		flex-direction: column;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.assignment-header {
@@ -1070,7 +1072,9 @@
 	}
 
 	.person-options {
-		max-height: 200px;
+		flex: 1;
+		min-height: 100px;
+		max-height: min(400px, 50vh);
 		overflow-y: auto;
 		border: 1px solid #e0e0e0;
 		border-radius: 6px;
@@ -1311,7 +1315,7 @@
 		}
 
 		.person-options {
-			max-height: 150px;
+			max-height: min(200px, 30vh);
 		}
 	}
 
