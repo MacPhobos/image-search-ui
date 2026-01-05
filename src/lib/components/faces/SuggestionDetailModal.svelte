@@ -238,14 +238,34 @@
 				facesLoading = false;
 			});
 
-		// Load persons list (only once)
-		if (persons.length === 0) {
-			listPersons(1, 100, 'active')
-				.then((response) => {
-					persons = response.items;
+		// Load persons list (fetch all pages)
+		if (persons.length === 0 && !personsLoading) {
+			personsLoading = true;
+			const fetchAllPersons = async () => {
+				let allPersons: Person[] = [];
+				let page = 1;
+				const pageSize = 100;
+				let hasMore = true;
+
+				while (hasMore) {
+					const response = await listPersons(page, pageSize, 'active');
+					allPersons = [...allPersons, ...response.items];
+					hasMore = response.items.length === pageSize;
+					page++;
+				}
+
+				return allPersons;
+			};
+
+			fetchAllPersons()
+				.then((allPersons) => {
+					persons = allPersons;
 				})
 				.catch((err) => {
 					console.error('Failed to load persons:', err);
+				})
+				.finally(() => {
+					personsLoading = false;
 				});
 		}
 
