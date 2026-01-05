@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes, pinPrototype, toAbsoluteUrl } from '$lib/api/faces';
+	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes, pinPrototype, deletePrototype, toAbsoluteUrl } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
@@ -257,6 +257,17 @@
 		} catch (err) {
 			console.error('Failed to unpin prototype:', err);
 			alert('Failed to unpin prototype');
+		}
+	}
+
+	async function handleDeletePrototype(prototype: Prototype) {
+		if (!confirm('Delete this prototype? This will remove the prototype assignment entirely.')) return;
+		try {
+			await deletePrototype(personId, prototype.id);
+			await loadPrototypes(); // Refresh the list
+		} catch (err) {
+			console.error('Failed to delete prototype:', err);
+			alert('Failed to delete prototype');
 		}
 	}
 
@@ -584,6 +595,19 @@
 												{#if proto.decadeBucket}
 													<div class="proto-decade">{proto.decadeBucket}</div>
 												{/if}
+											</button>
+
+											<!-- Delete button for all prototypes -->
+											<button
+												type="button"
+												class="delete-prototype-btn"
+												onclick={(e) => {
+													e.stopPropagation();
+													handleDeletePrototype(proto);
+												}}
+												title="Delete prototype"
+											>
+												🗑️
 											</button>
 
 											<!-- Pin functionality for unpinned prototypes -->
@@ -1431,6 +1455,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		position: relative;
 	}
 
 	.pin-prototype-section {
@@ -1525,5 +1550,29 @@
 	.pin-cancel-btn:disabled {
 		cursor: not-allowed;
 		opacity: 0.6;
+	}
+
+	.delete-prototype-btn {
+		position: absolute;
+		top: 0.25rem;
+		right: 0.25rem;
+		background: rgba(220, 53, 69, 0.9);
+		color: white;
+		border: none;
+		border-radius: 4px;
+		padding: 0.25rem 0.5rem;
+		cursor: pointer;
+		font-size: 0.75rem;
+		opacity: 0;
+		transition: opacity 0.2s;
+		z-index: 10;
+	}
+
+	.prototype-card-wrapper:hover .delete-prototype-btn {
+		opacity: 1;
+	}
+
+	.delete-prototype-btn:hover {
+		background: rgb(200, 35, 51);
 	}
 </style>

@@ -1164,6 +1164,20 @@ export async function unpinPrototype(personId: string, prototypeId: string): Pro
 }
 
 /**
+ * Delete a prototype assignment entirely.
+ * @param personId - Person UUID
+ * @param prototypeId - Prototype UUID to delete
+ */
+export async function deletePrototype(personId: string, prototypeId: string): Promise<undefined> {
+	return apiRequest<undefined>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/prototypes/${encodeURIComponent(prototypeId)}`,
+		{
+			method: 'DELETE'
+		}
+	);
+}
+
+/**
  * Recompute prototypes for a person.
  * @param personId - The person ID (UUID)
  * @param preservePins - Whether to preserve pinned prototypes
