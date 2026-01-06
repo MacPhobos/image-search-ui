@@ -44,7 +44,6 @@
 		<nav class="nav" data-testid={tid('layout', 'nav')}>
 			<a href="/">Search</a>
 			<a href="/people">People</a>
-			<a href="/faces/sessions">Face Sessions</a>
 			<a href="/faces/suggestions">Suggestions</a>
 			<a href="/faces/clusters">Clusters</a>
 			<a href="/categories">Categories</a>
