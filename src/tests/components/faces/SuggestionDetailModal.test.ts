@@ -202,8 +202,8 @@ describe('SuggestionDetailModal', () => {
 			expect(screen.getByText('Jane Smith')).toBeInTheDocument();
 
 			// Face metadata should be displayed
-			expect(screen.getByText(/Conf: 98%/)).toBeInTheDocument(); // Primary face
-			expect(screen.getByText(/Q: 0.8/)).toBeInTheDocument(); // Quality score (0.85 rounds to 0.8)
+			expect(screen.getByText(/Detection: 98%/)).toBeInTheDocument(); // Primary face
+			expect(screen.getByText(/Quality: 0.8/)).toBeInTheDocument(); // Quality score (0.85 rounds to 0.8)
 		});
 
 		it('shows image placeholder when no fullImageUrl', () => {
@@ -1043,7 +1043,7 @@ describe('SuggestionDetailModal', () => {
 			});
 
 			// Should display confidence but not quality when null
-			expect(screen.getByText(/Conf: 98%/)).toBeInTheDocument();
+			expect(screen.getByText(/Detection: 98%/)).toBeInTheDocument();
 		});
 
 		it('cancels pending requests on unmount', async () => {
