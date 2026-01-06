@@ -29,25 +29,27 @@
 </script>
 
 <form onsubmit={handleSubmit} class="search-bar" data-testid={t()}>
-	<input
-		type="text"
-		bind:value={query}
-		{placeholder}
-		class="search-input"
-		aria-label="Search query"
-		data-testid={t('input-query')}
-	/>
-	{#if query}
-		<button
-			type="button"
-			onclick={handleClear}
-			class="clear-btn"
-			aria-label="Clear search"
-			data-testid={t('btn-clear')}
-		>
-			×
-		</button>
-	{/if}
+	<div class="input-wrapper">
+		<input
+			type="text"
+			bind:value={query}
+			{placeholder}
+			class="search-input"
+			aria-label="Search query"
+			data-testid={t('input-query')}
+		/>
+		{#if query}
+			<button
+				type="button"
+				onclick={handleClear}
+				class="clear-btn"
+				aria-label="Clear search"
+				data-testid={t('btn-clear')}
+			>
+				×
+			</button>
+		{/if}
+	</div>
 	<button type="submit" class="search-btn" disabled={!query.trim()} data-testid={t('btn-submit')}>
 		Search
 	</button>
@@ -59,11 +61,17 @@
 		gap: 0.5rem;
 		width: 100%;
 		max-width: 600px;
+	}
+
+	.input-wrapper {
+		flex: 1;
 		position: relative;
+		display: flex;
+		align-items: center;
 	}
 
 	.search-input {
-		flex: 1;
+		width: 100%;
 		padding: 0.75rem 1rem;
 		padding-right: 2.5rem;
 		border: 2px solid #e0e0e0;
@@ -79,7 +87,7 @@
 
 	.clear-btn {
 		position: absolute;
-		right: 90px;
+		right: 0.5rem;
 		top: 50%;
 		transform: translateY(-50%);
 		background: none;
