@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import { checkHealth } from '$lib/api/client';
