@@ -205,8 +205,9 @@
 	/>
 {/if}
 
-{#if showRetrainModal && selectedDirectory}
+{#if selectedDirectory}
 	<RetrainModal
+		bind:open={showRetrainModal}
 		pathPrefix={selectedDirectory}
 		onConfirm={handleRetrainConfirm}
 		onCancel={() => {

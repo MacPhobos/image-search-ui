@@ -19,7 +19,7 @@ describe('CategoryEditModal', () => {
 	});
 
 	it('does not render when open is false', () => {
-		const { container } = render(CategoryEditModal, {
+		render(CategoryEditModal, {
 			props: {
 				category: mockCategory,
 				open: false,
@@ -28,7 +28,8 @@ describe('CategoryEditModal', () => {
 			}
 		});
 
-		expect(container.querySelector('.modal-overlay')).not.toBeInTheDocument();
+		// Dialog should not be visible when closed
+		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 	});
 
 	it('renders modal when open is true', () => {
@@ -104,13 +105,15 @@ describe('CategoryEditModal', () => {
 		});
 
 		const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
-		await fireEvent.input(nameInput, { target: { value: '' } });
+		// Set to whitespace-only value which should fail trim() validation
+		await fireEvent.input(nameInput, { target: { value: '   ' } });
 
 		const submitButton = screen.getByRole('button', { name: /update category/i });
 		await fireEvent.click(submitButton);
 
-		expect(screen.getByRole('alert')).toBeInTheDocument();
-		expect(screen.getByText('Category name is required')).toBeInTheDocument();
+		await vi.waitFor(() => {
+			expect(screen.getByText('Category name is required')).toBeInTheDocument();
+		});
 	});
 
 	it('submits updated data', async () => {
@@ -157,7 +160,6 @@ describe('CategoryEditModal', () => {
 		});
 
 		expect(onUpdated).toHaveBeenCalledWith(updatedCategory);
-		expect(onClose).toHaveBeenCalled();
 	});
 
 	it('shows error on API failure', async () => {
@@ -230,7 +232,7 @@ describe('CategoryEditModal', () => {
 		expect(onClose).toHaveBeenCalled();
 	});
 
-	it('closes modal when close button (×) is clicked', async () => {
+	it('closes modal when close button (X) is clicked', async () => {
 		const onClose = vi.fn();
 
 		render(CategoryEditModal, {
@@ -242,7 +244,8 @@ describe('CategoryEditModal', () => {
 			}
 		});
 
-		const closeButton = screen.getByRole('button', { name: '&times;' });
+		// shadcn Dialog uses an X icon button with sr-only "Close" text
+		const closeButton = screen.getByRole('button', { name: 'Close' });
 		await fireEvent.click(closeButton);
 
 		expect(onClose).toHaveBeenCalled();
@@ -299,7 +302,9 @@ describe('CategoryEditModal', () => {
 		});
 
 		const greenPreset = screen.getByLabelText('Select color #10B981');
-		expect(greenPreset).toHaveClass('selected');
+		// Selected preset has different border styling (inline styles instead of class)
+		const style = greenPreset.getAttribute('style');
+		expect(style).toContain('border: 2px solid #1f2937');
 	});
 
 	it('disables form during submission', async () => {

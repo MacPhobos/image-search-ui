@@ -1,15 +1,27 @@
 <script lang="ts">
 	import type { Category, CategoryUpdate } from '$lib/api/categories';
 	import { updateCategory } from '$lib/api/categories';
+	import { tid } from '$lib/testing/testid';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
 	interface Props {
 		category: Category;
 		open: boolean;
 		onClose: () => void;
 		onUpdated: (category: Category) => void;
+		testId?: string;
 	}
 
-	let { category, open, onClose, onUpdated }: Props = $props();
+	let { category, open = $bindable(false), onClose, onUpdated, testId = 'modal__category-edit' }: Props = $props();
+
+	// Derived scoped test ID generator (reactive to testId changes)
+	const t = $derived((...segments: string[]) =>
+		segments.length === 0 ? testId : tid(testId, ...segments)
+	);
 
 	let name = $state(category.name);
 	let description = $state(category.description || '');
@@ -54,7 +66,7 @@
 
 			const updatedCategory = await updateCategory(category.id, updateData);
 			onUpdated(updatedCategory);
-			onClose();
+			open = false;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to update category';
 		} finally {
@@ -72,313 +84,93 @@
 	}
 </script>
 
-{#if open}
-	<div class="modal-overlay" onclick={handleClose} role="presentation">
-		<div
-			class="modal-content"
-			onclick={(e) => e.stopPropagation()}
-			role="dialog"
-			aria-modal="true"
-			tabindex="-1"
+<Dialog.Root bind:open onOpenChange={(isOpen) => !isOpen && handleClose()}>
+	<Dialog.Content data-testid={t()}>
+		<Dialog.Header data-testid={t('header')}>
+			<Dialog.Title>Edit Category</Dialog.Title>
+			<Dialog.Description>
+				Update the category details below.
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+				handleSubmit();
+			}}
 		>
-			<div class="modal-header">
-				<h2>Edit Category</h2>
-				<button class="close-btn" onclick={handleClose}>&times;</button>
-			</div>
-
-			<div class="modal-body">
-				<form
-					onsubmit={(e) => {
-						e.preventDefault();
-						handleSubmit();
-					}}
-				>
-					<div class="form-group">
-						<label for="category-name">
-							Name <span class="required">*</span>
-						</label>
-						<input
-							id="category-name"
-							type="text"
-							bind:value={name}
-							placeholder="e.g., Personal Photos"
-							class="form-input"
-							disabled={loading || category.isDefault}
-							required
-						/>
-						{#if category.isDefault}
-							<p class="form-hint">Cannot rename the default category</p>
-						{/if}
-					</div>
-
-					<div class="form-group">
-						<label for="category-description">Description</label>
-						<textarea
-							id="category-description"
-							bind:value={description}
-							placeholder="Optional description for this category"
-							class="form-textarea"
-							disabled={loading}
-							rows="3"
-						/>
-					</div>
-
-					<div class="form-group">
-						<label for="category-color">Color</label>
-						<div class="color-picker">
-							<div class="color-presets">
-								{#each colorPresets as presetColor}
-									<button
-										type="button"
-										class="color-preset"
-										class:selected={color === presetColor}
-										style="background-color: {presetColor}"
-										onclick={() => (color = presetColor)}
-										disabled={loading}
-										aria-label="Select color {presetColor}"
-									/>
-								{/each}
-							</div>
-							<input
-								id="category-color"
-								type="color"
-								bind:value={color}
-								class="color-input"
-								disabled={loading}
-							/>
-						</div>
-					</div>
-
-					{#if error}
-						<div class="error-message" role="alert">
-							{error}
-						</div>
+			<div style="display: grid; gap: 1rem; padding: 0.5rem 0;" data-testid={t('body')}>
+				<div>
+					<Label for="category-name">
+						Name <span style="color: rgb(239, 68, 68);">*</span>
+					</Label>
+					<Input
+						id="category-name"
+						bind:value={name}
+						placeholder="e.g., Personal Photos"
+						disabled={loading || category.isDefault}
+						required
+						data-testid={t('input-name')}
+					/>
+					{#if category.isDefault}
+						<p style="margin-top: 0.375rem; font-size: 0.75rem; color: #6b7280;">
+							Cannot rename the default category
+						</p>
 					{/if}
-				</form>
+				</div>
+
+				<div>
+					<Label for="category-description">Description</Label>
+					<textarea
+						id="category-description"
+						bind:value={description}
+						placeholder="Optional description for this category"
+						disabled={loading}
+						rows="3"
+						data-testid={t('input-description')}
+						class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+					></textarea>
+				</div>
+
+				<div>
+					<Label for="category-color">Color</Label>
+					<div style="display: flex; align-items: center; gap: 1rem;">
+						<div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+							{#each colorPresets as presetColor}
+								<button
+									type="button"
+									style="width: 2rem; height: 2rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; padding: 0; background-color: {presetColor}; border: 2px solid {color === presetColor ? '#1f2937' : 'transparent'}; box-shadow: {color === presetColor ? '0 0 0 2px white, 0 0 0 4px #1f2937' : 'none'};"
+									onclick={() => (color = presetColor)}
+									disabled={loading}
+									aria-label="Select color {presetColor}"
+								></button>
+							{/each}
+						</div>
+						<input
+							id="category-color"
+							type="color"
+							bind:value={color}
+							disabled={loading}
+							style="width: 3rem; height: 2rem; border: 1px solid rgb(209, 213, 219); border-radius: 6px; cursor: pointer;"
+						/>
+					</div>
+				</div>
+
+				{#if error}
+					<Alert variant="destructive" data-testid={t('error')}>
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+				{/if}
 			</div>
 
-			<div class="modal-footer">
-				<button class="btn btn-secondary" onclick={handleClose} disabled={loading}> Cancel </button>
-				<button class="btn btn-primary" onclick={handleSubmit} disabled={loading}>
+			<Dialog.Footer data-testid={t('footer')}>
+				<Button variant="outline" onclick={handleClose} disabled={loading} data-testid={t('btn-cancel')}>
+					Cancel
+				</Button>
+				<Button type="submit" disabled={loading} data-testid={t('btn-submit')}>
 					{loading ? 'Updating...' : 'Update Category'}
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
-
-<style>
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-
-	.modal-content {
-		background-color: white;
-		border-radius: 8px;
-		max-width: 500px;
-		width: 90%;
-		max-height: 90vh;
-		display: flex;
-		flex-direction: column;
-		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	}
-
-	.modal-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1.5rem;
-		border-bottom: 1px solid #e5e7eb;
-	}
-
-	.modal-header h2 {
-		margin: 0;
-		font-size: 1.25rem;
-		color: #1f2937;
-	}
-
-	.close-btn {
-		background: none;
-		border: none;
-		font-size: 1.5rem;
-		color: #6b7280;
-		cursor: pointer;
-		padding: 0;
-		width: 2rem;
-		height: 2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
-
-	.close-btn:hover {
-		background-color: #f3f4f6;
-	}
-
-	.modal-body {
-		flex: 1;
-		padding: 1.5rem;
-		overflow-y: auto;
-	}
-
-	.form-group {
-		margin-bottom: 1.5rem;
-	}
-
-	.form-group label {
-		display: block;
-		margin-bottom: 0.5rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #374151;
-	}
-
-	.required {
-		color: #ef4444;
-	}
-
-	.form-input,
-	.form-textarea {
-		width: 100%;
-		padding: 0.625rem 0.875rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		color: #1f2937;
-		transition: border-color 0.2s;
-		font-family: inherit;
-	}
-
-	.form-input:disabled,
-	.form-textarea:disabled {
-		background-color: #f9fafb;
-		color: #9ca3af;
-		cursor: not-allowed;
-	}
-
-	.form-input:focus,
-	.form-textarea:focus {
-		outline: none;
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-	}
-
-	.form-textarea {
-		resize: vertical;
-		min-height: 4rem;
-	}
-
-	.form-hint {
-		margin-top: 0.375rem;
-		font-size: 0.75rem;
-		color: #6b7280;
-	}
-
-	.color-picker {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.color-presets {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
-	}
-
-	.color-preset {
-		width: 2rem;
-		height: 2rem;
-		border: 2px solid transparent;
-		border-radius: 6px;
-		cursor: pointer;
-		transition: all 0.2s;
-		padding: 0;
-	}
-
-	.color-preset:hover:not(:disabled) {
-		transform: scale(1.1);
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-	}
-
-	.color-preset.selected {
-		border-color: #1f2937;
-		box-shadow:
-			0 0 0 2px white,
-			0 0 0 4px #1f2937;
-	}
-
-	.color-preset:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.color-input {
-		width: 3rem;
-		height: 2rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		cursor: pointer;
-	}
-
-	.error-message {
-		margin-top: 1rem;
-		padding: 0.75rem 1rem;
-		background-color: #fee2e2;
-		color: #991b1b;
-		border-radius: 6px;
-		font-size: 0.875rem;
-	}
-
-	.modal-footer {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.75rem;
-		padding: 1.5rem;
-		border-top: 1px solid #e5e7eb;
-	}
-
-	.btn {
-		padding: 0.625rem 1.25rem;
-		border: none;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.btn-primary {
-		background-color: #3b82f6;
-		color: white;
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		background-color: #2563eb;
-	}
-
-	.btn-secondary {
-		background-color: #6b7280;
-		color: white;
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		background-color: #4b5563;
-	}
-</style>
+				</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>

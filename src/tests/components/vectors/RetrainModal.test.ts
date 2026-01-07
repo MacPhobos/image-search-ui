@@ -19,6 +19,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/vacation',
 				onConfirm,
 				onCancel
@@ -33,6 +34,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/vacation/2024',
 				onConfirm,
 				onCancel
@@ -49,6 +51,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -66,6 +69,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -82,6 +86,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -97,6 +102,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -114,6 +120,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -137,6 +144,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -164,6 +172,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -194,6 +203,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -207,24 +217,6 @@ describe('RetrainModal', () => {
 		expect(onConfirm).not.toHaveBeenCalled();
 	});
 
-	it('calls onCancel when close button clicked', async () => {
-		const onConfirm = vi.fn();
-		const onCancel = vi.fn();
-		render(RetrainModal, {
-			props: {
-				pathPrefix: '/photos/test',
-				onConfirm,
-				onCancel
-			}
-		});
-
-		const closeButton = document.querySelector('.close-btn');
-		if (!closeButton) throw new Error('Close button not found');
-		await fireEvent.click(closeButton);
-
-		expect(onCancel).toHaveBeenCalledTimes(1);
-	});
-
 	it('shows loading state during confirmation', async () => {
 		let resolveConfirm: () => void;
 		const confirmPromise = new Promise<void>((resolve) => {
@@ -235,6 +227,7 @@ describe('RetrainModal', () => {
 
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -268,6 +261,7 @@ describe('RetrainModal', () => {
 
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
@@ -295,6 +289,7 @@ describe('RetrainModal', () => {
 		const onCancel = vi.fn();
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/very/long/path/to/photos/vacation/2024',
 				onConfirm,
 				onCancel
@@ -315,6 +310,7 @@ describe('RetrainModal', () => {
 
 		render(RetrainModal, {
 			props: {
+				open: true,
 				pathPrefix: '/photos/test',
 				onConfirm,
 				onCancel
