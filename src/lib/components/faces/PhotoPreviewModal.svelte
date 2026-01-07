@@ -461,8 +461,8 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
-	<Dialog.Content class="max-w-[95vw] max-h-[95vh] w-auto p-0 gap-0" showCloseButton={false}>
-		<Dialog.Header class="border-b px-6 py-4 flex-row justify-between items-center">
+	<Dialog.Content class="!max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-0 gap-0 flex flex-col" showCloseButton={false}>
+		<Dialog.Header class="border-b px-6 py-4 flex-row justify-between items-center flex-shrink-0">
 			<Dialog.Title class="text-lg font-semibold">
 				{#if currentPersonName}
 					Photo Preview - {currentPersonName}
@@ -522,6 +522,7 @@
 					faces={faceBoxes}
 					{highlightedFaceId}
 					onFaceClick={handleFaceClick}
+					maxHeight="calc(98vh - 120px)"
 				/>
 
 				{#if onNext}
@@ -780,7 +781,8 @@
 		overflow: hidden;
 		flex: 1;
 		min-height: 0;
-		padding: 1rem;
+		padding: 1.5rem;
+		height: 100%;
 	}
 
 	.photo-container {
@@ -791,10 +793,22 @@
 		position: relative;
 		min-width: 0;
 		min-height: 0;
+		overflow: hidden;
+		background: #000;
+		border-radius: 8px;
+	}
+
+	/* Make the image component fill more space */
+	.photo-container :global(img) {
+		max-width: 100%;
+		max-height: 100%;
+		width: auto;
+		height: auto;
+		object-fit: contain;
 	}
 
 	.face-sidebar {
-		width: 280px;
+		width: 320px;
 		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;

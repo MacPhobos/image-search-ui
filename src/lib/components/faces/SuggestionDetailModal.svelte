@@ -465,7 +465,7 @@
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
-	<Dialog.Content class="max-w-[95vw] w-auto max-h-[95vh] p-0 gap-0">
+	<Dialog.Content class="!max-w-[98vw] !max-h-[98vh] w-[98vw] h-[98vh] p-0 gap-0 flex flex-col">
 		<Dialog.Header class="px-6 py-4 border-b flex-shrink-0">
 			<Dialog.Title>Face Suggestion Details</Dialog.Title>
 		</Dialog.Header>
