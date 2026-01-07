@@ -2,6 +2,8 @@
 	import type { FaceSuggestion } from '$lib/api/faces';
 	import FaceThumbnail from './FaceThumbnail.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import type { ComponentProps } from 'svelte';
 
 	interface Props {
 		suggestion: FaceSuggestion;
@@ -13,13 +15,34 @@
 	let { suggestion, selected, onSelect, onClick }: Props = $props();
 
 	const confidencePercent = $derived(Math.round(suggestion.confidence * 100));
-	const confidenceColor = $derived(
-		suggestion.confidence >= 0.9
-			? '#22c55e' // green-600
-			: suggestion.confidence >= 0.8
-				? '#eab308' // yellow-500
-				: '#f97316' // orange-500
-	);
+
+	// Map confidence to badge variant
+	function getConfidenceVariant(
+		confidence: number
+	): ComponentProps<Badge>['variant'] {
+		if (confidence >= 0.7) return 'success';
+		if (confidence >= 0.5) return 'warning';
+		return 'destructive';
+	}
+
+	// Map status to badge variant
+	function getStatusVariant(
+		status: FaceSuggestion['status']
+	): ComponentProps<Badge>['variant'] {
+		switch (status) {
+			case 'accepted':
+				return 'success';
+			case 'rejected':
+				return 'destructive';
+			case 'expired':
+				return 'secondary';
+			default:
+				return 'outline';
+		}
+	}
+
+	const confidenceVariant = $derived(getConfidenceVariant(suggestion.confidence));
+	const statusVariant = $derived(getStatusVariant(suggestion.status));
 
 	// Extract asset ID from faceThumbnailUrl (e.g., /api/v1/images/123/thumbnail)
 	const assetId = $derived.by(() => {
@@ -77,33 +100,31 @@
 	<FaceThumbnail
 		thumbnailUrl={suggestion.faceThumbnailUrl || ''}
 		dataUri={cachedThumbnail}
-		isLoading={isLoading}
+		{isLoading}
 		size={128}
 		alt="Face for {suggestion.personName || 'Unknown'}"
 		square={true}
 	/>
 
 	<!-- Confidence badge (bottom-right corner) -->
-	<div class="confidence-badge" style="background-color: {confidenceColor}">
-		{confidencePercent}%
+	<div class="confidence-badge">
+		<Badge variant={confidenceVariant} class="text-[0.625rem] font-bold px-1 py-0 h-auto">
+			{confidencePercent}%
+		</Badge>
 	</div>
 
 	<!-- Status indicator for non-pending -->
 	{#if suggestion.status !== 'pending'}
-		<div
-			class="status-badge {suggestion.status === 'accepted'
-				? 'accepted'
-				: suggestion.status === 'rejected'
-					? 'rejected'
-					: 'expired'}"
-		>
-			{#if suggestion.status === 'accepted'}
-				✓
-			{:else if suggestion.status === 'rejected'}
-				✗
-			{:else}
-				!
-			{/if}
+		<div class="status-badge">
+			<Badge variant={statusVariant} class="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs font-bold">
+				{#if suggestion.status === 'accepted'}
+					✓
+				{:else if suggestion.status === 'rejected'}
+					✗
+				{:else}
+					!
+				{/if}
+			</Badge>
 		</div>
 	{/if}
 </div>
@@ -158,12 +179,6 @@
 		position: absolute;
 		bottom: 2px;
 		right: 2px;
-		padding: 2px 4px;
-		border-radius: 4px;
-		font-size: 0.625rem;
-		font-weight: 700;
-		color: white;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 		pointer-events: none;
 	}
 
@@ -171,28 +186,6 @@
 		position: absolute;
 		top: 2px;
 		right: 2px;
-		width: 20px;
-		height: 20px;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.75rem;
-		font-weight: 700;
-		color: white;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 		pointer-events: none;
-	}
-
-	.status-badge.accepted {
-		background-color: #22c55e;
-	}
-
-	.status-badge.rejected {
-		background-color: #ef4444;
-	}
-
-	.status-badge.expired {
-		background-color: #94a3b8;
 	}
 </style>

@@ -116,26 +116,36 @@ describe('UnifiedPersonCard', () => {
 		});
 	});
 
-	describe('Badge Classes', () => {
-		it('should apply success badge class for identified persons', () => {
+	describe('Badge Variants', () => {
+		it('should render badge with success variant for identified persons', () => {
 			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
 
 			const badge = screen.getByText('Identified');
-			expect(badge.className).toContain('badge-success');
+			// shadcn Badge with success variant uses green background
+			expect(badge.className).toContain('bg-green-500');
 		});
 
-		it('should apply warning badge class for unidentified persons', () => {
+		it('should render badge with warning variant for unidentified persons', () => {
 			render(UnifiedPersonCard, { props: { person: unidentifiedPerson } });
 
 			const badge = screen.getByText('Needs Name');
-			expect(badge.className).toContain('badge-warning');
+			// shadcn Badge with warning variant uses amber background
+			expect(badge.className).toContain('bg-amber-500');
 		});
 
-		it('should apply error badge class for noise persons', () => {
+		it('should render badge with destructive variant for noise persons', () => {
 			render(UnifiedPersonCard, { props: { person: noisePerson } });
 
 			const badge = screen.getByText('Review');
-			expect(badge.className).toContain('badge-error');
+			// shadcn Badge with destructive variant uses destructive background
+			expect(badge.className).toContain('bg-destructive');
+		});
+
+		it('should render badge with uppercase text', () => {
+			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
+
+			const badge = screen.getByText('Identified');
+			expect(badge.className).toContain('uppercase');
 		});
 	});
 
@@ -307,9 +317,7 @@ describe('UnifiedPersonCard', () => {
 				props: { person: unidentifiedPerson, showAssignButton: true }
 			});
 
-			const assignBtn = screen.getByLabelText(
-				'Assign name to Unidentified Person 1'
-			);
+			const assignBtn = screen.getByLabelText('Assign name to Unidentified Person 1');
 			expect(assignBtn).toBeInTheDocument();
 		});
 	});

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { UnifiedPersonResponse } from '$lib/api/faces';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
+	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 
 	interface Props {
 		/** Person data (identified, unidentified, or noise) */
@@ -58,16 +59,16 @@
 		}
 	}
 
-	function getBadgeClass(type: string): string {
+	function getBadgeVariant(type: string): BadgeVariant {
 		switch (type) {
 			case 'identified':
-				return 'badge-success';
+				return 'success';
 			case 'unidentified':
-				return 'badge-warning';
+				return 'warning';
 			case 'noise':
-				return 'badge-error';
+				return 'destructive';
 			default:
-				return 'badge-neutral';
+				return 'secondary';
 		}
 	}
 
@@ -126,9 +127,9 @@
 	<div class="person-content">
 		<div class="person-header">
 			<h3 class="person-name">{person.name}</h3>
-			<span class="type-badge {getBadgeClass(person.type)}">
+			<Badge variant={getBadgeVariant(person.type)} class="uppercase">
 				{getBadgeLabel(person.type)}
-			</span>
+			</Badge>
 		</div>
 
 		<div class="person-stats">
@@ -148,7 +149,11 @@
 		{/if}
 
 		{#if showAssignButton && person.type !== 'identified' && person.type !== 'noise'}
-			<button class="assign-button" onclick={handleAssign} aria-label="Assign name to {person.name}">
+			<button
+				class="assign-button"
+				onclick={handleAssign}
+				aria-label="Assign name to {person.name}"
+			>
 				Assign Name
 			</button>
 		{/if}
@@ -281,35 +286,6 @@
 		white-space: nowrap;
 		flex: 1;
 		min-width: 0;
-	}
-
-	.type-badge {
-		font-size: 0.7rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		padding: 0.25rem 0.5rem;
-		border-radius: 12px;
-		flex-shrink: 0;
-	}
-
-	.badge-success {
-		background-color: #e8f5e9;
-		color: #2e7d32;
-	}
-
-	.badge-warning {
-		background-color: #fff3e0;
-		color: #e65100;
-	}
-
-	.badge-error {
-		background-color: #ffebee;
-		color: #c62828;
-	}
-
-	.badge-neutral {
-		background-color: #f5f5f5;
-		color: #666;
 	}
 
 	.person-stats {

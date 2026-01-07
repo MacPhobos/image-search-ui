@@ -7,6 +7,10 @@
 	import UnifiedPersonCard from '$lib/components/faces/UnifiedPersonCard.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { Badge } from '$lib/components/ui/badge';
+	import * as Select from '$lib/components/ui/select';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Label } from '$lib/components/ui/label';
+	import { Separator } from '$lib/components/ui/separator';
 
 	// State
 	let loading = $state(true);
@@ -17,14 +21,24 @@
 	let showIdentified = $state(true);
 	let showUnidentified = $state(false);
 	let showNoise = $state(false);
-	let sortBy = $state<'faceCount' | 'name'>('faceCount');
-	let sortOrder = $state<'asc' | 'desc'>('desc');
+
+	// Select component values (shadcn uses objects with value/label)
+	let sortBySelection = $state<{ value: string; label: string }>({
+		value: 'faceCount',
+		label: 'Face Count'
+	});
+	let sortOrderSelection = $state<{ value: string; label: string }>({
+		value: 'desc',
+		label: 'Descending'
+	});
+
+	// Derived values for API calls
+	let sortBy = $derived(sortBySelection.value as 'faceCount' | 'name');
+	let sortOrder = $derived(sortOrderSelection.value as 'asc' | 'desc');
 
 	// Derived - filter people by type
 	let identifiedPeople = $derived(data?.people.filter((p) => p.type === 'identified') ?? []);
-	let unidentifiedPeople = $derived(
-		data?.people.filter((p) => p.type === 'unidentified') ?? []
-	);
+	let unidentifiedPeople = $derived(data?.people.filter((p) => p.type === 'unidentified') ?? []);
 	let noisePeople = $derived(data?.people.filter((p) => p.type === 'noise') ?? []);
 
 	async function loadPeople() {
@@ -157,33 +171,43 @@
 	<!-- Filters -->
 	<section class="filters-bar">
 		<div class="filter-group">
-			<label class="checkbox-label">
-				<input type="checkbox" bind:checked={showIdentified} />
-				<span>Show Identified</span>
-			</label>
-			<label class="checkbox-label">
-				<input type="checkbox" bind:checked={showUnidentified} />
-				<span>Show Unidentified</span>
-			</label>
-			<label class="checkbox-label">
-				<input type="checkbox" bind:checked={showNoise} />
-				<span>Show Unknown Faces</span>
-			</label>
+			<div class="flex items-center space-x-2">
+				<Checkbox id="show-identified" bind:checked={showIdentified} />
+				<Label for="show-identified" class="cursor-pointer">Show Identified</Label>
+			</div>
+			<div class="flex items-center space-x-2">
+				<Checkbox id="show-unidentified" bind:checked={showUnidentified} />
+				<Label for="show-unidentified" class="cursor-pointer">Show Unidentified</Label>
+			</div>
+			<div class="flex items-center space-x-2">
+				<Checkbox id="show-noise" bind:checked={showNoise} />
+				<Label for="show-noise" class="cursor-pointer">Show Unknown Faces</Label>
+			</div>
 		</div>
 
-		<div class="divider"></div>
+		<Separator orientation="vertical" class="h-8" />
 
 		<div class="sort-controls">
-			<label for="sortBy" class="sort-label">Sort by:</label>
-			<select id="sortBy" bind:value={sortBy} class="sort-select">
-				<option value="faceCount">Face Count</option>
-				<option value="name">Name</option>
-			</select>
+			<Label for="sortBy" class="sort-label">Sort by:</Label>
+			<Select.Root bind:selected={sortBySelection}>
+				<Select.Trigger id="sortBy" class="w-[160px]">
+					<Select.Value />
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="faceCount" label="Face Count">Face Count</Select.Item>
+					<Select.Item value="name" label="Name">Name</Select.Item>
+				</Select.Content>
+			</Select.Root>
 
-			<select bind:value={sortOrder} class="sort-select" aria-label="Sort order">
-				<option value="desc">Descending</option>
-				<option value="asc">Ascending</option>
-			</select>
+			<Select.Root bind:selected={sortOrderSelection}>
+				<Select.Trigger class="w-[140px]" aria-label="Sort order">
+					<Select.Value />
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="desc" label="Descending">Descending</Select.Item>
+					<Select.Item value="asc" label="Ascending">Ascending</Select.Item>
+				</Select.Content>
+			</Select.Root>
 		</div>
 	</section>
 
@@ -276,9 +300,7 @@
 					<div class="section-header">
 						<h2 class="section-title">
 							<Badge variant="destructive">Unknown Faces</Badge>
-							<span class="section-count"
-								>{noisePeople[0]?.faceCount ?? 0} ungrouped faces</span
-							>
+							<span class="section-count">{noisePeople[0]?.faceCount ?? 0} ungrouped faces</span>
 						</h2>
 						<p class="section-description">
 							These faces couldn't be confidently grouped. Review and assign manually.
@@ -570,29 +592,6 @@
 		font-size: 0.875rem;
 		margin: 0;
 		max-width: 600px;
-	}
-
-	.badge {
-		font-size: 0.75rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		padding: 0.25rem 0.75rem;
-		border-radius: 12px;
-	}
-
-	.badge-success {
-		background-color: #e8f5e9;
-		color: #2e7d32;
-	}
-
-	.badge-warning {
-		background-color: #fff3e0;
-		color: #e65100;
-	}
-
-	.badge-error {
-		background-color: #ffebee;
-		color: #c62828;
 	}
 
 	.people-grid {

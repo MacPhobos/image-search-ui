@@ -6,6 +6,8 @@
 		cancelFaceDetectionSession,
 		subscribeFaceDetectionProgress
 	} from '$lib/api/faces';
+	import { Badge } from '$lib/components/ui/badge';
+	import type { BadgeVariant } from '$lib/components/ui/badge';
 
 	let { session, onUpdate } = $props<{
 		session: FaceDetectionSession;
@@ -29,22 +31,28 @@
 
 	// Computed values (use liveSession for real-time reactivity)
 	let progress = $derived(liveSession.progressPercent);
-	let statusColor = $derived(() => {
-		switch (liveSession.status) {
+
+	// Map status to Badge variant
+	function getStatusVariant(status: string): BadgeVariant {
+		switch (status) {
 			case 'completed':
-				return 'text-green-600 bg-green-100';
+				return 'success';
 			case 'failed':
-				return 'text-red-600 bg-red-100';
+				return 'destructive';
 			case 'processing':
-				return 'text-blue-600 bg-blue-100';
+				return 'default';
 			case 'paused':
-				return 'text-yellow-600 bg-yellow-100';
+				return 'warning';
 			case 'cancelled':
-				return 'text-gray-600 bg-gray-100';
+				return 'secondary';
+			case 'pending':
+				return 'outline';
 			default:
-				return 'text-gray-600 bg-gray-100';
+				return 'outline';
 		}
-	});
+	}
+
+	let statusVariant = $derived(getStatusVariant(liveSession.status));
 
 	// Subscribe to SSE when processing (check session prop, mutate liveSession)
 	$effect(() => {
@@ -57,7 +65,8 @@
 						...liveSession,
 						...data,
 						// Map new fields if they exist in SSE response
-						facesAssignedToPersons: data.facesAssignedToPersons ?? liveSession.facesAssignedToPersons,
+						facesAssignedToPersons:
+							data.facesAssignedToPersons ?? liveSession.facesAssignedToPersons,
 						clustersCreated: data.clustersCreated ?? liveSession.clustersCreated,
 						suggestionsCreated: data.suggestionsCreated ?? liveSession.suggestionsCreated,
 						currentBatch: data.currentBatch ?? liveSession.currentBatch,
@@ -118,9 +127,9 @@
 	<!-- Header -->
 	<div class="flex justify-between items-center mb-3">
 		<h3 class="font-semibold text-gray-800">Face Detection Session</h3>
-		<span class="px-2 py-1 text-xs font-medium rounded-full {statusColor()}">
+		<Badge variant={statusVariant}>
 			{liveSession.status}
-		</span>
+		</Badge>
 	</div>
 
 	<!-- Pending State Indicator -->
@@ -145,7 +154,9 @@
 			</div>
 			<div class="flex justify-between text-sm text-gray-500 mt-1">
 				<span
-					>{liveSession.processedImages} / {liveSession.totalImages} images ({progress.toFixed(1)}%)</span
+					>{liveSession.processedImages} / {liveSession.totalImages} images ({progress.toFixed(
+						1
+					)}%)</span
 				>
 				{#if liveSession.totalBatches && liveSession.totalBatches > 0}
 					<span>Batch {liveSession.currentBatch || 0} of {liveSession.totalBatches}</span>
