@@ -1,28 +1,47 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import type { FaceSuggestion, SuggestionGroup } from '$lib/api/faces';
+	import type { FaceSuggestion, Person } from '$lib/api/faces';
 	import {
 		listGroupedSuggestions,
 		getFaceSuggestionSettings,
 		bulkSuggestionAction,
 		acceptSuggestion,
 		rejectSuggestion,
+		listPersons,
 		type GroupedSuggestionsResponse,
 		type FaceSuggestionSettings
 	} from '$lib/api/faces';
 	import SuggestionGroupCard from '$lib/components/faces/SuggestionGroupCard.svelte';
 	import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
+	import PersonSearchBar from '$lib/components/faces/PersonSearchBar.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 
 	let groupedResponse = $state<GroupedSuggestionsResponse | null>(null);
 	let settings = $state<FaceSuggestionSettings>({ groupsPerPage: 10, itemsPerGroup: 20 });
 	let page = $state(1);
 	let statusFilter = $state<string>('pending');
+	let personFilter = $state<string | null>(null);
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 	let selectedIds = $state<Set<number>>(new Set());
 	let bulkLoading = $state(false);
 	let selectedSuggestion = $state<FaceSuggestion | null>(null);
+	let persons = $state<Person[]>([]);
+	let personsLoading = $state(false);
+
+	async function loadPersons() {
+		personsLoading = true;
+		try {
+			// Fetch all active persons (paginate if needed, but assuming reasonable count)
+			const response = await listPersons(1, 1000, 'active');
+			persons = response.items;
+		} catch (e) {
+			console.error('Failed to load persons:', e);
+			persons = [];
+		} finally {
+			personsLoading = false;
+		}
+	}
 
 	async function loadSuggestions() {
 		isLoading = true;
@@ -32,13 +51,19 @@
 				page,
 				groupsPerPage: settings.groupsPerPage,
 				suggestionsPerGroup: settings.itemsPerGroup,
-				status: statusFilter || undefined
+				status: statusFilter || undefined,
+				personId: personFilter || undefined
 			});
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load suggestions';
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	function handlePersonSelect(personId: string | null) {
+		personFilter = personId;
+		page = 1; // Reset to first page when filter changes
 	}
 
 	function handleSuggestionUpdate(updated: FaceSuggestion) {
@@ -177,6 +202,7 @@
 			// Use defaults if settings fetch fails
 			console.error('Failed to load settings:', e);
 		}
+		await loadPersons();
 		await loadSuggestions();
 	});
 
@@ -187,7 +213,7 @@
 
 	$effect(() => {
 		// Reload when filter or page changes
-		if (statusFilter !== undefined || page) {
+		if (statusFilter !== undefined || page || personFilter !== undefined) {
 			loadSuggestions();
 		}
 	});
@@ -205,7 +231,7 @@
 	const totalPages = $derived(
 		groupedResponse ? Math.ceil(groupedResponse.totalGroups / settings.groupsPerPage) : 0
 	);
-	const pendingCount = $derived(() => {
+	const pendingCount = $derived.by(() => {
 		if (!groupedResponse) return 0;
 		let count = 0;
 		for (const group of groupedResponse.groups) {
@@ -245,6 +271,20 @@
 				<option value="accepted">Accepted</option>
 				<option value="rejected">Rejected</option>
 			</select>
+		</div>
+
+		<div class="flex items-center gap-2 flex-1 min-w-0 max-w-xs">
+			<label for="person-filter" class="text-sm font-medium text-gray-700 shrink-0">Person:</label>
+			<div class="flex-1 min-w-0">
+				<PersonSearchBar
+					{persons}
+					loading={personsLoading}
+					selectedPersonId={personFilter}
+					onSelect={handlePersonSelect}
+					placeholder="Filter by person..."
+					testId="suggestion-person-filter"
+				/>
+			</div>
 		</div>
 
 		{#if pendingCount > 0}
