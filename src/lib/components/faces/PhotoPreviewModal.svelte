@@ -14,6 +14,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		/** Controls dialog open state */
@@ -428,7 +429,7 @@
 
 		const face = photo.faces.find((f) => f.faceInstanceId === pinningFaceId);
 		if (!face?.personId) {
-			alert('Cannot pin: face must be assigned to a person first');
+			toast.error('Cannot pin: face must be assigned to a person first');
 			return;
 		}
 
@@ -444,9 +445,13 @@
 
 			// Notify parent to refresh prototypes
 			onPrototypePinned?.();
+
+			toast.success('Prototype pinned successfully');
 		} catch (err) {
 			console.error('Failed to pin prototype:', err);
-			alert('Failed to pin as prototype');
+			toast.error('Failed to pin as prototype', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
 		} finally {
 			pinningInProgress = false;
 		}

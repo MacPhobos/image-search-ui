@@ -11,6 +11,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 
 	// State
 	let loading = $state(true);
@@ -214,9 +215,14 @@
 	<!-- Content -->
 	<section class="content">
 		{#if loading}
-			<div class="loading-state">
-				<div class="spinner"></div>
-				<p>Loading people...</p>
+			<div class="people-grid">
+				{#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
+					<div class="skeleton-card">
+						<Skeleton class="h-48 w-full rounded-lg mb-3" />
+						<Skeleton class="h-4 w-3/4 mb-2" />
+						<Skeleton class="h-3 w-1/2" />
+					</div>
+				{/each}
 			</div>
 		{:else if error}
 			<div class="error-state" role="alert">

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/svelte';
 import { describe, it, expect } from 'vitest';
-import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
+import CoverageIndicatorTestWrapper from './CoverageIndicatorTestWrapper.svelte';
 import type { TemporalCoverage, AgeEraBucket } from '$lib/types';
 
 describe('CoverageIndicator', () => {
@@ -41,7 +41,7 @@ describe('CoverageIndicator', () => {
 
 	describe('full mode', () => {
 		it('renders coverage bar and text', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage }
 			});
 
@@ -49,7 +49,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows high coverage with green color', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: highCoverage }
 			});
 
@@ -58,7 +58,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows medium coverage with orange color', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage }
 			});
 
@@ -67,7 +67,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows low coverage with red color', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: lowCoverage }
 			});
 
@@ -76,7 +76,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('displays correct era count', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: highCoverage }
 			});
 
@@ -84,7 +84,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows 0/6 eras for zero coverage', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: zeroCoverage }
 			});
 
@@ -92,7 +92,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows 6/6 eras for full coverage', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: fullCoverage }
 			});
 
@@ -100,7 +100,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('sets bar width to coverage percentage', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage }
 			});
 
@@ -111,7 +111,7 @@ describe('CoverageIndicator', () => {
 
 	describe('compact mode', () => {
 		it('renders compact badge', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage, compact: true }
 			});
 
@@ -119,7 +119,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('does not show era count in compact mode', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage, compact: true }
 			});
 
@@ -127,7 +127,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows high coverage badge with green background', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: highCoverage, compact: true }
 			});
 
@@ -137,7 +137,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows medium coverage badge with orange background', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage, compact: true }
 			});
 
@@ -147,7 +147,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows low coverage badge with red background', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: lowCoverage, compact: true }
 			});
 
@@ -157,7 +157,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('rounds percentage to nearest integer', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: highCoverage, compact: true }
 			});
 
@@ -165,7 +165,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows 0% for zero coverage', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: zeroCoverage, compact: true }
 			});
 
@@ -173,7 +173,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('shows 100% for full coverage', () => {
-			render(CoverageIndicator, {
+			render(CoverageIndicatorTestWrapper, {
 				props: { coverage: fullCoverage, compact: true }
 			});
 
@@ -190,7 +190,7 @@ describe('CoverageIndicator', () => {
 				totalPrototypes: 5
 			};
 
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage, compact: true }
 			});
 
@@ -205,7 +205,7 @@ describe('CoverageIndicator', () => {
 				totalPrototypes: 4
 			};
 
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage, compact: true }
 			});
 
@@ -213,7 +213,7 @@ describe('CoverageIndicator', () => {
 		});
 
 		it('classifies 50% as medium', () => {
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage: mediumCoverage, compact: true }
 			});
 
@@ -228,7 +228,7 @@ describe('CoverageIndicator', () => {
 				totalPrototypes: 2
 			};
 
-			const { container } = render(CoverageIndicator, {
+			const { container } = render(CoverageIndicatorTestWrapper, {
 				props: { coverage, compact: true }
 			});
 

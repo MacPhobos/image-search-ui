@@ -5,6 +5,8 @@
 	import { checkHealth } from '$lib/api/client';
 	import { tid } from '$lib/testing/testid';
 	import { setViewId } from '$lib/dev/viewId';
+	import { Toaster } from '$lib/components/ui/sonner';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	interface Props {
 		children: Snippet;
@@ -39,42 +41,44 @@
 	}
 </script>
 
-<div class="app" data-testid={tid('layout', 'root')}>
-	<header data-testid={tid('layout', 'header')}>
-		<h1>Mac'Image Search</h1>
-		<nav class="nav" data-testid={tid('layout', 'nav')}>
-			<a href="/">Search</a>
-			<a href="/people">People</a>
-			<a href="/faces/suggestions">Suggestions</a>
-			<a href="/faces/clusters">Clusters</a>
-			<a href="/categories">Categories</a>
-			<a href="/training">Training</a>
-			<a href="/queues">Queues</a>
-			<a href="/vectors">Vectors</a>
-			<a href="/admin">Admin</a>
-		</nav>
-		<div class="health-indicator" data-testid={tid('layout', 'health')}>
-			<span class="health-dot health-{healthStatus}"></span>
-			<span class="health-text">
-				{#if healthStatus === 'checking'}
-					Checking backend...
-				{:else if healthStatus === 'healthy'}
-					Backend connected
-				{:else}
-					Backend offline
-				{/if}
-			</span>
-		</div>
-	</header>
+<Tooltip.Provider>
+	<div class="app" data-testid={tid('layout', 'root')}>
+		<header data-testid={tid('layout', 'header')}>
+			<h1>Mac'Image Search</h1>
+			<nav class="nav" data-testid={tid('layout', 'nav')}>
+				<a href="/">Search</a>
+				<a href="/people">People</a>
+				<a href="/faces/suggestions">Suggestions</a>
+				<a href="/faces/clusters">Clusters</a>
+				<a href="/categories">Categories</a>
+				<a href="/training">Training</a>
+				<a href="/queues">Queues</a>
+				<a href="/vectors">Vectors</a>
+				<a href="/admin">Admin</a>
+			</nav>
+			<div class="health-indicator" data-testid={tid('layout', 'health')}>
+				<span class="health-dot health-{healthStatus}"></span>
+				<span class="health-text">
+					{#if healthStatus === 'checking'}
+						Checking backend...
+					{:else if healthStatus === 'healthy'}
+						Backend connected
+					{:else}
+						Backend offline
+					{/if}
+				</span>
+			</div>
+		</header>
 
-	<main data-testid={tid('layout', 'main')}>
-		{@render children()}
-	</main>
+		<main data-testid={tid('layout', 'main')}>
+			{@render children()}
+		</main>
 
-	<footer data-testid={tid('layout', 'footer')}>
-		<p>&copy; 2025 Image Search. Licensed under GPLv3.</p>
-	</footer>
-</div>
+		<footer data-testid={tid('layout', 'footer')}>
+			<p>&copy; 2025 Image Search. Licensed under GPLv3.</p>
+		</footer>
+	</div>
+</Tooltip.Provider>
 
 <!-- DEV-ONLY: Development overlay -->
 {#if import.meta.env.DEV}
@@ -82,6 +86,9 @@
 		<DevOverlay />
 	{/await}
 {/if}
+
+<!-- Toast notifications -->
+<Toaster />
 
 <style>
 	:global(body) {

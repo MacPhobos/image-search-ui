@@ -4,6 +4,7 @@
 	import { API_BASE_URL } from '$lib/api/client';
 	import PersonPickerModal from './PersonPickerModal.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		personId: string;
@@ -90,14 +91,16 @@
 		bulkActionInProgress = true;
 		try {
 			const result = await bulkRemoveFromPerson(personId, [...selectedPhotoIds]);
-			alert(
+			toast.success(
 				`Removed ${result.updatedFaces} faces from ${result.updatedPhotos} photos` +
 					(result.skippedFaces > 0 ? ` (${result.skippedFaces} faces skipped)` : '')
 			);
 			selectedPhotoIds = new Set();
 			await loadPhotos(); // Refresh
 		} catch (e) {
-			alert('Failed to remove: ' + (e instanceof Error ? e.message : 'Unknown error'));
+			toast.error('Failed to remove', {
+				description: e instanceof Error ? e.message : 'Unknown error'
+			});
 		} finally {
 			bulkActionInProgress = false;
 		}
@@ -109,7 +112,7 @@
 
 		try {
 			const result = await bulkMoveToPerson(personId, [...selectedPhotoIds], destination);
-			alert(
+			toast.success(
 				`Moved ${result.updatedFaces} faces from ${result.updatedPhotos} photos to ${result.toPersonName}` +
 					(result.skippedFaces > 0 ? ` (${result.skippedFaces} faces skipped)` : '') +
 					(result.personCreated ? ' (new person created)' : '')
@@ -117,7 +120,9 @@
 			selectedPhotoIds = new Set();
 			await loadPhotos(); // Refresh
 		} catch (e) {
-			alert('Failed to move: ' + (e instanceof Error ? e.message : 'Unknown error'));
+			toast.error('Failed to move', {
+				description: e instanceof Error ? e.message : 'Unknown error'
+			});
 		} finally {
 			bulkActionInProgress = false;
 		}

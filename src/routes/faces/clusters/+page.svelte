@@ -7,6 +7,7 @@
 	import ClusterCard from '$lib/components/faces/ClusterCard.svelte';
 	import type { ClusterSummary } from '$lib/types';
 	import { onMount } from 'svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 
 	// State
 	let clusters = $state<ClusterSummary[]>([]);
@@ -50,7 +51,7 @@
 		} catch (err) {
 			console.error('Failed to load configuration:', err);
 			// Use default values if config load fails (more permissive)
-			config = { minConfidence: 0.70, minClusterSize: 2 };
+			config = { minConfidence: 0.7, minClusterSize: 2 };
 		}
 		loadClusters(true);
 	});
@@ -126,17 +127,23 @@
 		<h1>Unknown Faces</h1>
 		<p class="subtitle">
 			Review and label face clusters to identify people in your photos. Showing clusters with at
-			least {config?.minClusterSize ?? 2} faces and {((config?.minConfidence ?? 0.70) * 100).toFixed(0)}%
-			similarity.
+			least {config?.minClusterSize ?? 2} faces and {((config?.minConfidence ?? 0.7) * 100).toFixed(
+				0
+			)}% similarity.
 		</p>
 	</header>
 
 	<!-- Content -->
 	<section class="content" aria-live="polite">
 		{#if loading}
-			<div class="loading-state">
-				<div class="spinner"></div>
-				<p>Loading clusters...</p>
+			<div class="clusters-grid">
+				{#each Array.from({ length: 12 }, (_, i) => i) as i (i)}
+					<div class="skeleton-card">
+						<Skeleton class="h-64 w-full rounded-lg mb-3" />
+						<Skeleton class="h-4 w-2/3 mb-2" />
+						<Skeleton class="h-3 w-1/3" />
+					</div>
+				{/each}
 			</div>
 		{:else if error}
 			<div class="error-state" role="alert">

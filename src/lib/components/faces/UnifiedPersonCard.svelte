@@ -5,6 +5,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	interface Props {
 		/** Person data (identified, unidentified, or noise) */
@@ -88,6 +89,19 @@
 		}
 	}
 
+	function getBadgeTooltip(type: string): string {
+		switch (type) {
+			case 'identified':
+				return 'This person has been assigned a name';
+			case 'unidentified':
+				return 'This face cluster needs to be identified with a name';
+			case 'noise':
+				return 'Low-confidence faces that need individual review';
+			default:
+				return type;
+		}
+	}
+
 	function getInitials(name: string): string {
 		return name
 			.split(' ')
@@ -130,23 +144,44 @@
 				<Card.Title class="text-lg font-semibold truncate flex-1 min-w-0">
 					{person.name}
 				</Card.Title>
-				<Badge variant={getBadgeVariant(person.type)} class="uppercase shrink-0">
-					{getBadgeLabel(person.type)}
-				</Badge>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						<Badge variant={getBadgeVariant(person.type)} class="uppercase shrink-0 cursor-help">
+							{getBadgeLabel(person.type)}
+						</Badge>
+					</Tooltip.Trigger>
+					<Tooltip.Content>
+						<p>{getBadgeTooltip(person.type)}</p>
+					</Tooltip.Content>
+				</Tooltip.Root>
 			</div>
 		</Card.Header>
 
 		<Card.Content class="p-0 space-y-2">
 			<div class="flex gap-4 flex-wrap text-sm text-muted-foreground">
-				<span>
-					<strong class="text-foreground">{person.faceCount}</strong>
-					{person.faceCount === 1 ? 'face' : 'faces'}
-				</span>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						<span class="cursor-help">
+							<strong class="text-foreground">{person.faceCount}</strong>
+							{person.faceCount === 1 ? 'face' : 'faces'}
+						</span>
+					</Tooltip.Trigger>
+					<Tooltip.Content>
+						<p>Number of detected faces in this {person.type === 'identified' ? 'person' : 'cluster'}</p>
+					</Tooltip.Content>
+				</Tooltip.Root>
 				{#if person.type === 'unidentified' && person.confidence}
-					<span>
-						<strong class="text-foreground">{Math.round(person.confidence * 100)}%</strong>
-						confidence
-					</span>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							<span class="cursor-help">
+								<strong class="text-foreground">{Math.round(person.confidence * 100)}%</strong>
+								confidence
+							</span>
+						</Tooltip.Trigger>
+						<Tooltip.Content>
+							<p>Average similarity score for faces in this cluster</p>
+						</Tooltip.Content>
+					</Tooltip.Root>
 				{/if}
 			</div>
 

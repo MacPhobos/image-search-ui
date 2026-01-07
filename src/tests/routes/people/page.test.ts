@@ -15,14 +15,19 @@ vi.mock('$app/navigation', () => ({
 	goto: vi.fn()
 }));
 
-import PeoplePage from '../../../routes/people/+page.svelte';
+import PageTestWrapper from './PageTestWrapper.svelte';
 import { goto } from '$app/navigation';
 
 describe('People Page', () => {
 	const defaultMockData = createUnifiedPeopleResponse([
 		createIdentifiedPerson({ id: 'uuid-1', name: 'Alice', faceCount: 50 }),
 		createIdentifiedPerson({ id: 'uuid-2', name: 'Bob', faceCount: 30 }),
-		createUnidentifiedPerson({ id: 'clu_1', name: 'Unidentified Person 1', faceCount: 100, confidence: 0.9 }),
+		createUnidentifiedPerson({
+			id: 'clu_1',
+			name: 'Unidentified Person 1',
+			faceCount: 100,
+			confidence: 0.9
+		}),
 		createNoisePerson({ id: 'noise', name: 'Unknown Faces', faceCount: 200 })
 	]);
 
@@ -36,7 +41,7 @@ describe('People Page', () => {
 			// Mock with regex to match any query params
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			expect(screen.getByText('Loading people...')).toBeInTheDocument();
 		});
@@ -45,7 +50,7 @@ describe('People Page', () => {
 			// Mock with regex to match any query params
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -57,7 +62,7 @@ describe('People Page', () => {
 			// Mock with regex to match any query params
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				// Check for identified count
@@ -72,13 +77,9 @@ describe('People Page', () => {
 
 	describe('Error Handling', () => {
 		it('should show error state on API failure', async () => {
-			mockError(
-				'/api/v1/faces/people.*',
-				500,
-				{ message: 'Internal server error' }
-			);
+			mockError('/api/v1/faces/people.*', 500, { message: 'Internal server error' });
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				const errorElement = screen.getByRole('alert');
@@ -90,13 +91,9 @@ describe('People Page', () => {
 		});
 
 		it('should retry loading when Try Again is clicked', async () => {
-			mockError(
-				'/api/v1/faces/people.*',
-				500,
-				{ message: 'Server error' }
-			);
+			mockError('/api/v1/faces/people.*', 500, { message: 'Server error' });
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -119,7 +116,7 @@ describe('People Page', () => {
 			const emptyData = createUnifiedPeopleResponse([]);
 			mockResponse('/api/v1/faces/people.*', emptyData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('No people found')).toBeInTheDocument();
@@ -134,7 +131,7 @@ describe('People Page', () => {
 		it('should show Identified section header', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				// Multiple "Identified" badges exist, so check for "2 people" instead
@@ -145,7 +142,7 @@ describe('People Page', () => {
 		it('should show Needs Names section header', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Needs Names')).toBeInTheDocument();
@@ -156,7 +153,7 @@ describe('People Page', () => {
 		it('should not show noise section by default', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -171,7 +168,7 @@ describe('People Page', () => {
 		it('should update API call when Show Identified is toggled', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -201,7 +198,7 @@ describe('People Page', () => {
 		it('should update API call when Show Unidentified is toggled', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -226,7 +223,7 @@ describe('People Page', () => {
 		it('should update API call when Show Unknown Faces is toggled', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -253,7 +250,7 @@ describe('People Page', () => {
 		it('should update API call when sort by is changed', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -271,7 +268,7 @@ describe('People Page', () => {
 		it('should update API call when sort order is changed', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -291,7 +288,7 @@ describe('People Page', () => {
 		it('should show assign button on unidentified cards', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Unidentified Person 1')).toBeInTheDocument();
@@ -304,7 +301,7 @@ describe('People Page', () => {
 		it('should navigate to person detail page when identified person is clicked', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -320,7 +317,7 @@ describe('People Page', () => {
 		it('should navigate to cluster detail page when unidentified person is clicked', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Unidentified Person 1')).toBeInTheDocument();
@@ -336,7 +333,7 @@ describe('People Page', () => {
 		it('should navigate to label page when assign button is clicked', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Unidentified Person 1')).toBeInTheDocument();
@@ -358,7 +355,7 @@ describe('People Page', () => {
 
 			mockResponse('/api/v1/faces/people.*', manyPeople);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('5 people')).toBeInTheDocument();
@@ -375,7 +372,7 @@ describe('People Page', () => {
 
 			mockResponse('/api/v1/faces/people.*', data);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				// The page uses "groups" plural even for 1 item
@@ -388,7 +385,7 @@ describe('People Page', () => {
 		it('should show noise section when checkbox is enabled', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -413,7 +410,7 @@ describe('People Page', () => {
 		it('should display noise count in statistics when visible', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -440,7 +437,7 @@ describe('People Page', () => {
 		it('should have proper page title', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			await waitFor(() => {
 				expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -454,7 +451,7 @@ describe('People Page', () => {
 		it('should have labeled filter checkboxes', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			expect(screen.getByLabelText(/Show Identified/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/Show Unidentified/i)).toBeInTheDocument();
@@ -464,7 +461,7 @@ describe('People Page', () => {
 		it('should have labeled sort controls', async () => {
 			mockResponse('/api/v1/faces/people.*', defaultMockData);
 
-			render(PeoplePage);
+			render(PageTestWrapper);
 
 			expect(screen.getByLabelText(/Sort by:/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/Sort order/i)).toBeInTheDocument();

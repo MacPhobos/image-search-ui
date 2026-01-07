@@ -7,6 +7,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
 	import { onMount } from 'svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 
 	let categories = $state<Category[]>([]);
 	let total = $state(0);
@@ -104,7 +105,43 @@
 	{/if}
 
 	{#if loading}
-		<div class="loading">Loading categories...</div>
+		<div class="categories-table-container">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Name</Table.Head>
+						<Table.Head>Description</Table.Head>
+						<Table.Head>Sessions</Table.Head>
+						<Table.Head>Created</Table.Head>
+						<Table.Head>Actions</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each Array.from({ length: 5 }, (_, i) => i) as i (i)}
+						<Table.Row>
+							<Table.Cell>
+								<Skeleton class="h-6 w-24" />
+							</Table.Cell>
+							<Table.Cell>
+								<Skeleton class="h-4 w-64" />
+							</Table.Cell>
+							<Table.Cell>
+								<Skeleton class="h-4 w-20" />
+							</Table.Cell>
+							<Table.Cell>
+								<Skeleton class="h-4 w-24" />
+							</Table.Cell>
+							<Table.Cell>
+								<div class="flex gap-2">
+									<Skeleton class="h-8 w-16" />
+									<Skeleton class="h-8 w-16" />
+								</div>
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
 	{:else if categories.length === 0}
 		<div class="empty-state">
 			<p>No categories found.</p>

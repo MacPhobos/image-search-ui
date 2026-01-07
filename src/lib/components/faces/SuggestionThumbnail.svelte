@@ -4,6 +4,7 @@
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Checkbox } from '$lib/components/ui/checkbox';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { ComponentProps } from 'svelte';
 
 	interface Props {
@@ -35,6 +36,25 @@
 				return 'secondary';
 			default:
 				return 'outline';
+		}
+	}
+
+	function getConfidenceTooltip(confidence: number): string {
+		if (confidence >= 0.7) return 'High confidence - Strong match to this person';
+		if (confidence >= 0.5) return 'Medium confidence - Likely match, review recommended';
+		return 'Low confidence - Uncertain match, manual verification needed';
+	}
+
+	function getStatusTooltip(status: FaceSuggestion['status']): string {
+		switch (status) {
+			case 'accepted':
+				return 'This suggestion has been accepted and the face is assigned';
+			case 'rejected':
+				return 'This suggestion has been rejected';
+			case 'expired':
+				return 'This suggestion has expired and is no longer active';
+			default:
+				return 'Pending review';
 		}
 	}
 
@@ -106,26 +126,40 @@
 
 	<!-- Confidence badge (bottom-right corner) -->
 	<div class="confidence-badge">
-		<Badge variant={confidenceVariant} class="text-[0.625rem] font-bold px-1 py-0 h-auto">
-			{confidencePercent}%
-		</Badge>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				<Badge variant={confidenceVariant} class="text-[0.625rem] font-bold px-1 py-0 h-auto cursor-help">
+					{confidencePercent}%
+				</Badge>
+			</Tooltip.Trigger>
+			<Tooltip.Content>
+				<p class="max-w-xs">{getConfidenceTooltip(suggestion.confidence)}</p>
+			</Tooltip.Content>
+		</Tooltip.Root>
 	</div>
 
 	<!-- Status indicator for non-pending -->
 	{#if suggestion.status !== 'pending'}
 		<div class="status-badge">
-			<Badge
-				variant={statusVariant}
-				class="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs font-bold"
-			>
-				{#if suggestion.status === 'accepted'}
-					✓
-				{:else if suggestion.status === 'rejected'}
-					✗
-				{:else}
-					!
-				{/if}
-			</Badge>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<Badge
+						variant={statusVariant}
+						class="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs font-bold cursor-help"
+					>
+						{#if suggestion.status === 'accepted'}
+							✓
+						{:else if suggestion.status === 'rejected'}
+							✗
+						{:else}
+							!
+						{/if}
+					</Badge>
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>{getStatusTooltip(suggestion.status)}</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
 		</div>
 	{/if}
 </div>

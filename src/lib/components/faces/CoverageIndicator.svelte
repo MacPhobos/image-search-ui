@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { TemporalCoverage } from '$lib/types';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	interface Props {
 		/** Coverage statistics */
@@ -15,22 +16,44 @@
 		if (coverage.coveragePercentage >= 50) return 'medium';
 		return 'low';
 	});
+
+	const coverageDescription = $derived(() => {
+		const covered = coverage.coveredEras.length;
+		const total = covered + coverage.missingEras.length;
+		return `This person appears in ${covered} out of ${total} time periods in your photo collection. Higher coverage indicates the person appears consistently across different time ranges.`;
+	});
 </script>
 
 {#if compact}
-	<span class="coverage-compact {coverageClass()}">
-		{coverage.coveragePercentage.toFixed(0)}%
-	</span>
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			<span class="coverage-compact {coverageClass()} cursor-help">
+				{coverage.coveragePercentage.toFixed(0)}%
+			</span>
+		</Tooltip.Trigger>
+		<Tooltip.Content>
+			<p class="max-w-xs">{coverageDescription()}</p>
+		</Tooltip.Content>
+	</Tooltip.Root>
 {:else}
-	<div class="coverage-indicator">
-		<div class="coverage-bar">
-			<div class="coverage-fill {coverageClass()}" style="width: {coverage.coveragePercentage}%">
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			<div class="coverage-indicator cursor-help">
+				<div class="coverage-bar">
+					<div
+						class="coverage-fill {coverageClass()}"
+						style="width: {coverage.coveragePercentage}%"
+					></div>
+				</div>
+				<span class="coverage-text">
+					{coverage.coveredEras.length}/{coverage.coveredEras.length + coverage.missingEras.length} eras
+				</span>
 			</div>
-		</div>
-		<span class="coverage-text">
-			{coverage.coveredEras.length}/{coverage.coveredEras.length + coverage.missingEras.length} eras
-		</span>
-	</div>
+		</Tooltip.Trigger>
+		<Tooltip.Content>
+			<p class="max-w-xs">{coverageDescription()}</p>
+		</Tooltip.Content>
+	</Tooltip.Root>
 {/if}
 
 <style>

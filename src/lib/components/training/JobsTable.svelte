@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { TrainingJob } from '$lib/types';
 	import StatusBadge from './StatusBadge.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Table from '$lib/components/ui/table';
+	import { Progress } from '$lib/components/ui/progress';
 
 	interface Props {
 		jobs: TrainingJob[];
@@ -33,64 +36,75 @@
 	{:else if jobs.length === 0}
 		<div class="empty-state">No jobs found.</div>
 	{:else}
-		<table class="jobs-table">
-			<thead>
-				<tr>
-					<th>Job ID</th>
-					<th>Asset ID</th>
-					<th>Status</th>
-					<th>Progress</th>
-					<th>Duration</th>
-					<th>Completed At</th>
-					<th>Error</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each jobs as job}
-					<tr>
-						<td>{job.id}</td>
-						<td>{job.assetId}</td>
-						<td>
-							<StatusBadge status={job.status} size="sm" />
-						</td>
-						<td>{job.progress}%</td>
-						<td>{formatDuration(job.processingTimeMs)}</td>
-						<td>{formatTimestamp(job.completedAt)}</td>
-						<td class="error-cell">
-							{#if job.errorMessage}
-								<span class="error-text" title={job.errorMessage}>
-									{job.errorMessage.length > 50
-										? job.errorMessage.substring(0, 50) + '...'
-										: job.errorMessage}
-								</span>
-							{:else}
-								-
-							{/if}
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+		<div class="table-wrapper">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Job ID</Table.Head>
+						<Table.Head>Asset ID</Table.Head>
+						<Table.Head>Status</Table.Head>
+						<Table.Head>Progress</Table.Head>
+						<Table.Head>Duration</Table.Head>
+						<Table.Head>Completed At</Table.Head>
+						<Table.Head>Error</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each jobs as job}
+						<Table.Row>
+							<Table.Cell>{job.id}</Table.Cell>
+							<Table.Cell>{job.assetId}</Table.Cell>
+							<Table.Cell>
+								<StatusBadge status={job.status} size="sm" />
+							</Table.Cell>
+							<Table.Cell>
+								<div class="space-y-1 min-w-[120px]">
+									<div class="flex justify-between text-xs text-gray-600">
+										<span>{job.progress}%</span>
+									</div>
+									<Progress value={job.progress} max={100} class="h-1.5" />
+								</div>
+							</Table.Cell>
+							<Table.Cell>{formatDuration(job.processingTimeMs)}</Table.Cell>
+							<Table.Cell>{formatTimestamp(job.completedAt)}</Table.Cell>
+							<Table.Cell class="max-w-[200px]">
+								{#if job.errorMessage}
+									<span class="error-text" title={job.errorMessage}>
+										{job.errorMessage.length > 50
+											? job.errorMessage.substring(0, 50) + '...'
+											: job.errorMessage}
+									</span>
+								{:else}
+									-
+								{/if}
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
 
 		{#if totalPages > 1}
 			<div class="pagination">
-				<button
-					class="pagination-btn"
+				<Button
+					variant="outline"
+					size="sm"
 					onclick={() => onPageChange(currentPage - 1)}
 					disabled={currentPage === 1}
 				>
 					Previous
-				</button>
+				</Button>
 				<span class="pagination-info">
 					Page {currentPage} of {totalPages}
 				</span>
-				<button
-					class="pagination-btn"
+				<Button
+					variant="outline"
+					size="sm"
 					onclick={() => onPageChange(currentPage + 1)}
 					disabled={currentPage === totalPages}
 				>
 					Next
-				</button>
+				</Button>
 			</div>
 		{/if}
 	{/if}
@@ -112,39 +126,10 @@
 		color: #6b7280;
 	}
 
-	.jobs-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.jobs-table thead {
-		background-color: #f9fafb;
-	}
-
-	.jobs-table th {
-		padding: 0.75rem 1rem;
-		text-align: left;
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: #4b5563;
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-		border-bottom: 2px solid #e5e7eb;
-	}
-
-	.jobs-table td {
-		padding: 0.75rem 1rem;
-		font-size: 0.875rem;
-		color: #1f2937;
-		border-bottom: 1px solid #f3f4f6;
-	}
-
-	.jobs-table tbody tr:hover {
-		background-color: #f9fafb;
-	}
-
-	.error-cell {
-		max-width: 200px;
+	.table-wrapper {
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		overflow: hidden;
 	}
 
 	.error-text {
@@ -160,27 +145,6 @@
 		gap: 1rem;
 		padding: 1rem;
 		border-top: 1px solid #e5e7eb;
-	}
-
-	.pagination-btn {
-		padding: 0.5rem 1rem;
-		background-color: #3b82f6;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.pagination-btn:hover:not(:disabled) {
-		background-color: #2563eb;
-	}
-
-	.pagination-btn:disabled {
-		background-color: #d1d5db;
-		cursor: not-allowed;
 	}
 
 	.pagination-info {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import UnifiedPersonCard from '$lib/components/faces/UnifiedPersonCard.svelte';
+import UnifiedPersonCardTestWrapper from './UnifiedPersonCardTestWrapper.svelte';
 import {
 	createIdentifiedPerson,
 	createUnidentifiedPerson,
@@ -32,7 +32,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Rendering', () => {
 		it('should render identified person correctly', () => {
-			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: identifiedPerson } });
 
 			expect(screen.getByText('John Doe')).toBeInTheDocument();
 			expect(screen.getByText('45', { exact: false })).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should render unidentified person with Needs Name badge', () => {
-			render(UnifiedPersonCard, { props: { person: unidentifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: unidentifiedPerson } });
 
 			expect(screen.getByText('Unidentified Person 1')).toBeInTheDocument();
 			expect(screen.getByText('Needs Name')).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should show confidence for unidentified persons', () => {
-			render(UnifiedPersonCard, { props: { person: unidentifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: unidentifiedPerson } });
 
 			// Look for the confidence percentage text
 			const confidenceText = screen.getByText(/85%/);
@@ -59,7 +59,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should render noise person with Review badge', () => {
-			render(UnifiedPersonCard, { props: { person: noisePerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: noisePerson } });
 
 			expect(screen.getByText('Unknown Faces')).toBeInTheDocument();
 			expect(screen.getByText('Review')).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('UnifiedPersonCard', () => {
 
 		it('should display singular "face" for count of 1', () => {
 			const singleFacePerson = createIdentifiedPerson({ faceCount: 1 });
-			render(UnifiedPersonCard, { props: { person: singleFacePerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: singleFacePerson } });
 
 			expect(screen.getByText('1', { exact: false })).toBeInTheDocument();
 			expect(screen.getByText(/face/)).toBeInTheDocument();
@@ -79,7 +79,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Thumbnail Display', () => {
 		it('should show thumbnail image when available', () => {
-			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: identifiedPerson } });
 
 			const img = screen.getByRole('img', { hidden: true });
 			expect(img).toHaveAttribute('src', 'http://example.com/thumb.jpg');
@@ -87,7 +87,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should show initial placeholder when no thumbnail', () => {
-			render(UnifiedPersonCard, { props: { person: unidentifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: unidentifiedPerson } });
 
 			// Should show first two letters (UP for Unidentified Person) in Avatar fallback
 			const placeholder = screen.getByText('UP');
@@ -102,7 +102,7 @@ describe('UnifiedPersonCard', () => {
 				name: 'John Doe',
 				thumbnailUrl: null
 			});
-			render(UnifiedPersonCard, { props: { person } });
+			render(UnifiedPersonCardTestWrapper, { props: { person } });
 
 			expect(screen.getByText('JD')).toBeInTheDocument();
 		});
@@ -112,7 +112,7 @@ describe('UnifiedPersonCard', () => {
 				name: 'Alice',
 				thumbnailUrl: null
 			});
-			render(UnifiedPersonCard, { props: { person } });
+			render(UnifiedPersonCardTestWrapper, { props: { person } });
 
 			expect(screen.getByText('A')).toBeInTheDocument();
 		});
@@ -120,7 +120,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Badge Variants', () => {
 		it('should render badge with success variant for identified persons', () => {
-			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: identifiedPerson } });
 
 			const badge = screen.getByText('Identified');
 			// shadcn Badge with success variant uses green background
@@ -128,7 +128,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should render badge with warning variant for unidentified persons', () => {
-			render(UnifiedPersonCard, { props: { person: unidentifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: unidentifiedPerson } });
 
 			const badge = screen.getByText('Needs Name');
 			// shadcn Badge with warning variant uses amber background
@@ -136,7 +136,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should render badge with destructive variant for noise persons', () => {
-			render(UnifiedPersonCard, { props: { person: noisePerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: noisePerson } });
 
 			const badge = screen.getByText('Review');
 			// shadcn Badge with destructive variant uses destructive background
@@ -144,7 +144,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should render badge with uppercase text', () => {
-			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
+			render(UnifiedPersonCardTestWrapper, { props: { person: identifiedPerson } });
 
 			const badge = screen.getByText('Identified');
 			expect(badge.className).toContain('uppercase');
@@ -154,11 +154,11 @@ describe('UnifiedPersonCard', () => {
 	describe('Click Handlers', () => {
 		it('should call onClick when clickable card is clicked', async () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			await fireEvent.click(card);
 
 			expect(onClick).toHaveBeenCalledTimes(1);
@@ -167,11 +167,11 @@ describe('UnifiedPersonCard', () => {
 
 		it('should call onClick when Enter key is pressed', async () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			await fireEvent.keyDown(card, { key: 'Enter' });
 
 			expect(onClick).toHaveBeenCalledTimes(1);
@@ -180,11 +180,11 @@ describe('UnifiedPersonCard', () => {
 
 		it('should call onClick when Space key is pressed', async () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			await fireEvent.keyDown(card, { key: ' ' });
 
 			expect(onClick).toHaveBeenCalledTimes(1);
@@ -193,18 +193,18 @@ describe('UnifiedPersonCard', () => {
 
 		it('should not respond to other keys', async () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			await fireEvent.keyDown(card, { key: 'a' });
 
 			expect(onClick).not.toHaveBeenCalled();
 		});
 
 		it('should have role="article" when onClick is not provided', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson }
 			});
 
@@ -214,17 +214,17 @@ describe('UnifiedPersonCard', () => {
 
 		it('should have role="button" when onClick is provided', () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			expect(card).toBeInTheDocument();
 		});
 
 		it('should NOT call onClick for noise faces even when onClick is provided', async () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson, onClick }
 			});
 
@@ -237,7 +237,7 @@ describe('UnifiedPersonCard', () => {
 
 		it('should have role="article" for noise faces even with onClick', () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson, onClick }
 			});
 
@@ -248,7 +248,7 @@ describe('UnifiedPersonCard', () => {
 
 		it('should not respond to keyboard events for noise faces', async () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson, onClick }
 			});
 
@@ -262,7 +262,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Assign Button', () => {
 		it('should show assign button for unidentified when enabled', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: unidentifiedPerson, showAssignButton: true }
 			});
 
@@ -270,7 +270,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should NOT show assign button for noise faces even when enabled', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson, showAssignButton: true }
 			});
 
@@ -278,7 +278,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should not show assign button for identified persons', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, showAssignButton: true }
 			});
 
@@ -286,7 +286,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should not show assign button when showAssignButton is false', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: unidentifiedPerson, showAssignButton: false }
 			});
 
@@ -296,7 +296,7 @@ describe('UnifiedPersonCard', () => {
 		it('should call onAssign when assign button is clicked', async () => {
 			const onAssign = vi.fn();
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: {
 					person: unidentifiedPerson,
 					showAssignButton: true,
@@ -315,7 +315,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should have correct aria-label for assign button', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: unidentifiedPerson, showAssignButton: true }
 			});
 
@@ -326,7 +326,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Selection State', () => {
 		it('should apply selected class when selected is true', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, selected: true }
 			});
 
@@ -337,7 +337,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should not apply selected class when selected is false', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, selected: false }
 			});
 
@@ -349,7 +349,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Accessibility', () => {
 		it('should have correct aria-label for card', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson }
 			});
 
@@ -359,16 +359,16 @@ describe('UnifiedPersonCard', () => {
 
 		it('should be focusable when clickable', () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			expect(card).toHaveAttribute('tabindex', '0');
 		});
 
 		it('should not be focusable when not clickable', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson }
 			});
 
@@ -380,18 +380,18 @@ describe('UnifiedPersonCard', () => {
 	describe('CSS Classes', () => {
 		it('should apply clickable class when onClick is provided for non-noise', () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson, onClick }
 			});
 
-			const card = screen.getByRole('button');
+			const card = screen.getByRole('button', { name: /Person:/ });
 			// Clickable state uses cursor-pointer and hover effects
 			expect(card.className).toContain('cursor-pointer');
 			expect(card.className).toContain('hover:border-primary');
 		});
 
 		it('should not apply clickable class when onClick is not provided', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson }
 			});
 
@@ -401,7 +401,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should apply noise class for noise faces', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson }
 			});
 
@@ -412,7 +412,7 @@ describe('UnifiedPersonCard', () => {
 
 		it('should NOT apply clickable class for noise faces even with onClick', () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson, onClick }
 			});
 
@@ -426,7 +426,7 @@ describe('UnifiedPersonCard', () => {
 
 	describe('Noise Faces', () => {
 		it('should display hint message for noise faces', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson }
 			});
 
@@ -436,7 +436,7 @@ describe('UnifiedPersonCard', () => {
 		});
 
 		it('should not display hint message for non-noise faces', () => {
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: identifiedPerson }
 			});
 
@@ -447,7 +447,7 @@ describe('UnifiedPersonCard', () => {
 
 		it('should not be focusable for noise faces', () => {
 			const onClick = vi.fn();
-			render(UnifiedPersonCard, {
+			render(UnifiedPersonCardTestWrapper, {
 				props: { person: noisePerson, onClick }
 			});
 

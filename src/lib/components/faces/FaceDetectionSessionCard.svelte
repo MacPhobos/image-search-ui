@@ -8,6 +8,7 @@
 	} from '$lib/api/faces';
 	import { Badge } from '$lib/components/ui/badge';
 	import type { BadgeVariant } from '$lib/components/ui/badge';
+	import { Progress } from '$lib/components/ui/progress';
 
 	let { session, onUpdate } = $props<{
 		session: FaceDetectionSession;
@@ -146,21 +147,18 @@
 	<!-- Progress Bar -->
 	{#if liveSession.status === 'processing' || liveSession.status === 'paused'}
 		<div class="mb-3">
-			<div class="h-2 bg-gray-200 rounded-full overflow-hidden">
-				<div
-					class="h-full bg-blue-500 transition-all duration-300"
-					style="width: {progress}%"
-				></div>
-			</div>
-			<div class="flex justify-between text-sm text-gray-500 mt-1">
-				<span
-					>{liveSession.processedImages} / {liveSession.totalImages} images ({progress.toFixed(
-						1
-					)}%)</span
-				>
-				{#if liveSession.totalBatches && liveSession.totalBatches > 0}
-					<span>Batch {liveSession.currentBatch || 0} of {liveSession.totalBatches}</span>
-				{/if}
+			<div class="space-y-1">
+				<div class="flex justify-between text-sm text-gray-500">
+					<span
+						>{liveSession.processedImages} / {liveSession.totalImages} images ({progress.toFixed(
+							1
+						)}%)</span
+					>
+					{#if liveSession.totalBatches && liveSession.totalBatches > 0}
+						<span>Batch {liveSession.currentBatch || 0} of {liveSession.totalBatches}</span>
+					{/if}
+				</div>
+				<Progress value={progress} max={100} class="h-2" />
 			</div>
 		</div>
 	{/if}

@@ -2,7 +2,8 @@
 	import type { TrainingSession } from '$lib/types';
 	import { deleteSession } from '$lib/api/training';
 	import StatusBadge from './StatusBadge.svelte';
-	import ProgressBar from './ProgressBar.svelte';
+	import { Progress } from '$lib/components/ui/progress';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		sessions: TrainingSession[];
@@ -35,8 +36,11 @@
 		try {
 			await deleteSession(sessionId);
 			onSessionDeleted();
+			toast.success('Training session deleted successfully');
 		} catch (err) {
-			alert(`Failed to delete session: ${err instanceof Error ? err.message : 'Unknown error'}`);
+			toast.error('Failed to delete session', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
 		} finally {
 			deletingId = null;
 		}
@@ -90,12 +94,19 @@
 					</div>
 
 					{#if session.status === 'running'}
+						{@const processed = session.processedImages || 0}
+						{@const total = session.totalImages || 0}
+						{@const percentage = total > 0 ? Math.round((processed / total) * 100) : 0}
 						<div class="progress-section">
-							<ProgressBar
-								current={session.processedImages || 0}
-								total={session.totalImages || 0}
-								showPercentage={true}
-							/>
+							<div class="space-y-1">
+								<div class="flex justify-between text-sm text-gray-600">
+									<span>Processing</span>
+									<span
+										>{percentage}% ({processed.toLocaleString()} / {total.toLocaleString()})</span
+									>
+								</div>
+								<Progress value={percentage} max={100} class="h-2" />
+							</div>
 						</div>
 					{/if}
 

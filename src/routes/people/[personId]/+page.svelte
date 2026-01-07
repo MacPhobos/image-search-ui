@@ -1,7 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { listPersons, mergePersons, getPersonPhotos, getPrototypes, unpinPrototype, recomputePrototypes, pinPrototype, deletePrototype, toAbsoluteUrl } from '$lib/api/faces';
+	import {
+		listPersons,
+		mergePersons,
+		getPersonPhotos,
+		getPrototypes,
+		unpinPrototype,
+		recomputePrototypes,
+		pinPrototype,
+		deletePrototype,
+		toAbsoluteUrl
+	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
@@ -10,6 +20,7 @@
 	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	// Get person ID from route params
 	let personId = $derived($page.params.personId);
@@ -254,31 +265,46 @@
 		try {
 			await unpinPrototype(personId, prototype.id);
 			await loadPrototypes(); // Refresh the list
+			toast.success('Prototype unpinned successfully');
 		} catch (err) {
 			console.error('Failed to unpin prototype:', err);
-			alert('Failed to unpin prototype');
+			toast.error('Failed to unpin prototype', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
 		}
 	}
 
 	async function handleDeletePrototype(prototype: Prototype) {
-		if (!confirm('Delete this prototype? This will remove the prototype assignment entirely.')) return;
+		if (!confirm('Delete this prototype? This will remove the prototype assignment entirely.'))
+			return;
 		try {
 			await deletePrototype(personId, prototype.id);
 			await loadPrototypes(); // Refresh the list
+			toast.success('Prototype deleted successfully');
 		} catch (err) {
 			console.error('Failed to delete prototype:', err);
-			alert('Failed to delete prototype');
+			toast.error('Failed to delete prototype', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
 		}
 	}
 
 	async function handleRecomputePrototypes() {
-		if (!confirm('Recompute all prototypes? This will optimize for temporal coverage while preserving pinned prototypes.')) return;
+		if (
+			!confirm(
+				'Recompute all prototypes? This will optimize for temporal coverage while preserving pinned prototypes.'
+			)
+		)
+			return;
 		try {
 			await recomputePrototypes(personId, true);
 			await loadPrototypes(); // Refresh the list
+			toast.success('Prototypes recomputed successfully');
 		} catch (err) {
 			console.error('Failed to recompute prototypes:', err);
-			alert('Failed to recompute prototypes');
+			toast.error('Failed to recompute prototypes', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
 		}
 	}
 
@@ -307,7 +333,7 @@
 
 		const prototype = prototypes.find((p) => p.id === pinningPrototypeId);
 		if (!prototype?.faceInstanceId) {
-			alert('Cannot pin: prototype has no face instance');
+			toast.error('Cannot pin: prototype has no face instance');
 			return;
 		}
 
@@ -323,9 +349,13 @@
 
 			// Refresh prototypes
 			await loadPrototypes();
+
+			toast.success('Prototype pinned successfully');
 		} catch (err) {
 			console.error('Failed to pin prototype:', err);
-			alert('Failed to pin as prototype');
+			toast.error('Failed to pin as prototype', {
+				description: err instanceof Error ? err.message : 'Unknown error'
+			});
 		} finally {
 			pinningInProgress = false;
 		}
@@ -355,8 +385,7 @@
 		// Handle both camelCase and snake_case field names (API inconsistency)
 		const photo = photos.find((p) =>
 			p.faces?.some((f) => {
-				const faceId =
-					f.faceInstanceId || (f as Record<string, unknown>).face_instance_id;
+				const faceId = f.faceInstanceId || (f as Record<string, unknown>).face_instance_id;
 				return faceId === proto.faceInstanceId;
 			})
 		);
@@ -542,17 +571,15 @@
 								</button>
 							</div>
 						</div>
-						<TemporalTimeline
-							{prototypes}
-							{coverage}
-							onUnpinClick={handleUnpinPrototype}
-						/>
+						<TemporalTimeline {prototypes} {coverage} onUnpinClick={handleUnpinPrototype} />
 
 						<!-- Prototype list -->
 						<div class="prototype-list">
 							<h4>All Prototypes ({prototypes.length})</h4>
 							{#if prototypes.length === 0}
-								<p class="no-prototypes">No prototypes yet. Assign faces to this person to create prototypes.</p>
+								<p class="no-prototypes">
+									No prototypes yet. Assign faces to this person to create prototypes.
+								</p>
 							{:else}
 								<div class="prototype-grid">
 									{#each prototypes as proto}
@@ -590,7 +617,9 @@
 													{/if}
 												</div>
 												<div class="proto-quality">
-													Quality: {proto.qualityScore ? (proto.qualityScore * 100).toFixed(0) + '%' : 'N/A'}
+													Quality: {proto.qualityScore
+														? (proto.qualityScore * 100).toFixed(0) + '%'
+														: 'N/A'}
 												</div>
 												{#if proto.decadeBucket}
 													<div class="proto-decade">{proto.decadeBucket}</div>
@@ -1331,7 +1360,9 @@
 		display: flex;
 		flex-direction: column;
 		cursor: pointer;
-		transition: transform 0.15s, box-shadow 0.15s;
+		transition:
+			transform 0.15s,
+			box-shadow 0.15s;
 		text-align: left;
 		width: 100%;
 	}
@@ -1342,12 +1373,12 @@
 	}
 
 	.prototype-card:focus {
-		outline: 2px solid #2196F3;
+		outline: 2px solid #2196f3;
 		outline-offset: 2px;
 	}
 
 	.prototype-card.pinned {
-		border-color: #2196F3;
+		border-color: #2196f3;
 		background: #e3f2fd;
 	}
 
@@ -1466,7 +1497,7 @@
 		width: 100%;
 		padding: 0.35rem 0.5rem;
 		font-size: 0.85rem;
-		background: #2196F3;
+		background: #2196f3;
 		color: white;
 		border: none;
 		border-radius: 4px;
@@ -1475,7 +1506,7 @@
 	}
 
 	.pin-prototype-btn:hover {
-		background: #1976D2;
+		background: #1976d2;
 	}
 
 	.pin-options {

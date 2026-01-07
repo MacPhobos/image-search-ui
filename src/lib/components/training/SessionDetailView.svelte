@@ -6,7 +6,7 @@
 	import { listFaceDetectionSessions } from '$lib/api/faces';
 	import FaceDetectionSessionCard from '../faces/FaceDetectionSessionCard.svelte';
 	import StatusBadge from './StatusBadge.svelte';
-	import ProgressBar from './ProgressBar.svelte';
+	import { Progress } from '$lib/components/ui/progress';
 	import ETADisplay from './ETADisplay.svelte';
 	import TrainingStats from './TrainingStats.svelte';
 	import TrainingControlPanel from './TrainingControlPanel.svelte';
@@ -173,13 +173,18 @@
 	/>
 
 	{#if progress}
+		{@const current = progress.progress.current}
+		{@const total = progress.progress.total}
+		{@const percentage = total > 0 ? Math.round((current / total) * 100) : 0}
 		<section class="progress-section">
 			<h2>Progress</h2>
-			<ProgressBar
-				current={progress.progress.current}
-				total={progress.progress.total}
-				showPercentage={true}
-			/>
+			<div class="space-y-1 mb-4">
+				<div class="flex justify-between text-sm text-gray-600">
+					<span>Processing Images</span>
+					<span>{percentage}% ({current.toLocaleString()} / {total.toLocaleString()})</span>
+				</div>
+				<Progress value={percentage} max={100} class="h-2" />
+			</div>
 			{#if progress.progress.etaSeconds}
 				<ETADisplay
 					eta={new Date(Date.now() + progress.progress.etaSeconds * 1000).toISOString()}
