@@ -2,7 +2,7 @@
 
 ## Why
 
-- You might have accumulated hundreds of thousands of images over time. Finding the right one is a pain. 
+- You might have accumulated hundreds of thousands of images over time. Finding the right one is a pain.
 - You also might not care to use expensive cloud services for image storage and search.
 - You might want to keep your images private.
 - Do all of this on your local machine without using any external LLMs or other services.
@@ -26,8 +26,8 @@ It lets you:
 - Use a simple SvelteKit dashboard that talks to a backend API (configured via `VITE_API_BASE_URL`)
 - Avoid external LLMs or hosted services for core functionality
 
-
 ## Stack
+
 SvelteKit + TypeScript dashboard for image search.
 
 ## Quick Start

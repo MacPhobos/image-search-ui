@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { listUnifiedPeople } from '$lib/api/faces';
 import { mockResponse, mockError, getFetchMock } from '../../helpers/mockFetch';
-import { createUnifiedPeopleResponse, createIdentifiedPerson, createUnidentifiedPerson } from '../../helpers/fixtures';
+import {
+	createUnifiedPeopleResponse,
+	createIdentifiedPerson,
+	createUnidentifiedPerson
+} from '../../helpers/fixtures';
 
 describe('listUnifiedPeople', () => {
 	beforeEach(() => {
@@ -28,10 +32,7 @@ describe('listUnifiedPeople', () => {
 
 	it('should pass includeIdentified filter parameter', async () => {
 		const mockData = createUnifiedPeopleResponse();
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?include_identified=true',
-			mockData
-		);
+		mockResponse('http://localhost:8000/api/v1/faces/people?include_identified=true', mockData);
 
 		await listUnifiedPeople({
 			includeIdentified: true
@@ -46,10 +47,7 @@ describe('listUnifiedPeople', () => {
 
 	it('should pass includeUnidentified filter parameter', async () => {
 		const mockData = createUnifiedPeopleResponse();
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?include_unidentified=false',
-			mockData
-		);
+		mockResponse('http://localhost:8000/api/v1/faces/people?include_unidentified=false', mockData);
 
 		await listUnifiedPeople({
 			includeUnidentified: false
@@ -64,10 +62,7 @@ describe('listUnifiedPeople', () => {
 
 	it('should pass includeNoise filter parameter', async () => {
 		const mockData = createUnifiedPeopleResponse();
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?include_noise=true',
-			mockData
-		);
+		mockResponse('http://localhost:8000/api/v1/faces/people?include_noise=true', mockData);
 
 		await listUnifiedPeople({
 			includeNoise: true
@@ -82,10 +77,7 @@ describe('listUnifiedPeople', () => {
 
 	it('should pass sortBy parameter and convert faceCount to face_count', async () => {
 		const mockData = createUnifiedPeopleResponse();
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?sort_by=face_count',
-			mockData
-		);
+		mockResponse('http://localhost:8000/api/v1/faces/people?sort_by=face_count', mockData);
 
 		await listUnifiedPeople({
 			sortBy: 'faceCount'
@@ -100,10 +92,7 @@ describe('listUnifiedPeople', () => {
 
 	it('should pass sortBy parameter with name unchanged', async () => {
 		const mockData = createUnifiedPeopleResponse();
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?sort_by=name',
-			mockData
-		);
+		mockResponse('http://localhost:8000/api/v1/faces/people?sort_by=name', mockData);
 
 		await listUnifiedPeople({
 			sortBy: 'name'
@@ -118,10 +107,7 @@ describe('listUnifiedPeople', () => {
 
 	it('should pass sortOrder parameter', async () => {
 		const mockData = createUnifiedPeopleResponse();
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/people?sort_order=asc',
-			mockData
-		);
+		mockResponse('http://localhost:8000/api/v1/faces/people?sort_order=asc', mockData);
 
 		await listUnifiedPeople({
 			sortOrder: 'asc'
@@ -177,9 +163,7 @@ describe('listUnifiedPeople', () => {
 		const result = await listUnifiedPeople();
 
 		// Identified person with relative URL should be converted to absolute
-		expect(result.people[0].thumbnailUrl).toBe(
-			'http://localhost:8000/api/v1/images/1/thumbnail'
-		);
+		expect(result.people[0].thumbnailUrl).toBe('http://localhost:8000/api/v1/images/1/thumbnail');
 
 		// Unidentified person with null should remain null
 		expect(result.people[1].thumbnailUrl).toBeNull();
@@ -217,20 +201,16 @@ describe('listUnifiedPeople', () => {
 	});
 
 	it('should throw ApiError on HTTP error response', async () => {
-		mockError(
-			'http://localhost:8000/api/v1/faces/people',
-			500,
-			{ message: 'Internal server error', detail: 'Database connection failed' }
-		);
+		mockError('http://localhost:8000/api/v1/faces/people', 500, {
+			message: 'Internal server error',
+			detail: 'Database connection failed'
+		});
 
 		await expect(listUnifiedPeople()).rejects.toThrow('Internal server error');
 	});
 
 	it('should throw ApiError on network failure', async () => {
-		mockError(
-			'http://localhost:8000/api/v1/faces/people',
-			new Error('Network error')
-		);
+		mockError('http://localhost:8000/api/v1/faces/people', new Error('Network error'));
 
 		await expect(listUnifiedPeople()).rejects.toThrow();
 	});

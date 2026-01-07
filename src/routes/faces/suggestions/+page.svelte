@@ -202,7 +202,9 @@
 		}
 	});
 
-	const totalPages = $derived(groupedResponse ? Math.ceil(groupedResponse.totalGroups / settings.groupsPerPage) : 0);
+	const totalPages = $derived(
+		groupedResponse ? Math.ceil(groupedResponse.totalGroups / settings.groupsPerPage) : 0
+	);
 	const pendingCount = $derived(() => {
 		if (!groupedResponse) return 0;
 		let count = 0;
@@ -223,7 +225,10 @@
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-2xl font-bold text-gray-900">Face Suggestions</h1>
 		<div class="text-sm text-gray-500">
-			{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions === 1 ? '' : 's'}
+			{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions ===
+			1
+				? ''
+				: 's'}
 			{#if groupedResponse}
 				· {groupedResponse.totalGroups} group{groupedResponse.totalGroups === 1 ? '' : 's'}
 			{/if}

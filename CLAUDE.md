@@ -103,6 +103,7 @@ src/
 ### Components (`src/lib/components/`)
 
 🟡 **Component Organization**:
+
 - One component per file
 - Props via `$props()` with TypeScript interface
 - Use Svelte 5 runes (`$state`, `$derived`, `$effect`)
@@ -110,6 +111,7 @@ src/
 - Group related components in domain folders (faces/, admin/, queues/)
 
 🟡 **Svelte 5 Patterns**:
+
 ```typescript
 // ✅ CORRECT - Use $derived.by() for complex derivations
 let groupedSuggestions = $derived.by(() => {
@@ -121,6 +123,7 @@ let groupedSuggestions = $derived(suggestions.reduce(...));  // Error-prone
 ```
 
 🟢 **State Management**:
+
 - **Local state first**: Use `$state` in components
 - **Shared state**: Use runes-based stores (see `thumbnailCache.svelte.ts`)
 - **No writable stores**: Prefer Svelte 5 runes pattern over legacy stores
@@ -128,12 +131,14 @@ let groupedSuggestions = $derived(suggestions.reduce(...));  // Error-prone
 ### Pages (`src/routes/`)
 
 🟡 **Page Organization**:
+
 - Keep pages thin - delegate to components
 - Use `+page.ts` for data loading when needed
 - Handle loading/error states at page level
 - Use `+layout.svelte` for shared UI (navigation, header)
 
 🟢 **Route Structure**:
+
 - Dynamic routes: `[id]/+page.svelte` (e.g., `/people/[personId]`)
 - Route groups: Use folders for logical organization
 - Page data: Export from `+page.ts` if server-side data needed
@@ -141,6 +146,7 @@ let groupedSuggestions = $derived(suggestions.reduce(...));  // Error-prone
 ### Types (`src/lib/types.ts`)
 
 🔴 **Type Safety Rules**:
+
 - Re-export generated types from `generated.ts`
 - Define frontend-specific interfaces here
 - NEVER manually type API responses (use generated types)
@@ -182,6 +188,7 @@ mockResponse('/api/v1/search', { results: [...], total: 1 });  // Fragile
 ```
 
 🟡 **Available Fixtures** (see `tests/helpers/fixtures.ts`):
+
 - `createAsset()` - Search result asset
 - `createSearchResponse()` - Search API response
 - `createPerson()` - Person entity
@@ -209,11 +216,13 @@ mockResponse('/api/v1/search', { results: [...], total: 1 });  // Fragile
 ### Svelte 5 Testing Patterns
 
 🟡 **Component Testing**:
+
 - Props: Pass via `render(Component, { props: { ... } })`
 - Events: Mock callback functions with `vi.fn()`
 - Effects: Use `untrack()` when callbacks trigger effects to avoid loops
 
 🟢 **Test ID Convention** (for non-semantic queries):
+
 ```typescript
 import { tid } from '$lib/testing/testid';
 
@@ -225,6 +234,7 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 ```
 
 🟢 **Development Tools**:
+
 - `DevOverlay.svelte` - Shows route info, params, breadcrumbs in DEV mode
 - `viewId.ts` - Breadcrumb tracking for route debugging
 - Both integrated in `+layout.svelte` behind `import.meta.env.DEV` check
@@ -239,6 +249,7 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 ## Key Decisions
 
 🔴 **Architecture Decisions**:
+
 - **No Playwright** - Component/unit tests only (Vitest + Testing Library)
 - **Svelte 5 runes over stores** - Use `$state`/`$derived` for new code
 - **Runes-based stores pattern** - For shared state (see `thumbnailCache.svelte.ts`)
@@ -246,6 +257,7 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 - **Date filters** - ISO 8601 format (`YYYY-MM-DD`)
 
 🟡 **Recent Patterns** (Last 30 Days):
+
 - **Batch thumbnail loading** - Use `thumbnailCache` store for face/person thumbnails
 - **Modal state persistence** - Pass state to modals, receive updates via callbacks
 - **Multi-face images** - Handle images with multiple detected faces
@@ -254,6 +266,7 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 - **Person-centric model** - Unified view of persons (known + unknown clusters)
 
 🟢 **Component Patterns**:
+
 - **Detail modals** - Full-screen modals for viewing/editing entities
 - **Thumbnail grids** - Lazy-loaded image grids with loading states
 - **Status badges** - Reusable badge components for job/worker status
@@ -263,6 +276,7 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 ## Feature Areas
 
 ### Face Recognition
+
 - **People View** (`/people`) - Unified person management (known + unknown)
 - **Face Clusters** (`/faces/clusters`) - Browse unknown face clusters
 - **Face Suggestions** (`/faces/suggestions`) - Review auto-assignment suggestions
@@ -270,11 +284,13 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 - **Person Detail** (`/people/[id]`) - Manage person with photos and prototypes
 
 ### Training & Vectors
+
 - **Training Sessions** (`/training`) - Manage CLIP embedding training jobs
 - **Vector Management** (`/vectors`) - Delete/retrain vectors by directory
 - **Categories** (`/categories`) - Manage image categorization
 
 ### Admin & Monitoring
+
 - **Admin Panel** (`/admin`) - Data management, settings, import/export
 - **Queue Dashboard** (`/queues`) - Monitor background job queues
 - **Health Indicator** - Real-time backend health check in header
@@ -282,16 +298,18 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 ## API Client Organization
 
 🔴 **Domain-Specific API Modules**:
+
 ```typescript
 // Use domain-specific API modules, NOT generated client directly
-import { searchImages } from '$lib/api/client';        // Core search
-import { getPersons } from '$lib/api/faces';           // Face recognition
-import { getCategories } from '$lib/api/categories';   // Categories
-import { getQueueInfo } from '$lib/api/queues';        // Queue monitoring
-import { deleteAllData } from '$lib/api/admin';        // Admin operations
+import { searchImages } from '$lib/api/client'; // Core search
+import { getPersons } from '$lib/api/faces'; // Face recognition
+import { getCategories } from '$lib/api/categories'; // Categories
+import { getQueueInfo } from '$lib/api/queues'; // Queue monitoring
+import { deleteAllData } from '$lib/api/admin'; // Admin operations
 ```
 
 🟡 **Common API Patterns**:
+
 - Transform query params from frontend conventions to backend (e.g., `sortBy: 'faceCount'` → `sort_by: 'face_count'`)
 - Handle pagination with `offset`/`limit` params
 - Use `POST` for search (JSON body, not query params)
@@ -300,22 +318,26 @@ import { deleteAllData } from '$lib/api/admin';        // Admin operations
 ## Common Gotchas
 
 🔴 **Face API Field Names**:
+
 - Backend uses **snake_case** (`face_id`, `asset_id`)
 - Frontend TypeScript uses **camelCase** (from OpenAPI generation)
 - Some backend responses return both formats (handle defensively)
 
 🔴 **State Persistence in Modals**:
+
 - Modals should receive initial state via props
 - Modifications update local state
 - Emit changes via callbacks (don't mutate props)
 - Parent component merges changes with page state
 
 🟡 **Svelte 5 Effect Loops**:
+
 - Use `untrack()` when effect callbacks trigger other effects
 - Prefer `$derived` over `$effect` for computed values
 - Use `$effect.pre()` for DOM measurements
 
 🟢 **Thumbnail Loading**:
+
 - Always use `thumbnailCache` for batch loading
 - Fetch visible items first, prefetch next page
 - Handle null thumbnails (not all faces have thumbnails)

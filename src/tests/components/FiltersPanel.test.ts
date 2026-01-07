@@ -220,9 +220,9 @@ describe('FiltersPanel - People Filter (Single-Select)', () => {
 
 		// Wait for selection to appear
 		await waitFor(() => {
-			const selectedPerson = screen.getAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.getAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeInTheDocument();
 			expect(screen.getByLabelText('Clear person filter')).toBeInTheDocument();
 		});
@@ -263,9 +263,9 @@ describe('FiltersPanel - People Filter (Single-Select)', () => {
 
 		// Wait for Alice to be selected
 		await waitFor(() => {
-			const selectedPerson = screen.getAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.getAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeInTheDocument();
 		});
 
@@ -343,9 +343,9 @@ describe('FiltersPanel - People Filter (Single-Select)', () => {
 
 		// Should show Alice's name in the selection display
 		await waitFor(() => {
-			const selectedPerson = screen.getAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.getAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeInTheDocument();
 		});
 	});
@@ -398,9 +398,9 @@ describe('FiltersPanel - People Filter (Single-Select)', () => {
 
 		// Wait for Alice to be selected
 		await waitFor(() => {
-			const selectedPerson = screen.getAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.getAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeInTheDocument();
 		});
 
@@ -465,9 +465,9 @@ describe('FiltersPanel - Clear All Filters', () => {
 
 		// Wait for selection to complete
 		await waitFor(() => {
-			const selectedPerson = screen.getAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.getAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeInTheDocument();
 		});
 
@@ -512,9 +512,9 @@ describe('FiltersPanel - Clear All Filters', () => {
 		await fireEvent.mouseDown(aliceOption);
 
 		await waitFor(() => {
-			const selectedPerson = screen.getAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.getAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeInTheDocument();
 		});
 
@@ -531,9 +531,9 @@ describe('FiltersPanel - Clear All Filters', () => {
 			expect(dateFromInput.value).toBe('');
 			expect(dateToInput.value).toBe('');
 			// Alice should no longer be in selected display
-			const selectedPerson = screen.queryAllByText('Alice').find((el) =>
-				el.closest('.selected-person')
-			);
+			const selectedPerson = screen
+				.queryAllByText('Alice')
+				.find((el) => el.closest('.selected-person'));
 			expect(selectedPerson).toBeFalsy();
 		});
 

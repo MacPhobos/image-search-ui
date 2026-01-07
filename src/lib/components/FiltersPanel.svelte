@@ -44,8 +44,8 @@
 	});
 
 	// Selected person for display
-	let selectedPerson = $derived.by<Person | null>(
-		() => (selectedPersonId ? persons?.find((p) => p.id === selectedPersonId) ?? null : null)
+	let selectedPerson = $derived.by<Person | null>(() =>
+		selectedPersonId ? (persons?.find((p) => p.id === selectedPersonId) ?? null) : null
 	);
 
 	// Load data on mount

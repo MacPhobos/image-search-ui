@@ -1217,9 +1217,7 @@ export interface BatchThumbnailResponse {
  * @param assetIds - Array of asset IDs to fetch thumbnails for (max 100)
  * @returns Promise with thumbnails map and stats
  */
-export async function getBatchThumbnails(
-	assetIds: number[]
-): Promise<BatchThumbnailResponse> {
+export async function getBatchThumbnails(assetIds: number[]): Promise<BatchThumbnailResponse> {
 	return apiRequest<BatchThumbnailResponse>('/api/v1/images/thumbnails/batch', {
 		method: 'POST',
 		body: JSON.stringify({ assetIds })

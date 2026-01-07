@@ -37,7 +37,7 @@
 	});
 
 	let clusteringConfig = $state<UnknownFaceClusteringConfig>({
-		minConfidence: 0.50,
+		minConfidence: 0.5,
 		minClusterSize: 2
 	});
 
@@ -297,8 +297,8 @@
 						<label for="prototypeMinQuality">
 							Prototype Minimum Quality
 							<span class="field-hint"
-								>Minimum face quality score (0-1) required for a face to become a prototype.
-								Higher values create fewer but better quality prototypes for person matching.</span
+								>Minimum face quality score (0-1) required for a face to become a prototype. Higher
+								values create fewer but better quality prototypes for person matching.</span
 							>
 						</label>
 						<div class="slider-container">
@@ -337,8 +337,8 @@
 			<div class="other-settings">
 				<h3>Suggestion Pagination</h3>
 				<p class="section-description">
-					Control how face suggestions are displayed on the review page. Groups organize
-					suggestions by person for easier batch processing.
+					Control how face suggestions are displayed on the review page. Groups organize suggestions
+					by person for easier batch processing.
 				</p>
 
 				<div class="form-grid">
@@ -385,8 +385,8 @@
 						<label for="clusterMinConfidence">
 							Minimum Cluster Confidence
 							<span class="field-hint"
-								>Minimum intra-cluster similarity required (0.70-0.95). Higher values show only
-								more cohesive clusters.</span
+								>Minimum intra-cluster similarity required (0.70-0.95). Higher values show only more
+								cohesive clusters.</span
 							>
 						</label>
 						<div class="slider-container">
@@ -408,8 +408,7 @@
 						<label for="clusterMinSize">
 							Minimum Cluster Size
 							<span class="field-hint"
-								>Minimum number of faces required per cluster (2-50). Smaller clusters are
-								hidden.</span
+								>Minimum number of faces required per cluster (2-50). Smaller clusters are hidden.</span
 							>
 						</label>
 						<input

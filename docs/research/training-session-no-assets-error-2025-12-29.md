@@ -10,6 +10,7 @@
 The "No assets found for session 19" error is **expected behavior**, not a bug. It occurs when a training session is started without any selected subdirectories containing image files. This is a validation safeguard preventing empty training runs.
 
 **Root Cause**: Session 19 either has:
+
 1. No subdirectories added to the session, OR
 2. All subdirectories are marked as `selected=false`, OR
 3. The selected subdirectories contain no image files matching allowed extensions
@@ -134,6 +135,7 @@ async def discover_assets(self, db: AsyncSession, session_id: int) -> list[Image
 ### Scenario 1: No Subdirectories Added to Session
 
 **Steps to Reproduce**:
+
 ```bash
 # Create session without subdirectories
 POST /api/v1/training/sessions
@@ -156,6 +158,7 @@ POST /api/v1/training/sessions/19/start
 ### Scenario 2: All Subdirectories Marked as Unselected
 
 **Steps to Reproduce**:
+
 ```bash
 # Create session with subdirectories
 POST /api/v1/training/sessions
@@ -185,6 +188,7 @@ POST /api/v1/training/sessions/19/start
 ### Scenario 3: Selected Subdirectories Contain No Images
 
 **Steps to Reproduce**:
+
 ```bash
 # Create session pointing to empty directories
 POST /api/v1/training/sessions
@@ -206,6 +210,7 @@ POST /api/v1/training/sessions/19/start
 ### Scenario 4: Directory Contains Only Unsupported File Types
 
 **Steps to Reproduce**:
+
 ```bash
 # Directory contains: file1.txt, file2.pdf, file3.gif
 POST /api/v1/training/sessions
@@ -229,23 +234,27 @@ POST /api/v1/training/sessions/19/start
 ### POST /api/v1/training/sessions/{session_id}/start
 
 **Expected Behavior**:
+
 - **Success (200)**: Returns `ControlResponse` with `status=running`
 - **Not Found (404)**: Session ID doesn't exist
 - **Bad Request (400)**: Invalid state transition OR **no assets found**
 
 **Error Response**:
+
 ```json
 {
-  "detail": "No assets found for session 19"
+	"detail": "No assets found for session 19"
 }
 ```
 
 **Valid State Transitions**:
+
 - `pending → running` (initial start with asset discovery)
 - `paused → running` (resume existing jobs)
 - `failed → running` (retry existing jobs)
 
 **Invalid State Transitions** (also return 400):
+
 - `running → running` (already running)
 - `completed → running` (use `/restart` endpoint)
 - `cancelled → running` (use `/restart` endpoint)
@@ -257,6 +266,7 @@ POST /api/v1/training/sessions/19/start
 ### ❌ **NOT A BUG** - This is correct validation logic
 
 **Reasons**:
+
 1. **Prevents Wasteful Operations**: Starting a training session with no images would create an empty RQ job that does nothing.
 2. **Clear Error Message**: User receives immediate feedback rather than a session that starts and immediately completes with 0 images processed.
 3. **Data Integrity**: Ensures `total_images` count is always > 0 for running sessions.
@@ -265,6 +275,7 @@ POST /api/v1/training/sessions/19/start
 ### ✅ **EXPECTED BEHAVIOR**
 
 This is a **validation safeguard** that should be enforced. The error correctly prevents:
+
 - Accidentally starting sessions without data
 - Wasting background worker resources
 - Confusing UI states (0/0 images processed)
@@ -348,6 +359,7 @@ async def start_training(session_id: int, db: AsyncSession = Depends(get_db)):
 To verify the correct behavior, check:
 
 1. **Database State**:
+
 ```sql
 -- Check if session exists
 SELECT * FROM training_sessions WHERE id = 19;
@@ -365,6 +377,7 @@ WHERE path LIKE '/path/from/subdirectory/%';
 ```
 
 2. **API Call**:
+
 ```bash
 # Get session details
 curl http://localhost:8000/api/v1/training/sessions/19
@@ -452,12 +465,12 @@ POST /api/v1/training/sessions/19/start
 4. **Better Error Messages**: Include diagnostic info in error response:
    ```json
    {
-     "detail": "No assets found for session 19",
-     "diagnostics": {
-       "total_subdirectories": 2,
-       "selected_subdirectories": 0,
-       "suggestion": "Select at least one subdirectory before starting training"
-     }
+   	"detail": "No assets found for session 19",
+   	"diagnostics": {
+   		"total_subdirectories": 2,
+   		"selected_subdirectories": 0,
+   		"suggestion": "Select at least one subdirectory before starting training"
+   	}
    }
    ```
 
@@ -468,6 +481,7 @@ POST /api/v1/training/sessions/19/start
 ### What are "assets" in the context of training sessions?
 
 **Assets** are `ImageAsset` database records representing individual image files on the filesystem. Each asset stores:
+
 - Absolute file path (unique)
 - File metadata (size, modification time)
 - Optional thumbnail path and dimensions
@@ -490,6 +504,7 @@ Assets are **not directly added** to sessions. Instead:
 ### Is the validation correct (sessions need assets before starting)?
 
 **✅ YES** - This is correct and necessary validation because:
+
 - Training requires at least one image to process
 - Empty sessions waste resources and create confusing UI states
 - Clear immediate feedback is better than a session that starts and fails

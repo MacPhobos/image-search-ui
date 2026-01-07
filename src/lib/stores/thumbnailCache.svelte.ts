@@ -27,9 +27,7 @@ function createThumbnailCache() {
 
 	async function fetchBatch(assetIds: number[]): Promise<void> {
 		// Filter out already cached and pending
-		const toFetch = assetIds.filter(
-			(id) => !state.cache.has(id) && !state.pending.has(id)
-		);
+		const toFetch = assetIds.filter((id) => !state.cache.has(id) && !state.pending.has(id));
 
 		if (toFetch.length === 0) return;
 

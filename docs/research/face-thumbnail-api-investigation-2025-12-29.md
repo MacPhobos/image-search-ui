@@ -11,6 +11,7 @@
 **Finding**: The image-search-service provides image serving through `/api/v1/images/{asset_id}/thumbnail` and `/api/v1/images/{asset_id}/full` endpoints. For face thumbnails in prototype data, the backend should construct the thumbnail URL using the `asset_id` from the associated `FaceInstance`.
 
 **Correct URL Pattern**:
+
 ```typescript
 // For a prototype with face_instance_id
 const thumbnailUrl = `/api/v1/images/${assetId}/thumbnail`;
@@ -18,6 +19,7 @@ const fullImageUrl = `/api/v1/images/${assetId}/full`;
 ```
 
 **Frontend Usage Pattern**:
+
 ```typescript
 // Prepend API_BASE_URL to relative URLs
 import { API_BASE_URL } from '$lib/api/client';
@@ -43,11 +45,13 @@ function getImageUrl(url: string): string {
 **Purpose**: Serve thumbnail for an image asset (generates on-the-fly if missing)
 
 **Parameters**:
+
 - `asset_id` (int) - Image asset ID from `ImageAsset` table
 
 **Response**: `FileResponse` with JPEG image
 
 **Features**:
+
 - Auto-generates thumbnails if they don't exist
 - Updates database with thumbnail metadata (path, width, height)
 - Security validation to prevent directory traversal attacks
@@ -55,6 +59,7 @@ function getImageUrl(url: string): string {
 - ETag support for conditional requests
 
 **Code Reference**:
+
 ```python
 @router.get("/{asset_id}/thumbnail")
 async def get_thumbnail(
@@ -78,11 +83,13 @@ async def get_thumbnail(
 **Purpose**: Serve full-size original image
 
 **Parameters**:
+
 - `asset_id` (int) - Image asset ID
 
 **Response**: `FileResponse` with original image (MIME type detected)
 
 **Features**:
+
 - Serves original file from filesystem
 - Security validation for allowed directories
 - 24-hour cache headers
@@ -98,26 +105,27 @@ async def get_thumbnail(
 
 ```typescript
 interface Asset {
-  id: string; // UUID
-  path: string; // Original file path
-  filename: string; // Basename of file
-  url: string; // Accessible URL for full image
-  thumbnailUrl: string; // Accessible URL for thumbnail
-  mimeType: string; // e.g., "image/jpeg"
-  width: number; // Pixels
-  height: number; // Pixels
-  fileSize: number; // Bytes
-  createdAt: string; // ISO 8601 timestamp
-  updatedAt: string; // ISO 8601 timestamp
+	id: string; // UUID
+	path: string; // Original file path
+	filename: string; // Basename of file
+	url: string; // Accessible URL for full image
+	thumbnailUrl: string; // Accessible URL for thumbnail
+	mimeType: string; // e.g., "image/jpeg"
+	width: number; // Pixels
+	height: number; // Pixels
+	fileSize: number; // Bytes
+	createdAt: string; // ISO 8601 timestamp
+	updatedAt: string; // ISO 8601 timestamp
 }
 ```
 
 **Example Asset Response** (Lines 346-378):
+
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "url": "/files/550e8400-e29b-41d4-a716-446655440000/full",
-  "thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/thumb"
+	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"url": "/files/550e8400-e29b-41d4-a716-446655440000/full",
+	"thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/thumb"
 }
 ```
 
@@ -127,37 +135,38 @@ interface Asset {
 
 ```typescript
 interface FaceSuggestion {
-  id: number;
-  faceInstanceId: string; // UUID of the suggested face
-  suggestedPersonId: string;
-  confidence: number;
-  sourceFaceId: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
-  createdAt: string;
-  reviewedAt: string | null;
-  faceThumbnailUrl: string | null; // Thumbnail URL for the suggested face
-  personName: string | null;
-  fullImageUrl: string | null; // Full image URL (e.g., /api/v1/images/{assetId}/full)
-  bboxX: number | null; // Bounding box X coordinate (pixels)
-  bboxY: number | null;
-  bboxW: number | null;
-  bboxH: number | null;
-  detectionConfidence: number | null;
-  qualityScore: number | null;
+	id: number;
+	faceInstanceId: string; // UUID of the suggested face
+	suggestedPersonId: string;
+	confidence: number;
+	sourceFaceId: string;
+	status: 'pending' | 'accepted' | 'rejected' | 'expired';
+	createdAt: string;
+	reviewedAt: string | null;
+	faceThumbnailUrl: string | null; // Thumbnail URL for the suggested face
+	personName: string | null;
+	fullImageUrl: string | null; // Full image URL (e.g., /api/v1/images/{assetId}/full)
+	bboxX: number | null; // Bounding box X coordinate (pixels)
+	bboxY: number | null;
+	bboxW: number | null;
+	bboxH: number | null;
+	detectionConfidence: number | null;
+	qualityScore: number | null;
 }
 ```
 
 **Example** (Lines 828-847):
+
 ```json
 {
-  "id": 1,
-  "faceInstanceId": "123e4567-e89b-12d3-a456-426614174000",
-  "faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
-  "fullImageUrl": "/api/v1/images/1234/full",
-  "bboxX": 100,
-  "bboxY": 150,
-  "bboxW": 80,
-  "bboxH": 80
+	"id": 1,
+	"faceInstanceId": "123e4567-e89b-12d3-a456-426614174000",
+	"faceThumbnailUrl": "/files/123e4567-e89b-12d3-a456-426614174000/face_thumb",
+	"fullImageUrl": "/api/v1/images/1234/full",
+	"bboxX": 100,
+	"bboxY": 150,
+	"bboxW": 80,
+	"bboxH": 80
 }
 ```
 
@@ -170,6 +179,7 @@ interface FaceSuggestion {
 **Location**: `/export/workspace/image-search/image-search-ui/src/lib/components/faces/PersonPhotosTab.svelte`
 
 **Pattern** (Lines 4, 125-130, 193):
+
 ```typescript
 import { API_BASE_URL } from '$lib/api/client';
 
@@ -188,15 +198,16 @@ function getImageUrl(url: string): string {
 **Location**: `/export/workspace/image-search/image-search-ui/src/lib/api/faces.ts`
 
 **Interface** (Lines 179-187):
+
 ```typescript
 export interface PersonPhotoGroup {
-  photoId: number;
-  takenAt: string | null;
-  thumbnailUrl: string; // Relative URL from backend
-  fullUrl: string; // Relative URL from backend
-  faces: FaceInPhoto[];
-  faceCount: number;
-  hasNonPersonFaces: boolean;
+	photoId: number;
+	takenAt: string | null;
+	thumbnailUrl: string; // Relative URL from backend
+	fullUrl: string; // Relative URL from backend
+	faces: FaceInPhoto[];
+	faceCount: number;
+	hasNonPersonFaces: boolean;
 }
 ```
 
@@ -211,6 +222,7 @@ export interface PersonPhotoGroup {
 **Response Schema**: `PrototypeListResponse`
 
 **Code**:
+
 ```python
 async def list_prototypes_endpoint(
     person_id: UUID,
@@ -255,6 +267,7 @@ async def list_prototypes_endpoint(
 **Location**: `/export/workspace/image-search/image-search-service/src/image_search_service/api/face_schemas.py` (Lines 394-404)
 
 **Current Fields**:
+
 ```python
 class PrototypeListItem(CamelCaseModel):
     """Single prototype in listing."""
@@ -278,6 +291,7 @@ class PrototypeListItem(CamelCaseModel):
 **Location**: `/export/workspace/image-search/image-search-service/src/image_search_service/db/models.py` (Lines 437-467)
 
 **Model**:
+
 ```python
 class FaceInstance(Base):
     """Face instance detected in an image asset."""
@@ -318,6 +332,7 @@ class FaceInstance(Base):
 **Location**: Same file (Lines 509-539)
 
 **Model**:
+
 ```python
 class PersonPrototype(Base):
     """Person prototype for face recognition (centroid or exemplar)."""
@@ -354,6 +369,7 @@ class PersonPrototype(Base):
 **Location**: `/export/workspace/image-search/image-search-service/src/image_search_service/api/routes/face_suggestions.py` (Lines 36-79)
 
 **Code**:
+
 ```python
 async def _build_suggestion_response(
     suggestion: FaceSuggestion,
@@ -405,6 +421,7 @@ async def _build_suggestion_response(
 **Location**: `/export/workspace/image-search/image-search-service/src/image_search_service/api/routes/faces.py` (Lines 460-572)
 
 **Code** (Lines 554-563):
+
 ```python
 items.append(
     PersonPhotoGroup(
@@ -514,15 +531,15 @@ function getImageUrl(url: string): string {
 
 ```typescript
 interface Prototype {
-  id: string; // UUID
-  faceInstanceId: string; // UUID of the face instance
-  role: 'primary' | 'temporal' | 'exemplar' | 'fallback';
-  ageEraBucket?: string;
-  decadeBucket?: string;
-  isPinned: boolean;
-  qualityScore: number;
-  thumbnailUrl: string | null; // ✅ ADD: Thumbnail URL for face image
-  createdAt: string;
+	id: string; // UUID
+	faceInstanceId: string; // UUID of the face instance
+	role: 'primary' | 'temporal' | 'exemplar' | 'fallback';
+	ageEraBucket?: string;
+	decadeBucket?: string;
+	isPinned: boolean;
+	qualityScore: number;
+	thumbnailUrl: string | null; // ✅ ADD: Thumbnail URL for face image
+	createdAt: string;
 }
 ```
 
@@ -530,19 +547,19 @@ interface Prototype {
 
 ```json
 {
-  "items": [
-    {
-      "id": "660e8400-e29b-41d4-a716-446655440111",
-      "faceInstanceId": "550e8400-e29b-41d4-a716-446655440000",
-      "role": "primary",
-      "ageEraBucket": "child",
-      "decadeBucket": "2000s",
-      "isPinned": true,
-      "qualityScore": 0.95,
-      "thumbnailUrl": "/api/v1/images/1234/thumbnail",
-      "createdAt": "2025-12-29T10:00:00Z"
-    }
-  ]
+	"items": [
+		{
+			"id": "660e8400-e29b-41d4-a716-446655440111",
+			"faceInstanceId": "550e8400-e29b-41d4-a716-446655440000",
+			"role": "primary",
+			"ageEraBucket": "child",
+			"decadeBucket": "2000s",
+			"isPinned": true,
+			"qualityScore": 0.95,
+			"thumbnailUrl": "/api/v1/images/1234/thumbnail",
+			"createdAt": "2025-12-29T10:00:00Z"
+		}
+	]
 }
 ```
 
@@ -553,11 +570,13 @@ interface Prototype {
 ### URL Pattern for Loading Face Thumbnails
 
 **Correct Pattern**:
+
 ```
 /api/v1/images/{asset_id}/thumbnail
 ```
 
 Where `asset_id` is obtained from:
+
 ```
 PersonPrototype → FaceInstance → ImageAsset
 prototype.face_instance_id → face.asset_id

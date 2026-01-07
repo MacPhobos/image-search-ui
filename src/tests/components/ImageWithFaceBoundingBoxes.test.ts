@@ -369,9 +369,7 @@ describe('ImageWithFaceBoundingBoxes', () => {
 
 			await waitFor(() => {
 				const rects = container.querySelectorAll('rect.face-box');
-				const highlightedRect = Array.from(rects).find((r) =>
-					r.classList.contains('highlighted')
-				);
+				const highlightedRect = Array.from(rects).find((r) => r.classList.contains('highlighted'));
 				expect(highlightedRect).toBeInTheDocument();
 			});
 		});

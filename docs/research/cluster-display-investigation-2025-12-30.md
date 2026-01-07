@@ -20,11 +20,13 @@ Investigation reveals **no issues with menu navigation** (correctly links to `/f
 **Location**: `/export/workspace/image-search/image-search-ui/src/routes/+layout.svelte`
 
 **Current Implementation** (Line 49):
+
 ```svelte
 <a href="/faces/clusters">Clusters</a>
 ```
 
 **Assessment**: ✅ **CORRECT BEHAVIOR**
+
 - Menu correctly links to `/faces/clusters` (the updated route)
 - Text shows "Clusters" (not "Face Clusters")
 - No old `/clusters` route exists (verified via directory search)
@@ -42,18 +44,19 @@ Investigation reveals **no issues with menu navigation** (correctly links to `/f
 
 ```typescript
 onMount(async () => {
-    try {
-        config = await getUnknownClusteringConfig();
-    } catch (err) {
-        console.error('Failed to load configuration:', err);
-        // Use default values if config load fails
-        config = { minConfidence: 0.85, minClusterSize: 5 };
-    }
-    loadClusters(true);
+	try {
+		config = await getUnknownClusteringConfig();
+	} catch (err) {
+		console.error('Failed to load configuration:', err);
+		// Use default values if config load fails
+		config = { minConfidence: 0.85, minClusterSize: 5 };
+	}
+	loadClusters(true);
 });
 ```
 
 **Default Configuration**:
+
 - `minConfidence: 0.85` (85%)
 - `minClusterSize: 5` (minimum 5 faces per cluster)
 
@@ -61,15 +64,16 @@ onMount(async () => {
 
 ```typescript
 const response = await listClusters(
-    currentPage,      // 1
-    PAGE_SIZE,        // 100
-    includeLabeled,   // false (hardcoded)
-    config?.minConfidence,   // 0.85 default
-    config?.minClusterSize   // 5 default
+	currentPage, // 1
+	PAGE_SIZE, // 100
+	includeLabeled, // false (hardcoded)
+	config?.minConfidence, // 0.85 default
+	config?.minClusterSize // 5 default
 );
 ```
 
 **API Parameters Sent**:
+
 - `page=1`
 - `page_size=100`
 - `include_labeled=false`
@@ -85,11 +89,13 @@ const response = await listClusters(
 **Problem**: `minConfidence: 0.85` (85%) is a very high threshold for intra-cluster similarity.
 
 **Impact**:
+
 - Many legitimate face clusters may have average intra-cluster confidence < 85%
 - Clusters with subtle variations (lighting, angles, aging) get filtered out
 - Only the most tightly-grouped clusters pass the filter
 
 **Evidence**:
+
 - User reports "many unmatched faces" exist
 - Only one cluster appears (suggesting most are filtered out)
 - Default 85% threshold is industry-standard strict
@@ -103,11 +109,13 @@ const response = await listClusters(
 **Problem**: `minClusterSize: 5` requires at least 5 faces per cluster.
 
 **Impact**:
+
 - Smaller clusters (2-4 faces) are filtered out
 - If user has many people with only 2-4 photos, they won't appear
 - Reduces total cluster count significantly
 
 **Evidence**:
+
 - User reports knowing there are "many unmatched faces"
 - If faces are distributed across many small clusters, only a few would show
 
@@ -120,11 +128,13 @@ const response = await listClusters(
 **Problem**: Backend API might be returning only 1 cluster.
 
 **Diagnostic**:
+
 - Need to check actual API response in browser DevTools
 - Look at `response.total` field to see true count
 - Compare `response.items.length` vs `response.total`
 
 **Verification Steps**:
+
 1. Open browser DevTools → Network tab
 2. Navigate to `/faces/clusters`
 3. Find `GET /api/v1/faces/clusters?...` request
@@ -148,11 +158,13 @@ const response = await listClusters(
 **Problem**: `/api/v1/config/face-clustering-unknown` endpoint might fail, causing fallback to restrictive defaults.
 
 **Evidence Location**: Browser console (check for error message)
+
 ```
 Failed to load configuration: [error details]
 ```
 
 **If error occurs**:
+
 - Fallback uses defaults: `{ minConfidence: 0.85, minClusterSize: 5 }`
 - These defaults are too restrictive
 - Need to check backend config endpoint
@@ -169,31 +181,33 @@ Failed to load configuration: [error details]
 
 ```typescript
 export async function listClusters(
-    page: number = 1,
-    pageSize: number = 20,  // ← Default is 20, but UI passes 100
-    includeLabeled: boolean = false,
-    minConfidence?: number,
-    minClusterSize?: number
-): Promise<ClusterListResponse>
+	page: number = 1,
+	pageSize: number = 20, // ← Default is 20, but UI passes 100
+	includeLabeled: boolean = false,
+	minConfidence?: number,
+	minClusterSize?: number
+): Promise<ClusterListResponse>;
 ```
 
 **Query Parameters Built**:
+
 ```typescript
 const params = new URLSearchParams({
-    page: page.toString(),
-    page_size: pageSize.toString(),
-    include_labeled: includeLabeled.toString()
+	page: page.toString(),
+	page_size: pageSize.toString(),
+	include_labeled: includeLabeled.toString()
 });
 
 if (minConfidence !== undefined) {
-    params.set('min_confidence', minConfidence.toString());
+	params.set('min_confidence', minConfidence.toString());
 }
 if (minClusterSize !== undefined) {
-    params.set('min_cluster_size', minClusterSize.toString());
+	params.set('min_cluster_size', minClusterSize.toString());
 }
 ```
 
 **Assessment**: ✅ **Implementation is correct**
+
 - Properly passes all parameters to backend
 - UI overrides default `pageSize=20` with `PAGE_SIZE=100`
 - Optional parameters correctly omitted if undefined
@@ -203,26 +217,30 @@ if (minClusterSize !== undefined) {
 ### 5. Display Logic Analysis
 
 **Pagination Implementation** (Lines 85-86):
+
 ```typescript
 totalClusters = response.total;
 hasMore = clusters.length < response.total;
 ```
 
 **UI Display** (Line 181):
+
 ```svelte
 Showing {clusters.length} of {totalClusters} clusters
 ```
 
 **Load More Logic** (Lines 100-104):
+
 ```typescript
 function handleLoadMore() {
-    if (loadingMore || !hasMore) return;
-    currentPage += 1;
-    loadClusters(false);  // Appends to existing clusters
+	if (loadingMore || !hasMore) return;
+	currentPage += 1;
+	loadClusters(false); // Appends to existing clusters
 }
 ```
 
 **Assessment**: ✅ **Pagination logic is correct**
+
 - Correctly tracks total count
 - Shows "Load More" button when `hasMore` is true
 - Accumulates clusters across pages
@@ -256,14 +274,17 @@ function handleLoadMore() {
 
 ```json
 {
-  "items": [ /* array of clusters */ ],
-  "total": 150,  // ← THIS IS KEY
-  "page": 1,
-  "pageSize": 100
+	"items": [
+		/* array of clusters */
+	],
+	"total": 150, // ← THIS IS KEY
+	"page": 1,
+	"pageSize": 100
 }
 ```
 
 **Interpretation**:
+
 - If `items.length === 1` AND `total === 1`: Backend issue (no clusters found)
 - If `items.length === 1` BUT `total > 1`: **FILTERING ISSUE** (most likely cause)
 - If `items.length > 1`: UI rendering issue (unlikely)
@@ -273,21 +294,23 @@ function handleLoadMore() {
 ### Step 3: Check Configuration Values
 
 1. In Console tab, type:
+
    ```javascript
    fetch('http://localhost:8000/api/v1/config/face-clustering-unknown')
-     .then(r => r.json())
-     .then(console.log)
+   	.then((r) => r.json())
+   	.then(console.log);
    ```
 
 2. Expected response:
    ```json
    {
-     "minConfidence": 0.85,
-     "minClusterSize": 5
+   	"minConfidence": 0.85,
+   	"minClusterSize": 5
    }
    ```
 
 **Analysis**:
+
 - If values are very high (0.85+ confidence, 5+ cluster size) → **TOO RESTRICTIVE**
 - If values are reasonable but no clusters show → Backend data issue
 
@@ -302,15 +325,17 @@ function handleLoadMore() {
 **File**: `/export/workspace/image-search/image-search-ui/src/routes/faces/clusters/+page.svelte`
 
 **Change** (Line 53):
+
 ```typescript
 // BEFORE:
 config = { minConfidence: 0.85, minClusterSize: 5 };
 
 // AFTER:
-config = { minConfidence: 0.70, minClusterSize: 2 };
+config = { minConfidence: 0.7, minClusterSize: 2 };
 ```
 
 **Rationale**:
+
 - 70% confidence is still high quality but more inclusive
 - Minimum 2 faces allows smaller person clusters to appear
 - Reduces risk of empty cluster view
@@ -322,19 +347,22 @@ config = { minConfidence: 0.70, minClusterSize: 2 };
 **API Endpoint**: `PUT /api/v1/config/face-clustering-unknown`
 
 **Request Body**:
+
 ```json
 {
-  "minConfidence": 0.70,
-  "minClusterSize": 2
+	"minConfidence": 0.7,
+	"minClusterSize": 2
 }
 ```
 
 **Impact**:
+
 - Persists configuration across sessions
 - Applies to all users
 - More permissive filtering shows more clusters
 
 **Testing**:
+
 ```bash
 curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
   -H "Content-Type: application/json" \
@@ -351,21 +379,34 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
 
 ```svelte
 <div class="filters">
-  <label>
-    Min Confidence: {(localMinConfidence * 100).toFixed(0)}%
-    <input type="range" min="0.5" max="0.95" step="0.05"
-           bind:value={localMinConfidence} on:change={handleFilterChange} />
-  </label>
+	<label>
+		Min Confidence: {(localMinConfidence * 100).toFixed(0)}%
+		<input
+			type="range"
+			min="0.5"
+			max="0.95"
+			step="0.05"
+			bind:value={localMinConfidence}
+			on:change={handleFilterChange}
+		/>
+	</label>
 
-  <label>
-    Min Cluster Size: {localMinClusterSize}
-    <input type="range" min="2" max="10" step="1"
-           bind:value={localMinClusterSize} on:change={handleFilterChange} />
-  </label>
+	<label>
+		Min Cluster Size: {localMinClusterSize}
+		<input
+			type="range"
+			min="2"
+			max="10"
+			step="1"
+			bind:value={localMinClusterSize}
+			on:change={handleFilterChange}
+		/>
+	</label>
 </div>
 ```
 
 **Benefits**:
+
 - Users can experiment with thresholds
 - Real-time feedback on cluster visibility
 - Discovers optimal values for their dataset
@@ -375,28 +416,31 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
 ### Fix 4: Improve Empty State Messaging (UX)
 
 **Current Empty State** (Line 169):
+
 ```svelte
 <h2>No Unknown Face Clusters</h2>
 <p>
-  All faces have been labeled, or no clusters meet the current confidence threshold.
-  Try adjusting the settings to see more clusters.
+	All faces have been labeled, or no clusters meet the current confidence threshold. Try adjusting
+	the settings to see more clusters.
 </p>
 ```
 
 **Enhancement**:
+
 ```svelte
 <h2>No Clusters Found</h2>
 <p>
-  Current filters: {(config?.minConfidence ?? 0.85) * 100}% confidence,
-  {config?.minClusterSize ?? 5}+ faces per cluster.
+	Current filters: {(config?.minConfidence ?? 0.85) * 100}% confidence,
+	{config?.minClusterSize ?? 5}+ faces per cluster.
 </p>
 <p>
-  Try lowering the thresholds in <a href="/admin">Admin Settings</a>
-  to see more clusters.
+	Try lowering the thresholds in <a href="/admin">Admin Settings</a>
+	to see more clusters.
 </p>
 ```
 
 **Benefits**:
+
 - Shows exact filter values causing issue
 - Guides users to solution
 - Reduces confusion
@@ -405,16 +449,16 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
 
 ## Summary Table
 
-| Component | Status | Issue Found | Severity |
-|-----------|--------|-------------|----------|
-| **Menu Navigation** | ✅ Correct | Text is "Clusters" (could be "Face Clusters") | Cosmetic |
-| **Route Path** | ✅ Correct | Links to `/faces/clusters` | None |
-| **Page Size** | ✅ Correct | 100 items per page | None |
-| **API Client** | ✅ Correct | Parameters passed correctly | None |
-| **Pagination Logic** | ✅ Correct | Load more works | None |
-| **Default Config** | ⚠️ Issue | `minConfidence: 0.85` too strict | **HIGH** |
-| **Min Cluster Size** | ⚠️ Issue | `minClusterSize: 5` too large | **MEDIUM** |
-| **Config Fallback** | ⚠️ Issue | Uses strict defaults on API failure | **MEDIUM** |
+| Component            | Status     | Issue Found                                   | Severity   |
+| -------------------- | ---------- | --------------------------------------------- | ---------- |
+| **Menu Navigation**  | ✅ Correct | Text is "Clusters" (could be "Face Clusters") | Cosmetic   |
+| **Route Path**       | ✅ Correct | Links to `/faces/clusters`                    | None       |
+| **Page Size**        | ✅ Correct | 100 items per page                            | None       |
+| **API Client**       | ✅ Correct | Parameters passed correctly                   | None       |
+| **Pagination Logic** | ✅ Correct | Load more works                               | None       |
+| **Default Config**   | ⚠️ Issue   | `minConfidence: 0.85` too strict              | **HIGH**   |
+| **Min Cluster Size** | ⚠️ Issue   | `minClusterSize: 5` too large                 | **MEDIUM** |
+| **Config Fallback**  | ⚠️ Issue   | Uses strict defaults on API failure           | **MEDIUM** |
 
 ---
 
@@ -428,6 +472,7 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
    - Verify actual `minConfidence` and `minClusterSize` values
 
 2. **Test Configuration Change**:
+
    ```bash
    # Update backend config to more permissive values
    curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
@@ -462,6 +507,7 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
 ## Confidence Assessment
 
 **Root Cause Likelihood**:
+
 - **90%**: Too restrictive `minConfidence` threshold (0.85)
 - **70%**: Too large `minClusterSize` requirement (5)
 - **30%**: Backend configuration API failure
@@ -469,6 +515,7 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
 - **5%**: Frontend rendering bug
 
 **Recommended Priority**:
+
 1. ✅ Check browser DevTools (Network → API response `total` field)
 2. ✅ Lower configuration thresholds (0.70 confidence, 2 cluster size)
 3. ✅ Update fallback defaults in UI code
@@ -478,13 +525,13 @@ curl -X PUT http://localhost:8000/api/v1/config/face-clustering-unknown \
 
 ## File Locations Reference
 
-| File | Purpose | Lines of Interest |
-|------|---------|-------------------|
-| `src/routes/+layout.svelte` | Navigation menu | Line 49 (Clusters link) |
-| `src/routes/faces/clusters/+page.svelte` | Main cluster view | Lines 47-56 (config loading), 68-77 (API call), 44 (PAGE_SIZE) |
-| `src/lib/api/faces.ts` | Cluster API client | Lines 281-302 (`listClusters` function) |
-| `src/lib/api/admin.ts` | Configuration API | Lines 220-238 (config endpoints) |
-| `src/lib/components/faces/ClusterCard.svelte` | Cluster card display | Entire file (rendering logic) |
+| File                                          | Purpose              | Lines of Interest                                              |
+| --------------------------------------------- | -------------------- | -------------------------------------------------------------- |
+| `src/routes/+layout.svelte`                   | Navigation menu      | Line 49 (Clusters link)                                        |
+| `src/routes/faces/clusters/+page.svelte`      | Main cluster view    | Lines 47-56 (config loading), 68-77 (API call), 44 (PAGE_SIZE) |
+| `src/lib/api/faces.ts`                        | Cluster API client   | Lines 281-302 (`listClusters` function)                        |
+| `src/lib/api/admin.ts`                        | Configuration API    | Lines 220-238 (config endpoints)                               |
+| `src/lib/components/faces/ClusterCard.svelte` | Cluster card display | Entire file (rendering logic)                                  |
 
 ---
 

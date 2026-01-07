@@ -159,12 +159,66 @@ describe('TemporalTimeline', () => {
 		};
 
 		const fullPrototypes: Prototype[] = [
-			{ id: '1', faceInstanceId: 'f1', role: 'temporal', ageEraBucket: 'infant', decadeBucket: '1990s', isPinned: false, qualityScore: 0.8, createdAt: '2025-01-01T00:00:00Z' },
-			{ id: '2', faceInstanceId: 'f2', role: 'temporal', ageEraBucket: 'child', decadeBucket: '2000s', isPinned: false, qualityScore: 0.85, createdAt: '2025-01-01T00:00:00Z' },
-			{ id: '3', faceInstanceId: 'f3', role: 'temporal', ageEraBucket: 'teen', decadeBucket: '2010s', isPinned: false, qualityScore: 0.9, createdAt: '2025-01-01T00:00:00Z' },
-			{ id: '4', faceInstanceId: 'f4', role: 'temporal', ageEraBucket: 'young_adult', decadeBucket: '2015s', isPinned: false, qualityScore: 0.92, createdAt: '2025-01-01T00:00:00Z' },
-			{ id: '5', faceInstanceId: 'f5', role: 'primary', ageEraBucket: 'adult', decadeBucket: '2020s', isPinned: true, qualityScore: 0.95, createdAt: '2025-01-01T00:00:00Z' },
-			{ id: '6', faceInstanceId: 'f6', role: 'temporal', ageEraBucket: 'senior', decadeBucket: '2025s', isPinned: false, qualityScore: 0.88, createdAt: '2025-01-01T00:00:00Z' }
+			{
+				id: '1',
+				faceInstanceId: 'f1',
+				role: 'temporal',
+				ageEraBucket: 'infant',
+				decadeBucket: '1990s',
+				isPinned: false,
+				qualityScore: 0.8,
+				createdAt: '2025-01-01T00:00:00Z'
+			},
+			{
+				id: '2',
+				faceInstanceId: 'f2',
+				role: 'temporal',
+				ageEraBucket: 'child',
+				decadeBucket: '2000s',
+				isPinned: false,
+				qualityScore: 0.85,
+				createdAt: '2025-01-01T00:00:00Z'
+			},
+			{
+				id: '3',
+				faceInstanceId: 'f3',
+				role: 'temporal',
+				ageEraBucket: 'teen',
+				decadeBucket: '2010s',
+				isPinned: false,
+				qualityScore: 0.9,
+				createdAt: '2025-01-01T00:00:00Z'
+			},
+			{
+				id: '4',
+				faceInstanceId: 'f4',
+				role: 'temporal',
+				ageEraBucket: 'young_adult',
+				decadeBucket: '2015s',
+				isPinned: false,
+				qualityScore: 0.92,
+				createdAt: '2025-01-01T00:00:00Z'
+			},
+			{
+				id: '5',
+				faceInstanceId: 'f5',
+				role: 'primary',
+				ageEraBucket: 'adult',
+				decadeBucket: '2020s',
+				isPinned: true,
+				qualityScore: 0.95,
+				createdAt: '2025-01-01T00:00:00Z'
+			},
+			{
+				id: '6',
+				faceInstanceId: 'f6',
+				role: 'temporal',
+				ageEraBucket: 'senior',
+				decadeBucket: '2025s',
+				isPinned: false,
+				qualityScore: 0.88,
+				createdAt: '2025-01-01T00:00:00Z'
+			}
 		];
 
 		render(TemporalTimeline, {

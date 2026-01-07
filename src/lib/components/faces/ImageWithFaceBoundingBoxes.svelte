@@ -177,7 +177,12 @@
 							rx={4}
 							fill="rgba(100, 116, 139, 0.6)"
 						/>
-						<text x={face.bboxX + 8} y={face.bboxY + face.bboxH + labelTextYOffset} fill="white" font-size={labelFontSize}>
+						<text
+							x={face.bboxX + 8}
+							y={face.bboxY + face.bboxH + labelTextYOffset}
+							fill="white"
+							font-size={labelFontSize}
+						>
 							{face.label}
 						</text>
 					</g>

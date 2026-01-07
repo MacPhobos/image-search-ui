@@ -24,12 +24,14 @@ The Prototype view already has **unpinning** functionality but lacks the ability
 **File**: `/export/workspace/image-search/image-search-ui/src/routes/people/[personId]/+page.svelte`
 
 **Structure**:
+
 - Three-tab interface: Faces, Photos, Prototypes
 - Prototypes tab (lines 458-541) shows:
   - **TemporalTimeline component** - Age era timeline with coverage indicators
   - **Prototype grid** - Cards showing all prototypes with thumbnails
 
 **Current Capabilities**:
+
 - ✅ Display prototypes in grid with thumbnails
 - ✅ Show pinned status (📌 indicator)
 - ✅ Unpin prototypes via `handleUnpinPrototype()` function
@@ -44,6 +46,7 @@ The Prototype view already has **unpinning** functionality but lacks the ability
 **File**: `/export/workspace/image-search/image-search-ui/src/lib/components/faces/PhotoPreviewModal.svelte`
 
 **Lines 61-66**: State management
+
 ```svelte
 // Pin prototype state
 let pinningFaceId = $state<string | null>(null);
@@ -53,6 +56,7 @@ let selectedEra = $state<AgeEraBucket | null>(null);
 ```
 
 **Lines 402-409**: Age era options
+
 ```svelte
 const ageEras: { value: AgeEraBucket; label: string }[] = [
 	{ value: 'infant', label: 'Infant (0-3)' },
@@ -65,6 +69,7 @@ const ageEras: { value: AgeEraBucket; label: string }[] = [
 ```
 
 **Lines 411-450**: Pin handlers
+
 ```svelte
 function startPinning(faceId: string) {
 	pinningFaceId = faceId;
@@ -109,6 +114,7 @@ async function handlePinAsPrototype() {
 ```
 
 **Lines 702-741**: UI rendering
+
 ```svelte
 <!-- Pin as Prototype Section -->
 {#if face.personId && assigningFaceId !== face.faceInstanceId}
@@ -133,9 +139,7 @@ async function handlePinAsPrototype() {
 					>
 						{pinningInProgress ? 'Pinning...' : 'Confirm Pin'}
 					</button>
-					<button type="button" class="pin-cancel-btn" onclick={cancelPinning}>
-						Cancel
-					</button>
+					<button type="button" class="pin-cancel-btn" onclick={cancelPinning}> Cancel </button>
 				</div>
 			</div>
 		{:else}
@@ -157,6 +161,7 @@ async function handlePinAsPrototype() {
 **File**: `/export/workspace/image-search/image-search-ui/src/lib/api/faces.ts`
 
 **Lines 1132-1153**: Pin endpoint
+
 ```typescript
 export async function pinPrototype(
 	personId: string,
@@ -180,6 +185,7 @@ export async function pinPrototype(
 ```
 
 **Lines 1157-1164**: Unpin endpoint
+
 ```typescript
 export async function unpinPrototype(personId: string, prototypeId: string): Promise<undefined> {
 	return apiRequest<undefined>(
@@ -192,6 +198,7 @@ export async function unpinPrototype(personId: string, prototypeId: string): Pro
 ```
 
 **Data Structures**:
+
 ```typescript
 export interface Prototype {
 	id: string;
@@ -219,6 +226,7 @@ export type AgeEraBucket = 'infant' | 'child' | 'teen' | 'young_adult' | 'adult'
 **File**: `/export/workspace/image-search/image-search-ui/src/lib/components/faces/TemporalTimeline.svelte`
 
 **Current Features**:
+
 - Displays 6 age era slots (infant → senior)
 - Shows coverage percentage
 - Indicates which eras have prototypes (green border)
@@ -227,18 +235,20 @@ export type AgeEraBucket = 'infant' | 'child' | 'teen' | 'young_adult' | 'adult'
 - Shows **"+ Pin" button** for empty slots (lines 72-79)
 
 **Key Props**:
+
 ```typescript
 interface Props {
 	prototypes: Prototype[];
 	coverage: TemporalCoverage;
-	onPinClick?: (era: AgeEraBucket) => void;  // Callback for empty slot pins
-	onUnpinClick?: (prototype: Prototype) => void;  // Callback for unpins
+	onPinClick?: (era: AgeEraBucket) => void; // Callback for empty slot pins
+	onUnpinClick?: (prototype: Prototype) => void; // Callback for unpins
 }
 ```
 
 **Important Discovery**: The timeline already has a `onPinClick` callback prop defined, but it's **not currently wired up** in the parent component (`/routes/people/[personId]/+page.svelte`).
 
 **Lines 484**: Timeline component usage
+
 ```svelte
 <TemporalTimeline
 	{prototypes}
@@ -281,11 +291,13 @@ async function handlePinFromTimeline(era: AgeEraBucket) {
 ```
 
 **Pros**:
+
 - Minimal code changes
 - Uses existing UI pattern
 - Clear user flow
 
 **Cons**:
+
 - Still requires navigating to Photos tab for actual pinning
 - Two-step process (select era → select photo)
 
@@ -406,9 +418,7 @@ function cancelGridPinning() {
 				>
 					Pin
 				</button>
-				<button type="button" class="pin-cancel-small" onclick={cancelGridPinning}>
-					Cancel
-				</button>
+				<button type="button" class="pin-cancel-small" onclick={cancelGridPinning}> Cancel </button>
 			</div>
 		</div>
 	{:else if proto.isPinned}
@@ -528,12 +538,14 @@ function cancelGridPinning() {
 ```
 
 **Pros**:
+
 - Direct action from Prototype view (no navigation needed)
 - Consistent with unpin button pattern
 - Clear visual feedback
 - Users can see all prototypes and choose which to pin
 
 **Cons**:
+
 - Adds UI complexity to prototype cards
 - Requires more CSS for responsive layout
 
@@ -557,7 +569,7 @@ interface Props {
 	onNext?: () => void;
 	onFaceAssigned?: (faceId: string, personId: string | null, personName: string | null) => void;
 	onPrototypePinned?: () => void;
-	initialPinEra?: AgeEraBucket;  // NEW: Pre-select era when opening for pin
+	initialPinEra?: AgeEraBucket; // NEW: Pre-select era when opening for pin
 }
 ```
 
@@ -605,11 +617,13 @@ async function handlePrototypeClick(proto: Prototype, pinMode: boolean = false) 
 ```
 
 **Pros**:
+
 - Leverages existing PhotoPreviewModal functionality
 - Maintains consistency with photo review workflow
 - Allows seeing full context (all faces in photo)
 
 **Cons**:
+
 - Requires modal enhancement
 - Indirect (click prototype → see photo → pin)
 
@@ -620,6 +634,7 @@ async function handlePrototypeClick(proto: Prototype, pinMode: boolean = false) 
 **Best Approach**: **Option 2** (Pin button in Prototype Grid)
 
 **Rationale**:
+
 1. **Minimal navigation**: Users stay in Prototypes tab
 2. **Visual clarity**: All prototypes visible with direct pin actions
 3. **Consistency**: Matches existing unpin button pattern
@@ -657,6 +672,7 @@ async function handlePrototypeClick(proto: Prototype, pinMode: boolean = false) 
 ✅ `GET /api/v1/faces/persons/{personId}/prototypes` - List prototypes
 
 **Request/Response Types**:
+
 ```typescript
 // Pin request
 {
@@ -675,16 +691,20 @@ async function handlePrototypeClick(proto: Prototype, pinMode: boolean = false) 
 ## File Reference Summary
 
 ### Components to Modify
+
 - `/export/workspace/image-search/image-search-ui/src/routes/people/[personId]/+page.svelte` - Main person detail page
 
 ### Reference Components (Pinning Patterns)
+
 - `/export/workspace/image-search/image-search-ui/src/lib/components/faces/PhotoPreviewModal.svelte` - Lines 61-66, 402-450, 702-741
 - `/export/workspace/image-search/image-search-ui/src/lib/components/faces/TemporalTimeline.svelte` - Lines 72-79 (empty slot pins)
 
 ### API Integration
+
 - `/export/workspace/image-search/image-search-ui/src/lib/api/faces.ts` - Lines 1132-1164 (pin/unpin functions)
 
 ### Type Definitions
+
 - `/export/workspace/image-search/image-search-ui/src/lib/api/faces.ts` - Lines 992-1028 (Prototype, PinPrototypeRequest types)
 
 ---
@@ -730,6 +750,7 @@ async function handlePrototypeClick(proto: Prototype, pinMode: boolean = false) 
 The Prototype view currently supports **viewing** and **unpinning** prototypes but lacks the ability to **pin** new images to age eras. The recommended implementation (Option 2) adds pin buttons directly to the prototype grid, following the existing unpin pattern for consistency.
 
 **Key Implementation Points**:
+
 1. Reuse existing `pinPrototype()` API function
 2. Add era selector dropdown when user clicks "Pin to Era"
 3. Refresh prototype list after successful pin

@@ -17,12 +17,15 @@ The Photo Preview dialog has a fully functional face-to-bounding-box visual asso
 ## 1. Component File Locations
 
 ### Photo Preview Dialog
+
 **File:** `/export/workspace/image-search/image-search-ui/src/lib/components/faces/PhotoPreviewModal.svelte`
 
 ### Face Suggestion Details Dialog
+
 **File:** `/export/workspace/image-search/image-search-ui/src/lib/components/faces/SuggestionDetailModal.svelte`
 
 ### Shared Component
+
 **File:** `/export/workspace/image-search/image-search-ui/src/lib/components/faces/ImageWithFaceBoundingBoxes.svelte`
 
 ---
@@ -35,16 +38,16 @@ Both dialogs use the same color palette for visual distinction:
 
 ```typescript
 const FACE_COLORS = [
-  '#3b82f6', // Blue
-  '#22c55e', // Green
-  '#f59e0b', // Amber
-  '#ef4444', // Red
-  '#8b5cf6', // Purple
-  '#ec4899', // Pink
-  '#14b8a6', // Teal
-  '#f97316', // Orange
-  '#06b6d4', // Cyan
-  '#84cc16'  // Lime
+	'#3b82f6', // Blue
+	'#22c55e', // Green
+	'#f59e0b', // Amber
+	'#ef4444', // Red
+	'#8b5cf6', // Purple
+	'#ec4899', // Pink
+	'#14b8a6', // Teal
+	'#f97316', // Orange
+	'#06b6d4', // Cyan
+	'#84cc16' // Lime
 ];
 ```
 
@@ -53,18 +56,19 @@ Each face gets a unique color based on its index in the face array:
 ```typescript
 // PhotoPreviewModal.svelte (lines 98-105)
 function getFaceColorByIndex(index: number): string {
-  return FACE_COLORS[index % FACE_COLORS.length];
+	return FACE_COLORS[index % FACE_COLORS.length];
 }
 
 function getFaceColor(face: FaceInPhoto): string {
-  const index = photo.faces.findIndex((f) => f.faceInstanceId === face.faceInstanceId);
-  return getFaceColorByIndex(index >= 0 ? index : 0);
+	const index = photo.faces.findIndex((f) => f.faceInstanceId === face.faceInstanceId);
+	return getFaceColorByIndex(index >= 0 ? index : 0);
 }
 ```
 
 ### 2.2 State Management
 
 **Key State Variable:**
+
 ```typescript
 // PhotoPreviewModal.svelte (line 46)
 let highlightedFaceId = $state<string | null>(null);
@@ -78,24 +82,21 @@ This reactive state variable tracks which face is currently highlighted.
 
 ```svelte
 <li
-  class="face-item"
-  class:highlighted={highlightedFaceId === face.faceInstanceId}
-  style="--highlight-color: {getFaceColor(face)};"
+	class="face-item"
+	class:highlighted={highlightedFaceId === face.faceInstanceId}
+	style="--highlight-color: {getFaceColor(face)};"
 >
-  <div class="face-item-content">
-    <button
-      type="button"
-      class="face-item-button"
-      onclick={() => handleHighlightFace(face.faceInstanceId)}
-      aria-label="Highlight face of {getFaceLabel(face)}"
-    >
-      <span
-        class="face-indicator"
-        style="background-color: {getFaceColor(face)};"
-      ></span>
-      <!-- Face name and metadata -->
-    </button>
-  </div>
+	<div class="face-item-content">
+		<button
+			type="button"
+			class="face-item-button"
+			onclick={() => handleHighlightFace(face.faceInstanceId)}
+			aria-label="Highlight face of {getFaceLabel(face)}"
+		>
+			<span class="face-indicator" style="background-color: {getFaceColor(face)};"></span>
+			<!-- Face name and metadata -->
+		</button>
+	</div>
 </li>
 ```
 
@@ -103,7 +104,7 @@ This reactive state variable tracks which face is currently highlighted.
 
 ```typescript
 function handleHighlightFace(faceId: string) {
-  highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+	highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 }
 ```
 
@@ -115,12 +116,13 @@ function handleHighlightFace(faceId: string) {
 
 ```css
 .face-item.highlighted {
-  background-color: #e0f2fe;
-  box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
+	background-color: #e0f2fe;
+	box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
 }
 ```
 
 **Features:**
+
 - Light blue background (`#e0f2fe`)
 - Colored left border using the face's unique color
 - CSS custom property `--highlight-color` for dynamic color
@@ -153,14 +155,15 @@ let faceBoxes = $derived<FaceBox[]>(
 
 ```svelte
 <ImageWithFaceBoundingBoxes
-  imageUrl={photo.fullUrl}
-  faces={faceBoxes}
-  highlightedFaceId={highlightedFaceId}
-  onFaceClick={handleFaceClick}
+	imageUrl={photo.fullUrl}
+	faces={faceBoxes}
+	{highlightedFaceId}
+	onFaceClick={handleFaceClick}
 />
 ```
 
 **Bidirectional Interaction:**
+
 - `highlightedFaceId` prop tells the image component which face to highlight
 - `onFaceClick` callback allows clicking on bounding boxes to update `highlightedFaceId`
 
@@ -172,12 +175,12 @@ let faceBoxes = $derived<FaceBox[]>(
 
 ```typescript
 interface Props {
-  imageUrl: string;
-  faces: FaceBox[];
-  highlightedFaceId?: string | null;
-  primaryFaceId?: string | null;
-  onFaceClick?: (faceId: string) => void;
-  maxHeight?: string;
+	imageUrl: string;
+	faces: FaceBox[];
+	highlightedFaceId?: string | null;
+	primaryFaceId?: string | null;
+	onFaceClick?: (faceId: string) => void;
+	maxHeight?: string;
 }
 ```
 
@@ -187,9 +190,9 @@ interface Props {
 
 ```typescript
 function getStrokeWidth(face: FaceBox): number {
-  if (face.id === primaryFaceId) return 4;
-  if (face.id === highlightedFaceId) return 3;
-  return 2;
+	if (face.id === primaryFaceId) return 4;
+	if (face.id === highlightedFaceId) return 3;
+	return 2;
 }
 ```
 
@@ -197,15 +200,15 @@ function getStrokeWidth(face: FaceBox): number {
 
 ```svelte
 <rect
-  x={face.bboxX}
-  y={face.bboxY}
-  width={face.bboxW}
-  height={face.bboxH}
-  class="face-box"
-  class:primary
-  class:highlighted
-  style="stroke: {faceColor}; stroke-width: {strokeWidth};"
-  onclick={() => handleFaceClick(face.id)}
+	x={face.bboxX}
+	y={face.bboxY}
+	width={face.bboxW}
+	height={face.bboxH}
+	class="face-box"
+	class:primary
+	class:highlighted
+	style="stroke: {faceColor}; stroke-width: {strokeWidth};"
+	onclick={() => handleFaceClick(face.id)}
 />
 ```
 
@@ -213,13 +216,18 @@ function getStrokeWidth(face: FaceBox): number {
 
 ```css
 .face-box.highlighted {
-  opacity: 1;
-  animation: pulse-box 1.5s ease-in-out infinite;
+	opacity: 1;
+	animation: pulse-box 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse-box {
-  0%, 100% { stroke-width: 3; }
-  50% { stroke-width: 5; }
+	0%,
+	100% {
+		stroke-width: 3;
+	}
+	50% {
+		stroke-width: 5;
+	}
 }
 ```
 
@@ -248,25 +256,23 @@ function getStrokeWidth(face: FaceBox): number {
 ```svelte
 <!-- Lines 484-522 -->
 <li class="face-item">
-  <div class="face-item-content">
-    <div class="face-info">
-      <span class="face-name">
-        {#if isPrimary}
-          <span class="primary-badge">Primary</span>
-        {/if}
-        {getFaceLabel(face)}
-      </span>
-      <span class="face-meta">
-        Conf: {(face.detectionConfidence * 100).toFixed(0)}%
-      </span>
-    </div>
+	<div class="face-item-content">
+		<div class="face-info">
+			<span class="face-name">
+				{#if isPrimary}
+					<span class="primary-badge">Primary</span>
+				{/if}
+				{getFaceLabel(face)}
+			</span>
+			<span class="face-meta">
+				Conf: {(face.detectionConfidence * 100).toFixed(0)}%
+			</span>
+		</div>
 
-    {#if !isPrimary && !face.personName}
-      <button class="assign-btn" onclick={() => startAssignment(face.id)}>
-        Assign
-      </button>
-    {/if}
-  </div>
+		{#if !isPrimary && !face.personName}
+			<button class="assign-btn" onclick={() => startAssignment(face.id)}> Assign </button>
+		{/if}
+	</div>
 </li>
 ```
 
@@ -290,11 +296,11 @@ let highlightedFaceId = $state<string | null>(null);
 ```typescript
 // Add after existing handler functions (around line 435)
 function handleHighlightFace(faceId: string) {
-  highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+	highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 }
 
 function handleFaceClick(faceId: string) {
-  highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+	highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 }
 ```
 
@@ -319,33 +325,31 @@ function handleFaceClick(faceId: string) {
 ```svelte
 <!-- Update face-item structure (lines 489-522) -->
 <li
-  class="face-item"
-  class:highlighted={highlightedFaceId === face.id}
-  style="--highlight-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
+	class="face-item"
+	class:highlighted={highlightedFaceId === face.id}
+	style="--highlight-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
 >
-  <div class="face-item-content">
-    <button
-      type="button"
-      class="face-item-button"
-      onclick={() => handleHighlightFace(face.id)}
-      aria-label="Highlight face of {getFaceLabel(face)}"
-    >
-      <span
-        class="face-indicator"
-        style="background-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
-      ></span>
-      <div class="face-info">
-        <!-- Existing face name and metadata -->
-      </div>
-    </button>
+	<div class="face-item-content">
+		<button
+			type="button"
+			class="face-item-button"
+			onclick={() => handleHighlightFace(face.id)}
+			aria-label="Highlight face of {getFaceLabel(face)}"
+		>
+			<span
+				class="face-indicator"
+				style="background-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
+			></span>
+			<div class="face-info">
+				<!-- Existing face name and metadata -->
+			</div>
+		</button>
 
-    <!-- Keep assign button outside main button -->
-    {#if !isPrimary && !face.personName}
-      <button class="assign-btn" onclick={() => startAssignment(face.id)}>
-        Assign
-      </button>
-    {/if}
-  </div>
+		<!-- Keep assign button outside main button -->
+		{#if !isPrimary && !face.personName}
+			<button class="assign-btn" onclick={() => startAssignment(face.id)}> Assign </button>
+		{/if}
+	</div>
 </li>
 ```
 
@@ -356,27 +360,27 @@ function handleFaceClick(faceId: string) {
 ```css
 /* Add after .face-item styles (around line 840) */
 .face-item.highlighted {
-  background-color: #e0f2fe;
-  box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
+	background-color: #e0f2fe;
+	box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
 }
 
 .face-item-button {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex: 1;
-  padding: 0.625rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	flex: 1;
+	padding: 0.625rem;
+	border: none;
+	background: none;
+	cursor: pointer;
+	text-align: left;
 }
 
 .face-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	flex-shrink: 0;
 }
 ```
 
@@ -385,7 +389,7 @@ function handleFaceClick(faceId: string) {
 ```typescript
 // Add after FACE_COLORS definition (around line 102)
 function getFaceColorByIndex(index: number): string {
-  return FACE_COLORS[index % FACE_COLORS.length];
+	return FACE_COLORS[index % FACE_COLORS.length];
 }
 ```
 
@@ -396,28 +400,29 @@ function getFaceColorByIndex(index: number): string {
 ### 6.1 From PhotoPreviewModal
 
 **State Pattern:**
+
 ```typescript
 let highlightedFaceId = $state<string | null>(null);
 ```
 
 **Toggle Handler:**
+
 ```typescript
 function handleHighlightFace(faceId: string) {
-  highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+	highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 }
 ```
 
 **CSS Custom Property:**
+
 ```svelte
 style="--highlight-color: {getFaceColor(face)};"
 ```
 
 **Face Indicator:**
+
 ```svelte
-<span
-  class="face-indicator"
-  style="background-color: {getFaceColor(face)};"
-></span>
+<span class="face-indicator" style="background-color: {getFaceColor(face)};"></span>
 ```
 
 ### 6.2 From ImageWithFaceBoundingBoxes
@@ -455,24 +460,28 @@ Already being used correctly - just needs `highlightedFaceId` and `onFaceClick` 
 ## 8. Recommended Implementation Approach
 
 ### Phase 1: Add Core Functionality (Minimal Changes)
+
 1. Add `highlightedFaceId` state
 2. Add handler functions
 3. Pass props to `ImageWithFaceBoundingBoxes`
 4. Test bidirectional click interaction
 
 ### Phase 2: Add Visual Feedback
+
 1. Wrap face content in button
 2. Add face indicator dot
 3. Add highlighted class binding
 4. Add CSS styles
 
 ### Phase 3: Polish
+
 1. Test keyboard navigation
 2. Verify aria labels
 3. Test color consistency
 4. Mobile responsiveness check
 
 ### Phase 4: Regression Testing
+
 1. Ensure assignment panel still works
 2. Verify suggestion acceptance works
 3. Check primary/non-primary face distinction
@@ -485,16 +494,19 @@ Already being used correctly - just needs `highlightedFaceId` and `onFaceClick` 
 ### Current Implementation (Photo Preview)
 
 ✅ **Proper ARIA labels:**
+
 ```svelte
 aria-label="Highlight face of {getFaceLabel(face)}"
 ```
 
 ✅ **Button for interaction:**
+
 ```svelte
 <button type="button" class="face-item-button">
 ```
 
 ✅ **Visual AND programmatic state:**
+
 ```svelte
 class:highlighted={highlightedFaceId === face.faceInstanceId}
 ```
@@ -542,6 +554,7 @@ class:highlighted={highlightedFaceId === face.faceInstanceId}
 ## 11. Summary
 
 ### What Works in Photo Preview
+
 - ✅ Color-coded face indicators (dots)
 - ✅ Interactive hover/click on sidebar faces
 - ✅ Bidirectional highlighting (sidebar ↔ image)
@@ -549,6 +562,7 @@ class:highlighted={highlightedFaceId === face.faceInstanceId}
 - ✅ Accessibility (ARIA labels, keyboard support)
 
 ### What's Missing in Face Suggestion Details
+
 - ❌ State management for highlight
 - ❌ Click handlers for faces
 - ❌ Props to image component
@@ -556,9 +570,11 @@ class:highlighted={highlightedFaceId === face.faceInstanceId}
 - ❌ CSS for highlighting
 
 ### Implementation Complexity
+
 **Low to Medium** - Most code can be directly copied from PhotoPreviewModal with minor adaptations for different data structures.
 
 ### Estimated Effort
+
 - Core functionality: **30 minutes**
 - Visual polish: **15 minutes**
 - Testing: **30 minutes**
@@ -569,11 +585,13 @@ class:highlighted={highlightedFaceId === face.faceInstanceId}
 ## 12. References
 
 ### Code Files Analyzed
+
 1. `/export/workspace/image-search/image-search-ui/src/lib/components/faces/PhotoPreviewModal.svelte` (1381 lines)
 2. `/export/workspace/image-search/image-search-ui/src/lib/components/faces/SuggestionDetailModal.svelte` (1283 lines)
 3. `/export/workspace/image-search/image-search-ui/src/lib/components/faces/ImageWithFaceBoundingBoxes.svelte` (325 lines)
 
 ### Key Line References
+
 - **PhotoPreview State:** Line 46
 - **PhotoPreview Handlers:** Lines 211-217
 - **PhotoPreview Face List:** Lines 526-560
