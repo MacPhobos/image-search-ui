@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { DeletionLogEntry } from '$lib/api/vectors';
-	import { Table } from '$lib/components/ui/table';
+	import * as Table from '$lib/components/ui/table';
 	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 
 	interface Props {

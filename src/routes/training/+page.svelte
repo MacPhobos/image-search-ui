@@ -12,6 +12,7 @@
 		type FaceDetectionSession
 	} from '$lib/api/faces';
 	import FaceDetectionSessionCard from '$lib/components/faces/FaceDetectionSessionCard.svelte';
+	import * as Tabs from '$lib/components/ui/tabs';
 
 	interface Props {
 		data: PageData;
@@ -22,7 +23,7 @@
 	// Tab state with URL sync
 	let activeTab = $state<'training' | 'face-detection'>('training');
 
-	// URL sync on mount
+	// URL sync on mount - read from URL
 	$effect(() => {
 		const tabParam = $page.url.searchParams.get('tab');
 		if (tabParam === 'face-detection') {
@@ -32,10 +33,12 @@
 		}
 	});
 
-	function setTab(tab: 'training' | 'face-detection') {
-		activeTab = tab;
+	// URL sync on tab change - write to URL
+	function onTabChange(value: string | undefined) {
+		if (!value) return;
+		activeTab = value as 'training' | 'face-detection';
 		const url = new URL($page.url);
-		url.searchParams.set('tab', tab);
+		url.searchParams.set('tab', value);
 		goto(url.toString(), { replaceState: true, noScroll: true });
 	}
 
@@ -143,105 +146,93 @@
 </svelte:head>
 
 <div class="training-page">
-	<!-- Tab Navigation -->
-	<div class="tabs">
-		<button
-			type="button"
-			class="tab-button"
-			class:active={activeTab === 'training'}
-			onclick={() => setTab('training')}
-		>
-			Training Sessions
-		</button>
-		<button
-			type="button"
-			class="tab-button"
-			class:active={activeTab === 'face-detection'}
-			onclick={() => setTab('face-detection')}
-		>
-			Face Detection Sessions
-		</button>
-	</div>
+	<Tabs.Root value={activeTab} onValueChange={onTabChange}>
+		<Tabs.List class="mb-6 w-full justify-start">
+			<Tabs.Trigger value="training">Training Sessions</Tabs.Trigger>
+			<Tabs.Trigger value="face-detection">Face Detection Sessions</Tabs.Trigger>
+		</Tabs.List>
 
-	<!-- Tab Content -->
-	{#if activeTab === 'training'}
-		<TrainingSessionList
-			{sessions}
-			{currentPage}
-			{totalPages}
-			onPageChange={handlePageChange}
-			onSessionDeleted={handleSessionDeleted}
-			onCreateSession={handleCreateSession}
-			{loading}
-		/>
-	{:else if activeTab === 'face-detection'}
-		<div class="face-sessions-container">
-			<div class="flex justify-between items-center mb-6">
-				<h1 class="text-2xl font-bold text-gray-800">Face Detection Sessions</h1>
-				<button
-					class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-					onclick={handleCreateFaceSession}
-					disabled={isCreatingFaceSession}
-				>
-					{isCreatingFaceSession ? 'Creating...' : 'New Session'}
-				</button>
-			</div>
+		<Tabs.Content value="training">
+			<TrainingSessionList
+				{sessions}
+				{currentPage}
+				{totalPages}
+				onPageChange={handlePageChange}
+				onSessionDeleted={handleSessionDeleted}
+				onCreateSession={handleCreateSession}
+				{loading}
+			/>
+		</Tabs.Content>
 
-			{#if faceError}
-				<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-					<p class="text-red-700">{faceError}</p>
-				</div>
-			{/if}
-
-			{#if faceLoading}
-				<div class="flex justify-center py-12">
-					<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-				</div>
-			{:else if faceSessions.length === 0}
-				<div class="text-center py-12 bg-gray-50 rounded-lg">
-					<p class="text-gray-500 mb-4">No face detection sessions found.</p>
-					<p class="text-sm text-gray-400">
-						Create a new session to start detecting faces in your images.
-					</p>
-				</div>
-			{:else}
-				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{#each faceSessions as session (session.id)}
-						<FaceDetectionSessionCard {session} onUpdate={loadFaceSessions} />
-					{/each}
+		<Tabs.Content value="face-detection">
+			<div class="face-sessions-container">
+				<div class="flex justify-between items-center mb-6">
+					<h1 class="text-2xl font-bold text-gray-800">Face Detection Sessions</h1>
+					<button
+						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+						onclick={handleCreateFaceSession}
+						disabled={isCreatingFaceSession}
+					>
+						{isCreatingFaceSession ? 'Creating...' : 'New Session'}
+					</button>
 				</div>
 
-				<!-- Pagination -->
-				{#if faceTotalPages > 1}
-					<div class="flex justify-center gap-2 mt-6">
-						<button
-							class="px-3 py-1 rounded border disabled:opacity-50"
-							onclick={() => {
-								facePage--;
-								loadFaceSessions();
-							}}
-							disabled={facePage <= 1}
-						>
-							Previous
-						</button>
-						<span class="px-3 py-1">
-							Page {facePage} of {faceTotalPages}
-						</span>
-						<button
-							class="px-3 py-1 rounded border disabled:opacity-50"
-							onclick={() => {
-								facePage++;
-								loadFaceSessions();
-							}}
-							disabled={facePage >= faceTotalPages}
-						>
-							Next
-						</button>
+				{#if faceError}
+					<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+						<p class="text-red-700">{faceError}</p>
 					</div>
 				{/if}
-			{/if}
-		</div>
-	{/if}
+
+				{#if faceLoading}
+					<div class="flex justify-center py-12">
+						<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+					</div>
+				{:else if faceSessions.length === 0}
+					<div class="text-center py-12 bg-gray-50 rounded-lg">
+						<p class="text-gray-500 mb-4">No face detection sessions found.</p>
+						<p class="text-sm text-gray-400">
+							Create a new session to start detecting faces in your images.
+						</p>
+					</div>
+				{:else}
+					<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{#each faceSessions as session (session.id)}
+							<FaceDetectionSessionCard {session} onUpdate={loadFaceSessions} />
+						{/each}
+					</div>
+
+					<!-- Pagination -->
+					{#if faceTotalPages > 1}
+						<div class="flex justify-center gap-2 mt-6">
+							<button
+								class="px-3 py-1 rounded border disabled:opacity-50"
+								onclick={() => {
+									facePage--;
+									loadFaceSessions();
+								}}
+								disabled={facePage <= 1}
+							>
+								Previous
+							</button>
+							<span class="px-3 py-1">
+								Page {facePage} of {faceTotalPages}
+							</span>
+							<button
+								class="px-3 py-1 rounded border disabled:opacity-50"
+								onclick={() => {
+									facePage++;
+									loadFaceSessions();
+								}}
+								disabled={facePage >= faceTotalPages}
+							>
+								Next
+							</button>
+						</div>
+					{/if}
+				{/if}
+			</div>
+		</Tabs.Content>
+	</Tabs.Root>
 </div>
 
 <CreateSessionModal
@@ -255,33 +246,6 @@
 		width: 100%;
 		max-width: 1400px;
 		margin: 0 auto;
-	}
-
-	.tabs {
-		display: flex;
-		gap: 0;
-		border-bottom: 1px solid #e5e7eb;
-		margin-bottom: 1.5rem;
-	}
-
-	.tab-button {
-		padding: 0.75rem 1.5rem;
-		background: none;
-		border: none;
-		border-bottom: 2px solid transparent;
-		color: #6b7280;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
-
-	.tab-button:hover {
-		color: #374151;
-	}
-
-	.tab-button.active {
-		color: #4a90e2;
-		border-bottom-color: #4a90e2;
 	}
 
 	.face-sessions-container {

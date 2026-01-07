@@ -1,8 +1,7 @@
 <script lang="ts">
 	import AdminDataManagement from '$lib/components/admin/AdminDataManagement.svelte';
 	import FaceMatchingSettings from '$lib/components/admin/FaceMatchingSettings.svelte';
-
-	let activeTab = $state<'data' | 'settings'>('data');
+	import * as Tabs from '$lib/components/ui/tabs';
 </script>
 
 <svelte:head>
@@ -17,40 +16,20 @@
 		</p>
 	</header>
 
-	<nav class="admin-tabs" role="tablist" aria-label="Admin sections">
-		<button
-			class="tab-button"
-			class:active={activeTab === 'data'}
-			role="tab"
-			aria-selected={activeTab === 'data'}
-			aria-controls="data-panel"
-			onclick={() => (activeTab = 'data')}
-		>
-			Data Management
-		</button>
-		<button
-			class="tab-button"
-			class:active={activeTab === 'settings'}
-			role="tab"
-			aria-selected={activeTab === 'settings'}
-			aria-controls="settings-panel"
-			onclick={() => (activeTab = 'settings')}
-		>
-			Settings
-		</button>
-	</nav>
+	<Tabs.Root value="data" class="admin-tabs-container">
+		<Tabs.List class="admin-tabs-list">
+			<Tabs.Trigger value="data" class="admin-tab-trigger">Data Management</Tabs.Trigger>
+			<Tabs.Trigger value="settings" class="admin-tab-trigger">Settings</Tabs.Trigger>
+		</Tabs.List>
 
-	<div class="tab-content">
-		{#if activeTab === 'data'}
-			<div id="data-panel" role="tabpanel" aria-labelledby="data-tab">
-				<AdminDataManagement />
-			</div>
-		{:else if activeTab === 'settings'}
-			<div id="settings-panel" role="tabpanel" aria-labelledby="settings-tab">
-				<FaceMatchingSettings />
-			</div>
-		{/if}
-	</div>
+		<Tabs.Content value="data" class="admin-tab-content">
+			<AdminDataManagement />
+		</Tabs.Content>
+
+		<Tabs.Content value="settings" class="admin-tab-content">
+			<FaceMatchingSettings />
+		</Tabs.Content>
+	</Tabs.Root>
 </div>
 
 <style>
@@ -77,37 +56,12 @@
 		line-height: 1.6;
 	}
 
-	.admin-tabs {
-		display: flex;
-		gap: 0;
-		border-bottom: 2px solid #e5e7eb;
+	/* shadcn Tabs customizations */
+	:global(.admin-tabs-container) {
 		margin-bottom: 1.5rem;
 	}
 
-	.tab-button {
-		padding: 0.75rem 1.5rem;
-		background: transparent;
-		border: none;
-		border-bottom: 2px solid transparent;
-		margin-bottom: -2px;
-		cursor: pointer;
-		font-size: 0.9375rem;
-		font-weight: 500;
-		color: #6b7280;
-		transition: all 0.15s ease;
-	}
-
-	.tab-button:hover {
-		color: #374151;
-		background: #f9fafb;
-	}
-
-	.tab-button.active {
-		color: #3b82f6;
-		border-bottom-color: #3b82f6;
-	}
-
-	.tab-content {
+	:global(.admin-tab-content) {
 		min-height: 400px;
 	}
 
@@ -118,11 +72,6 @@
 
 		.page-description {
 			font-size: 0.9rem;
-		}
-
-		.tab-button {
-			padding: 0.625rem 1rem;
-			font-size: 0.875rem;
 		}
 	}
 </style>

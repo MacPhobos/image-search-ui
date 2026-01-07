@@ -81,7 +81,7 @@ describe('UnifiedPersonCard', () => {
 		it('should show thumbnail image when available', () => {
 			render(UnifiedPersonCard, { props: { person: identifiedPerson } });
 
-			const img = screen.getByRole('img');
+			const img = screen.getByRole('img', { hidden: true });
 			expect(img).toHaveAttribute('src', 'http://example.com/thumb.jpg');
 			expect(img).toHaveAttribute('alt', 'John Doe');
 		});
@@ -89,10 +89,12 @@ describe('UnifiedPersonCard', () => {
 		it('should show initial placeholder when no thumbnail', () => {
 			render(UnifiedPersonCard, { props: { person: unidentifiedPerson } });
 
-			// Should show first two letters (UP for Unidentified Person)
+			// Should show first two letters (UP for Unidentified Person) in Avatar fallback
 			const placeholder = screen.getByText('UP');
 			expect(placeholder).toBeInTheDocument();
-			expect(placeholder.className).toContain('thumbnail-placeholder');
+			// Avatar fallback (the direct parent) has gradient background classes
+			const fallback = placeholder.closest('[data-slot="avatar-fallback"]');
+			expect(fallback?.className).toContain('bg-gradient-to-br');
 		});
 
 		it('should show first two initials for multi-word names', () => {
@@ -329,7 +331,9 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('article');
-			expect(card.className).toContain('selected');
+			// Selected state uses border-primary and bg-primary/5
+			expect(card.className).toContain('border-primary');
+			expect(card.className).toContain('bg-primary/5');
 		});
 
 		it('should not apply selected class when selected is false', () => {
@@ -338,7 +342,8 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('article');
-			expect(card.className).not.toContain('selected');
+			expect(card.className).not.toContain('border-primary');
+			expect(card.className).not.toContain('bg-primary/5');
 		});
 	});
 
@@ -380,7 +385,9 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('button');
-			expect(card.className).toContain('clickable');
+			// Clickable state uses cursor-pointer and hover effects
+			expect(card.className).toContain('cursor-pointer');
+			expect(card.className).toContain('hover:border-primary');
 		});
 
 		it('should not apply clickable class when onClick is not provided', () => {
@@ -389,7 +396,8 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('article');
-			expect(card.className).not.toContain('clickable');
+			expect(card.className).not.toContain('cursor-pointer');
+			expect(card.className).not.toContain('hover:border-primary');
 		});
 
 		it('should apply noise class for noise faces', () => {
@@ -398,7 +406,8 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('article');
-			expect(card.className).toContain('noise');
+			// Noise state uses opacity-85
+			expect(card.className).toContain('opacity-85');
 		});
 
 		it('should NOT apply clickable class for noise faces even with onClick', () => {
@@ -408,8 +417,10 @@ describe('UnifiedPersonCard', () => {
 			});
 
 			const card = screen.getByRole('article');
-			expect(card.className).not.toContain('clickable');
-			expect(card.className).toContain('noise');
+			expect(card.className).not.toContain('cursor-pointer');
+			expect(card.className).not.toContain('hover:border-primary');
+			// Still has noise styling
+			expect(card.className).toContain('opacity-85');
 		});
 	});
 
