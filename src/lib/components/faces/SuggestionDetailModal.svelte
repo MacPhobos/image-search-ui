@@ -5,8 +5,10 @@
 		listPersons,
 		assignFaceToPerson,
 		createPerson,
-		getFaceSuggestions
+		getFaceSuggestions,
+		pinPrototype
 	} from '$lib/api/faces';
+	import type { AgeEraBucket } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
 	import ImageWithFaceBoundingBoxes, {
 		type FaceBox
@@ -22,9 +24,11 @@
 		onAccept: (suggestion: FaceSuggestion) => void;
 		onReject: (suggestion: FaceSuggestion) => void;
 		onFaceAssigned?: (faceId: string, personId: string, personName: string) => void;
+		onPrototypePinned?: () => void;
 	}
 
-	let { suggestion, onClose, onAccept, onReject, onFaceAssigned }: Props = $props();
+	let { suggestion, onClose, onAccept, onReject, onFaceAssigned, onPrototypePinned }: Props =
+		$props();
 
 	// Derive open state from suggestion
 	let open = $derived(suggestion !== null);
@@ -47,6 +51,12 @@
 	// Face highlight state
 	let highlightedFaceId = $state<string | null>(null);
 
+	// Pin prototype state
+	let pinningFaceId = $state<string | null>(null);
+	let showPinOptions = $state(false);
+	let pinningInProgress = $state(false);
+	let selectedEra = $state<AgeEraBucket | null>(null);
+
 	// Face suggestions state
 	interface FaceSuggestionsState {
 		suggestions: FaceSuggestionItem[];
@@ -64,6 +74,16 @@
 				? '#eab308' // yellow-500
 				: '#f97316'; // orange-500
 	});
+
+	// Age era options for prototype pinning
+	const ageEras: { value: AgeEraBucket; label: string }[] = [
+		{ value: 'infant', label: 'Infant (0-3)' },
+		{ value: 'child', label: 'Child (4-12)' },
+		{ value: 'teen', label: 'Teen (13-19)' },
+		{ value: 'young_adult', label: 'Young Adult (20-35)' },
+		{ value: 'adult', label: 'Adult (36-55)' },
+		{ value: 'senior', label: 'Senior (56+)' }
+	];
 
 	// Get full image URL (backend now provides this directly)
 	const fullImageUrl = $derived(() => {
@@ -462,6 +482,44 @@
 	function handleFaceClick(faceId: string) {
 		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
+
+	// Pin prototype handlers
+	function startPinning(faceId: string) {
+		pinningFaceId = faceId;
+		showPinOptions = true;
+		selectedEra = null;
+	}
+
+	function cancelPinning() {
+		pinningFaceId = null;
+		showPinOptions = false;
+		selectedEra = null;
+	}
+
+	async function handlePinAsPrototype() {
+		if (!pinningFaceId) return;
+
+		const face = allFaces.find((f) => f.id === pinningFaceId);
+		if (!face?.personId) {
+			console.error('Cannot pin: face must be assigned to a person first');
+			return;
+		}
+
+		pinningInProgress = true;
+		try {
+			await pinPrototype(face.personId, face.id, {
+				ageEraBucket: selectedEra ?? undefined,
+				role: 'temporal'
+			});
+
+			cancelPinning();
+			onPrototypePinned?.();
+		} catch (err) {
+			console.error('Failed to pin prototype:', err);
+		} finally {
+			pinningInProgress = false;
+		}
+	}
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
@@ -658,6 +716,47 @@
 													{/if}
 												{/if}
 											</div>
+										</div>
+									{/if}
+
+									<!-- Pin as Prototype Section -->
+									{#if face.personId && assigningFaceId !== face.id}
+										<div class="pin-prototype-section">
+											{#if pinningFaceId === face.id && showPinOptions}
+												<div class="pin-options">
+													<label>
+														Age Era (optional):
+														<select bind:value={selectedEra}>
+															<option value={null}>Auto-detect</option>
+															{#each ageEras as era}
+																<option value={era.value}>{era.label}</option>
+															{/each}
+														</select>
+													</label>
+													<div class="pin-actions">
+														<button
+															type="button"
+															class="confirm-pin-btn"
+															onclick={handlePinAsPrototype}
+															disabled={pinningInProgress}
+														>
+															{pinningInProgress ? 'Pinning...' : 'Confirm Pin'}
+														</button>
+														<button type="button" class="cancel-pin-btn" onclick={cancelPinning}>
+															Cancel
+														</button>
+													</div>
+												</div>
+											{:else}
+												<button
+													type="button"
+													class="pin-prototype-btn"
+													onclick={() => startPinning(face.id)}
+													title="Pin this face as a prototype for the person"
+												>
+													Pin as Prototype
+												</button>
+											{/if}
 										</div>
 									{/if}
 								</li>
@@ -1103,6 +1202,97 @@
 	.person-option-meta {
 		font-size: 0.6875rem;
 		color: #999;
+	}
+
+	/* Pin prototype styles */
+	.pin-prototype-section {
+		margin: 0.5rem 0.75rem;
+		padding-top: 0.5rem;
+		border-top: 1px solid #e0e0e0;
+	}
+
+	.pin-prototype-btn {
+		width: 100%;
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		background-color: #4a90e2;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.pin-prototype-btn:hover {
+		background-color: #3a7bc8;
+	}
+
+	.pin-options {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.pin-options label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.8125rem;
+		color: #333;
+		font-weight: 500;
+	}
+
+	.pin-options select {
+		padding: 0.4rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 0.8125rem;
+		background: white;
+	}
+
+	.pin-options select:focus {
+		outline: none;
+		border-color: #4a90e2;
+	}
+
+	.pin-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.confirm-pin-btn {
+		flex: 1;
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		background-color: #22c55e;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	.confirm-pin-btn:hover:not(:disabled) {
+		background-color: #16a34a;
+	}
+
+	.confirm-pin-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.cancel-pin-btn {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+		border: 1px solid #ddd;
+		background: white;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	.cancel-pin-btn:hover {
+		background-color: #f5f5f5;
 	}
 
 	/* Primary suggestion details */
