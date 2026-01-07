@@ -11,6 +11,10 @@
 	import ImageWithFaceBoundingBoxes, {
 		type FaceBox
 	} from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Alert from '$lib/components/ui/alert';
 
 	interface Props {
 		suggestion: FaceSuggestion | null;
@@ -21,6 +25,9 @@
 	}
 
 	let { suggestion, onClose, onAccept, onReject, onFaceAssigned }: Props = $props();
+
+	// Derive open state from suggestion
+	let open = $derived(suggestion !== null);
 
 	let isActionLoading = $state(false);
 
@@ -71,11 +78,7 @@
 		// Pattern 1: /api/v1/images/{id}/full
 		// Pattern 2: /images/{id}/full
 		// Pattern 3: Just extract any number before /full
-		const patterns = [
-			/\/api\/v1\/images\/(\d+)\/full/,
-			/\/images\/(\d+)\/full/,
-			/\/(\d+)\/full/
-		];
+		const patterns = [/\/api\/v1\/images\/(\d+)\/full/, /\/images\/(\d+)\/full/, /\/(\d+)\/full/];
 		for (const pattern of patterns) {
 			const match = suggestion.fullImageUrl.match(pattern);
 			if (match) {
@@ -105,50 +108,52 @@
 	}
 
 	// Create FaceBox array for all faces in image
-	const allFaceBoxes = $derived<FaceBox[]>((() => {
-		if (!suggestion) return [];
+	const allFaceBoxes = $derived<FaceBox[]>(
+		(() => {
+			if (!suggestion) return [];
 
-		return allFaces.map((face, index) => {
-			const suggestionState = faceSuggestions.get(face.id);
-			const topSuggestion = suggestionState?.suggestions?.[0];
-			const isPrimaryFace = face.id === suggestion.faceInstanceId;
+			return allFaces.map((face, index) => {
+				const suggestionState = faceSuggestions.get(face.id);
+				const topSuggestion = suggestionState?.suggestions?.[0];
+				const isPrimaryFace = face.id === suggestion.faceInstanceId;
 
-			let labelStyle: FaceBox['labelStyle'];
-			let label: string;
-			let suggestionConfidence: number | undefined;
+				let labelStyle: FaceBox['labelStyle'];
+				let label: string;
+				let suggestionConfidence: number | undefined;
 
-			if (isPrimaryFace) {
-				labelStyle = 'suggested';
-				label = `Primary: ${suggestion.personName || 'Suggested'}`;
-				suggestionConfidence = suggestion.confidence;
-			} else if (face.personName) {
-				labelStyle = 'assigned';
-				label = face.personName;
-			} else if (suggestionState?.loading) {
-				labelStyle = 'loading';
-				label = 'Loading...';
-			} else if (topSuggestion) {
-				labelStyle = 'suggested';
-				label = `Suggested: ${topSuggestion.personName}`;
-				suggestionConfidence = topSuggestion.confidence;
-			} else {
-				labelStyle = 'unknown';
-				label = 'Unknown';
-			}
+				if (isPrimaryFace) {
+					labelStyle = 'suggested';
+					label = `Primary: ${suggestion.personName || 'Suggested'}`;
+					suggestionConfidence = suggestion.confidence;
+				} else if (face.personName) {
+					labelStyle = 'assigned';
+					label = face.personName;
+				} else if (suggestionState?.loading) {
+					labelStyle = 'loading';
+					label = 'Loading...';
+				} else if (topSuggestion) {
+					labelStyle = 'suggested';
+					label = `Suggested: ${topSuggestion.personName}`;
+					suggestionConfidence = topSuggestion.confidence;
+				} else {
+					labelStyle = 'unknown';
+					label = 'Unknown';
+				}
 
-			return {
-				id: face.id,
-				bboxX: face.bbox.x,
-				bboxY: face.bbox.y,
-				bboxW: face.bbox.width,
-				bboxH: face.bbox.height,
-				label,
-				labelStyle,
-				color: getFaceColorByIndex(index),
-				suggestionConfidence
-			};
-		});
-	})());
+				return {
+					id: face.id,
+					bboxX: face.bbox.x,
+					bboxY: face.bbox.y,
+					bboxW: face.bbox.width,
+					bboxH: face.bbox.height,
+					label,
+					labelStyle,
+					color: getFaceColorByIndex(index),
+					suggestionConfidence
+				};
+			});
+		})()
+	);
 
 	// Derived states for assignment panel
 	let filteredPersons = $derived(() => {
@@ -275,18 +280,6 @@
 		};
 	});
 
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			onClose();
-		}
-	}
-
-	function handleBackdropClick(event: MouseEvent) {
-		if (event.target === event.currentTarget) {
-			onClose();
-		}
-	}
-
 	async function handleAccept() {
 		if (!suggestion || isActionLoading) return;
 		isActionLoading = true;
@@ -335,6 +328,12 @@
 		return 'Unknown';
 	}
 
+	function handleOpenChange(newOpen: boolean) {
+		if (!newOpen) {
+			onClose();
+		}
+	}
+
 	// Assignment handlers
 	function startAssignment(faceId: string) {
 		assigningFaceId = faceId;
@@ -371,8 +370,7 @@
 			onFaceAssigned?.(faceId, personId, personName);
 		} catch (error) {
 			console.error('Failed to assign face:', error);
-			assignmentError =
-				error instanceof Error ? error.message : 'Failed to assign face to person.';
+			assignmentError = error instanceof Error ? error.message : 'Failed to assign face to person.';
 		}
 	}
 
@@ -466,22 +464,13 @@
 	}
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<Dialog.Root {open} onOpenChange={handleOpenChange}>
+	<Dialog.Content class="max-w-[95vw] w-auto max-h-[95vh] p-0 gap-0">
+		<Dialog.Header class="px-6 py-4 border-b flex-shrink-0">
+			<Dialog.Title>Face Suggestion Details</Dialog.Title>
+		</Dialog.Header>
 
-{#if suggestion}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal-backdrop" onclick={handleBackdropClick}>
-		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-			<header class="modal-header">
-				<h2 id="modal-title">Face Suggestion Details</h2>
-				<button type="button" class="close-button" onclick={onClose} aria-label="Close modal">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<line x1="18" y1="6" x2="6" y2="18" />
-						<line x1="6" y1="6" x2="18" y2="18" />
-					</svg>
-				</button>
-			</header>
-
+		{#if suggestion}
 			<div class="modal-body">
 				<!-- Image container -->
 				<div class="image-container">
@@ -490,7 +479,7 @@
 							imageUrl={fullImageUrl() ?? ''}
 							faces={allFaceBoxes}
 							primaryFaceId={suggestion.faceInstanceId}
-							highlightedFaceId={highlightedFaceId}
+							{highlightedFaceId}
 							onFaceClick={handleFaceClick}
 							maxHeight="75vh"
 						/>
@@ -548,7 +537,9 @@
 													{/if}
 												</span>
 												<span class="face-meta">
-													<span title="How confident the AI is that this region contains a face (not person matching)">
+													<span
+														title="How confident the AI is that this region contains a face (not person matching)"
+													>
 														Detection: {(face.detectionConfidence * 100).toFixed(0)}%
 													</span>
 													{#if face.qualityScore !== null}
@@ -586,7 +577,11 @@
 												type="button"
 												class="accept-suggestion-btn"
 												onclick={() =>
-													handleAssignFace(face.id, topSuggestion.personId, topSuggestion.personName)}
+													handleAssignFace(
+														face.id,
+														topSuggestion.personId,
+														topSuggestion.personName
+													)}
 												title="Accept suggestion"
 											>
 												✓ Accept
@@ -610,9 +605,9 @@
 											</div>
 
 											{#if assignmentError}
-												<div class="assignment-error" role="alert">
-													{assignmentError}
-												</div>
+												<Alert.Root variant="destructive" class="mb-2">
+													<Alert.Description>{assignmentError}</Alert.Description>
+												</Alert.Root>
 											{/if}
 
 											<input
@@ -689,17 +684,16 @@
 
 						<div class="detail-row">
 							<span class="detail-label">Status:</span>
-							<span
-								class="status-badge {suggestion.status === 'accepted'
-									? 'accepted'
+							<Badge
+								variant={suggestion.status === 'accepted'
+									? 'default'
 									: suggestion.status === 'rejected'
-										? 'rejected'
-										: suggestion.status === 'expired'
-											? 'expired'
-											: 'pending'}"
+										? 'destructive'
+										: 'secondary'}
+								class={suggestion.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
 							>
 								{suggestion.status}
-							</span>
+							</Badge>
 						</div>
 
 						<div class="detail-row">
@@ -711,96 +705,25 @@
 			</div>
 
 			{#if suggestion.status === 'pending'}
-				<footer class="modal-footer">
-					<button
-						type="button"
-						class="btn btn-accept"
+				<Dialog.Footer class="px-6 py-4 border-t flex-shrink-0 justify-end gap-3">
+					<Button
+						variant="default"
+						class="bg-green-600 hover:bg-green-700"
 						onclick={handleAccept}
 						disabled={isActionLoading}
 					>
 						{isActionLoading ? 'Processing...' : '✓ Accept Primary'}
-					</button>
-					<button
-						type="button"
-						class="btn btn-reject"
-						onclick={handleReject}
-						disabled={isActionLoading}
-					>
+					</Button>
+					<Button variant="destructive" onclick={handleReject} disabled={isActionLoading}>
 						{isActionLoading ? 'Processing...' : '✗ Reject Primary'}
-					</button>
-				</footer>
+					</Button>
+				</Dialog.Footer>
 			{/if}
-		</div>
-	</div>
-{/if}
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>
 
 <style>
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background-color: rgba(0, 0, 0, 0.75);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
-	.modal {
-		background: white;
-		border-radius: 12px;
-		max-width: 95vw;
-		width: auto;
-		max-height: 95vh;
-		display: flex;
-		flex-direction: column;
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-		overflow: hidden;
-	}
-
-	.modal-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1rem 1.5rem;
-		border-bottom: 1px solid #e0e0e0;
-		flex-shrink: 0;
-	}
-
-	.modal-header h2 {
-		margin: 0;
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: #333;
-	}
-
-	.close-button {
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		border-radius: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #666;
-		transition:
-			background-color 0.2s,
-			color 0.2s;
-	}
-
-	.close-button:hover {
-		background-color: #f0f0f0;
-		color: #333;
-	}
-
-	.close-button svg {
-		width: 20px;
-		height: 20px;
-	}
-
 	.modal-body {
 		display: flex;
 		gap: 1rem;
@@ -1071,15 +994,6 @@
 		background-color: #e0e0e0;
 	}
 
-	.assignment-error {
-		background-color: #fef2f2;
-		color: #dc2626;
-		padding: 0.5rem;
-		border-radius: 4px;
-		margin-bottom: 0.5rem;
-		font-size: 0.75rem;
-	}
-
 	.person-search-input {
 		width: 100%;
 		padding: 0.5rem;
@@ -1239,90 +1153,6 @@
 		font-size: 0.875rem;
 	}
 
-	.status-badge {
-		display: inline-block;
-		padding: 0.25rem 0.5rem;
-		border-radius: 12px;
-		font-size: 0.6875rem;
-		font-weight: 600;
-		text-transform: capitalize;
-	}
-
-	.status-badge.pending {
-		background-color: #fef3c7;
-		color: #92400e;
-	}
-
-	.status-badge.accepted {
-		background-color: #d1fae5;
-		color: #065f46;
-	}
-
-	.status-badge.rejected {
-		background-color: #fee2e2;
-		color: #991b1b;
-	}
-
-	.status-badge.expired {
-		background-color: #f1f5f9;
-		color: #475569;
-	}
-
-	.modal-footer {
-		display: flex;
-		gap: 0.75rem;
-		padding: 1rem 1.5rem;
-		border-top: 1px solid #e0e0e0;
-		flex-shrink: 0;
-		justify-content: flex-end;
-	}
-
-	.btn {
-		padding: 0.625rem 1.25rem;
-		border: none;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition:
-			background-color 0.2s,
-			transform 0.1s;
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-	}
-
-	.btn:hover:not(:disabled) {
-		transform: translateY(-1px);
-	}
-
-	.btn:active:not(:disabled) {
-		transform: translateY(0);
-	}
-
-	.btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.btn-accept {
-		background-color: #22c55e;
-		color: white;
-	}
-
-	.btn-accept:hover:not(:disabled) {
-		background-color: #16a34a;
-	}
-
-	.btn-reject {
-		background-color: #ef4444;
-		color: white;
-	}
-
-	.btn-reject:hover:not(:disabled) {
-		background-color: #dc2626;
-	}
-
 	/* Responsive adjustments */
 	@media (max-width: 1024px) {
 		.modal-body {
@@ -1344,22 +1174,9 @@
 	}
 
 	@media (max-width: 640px) {
-		.modal {
-			max-width: 100%;
-		}
-
 		.image-placeholder {
 			width: 320px;
 			height: 320px;
-		}
-
-		.modal-footer {
-			flex-direction: column;
-		}
-
-		.btn {
-			width: 100%;
-			justify-content: center;
 		}
 
 		.face-sidebar {

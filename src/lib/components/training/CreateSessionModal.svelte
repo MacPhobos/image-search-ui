@@ -5,13 +5,19 @@
 	import CategorySelector from '../CategorySelector.svelte';
 	import CategoryCreateModal from '../CategoryCreateModal.svelte';
 	import { onMount } from 'svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
 	interface Props {
+		open: boolean;
 		onClose: () => void;
 		onSessionCreated: (sessionId: number) => void;
 	}
 
-	let { onClose, onSessionCreated }: Props = $props();
+	let { open = $bindable(false), onClose, onSessionCreated }: Props = $props();
 
 	// Storage keys for persisting last used values (per-user scope for future auth)
 	const STORAGE_KEYS = {
@@ -103,7 +109,7 @@
 				subdirectories: selectedSubdirs.length > 0 ? selectedSubdirs : undefined
 			});
 			onSessionCreated(session.id);
-			onClose();
+			open = false;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create session';
 		} finally {
@@ -124,49 +130,58 @@
 	function handleBack() {
 		step = 'info';
 	}
+
+	function handleClose() {
+		step = 'info';
+		error = null;
+		onClose();
+	}
 </script>
 
-<div class="modal-overlay" onclick={onClose} role="presentation">
-	<div
-		class="modal-content"
-		onclick={(e) => e.stopPropagation()}
-		role="dialog"
-		aria-modal="true"
-		tabindex="-1"
-	>
-		<div class="modal-header">
-			<h2>Create Training Session</h2>
-			<button class="close-btn" onclick={onClose}>&times;</button>
-		</div>
+<Dialog.Root bind:open onOpenChange={(isOpen) => !isOpen && handleClose()}>
+	<Dialog.Content data-testid="modal__create-session">
+		<Dialog.Header data-testid="modal__create-session__header">
+			<Dialog.Title>Create Training Session</Dialog.Title>
+			<Dialog.Description>
+				{#if step === 'info'}
+					Configure the training session by providing a name, root directory path, and category.
+				{:else}
+					Select which subdirectories to include in training. Leave none selected to include all.
+				{/if}
+			</Dialog.Description>
+		</Dialog.Header>
 
 		{#if step === 'info'}
-			<div class="modal-body">
-				<div class="form-group">
-					<label for="session-name">Session Name</label>
-					<input
+			<div
+				style="display: grid; gap: 1rem; padding: 0.5rem 0;"
+				data-testid="modal__create-session__body"
+			>
+				<div>
+					<Label for="session-name">Session Name</Label>
+					<Input
 						id="session-name"
-						type="text"
 						bind:value={sessionName}
 						placeholder="My Training Session"
-						class="form-input"
+						disabled={loading}
+						data-testid="modal__create-session__input-name"
 					/>
 				</div>
 
-				<div class="form-group">
-					<label for="root-path">Root Path</label>
-					<input
+				<div>
+					<Label for="root-path">Root Path</Label>
+					<Input
 						id="root-path"
-						type="text"
 						bind:value={rootPath}
 						placeholder="/path/to/images"
-						class="form-input"
+						disabled={loading}
+						data-testid="modal__create-session__input-path"
 					/>
-					<p class="form-help">
+					<p style="margin-top: 0.5rem; font-size: 0.8125rem; color: hsl(var(--muted-foreground));">
 						Provide the absolute path to the directory containing images to train on.
 					</p>
 				</div>
 
-				<div class="form-group">
+				<div>
 					<CategorySelector
 						bind:this={categorySelectorRef}
 						selectedId={categoryId}
@@ -175,28 +190,40 @@
 						showCreateOption={true}
 						label="Category"
 					/>
-					<p class="form-help">Categorize this training session for better organization.</p>
+					<p style="margin-top: 0.5rem; font-size: 0.8125rem; color: hsl(var(--muted-foreground));">
+						Categorize this training session for better organization.
+					</p>
 				</div>
 
 				{#if error}
-					<div class="error-message" role="alert">
-						{error}
-					</div>
+					<Alert variant="destructive" data-testid="modal__create-session__error">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
 				{/if}
 			</div>
 
-			<div class="modal-footer">
-				<button class="btn btn-secondary" onclick={onClose}>Cancel</button>
-				<button class="btn btn-primary" onclick={handleNextStep} disabled={loading}>
+			<Dialog.Footer data-testid="modal__create-session__footer">
+				<Button
+					variant="outline"
+					onclick={handleClose}
+					disabled={loading}
+					data-testid="modal__create-session__btn-cancel"
+				>
+					Cancel
+				</Button>
+				<Button
+					onclick={handleNextStep}
+					disabled={loading}
+					data-testid="modal__create-session__btn-next"
+				>
 					{loading ? 'Scanning...' : 'Next'}
-				</button>
-			</div>
+				</Button>
+			</Dialog.Footer>
 		{:else if step === 'subdirs'}
-			<div class="modal-body">
-				<p class="step-description">
-					Select which subdirectories to include in training. Leave none selected to include all.
-				</p>
-
+			<div
+				style="display: grid; gap: 1rem; padding: 0.5rem 0;"
+				data-testid="modal__create-session__body"
+			>
 				<DirectoryBrowser
 					{rootPath}
 					bind:selectedSubdirs
@@ -204,185 +231,35 @@
 				/>
 
 				{#if error}
-					<div class="error-message" role="alert">
-						{error}
-					</div>
+					<Alert variant="destructive" data-testid="modal__create-session__error">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
 				{/if}
 			</div>
 
-			<div class="modal-footer">
-				<button class="btn btn-secondary" onclick={handleBack} disabled={loading}>Back</button>
-				<button class="btn btn-primary" onclick={handleCreate} disabled={loading}>
+			<Dialog.Footer data-testid="modal__create-session__footer">
+				<Button
+					variant="outline"
+					onclick={handleBack}
+					disabled={loading}
+					data-testid="modal__create-session__btn-back"
+				>
+					Back
+				</Button>
+				<Button
+					onclick={handleCreate}
+					disabled={loading}
+					data-testid="modal__create-session__btn-create"
+				>
 					{loading ? 'Creating...' : 'Create Session'}
-				</button>
-			</div>
+				</Button>
+			</Dialog.Footer>
 		{/if}
-	</div>
-</div>
+	</Dialog.Content>
+</Dialog.Root>
 
 <CategoryCreateModal
 	open={showCategoryModal}
 	onClose={() => (showCategoryModal = false)}
 	onCreated={handleCategoryCreated}
 />
-
-<style>
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-
-	.modal-content {
-		background-color: white;
-		border-radius: 8px;
-		width: 90%;
-		max-height: 90vh;
-		display: flex;
-		flex-direction: column;
-		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-	}
-
-	@media (max-width: 480px) {
-		.modal-content {
-			width: 95%;
-		}
-	}
-
-	.modal-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1.5rem;
-		border-bottom: 1px solid #e5e7eb;
-	}
-
-	.modal-header h2 {
-		margin: 0;
-		font-size: 1.25rem;
-		color: #1f2937;
-	}
-
-	.close-btn {
-		background: none;
-		border: none;
-		font-size: 1.5rem;
-		color: #6b7280;
-		cursor: pointer;
-		padding: 0;
-		width: 2rem;
-		height: 2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
-
-	.close-btn:hover {
-		background-color: #f3f4f6;
-	}
-
-	.modal-body {
-		flex: 1;
-		padding: 1.5rem;
-		overflow-y: auto;
-	}
-
-	.form-group {
-		margin-bottom: 1.5rem;
-	}
-
-	.form-group label {
-		display: block;
-		margin-bottom: 0.5rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #374151;
-	}
-
-	.form-input {
-		width: 100%;
-		padding: 0.625rem 0.875rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		color: #1f2937;
-		transition: border-color 0.2s;
-	}
-
-	.form-input:focus {
-		outline: none;
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-	}
-
-	.form-help {
-		margin-top: 0.5rem;
-		font-size: 0.8125rem;
-		color: #6b7280;
-	}
-
-	.step-description {
-		margin-bottom: 1rem;
-		color: #4b5563;
-		font-size: 0.875rem;
-	}
-
-	.error-message {
-		margin-top: 1rem;
-		padding: 0.75rem 1rem;
-		background-color: #fee2e2;
-		color: #991b1b;
-		border-radius: 6px;
-		font-size: 0.875rem;
-	}
-
-	.modal-footer {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.75rem;
-		padding: 1.5rem;
-		border-top: 1px solid #e5e7eb;
-	}
-
-	.btn {
-		padding: 0.625rem 1.25rem;
-		border: none;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.btn-primary {
-		background-color: #3b82f6;
-		color: white;
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		background-color: #2563eb;
-	}
-
-	.btn-secondary {
-		background-color: #6b7280;
-		color: white;
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		background-color: #4b5563;
-	}
-</style>

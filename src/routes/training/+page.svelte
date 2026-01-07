@@ -244,9 +244,11 @@
 	{/if}
 </div>
 
-{#if showCreateModal}
-	<CreateSessionModal onClose={handleCloseModal} onSessionCreated={handleSessionCreated} />
-{/if}
+<CreateSessionModal
+	bind:open={showCreateModal}
+	onClose={handleCloseModal}
+	onSessionCreated={handleSessionCreated}
+/>
 
 <style>
 	.training-page {

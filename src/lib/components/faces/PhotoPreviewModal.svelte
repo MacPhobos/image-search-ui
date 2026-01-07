@@ -11,8 +11,13 @@
 	} from '$lib/api/faces';
 	import type { Person, AgeEraBucket } from '$lib/api/faces';
 	import ImageWithFaceBoundingBoxes, { type FaceBox } from './ImageWithFaceBoundingBoxes.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 
 	interface Props {
+		/** Controls dialog open state */
+		open?: boolean;
 		/** The photo to display */
 		photo: PersonPhotoGroup;
 		/** The person being reviewed (for highlighting their faces) - optional for search results */
@@ -32,6 +37,7 @@
 	}
 
 	let {
+		open = $bindable(true),
 		photo,
 		currentPersonId = null,
 		currentPersonName = null,
@@ -191,9 +197,6 @@
 	});
 
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			onClose();
-		}
 		if (event.key === 'ArrowLeft' && onPrevious) {
 			onPrevious();
 		}
@@ -202,8 +205,8 @@
 		}
 	}
 
-	function handleBackdropClick(event: MouseEvent) {
-		if (event.target === event.currentTarget) {
+	function handleOpenChange(newOpen: boolean) {
+		if (!newOpen) {
 			onClose();
 		}
 	}
@@ -452,70 +455,80 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="modal-backdrop" onclick={handleBackdropClick}>
-	<div
-		class="modal photo-preview-modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="modal-title"
-	>
-		<header class="modal-header">
-			<h2 id="modal-title">
+<Dialog.Root bind:open onOpenChange={handleOpenChange}>
+	<Dialog.Content class="max-w-[95vw] max-h-[95vh] w-auto p-0 gap-0" showCloseButton={false}>
+		<Dialog.Header class="border-b px-6 py-4 flex-row justify-between items-center">
+			<Dialog.Title class="text-lg font-semibold">
 				{#if currentPersonName}
 					Photo Preview - {currentPersonName}
 				{:else}
 					Photo Preview
 				{/if}
-			</h2>
-			<button type="button" class="close-button" onclick={onClose} aria-label="Close">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			</Dialog.Title>
+			<Dialog.Close class="relative opacity-70 hover:opacity-100">
+				<svg
+					class="h-5 w-5"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<line x1="18" y1="6" x2="6" y2="18" />
 					<line x1="6" y1="6" x2="18" y2="18" />
 				</svg>
-			</button>
-		</header>
+				<span class="sr-only">Close</span>
+			</Dialog.Close>
+		</Dialog.Header>
 
 		<!-- Unassignment error display -->
 		{#if unassignmentError}
-			<div class="error-banner" role="alert">
-				{unassignmentError}
-				<button
-					type="button"
-					class="error-close"
-					onclick={() => (unassignmentError = null)}
-					aria-label="Dismiss error"
-				>
-					✕
-				</button>
-			</div>
+			<Alert variant="destructive" class="m-4 mb-0">
+				<AlertDescription class="flex justify-between items-center gap-4">
+					{unassignmentError}
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onclick={() => (unassignmentError = null)}
+						aria-label="Dismiss error"
+					>
+						✕
+					</Button>
+				</AlertDescription>
+			</Alert>
 		{/if}
 
 		<div class="modal-body">
 			<!-- Photo container with navigation -->
 			<div class="photo-container">
 				{#if onPrevious}
-					<button
-						type="button"
-						class="nav-btn prev"
+					<Button
+						variant="ghost"
+						size="icon-lg"
+						class="nav-btn prev absolute top-1/2 left-2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white text-4xl h-auto px-3 py-5 rounded"
 						onclick={onPrevious}
 						aria-label="Previous photo"
 					>
 						‹
-					</button>
+					</Button>
 				{/if}
 
 				<ImageWithFaceBoundingBoxes
 					imageUrl={photo.fullUrl}
 					faces={faceBoxes}
-					highlightedFaceId={highlightedFaceId}
+					{highlightedFaceId}
 					onFaceClick={handleFaceClick}
 				/>
 
 				{#if onNext}
-					<button type="button" class="nav-btn next" onclick={onNext} aria-label="Next photo">
+					<Button
+						variant="ghost"
+						size="icon-lg"
+						class="nav-btn next absolute top-1/2 right-2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white text-4xl h-auto px-3 py-5 rounded"
+						onclick={onNext}
+						aria-label="Next photo"
+					>
 						›
-					</button>
+					</Button>
 				{/if}
 			</div>
 
@@ -551,7 +564,9 @@
 											{/if}
 										</span>
 										<span class="face-meta">
-											<span title="How confident the AI is that this region contains a face (not person matching)">
+											<span
+												title="How confident the AI is that this region contains a face (not person matching)"
+											>
 												Detection: {(face.detectionConfidence * 100).toFixed(0)}%
 											</span>
 											{#if face.qualityScore !== null}
@@ -565,9 +580,9 @@
 
 								<!-- Assign button for faces without a person name -->
 								{#if !face.personName && assigningFaceId !== face.faceInstanceId}
-									<button
-										type="button"
-										class="assign-btn"
+									<Button
+										size="sm"
+										class="flex-shrink-0 mr-2 h-6 px-2 text-xs"
 										onclick={(e) => {
 											e.stopPropagation();
 											startAssignment(face.faceInstanceId);
@@ -575,14 +590,15 @@
 										aria-label="Assign this face to a person"
 									>
 										Assign
-									</button>
+									</Button>
 								{/if}
 
 								<!-- Unassign button for faces with a person name -->
 								{#if face.personName && assigningFaceId !== face.faceInstanceId}
-									<button
-										type="button"
-										class="unassign-btn"
+									<Button
+										variant="destructive"
+										size="icon-sm"
+										class="flex-shrink-0 mr-2 h-6 w-6 rounded-full"
 										onclick={(e) => {
 											e.stopPropagation();
 											handleUnassignFace(face.faceInstanceId);
@@ -596,7 +612,7 @@
 										{:else}
 											✕
 										{/if}
-									</button>
+									</Button>
 								{/if}
 							</div>
 
@@ -612,9 +628,9 @@
 												topSuggestion.confidence * 100
 											)}%)
 										</span>
-										<button
-											type="button"
-											class="accept-suggestion-btn"
+										<Button
+											size="sm"
+											class="flex-shrink-0 h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
 											onclick={() =>
 												handleAssignFace(
 													face.faceInstanceId,
@@ -624,7 +640,7 @@
 											title="Accept suggestion"
 										>
 											✓ Accept
-										</button>
+										</Button>
 									</div>
 								{/if}
 							{/if}
@@ -634,20 +650,20 @@
 								<div class="assignment-panel">
 									<div class="assignment-header">
 										<h4>Assign Face</h4>
-										<button
-											type="button"
-											class="close-assignment"
+										<Button
+											variant="ghost"
+											size="icon-sm"
 											onclick={cancelAssignment}
 											aria-label="Cancel assignment"
 										>
 											×
-										</button>
+										</Button>
 									</div>
 
 									{#if assignmentError}
-										<div class="assignment-error" role="alert">
-											{assignmentError}
-										</div>
+										<Alert variant="destructive" class="mb-2">
+											<AlertDescription class="text-xs">{assignmentError}</AlertDescription>
+										</Alert>
 									{/if}
 
 									<input
@@ -718,28 +734,28 @@
 												</select>
 											</label>
 											<div class="pin-actions">
-												<button
-													type="button"
-													class="pin-confirm-btn"
+												<Button
+													size="sm"
+													class="flex-1 bg-green-600 hover:bg-green-700"
 													onclick={handlePinAsPrototype}
 													disabled={pinningInProgress}
 												>
 													{pinningInProgress ? 'Pinning...' : 'Confirm Pin'}
-												</button>
-												<button type="button" class="pin-cancel-btn" onclick={cancelPinning}>
+												</Button>
+												<Button variant="outline" size="sm" onclick={cancelPinning}>
 													Cancel
-												</button>
+												</Button>
 											</div>
 										</div>
 									{:else}
-										<button
-											type="button"
-											class="pin-prototype-btn"
+										<Button
+											size="sm"
+											class="w-full"
 											onclick={() => startPinning(face.faceInstanceId)}
 											title="Pin this face as a prototype for the person"
 										>
 											Pin as Prototype
-										</button>
+										</Button>
 									{/if}
 								</div>
 							{/if}
@@ -748,110 +764,10 @@
 				</ul>
 			</aside>
 		</div>
-	</div>
-</div>
+	</Dialog.Content>
+</Dialog.Root>
 
 <style>
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background-color: rgba(0, 0, 0, 0.75);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
-	.photo-preview-modal {
-		background: white;
-		border-radius: 12px;
-		max-width: 95vw;
-		max-height: 95vh;
-		width: auto;
-		display: flex;
-		flex-direction: column;
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-	}
-
-	.modal-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1rem 1.5rem;
-		border-bottom: 1px solid #e0e0e0;
-		flex-shrink: 0;
-	}
-
-	.modal-header h2 {
-		margin: 0;
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: #333;
-	}
-
-	.close-button {
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		border-radius: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #666;
-		transition:
-			background-color 0.2s,
-			color 0.2s;
-	}
-
-	.close-button:hover {
-		background-color: #f0f0f0;
-		color: #333;
-	}
-
-	.close-button svg {
-		width: 20px;
-		height: 20px;
-	}
-
-	.error-banner {
-		background-color: #fef2f2;
-		border: 1px solid #fecaca;
-		color: #dc2626;
-		padding: 0.75rem 1rem;
-		margin: 0 1rem;
-		margin-top: 1rem;
-		border-radius: 6px;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-		font-size: 0.875rem;
-	}
-
-	.error-close {
-		width: 20px;
-		height: 20px;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		font-size: 1rem;
-		color: #dc2626;
-		opacity: 0.7;
-		transition: opacity 0.2s;
-		flex-shrink: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.error-close:hover {
-		opacity: 1;
-	}
 
 	.modal-body {
 		display: flex;
@@ -871,7 +787,6 @@
 		min-width: 0;
 		min-height: 0;
 	}
-
 
 	.face-sidebar {
 		width: 280px;
@@ -937,57 +852,6 @@
 		text-align: left;
 	}
 
-	.assign-btn {
-		padding: 0.25rem 0.5rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		background-color: #4a90e2;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: background-color 0.2s;
-		flex-shrink: 0;
-		margin-right: 0.5rem;
-	}
-
-	.assign-btn:hover {
-		background-color: #3a7bc8;
-	}
-
-	.unassign-btn {
-		width: 24px;
-		height: 24px;
-		padding: 0;
-		font-size: 0.875rem;
-		font-weight: 600;
-		background-color: #fee;
-		color: #dc2626;
-		border: 1px solid #fecaca;
-		border-radius: 50%;
-		cursor: pointer;
-		transition:
-			background-color 0.2s,
-			color 0.2s,
-			border-color 0.2s;
-		flex-shrink: 0;
-		margin-right: 0.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		line-height: 1;
-	}
-
-	.unassign-btn:hover:not(:disabled) {
-		background-color: #dc2626;
-		color: white;
-		border-color: #dc2626;
-	}
-
-	.unassign-btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
 
 	.face-indicator {
 		width: 12px;
@@ -1024,33 +888,6 @@
 		color: #999;
 	}
 
-	.nav-btn {
-		position: absolute;
-		top: 50%;
-		transform: translateY(-50%);
-		font-size: 2.5rem;
-		background-color: rgba(0, 0, 0, 0.5);
-		color: white;
-		border: none;
-		padding: 1.25rem 0.75rem;
-		cursor: pointer;
-		z-index: 10;
-		line-height: 1;
-		transition: background-color 0.2s;
-		border-radius: 4px;
-	}
-
-	.nav-btn:hover {
-		background-color: rgba(0, 0, 0, 0.7);
-	}
-
-	.nav-btn.prev {
-		left: 0.5rem;
-	}
-
-	.nav-btn.next {
-		right: 0.5rem;
-	}
 
 	/* Suggestion hint styles */
 	.suggestion-hint {
@@ -1079,23 +916,6 @@
 		white-space: nowrap;
 	}
 
-	.accept-suggestion-btn {
-		padding: 0.25rem 0.5rem;
-		background-color: #22c55e;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.6875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: background-color 0.2s;
-		flex-shrink: 0;
-		white-space: nowrap;
-	}
-
-	.accept-suggestion-btn:hover {
-		background-color: #16a34a;
-	}
 
 	/* Assignment panel styles */
 	.assignment-panel {
@@ -1125,33 +945,6 @@
 		color: #333;
 	}
 
-	.close-assignment {
-		width: 24px;
-		height: 24px;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		font-size: 1.5rem;
-		line-height: 1;
-		color: #666;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
-
-	.close-assignment:hover {
-		background-color: #e0e0e0;
-	}
-
-	.assignment-error {
-		background-color: #fef2f2;
-		color: #dc2626;
-		padding: 0.5rem;
-		border-radius: 4px;
-		margin-bottom: 0.5rem;
-		font-size: 0.75rem;
-		flex-shrink: 0;
-	}
 
 	.person-search-input {
 		width: 100%;
@@ -1272,23 +1065,6 @@
 		border-top: 1px solid #e0e0e0;
 	}
 
-	.pin-prototype-btn {
-		padding: 0.5rem 1rem;
-		background: #4a90e2;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.8125rem;
-		font-weight: 500;
-		width: 100%;
-		transition: background-color 0.2s;
-	}
-
-	.pin-prototype-btn:hover {
-		background: #3a7bc8;
-	}
-
 	.pin-options {
 		display: flex;
 		flex-direction: column;
@@ -1321,45 +1097,6 @@
 	.pin-actions {
 		display: flex;
 		gap: 0.5rem;
-	}
-
-	.pin-confirm-btn {
-		flex: 1;
-		padding: 0.4rem;
-		background: #22c55e;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.8125rem;
-		font-weight: 500;
-		transition: background-color 0.2s;
-	}
-
-	.pin-confirm-btn:hover:not(:disabled) {
-		background: #16a34a;
-	}
-
-	.pin-confirm-btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.pin-cancel-btn {
-		padding: 0.4rem 0.75rem;
-		background: #f0f0f0;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.8125rem;
-		transition:
-			background-color 0.2s,
-			border-color 0.2s;
-	}
-
-	.pin-cancel-btn:hover {
-		background: #e0e0e0;
-		border-color: #ccc;
 	}
 
 	/* Responsive adjustments */
