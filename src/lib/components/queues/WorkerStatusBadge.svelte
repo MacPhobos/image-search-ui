@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
+	import type { BadgeProps } from '$lib/components/ui/badge';
 	import type { WorkerState } from '$lib/api/queues';
 
 	interface Props {
@@ -8,37 +10,28 @@
 
 	let { state, size = 'md' }: Props = $props();
 
-	const stateConfig: Record<WorkerState, { bg: string; text: string; label: string }> = {
-		idle: { bg: '#d1fae5', text: '#065f46', label: 'Idle' },
-		busy: { bg: '#dbeafe', text: '#1e40af', label: 'Busy' },
-		suspended: { bg: '#fef3c7', text: '#92400e', label: 'Suspended' }
+	// Map worker state to Badge variant
+	const stateToVariant: Record<WorkerState, BadgeProps['variant']> = {
+		idle: 'default', // Success/green style
+		busy: 'secondary', // Blue style
+		suspended: 'outline' // Neutral style
 	};
 
-	const config = $derived(stateConfig[state] || stateConfig.idle);
-	const sizeClass = $derived(size === 'sm' ? 'badge-sm' : size === 'lg' ? 'badge-lg' : 'badge-md');
+	const stateLabels: Record<WorkerState, string> = {
+		idle: 'Idle',
+		busy: 'Busy',
+		suspended: 'Suspended'
+	};
+
+	const variant = $derived(stateToVariant[state] || 'outline');
+	const label = $derived(stateLabels[state] || state);
+
+	// Size classes for custom styling
+	const sizeClass = $derived(
+		size === 'sm' ? 'text-xs px-2 py-0.5' : size === 'lg' ? 'text-base px-4 py-1.5' : ''
+	);
 </script>
 
-<span class="badge {sizeClass}" style="background-color: {config.bg}; color: {config.text}">
-	{config.label}
-</span>
-
-<style>
-	.badge {
-		display: inline-flex;
-		align-items: center;
-		font-weight: 500;
-		border-radius: 9999px;
-	}
-	.badge-sm {
-		padding: 0.125rem 0.5rem;
-		font-size: 0.75rem;
-	}
-	.badge-md {
-		padding: 0.25rem 0.75rem;
-		font-size: 0.875rem;
-	}
-	.badge-lg {
-		padding: 0.375rem 1rem;
-		font-size: 1rem;
-	}
-</style>
+<Badge {variant} class={sizeClass}>
+	{label}
+</Badge>

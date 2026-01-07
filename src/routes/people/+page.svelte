@@ -6,6 +6,7 @@
 	import { ApiError } from '$lib/api/client';
 	import UnifiedPersonCard from '$lib/components/faces/UnifiedPersonCard.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 
 	// State
 	let loading = $state(true);
@@ -14,7 +15,7 @@
 
 	// Filters
 	let showIdentified = $state(true);
-	let showUnidentified = $state(true);
+	let showUnidentified = $state(false);
 	let showNoise = $state(false);
 	let sortBy = $state<'faceCount' | 'name'>('faceCount');
 	let sortOrder = $state<'asc' | 'desc'>('desc');
@@ -231,7 +232,7 @@
 				<section class="people-section">
 					<div class="section-header">
 						<h2 class="section-title">
-							<span class="badge badge-success">Identified</span>
+							<Badge variant="default">Identified</Badge>
 							<span class="section-count">{identifiedPeople.length} people</span>
 						</h2>
 					</div>
@@ -248,7 +249,7 @@
 				<section class="people-section">
 					<div class="section-header">
 						<h2 class="section-title">
-							<span class="badge badge-warning">Needs Names</span>
+							<Badge variant="secondary">Needs Names</Badge>
 							<span class="section-count">{unidentifiedPeople.length} groups</span>
 						</h2>
 						<p class="section-description">
@@ -274,7 +275,7 @@
 				<section class="people-section">
 					<div class="section-header">
 						<h2 class="section-title">
-							<span class="badge badge-error">Unknown Faces</span>
+							<Badge variant="destructive">Unknown Faces</Badge>
 							<span class="section-count"
 								>{noisePeople[0]?.faceCount ?? 0} ungrouped faces</span
 							>

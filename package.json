@@ -14,6 +14,7 @@
 		"gen:api": "openapi-typescript ${VITE_API_BASE_URL:-http://localhost:8000}/openapi.json -o src/lib/api/generated.ts"
 	},
 	"devDependencies": {
+		"@internationalized/date": "^3.10.1",
 		"@sveltejs/adapter-node": "^5.2.10",
 		"@sveltejs/kit": "^2.18.3",
 		"@sveltejs/vite-plugin-svelte": "^5.0.2",
@@ -21,6 +22,7 @@
 		"@testing-library/svelte": "^5.2.4",
 		"@testing-library/user-event": "^14.6.1",
 		"@types/node": "^22.10.2",
+		"bits-ui": "^2.15.4",
 		"eslint": "^9.17.0",
 		"eslint-plugin-svelte": "^2.46.1",
 		"globals": "^15.13.0",

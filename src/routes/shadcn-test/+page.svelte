@@ -1,5 +1,14 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
+
+	let searchQuery = $state('');
+	let emailInput = $state('');
+	let passwordInput = $state('');
+	let numberInput = $state('');
 </script>
 
 <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
@@ -64,15 +73,108 @@
 		</div>
 	</section>
 
+	<section style="margin-bottom: 3rem;">
+		<h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">Badge Variants</h2>
+		<div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+			<Badge>Default</Badge>
+			<Badge variant="secondary">Secondary</Badge>
+			<Badge variant="destructive">Destructive</Badge>
+			<Badge variant="outline">Outline</Badge>
+		</div>
+	</section>
+
+	<section style="margin-bottom: 3rem;">
+		<h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">Input Variants</h2>
+		<div style="display: grid; gap: 1.5rem; max-width: 600px;">
+			<div>
+				<Label for="default-input">Default Input</Label>
+				<Input id="default-input" placeholder="Type something..." bind:value={searchQuery} />
+			</div>
+
+			<div>
+				<Label for="email-input">Email Input</Label>
+				<Input
+					id="email-input"
+					type="email"
+					placeholder="email@example.com"
+					bind:value={emailInput}
+				/>
+			</div>
+
+			<div>
+				<Label for="password-input">Password Input</Label>
+				<Input id="password-input" type="password" bind:value={passwordInput} />
+			</div>
+
+			<div>
+				<Label for="number-input">Number Input</Label>
+				<Input id="number-input" type="number" placeholder="0" bind:value={numberInput} />
+			</div>
+
+			<div>
+				<Label for="disabled-input">Disabled Input</Label>
+				<Input id="disabled-input" disabled value="Cannot edit this" />
+			</div>
+
+			<div>
+				<Label for="required-input">
+					Required Input <span style="color: red;">*</span>
+				</Label>
+				<Input id="required-input" required placeholder="This field is required" />
+			</div>
+		</div>
+	</section>
+
+	<section style="margin-bottom: 3rem;">
+		<h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">Label Variants</h2>
+		<div style="display: grid; gap: 1rem; max-width: 600px;">
+			<div>
+				<Label>Basic Label (no for attribute)</Label>
+			</div>
+			<div>
+				<Label for="labeled-input">Label with for attribute</Label>
+				<Input id="labeled-input" placeholder="Click the label above to focus" />
+			</div>
+			<div>
+				<Label for="required-field">
+					Required Field <span style="color: red;">*</span>
+				</Label>
+				<Input id="required-field" placeholder="Must be filled out" />
+			</div>
+		</div>
+	</section>
+
+	<section style="margin-bottom: 3rem;">
+		<h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">Alert Variants</h2>
+		<div style="display: grid; gap: 1rem; max-width: 800px;">
+			<Alert>
+				<AlertTitle>Default Alert</AlertTitle>
+				<AlertDescription>
+					This is a default alert with a title and description.
+				</AlertDescription>
+			</Alert>
+
+			<Alert variant="destructive">
+				<AlertTitle>Destructive Alert</AlertTitle>
+				<AlertDescription>
+					This is an error alert. Something went wrong!
+				</AlertDescription>
+			</Alert>
+
+			<Alert>
+				<AlertDescription>Alert with description only (no title)</AlertDescription>
+			</Alert>
+		</div>
+	</section>
+
 	<section
 		style="background-color: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 8px; padding: 1.5rem; margin-top: 3rem;"
 	>
 		<h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: #0369a1;">
-			✅ Installation Successful!
+			✅ Phase 1 Installation Successful!
 		</h2>
 		<p style="color: #075985; margin: 0;">
-			If you can see styled buttons above, shadcn-svelte has been successfully installed and
-			configured for Svelte 5 + Tailwind CSS v4.
+			All Phase 1 components (Button, Badge, Input, Label, Alert) are now installed and working.
 		</p>
 	</section>
 
@@ -80,10 +182,10 @@
 		<h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">Next Steps:</h3>
 		<ul style="margin: 0; padding-left: 1.5rem;">
 			<li>Verify no console errors in browser DevTools</li>
-			<li>Test hover and focus states on buttons</li>
+			<li>Test interactive states (hover, focus, disabled)</li>
 			<li>Confirm TypeScript has no errors (<code>make typecheck</code>)</li>
 			<li>Run tests to ensure no regressions (<code>make test</code>)</li>
-			<li>Proceed to Phase 1 migration (Badge, Input, Alert components)</li>
+			<li>Begin migrating existing components to use these UI primitives</li>
 		</ul>
 	</div>
 </div>
