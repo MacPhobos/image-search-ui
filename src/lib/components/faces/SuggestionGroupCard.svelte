@@ -118,7 +118,7 @@
 					disabled={isLoading}
 					aria-label="Accept all suggestions in this group"
 				>
-					{isLoading ? 'Processing...' : `✓ Accept All (${group.pendingCount})`}
+					{isLoading ? 'Processing...' : `✓ Accept All (${pendingIds.length})`}
 				</button>
 				<button
 					type="button"
@@ -127,7 +127,7 @@
 					disabled={isLoading}
 					aria-label="Reject all suggestions in this group"
 				>
-					{isLoading ? 'Processing...' : `✗ Reject All (${group.pendingCount})`}
+					{isLoading ? 'Processing...' : `✗ Reject All (${pendingIds.length})`}
 				</button>
 			</div>
 		{/if}

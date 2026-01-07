@@ -242,7 +242,22 @@
 	const totalPages = $derived(
 		groupedResponse ? Math.ceil(groupedResponse.totalGroups / settings.groupsPerPage) : 0
 	);
-	const pendingCount = $derived.by(() => {
+	const totalPendingCount = $derived.by(() => {
+		if (!groupedResponse) return 0;
+		// When filtering by pending, totalSuggestions IS the total pending count
+		if (statusFilter === 'pending') {
+			return groupedResponse.totalSuggestions;
+		}
+		// Otherwise, count pending in currently displayed suggestions
+		let count = 0;
+		for (const group of groupedResponse.groups) {
+			for (const suggestion of group.suggestions) {
+				if (suggestion.status === 'pending') count++;
+			}
+		}
+		return count;
+	});
+	const displayedPendingCount = $derived.by(() => {
 		if (!groupedResponse) return 0;
 		let count = 0;
 		for (const group of groupedResponse.groups) {
@@ -298,10 +313,10 @@
 			</div>
 		</div>
 
-		{#if pendingCount > 0}
+		{#if totalPendingCount > 0}
 			<div class="flex items-center gap-2 ml-auto">
 				<button onclick={selectAll} class="text-sm text-blue-600 hover:underline">
-					Select All ({pendingCount})
+					Select All ({displayedPendingCount})
 				</button>
 				<button onclick={selectNone} class="text-sm text-gray-600 hover:underline">
 					Select None
@@ -348,7 +363,11 @@
 			{#each groupedResponse.groups as group (group.personId)}
 				{@const groupWithPendingCount = {
 					...group,
-					pendingCount: group.suggestions.filter((s) => s.status === 'pending').length
+					// When filtering by pending, suggestionCount IS the pending count for this person.
+					// Otherwise, count pending in displayed suggestions.
+					pendingCount: statusFilter === 'pending'
+						? group.suggestionCount
+						: group.suggestions.filter((s) => s.status === 'pending').length
 				}}
 				<SuggestionGroupCard
 					group={groupWithPendingCount}
