@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { FaceSuggestion } from '$lib/api/faces';
 	import SuggestionThumbnail from './SuggestionThumbnail.svelte';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 
 	interface SuggestionGroup {
 		personId: string;
@@ -46,9 +47,14 @@
 		pendingIds.length > 0 && !allSelected && pendingIds.some((id) => selectedIds.has(id))
 	);
 
-	function handleSelectAll(e: Event) {
-		const target = e.target as HTMLInputElement;
-		onSelectAllInGroup(pendingIds, target.checked);
+	// Map state to shadcn Checkbox format
+	const checkboxChecked = $derived(allSelected);
+	const checkboxIndeterminate = $derived(someSelected);
+
+	function handleSelectAll(checked: boolean | 'indeterminate') {
+		// When indeterminate or unchecked, select all; when checked, deselect all
+		const shouldSelect = checked === true;
+		onSelectAllInGroup(pendingIds, shouldSelect);
 	}
 
 	async function handleAcceptAll() {
@@ -85,12 +91,10 @@
 	<header class="group-header">
 		<div class="header-left">
 			{#if group.pendingCount > 0}
-				<input
-					type="checkbox"
-					checked={allSelected}
-					indeterminate={someSelected}
-					onchange={handleSelectAll}
-					class="group-checkbox"
+				<Checkbox
+					checked={checkboxChecked}
+					indeterminate={checkboxIndeterminate}
+					onCheckedChange={handleSelectAll}
 					aria-label="Select all suggestions in this group"
 				/>
 			{/if}
@@ -180,13 +184,6 @@
 		gap: 0.75rem;
 		flex: 1;
 		min-width: 0;
-	}
-
-	.group-checkbox {
-		width: 18px;
-		height: 18px;
-		cursor: pointer;
-		flex-shrink: 0;
 	}
 
 	.group-info {

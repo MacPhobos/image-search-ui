@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { SubdirectoryInfo } from '$lib/types';
 	import { listDirectories } from '$lib/api/training';
+	import { Switch } from '$lib/components/ui/switch';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Label } from '$lib/components/ui/label';
 
 	interface Props {
 		rootPath: string;
@@ -44,8 +47,8 @@
 	});
 
 	// Count of fully trained directories for display
-	let fullyTrainedCount = $derived.by(() =>
-		subdirs.filter((d) => d.trainingStatus === 'complete').length
+	let fullyTrainedCount = $derived.by(
+		() => subdirs.filter((d) => d.trainingStatus === 'complete').length
 	);
 
 	async function loadSubdirectories() {
@@ -137,11 +140,11 @@
 				aria-label="Filter directories"
 			/>
 
-			<!-- Hide fully trained checkbox -->
-			<label class="checkbox-filter">
-				<input type="checkbox" bind:checked={hideTrainedDirs} />
-				<span>Hide fully trained directories</span>
-			</label>
+			<!-- Hide fully trained switch -->
+			<div class="switch-filter">
+				<Switch bind:checked={hideTrainedDirs} id="hide-trained" />
+				<Label for="hide-trained">Hide fully trained directories</Label>
+			</div>
 
 			{#if filterText || hideTrainedDirs}
 				<div class="filter-count">
@@ -173,10 +176,9 @@
 					class:partially-trained={subdir.trainingStatus === 'partial'}
 					class:in-progress={subdir.trainingStatus === 'in_progress'}
 				>
-					<input
-						type="checkbox"
+					<Checkbox
 						checked={safeSelectedSubdirs.includes(subdir.path)}
-						onchange={() => toggleSubdir(subdir.path)}
+						onCheckedChange={() => toggleSubdir(subdir.path)}
 					/>
 					<div class="subdir-info">
 						<div class="subdir-header">
@@ -185,16 +187,29 @@
 							{#if subdir.trainingStatus === 'in_progress'}
 								<span class="training-badge in-progress" aria-label="Training in progress">
 									<svg class="spinner-icon" viewBox="0 0 24 24" fill="none">
-										<circle class="spinner-track" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
-										<circle class="spinner-head" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+										<circle
+											class="spinner-track"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="3"
+										/>
+										<circle
+											class="spinner-head"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="3"
+											stroke-dasharray="31.4 31.4"
+											stroke-linecap="round"
+										/>
 									</svg>
 									Training...
 								</span>
 							{:else if subdir.trainedCount && subdir.trainedCount > 0}
-								<span
-									class="training-badge"
-									class:complete={subdir.trainingStatus === 'complete'}
-								>
+								<span class="training-badge" class:complete={subdir.trainingStatus === 'complete'}>
 									{#if subdir.trainingStatus === 'complete'}
 										✓ Fully Trained
 									{:else}
@@ -298,26 +313,12 @@
 		color: #9ca3af;
 	}
 
-	.checkbox-filter {
+	.switch-filter {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		font-size: 0.875rem;
-		color: #4b5563;
-		cursor: pointer;
-		user-select: none;
 		padding: 8px 0;
 		margin-top: 0.5rem;
-	}
-
-	.checkbox-filter input[type='checkbox'] {
-		cursor: pointer;
-		width: 16px;
-		height: 16px;
-	}
-
-	.checkbox-filter:hover {
-		color: #1f2937;
 	}
 
 	.filter-count {
@@ -380,13 +381,6 @@
 	.subdir-item.in-progress {
 		background-color: #eff6ff;
 		border-left: 3px solid #3b82f6;
-	}
-
-	.subdir-item input[type='checkbox'] {
-		width: 18px;
-		height: 18px;
-		cursor: pointer;
-		margin-top: 2px;
 	}
 
 	.subdir-info {

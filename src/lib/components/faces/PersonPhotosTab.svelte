@@ -3,6 +3,7 @@
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
 	import PersonPickerModal from './PersonPickerModal.svelte';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 
 	interface Props {
 		personId: string;
@@ -178,11 +179,10 @@
 			{#each photos as photo (photo.photoId)}
 				{@const isSelected = selectedPhotoIds.has(photo.photoId)}
 				<div class="photo-card" class:selected={isSelected}>
-					<input
-						type="checkbox"
+					<Checkbox
 						class="photo-checkbox"
 						checked={isSelected}
-						onchange={() => toggleSelection(photo.photoId)}
+						onCheckedChange={() => toggleSelection(photo.photoId)}
 						aria-label="Select photo {photo.photoId}"
 					/>
 					<button
@@ -388,15 +388,12 @@
 		background: #e8f4fd;
 	}
 
-	.photo-checkbox {
+	:global(.photo-card .photo-checkbox) {
 		position: absolute;
 		top: 8px;
 		left: 8px;
 		z-index: 2;
-		width: 20px;
-		height: 20px;
 		cursor: pointer;
-		accent-color: #4a90e2;
 	}
 
 	.photo-thumbnail {

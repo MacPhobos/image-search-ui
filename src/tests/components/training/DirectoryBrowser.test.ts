@@ -14,7 +14,10 @@ const mockSubdirs: SubdirectoryInfo[] = [
 describe('DirectoryBrowser - Filter Functionality', () => {
 	beforeEach(() => {
 		// Mock the API response for directory listing (with include_training_status=true)
-		mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fphotos&include_training_status=true', mockSubdirs);
+		mockResponse(
+			'http://localhost:8000/api/v1/training/directories?path=%2Fphotos&include_training_status=true',
+			mockSubdirs
+		);
 	});
 
 	describe('Filter input rendering', () => {
@@ -61,7 +64,10 @@ describe('DirectoryBrowser - Filter Functionality', () => {
 		});
 
 		it('should not render filter input when no directories exist', async () => {
-			mockResponse('http://localhost:8000/api/v1/training/directories?path=%2Fempty&include_training_status=true', []);
+			mockResponse(
+				'http://localhost:8000/api/v1/training/directories?path=%2Fempty&include_training_status=true',
+				[]
+			);
 
 			render(DirectoryBrowser, {
 				props: {
@@ -479,18 +485,17 @@ describe('DirectoryBrowser - Filter Functionality', () => {
 				expect(screen.getByText('vacation-photos')).toBeInTheDocument();
 			});
 
-			// Check initial state - both checkboxes should be checked
-			const vacationCheckbox = screen
-				.getByText('vacation-photos')
-				.closest('label')
-				?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-			const familyCheckbox = screen
-				.getByText('family-2024')
-				.closest('label')
-				?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+			// Check initial state - both items should be present
+			expect(screen.getByText('vacation-photos')).toBeInTheDocument();
+			expect(screen.getByText('family-2024')).toBeInTheDocument();
 
-			expect(vacationCheckbox.checked).toBe(true);
-			expect(familyCheckbox.checked).toBe(true);
+			// Check checkboxes are in checked state (shadcn uses data-state attribute)
+			const vacationItem = screen.getByText('vacation-photos').closest('label');
+			const familyItem = screen.getByText('family-2024').closest('label');
+
+			// Verify checkboxes exist and are checked (look for checked state in shadcn checkbox)
+			expect(vacationItem?.querySelector('[data-state="checked"]')).toBeInTheDocument();
+			expect(familyItem?.querySelector('[data-state="checked"]')).toBeInTheDocument();
 
 			// Apply filter to show only "vacation" directories
 			const filterInput = screen.getByPlaceholderText('Filter directories...');
@@ -500,11 +505,8 @@ describe('DirectoryBrowser - Filter Functionality', () => {
 			expect(screen.queryByText('family-2024')).not.toBeInTheDocument();
 
 			// vacation-photos should still be checked
-			const visibleCheckbox = screen
-				.getByText('vacation-photos')
-				.closest('label')
-				?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-			expect(visibleCheckbox.checked).toBe(true);
+			const visibleItem = screen.getByText('vacation-photos').closest('label');
+			expect(visibleItem?.querySelector('[data-state="checked"]')).toBeInTheDocument();
 		});
 
 		it('should maintain selection summary during filtering', async () => {

@@ -4,6 +4,8 @@
 		type PersonMetadataExport,
 		type ImportResponse
 	} from '$lib/api/admin';
+	import { Switch } from '$lib/components/ui/switch';
+	import { Label } from '$lib/components/ui/label';
 
 	interface Props {
 		open: boolean;
@@ -229,35 +231,29 @@
 								</p>
 							</div>
 
-							<div class="form-group">
-								<label class="checkbox-label">
-									<input
-										type="checkbox"
-										bind:checked={skipMissingImages}
-										disabled={loading}
-										class="form-checkbox"
-									/>
-									Skip faces for missing images
-								</label>
-								<p class="input-help">
-									Continue import even if some images are not found in the database
-								</p>
+							<div class="setting-item">
+								<div class="setting-info">
+									<Label for="skip-missing-images" class="setting-label">
+										Skip faces for missing images
+									</Label>
+									<p class="setting-description">
+										Continue import even if some images are not found in the database
+									</p>
+								</div>
+								<Switch id="skip-missing-images" bind:checked={skipMissingImages} disabled={loading} />
 							</div>
 
-							<div class="form-group">
-								<label class="checkbox-label">
-									<input
-										type="checkbox"
-										bind:checked={autoIngestImages}
-										disabled={loading}
-										class="form-checkbox"
-									/>
-									Auto-ingest missing images
-								</label>
-								<p class="input-help">
-									Automatically ingest images that exist on the filesystem but are not yet in the
-									database. This enables seamless seed data restoration.
-								</p>
+							<div class="setting-item">
+								<div class="setting-info">
+									<Label for="auto-ingest-images" class="setting-label">
+										Auto-ingest missing images
+									</Label>
+									<p class="setting-description">
+										Automatically ingest images that exist on the filesystem but are not yet in the
+										database. This enables seamless seed data restoration.
+									</p>
+								</div>
+								<Switch id="auto-ingest-images" bind:checked={autoIngestImages} disabled={loading} />
 							</div>
 						</div>
 
@@ -613,19 +609,34 @@
 		font-weight: 500;
 	}
 
-	.checkbox-label {
+	.setting-item {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		cursor: pointer;
-		font-weight: 600;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem;
+		background-color: white;
+		border: 1px solid #e5e7eb;
+		border-radius: 6px;
 	}
 
-	.form-checkbox {
-		width: 1.125rem;
-		height: 1.125rem;
+	.setting-info {
+		flex: 1;
+	}
+
+	.setting-label {
+		display: block;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: #374151;
 		cursor: pointer;
-		accent-color: #3b82f6;
+	}
+
+	.setting-description {
+		margin: 0.375rem 0 0 0;
+		font-size: 0.8rem;
+		color: #6b7280;
+		line-height: 1.4;
 	}
 
 	.input-help {

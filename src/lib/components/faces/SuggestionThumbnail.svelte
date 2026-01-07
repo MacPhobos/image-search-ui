@@ -3,6 +3,7 @@
 	import FaceThumbnail from './FaceThumbnail.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import type { ComponentProps } from 'svelte';
 
 	interface Props {
@@ -17,18 +18,14 @@
 	const confidencePercent = $derived(Math.round(suggestion.confidence * 100));
 
 	// Map confidence to badge variant
-	function getConfidenceVariant(
-		confidence: number
-	): ComponentProps<Badge>['variant'] {
+	function getConfidenceVariant(confidence: number): ComponentProps<Badge>['variant'] {
 		if (confidence >= 0.7) return 'success';
 		if (confidence >= 0.5) return 'warning';
 		return 'destructive';
 	}
 
 	// Map status to badge variant
-	function getStatusVariant(
-		status: FaceSuggestion['status']
-	): ComponentProps<Badge>['variant'] {
+	function getStatusVariant(status: FaceSuggestion['status']): ComponentProps<Badge>['variant'] {
 		switch (status) {
 			case 'accepted':
 				return 'success';
@@ -55,10 +52,8 @@
 	const cachedThumbnail = $derived(assetId ? thumbnailCache.get(assetId) : undefined);
 	const isLoading = $derived(assetId ? thumbnailCache.isPending(assetId) : false);
 
-	function handleCheckbox(e: Event) {
-		e.stopPropagation();
-		const target = e.target as HTMLInputElement;
-		onSelect(suggestion.id, target.checked);
+	function handleCheckboxChange(checked: boolean) {
+		onSelect(suggestion.id, checked);
 	}
 
 	function handleClick() {
@@ -85,12 +80,15 @@
 >
 	<!-- Selection checkbox (top-left, only for pending) -->
 	{#if suggestion.status === 'pending'}
-		<div class="checkbox-container">
-			<input
-				type="checkbox"
+		<div
+			class="checkbox-container"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+			role="none"
+		>
+			<Checkbox
 				checked={selected}
-				onchange={handleCheckbox}
-				class="checkbox"
+				onCheckedChange={handleCheckboxChange}
 				aria-label="Select suggestion"
 			/>
 		</div>
@@ -116,7 +114,10 @@
 	<!-- Status indicator for non-pending -->
 	{#if suggestion.status !== 'pending'}
 		<div class="status-badge">
-			<Badge variant={statusVariant} class="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs font-bold">
+			<Badge
+				variant={statusVariant}
+				class="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs font-bold"
+			>
 				{#if suggestion.status === 'accepted'}
 					✓
 				{:else if suggestion.status === 'rejected'}
@@ -158,21 +159,13 @@
 
 	.checkbox-container {
 		position: absolute;
-		top: 2px;
-		left: 2px;
+		top: 4px;
+		left: 4px;
 		z-index: 10;
 		background-color: rgba(255, 255, 255, 0.95);
-		border-radius: 3px;
+		border-radius: 4px;
 		padding: 2px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-	}
-
-	.checkbox {
-		display: block;
-		width: 14px;
-		height: 14px;
-		cursor: pointer;
-		margin: 0;
 	}
 
 	.confidence-badge {
