@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { DeletionLogEntry } from '$lib/api/vectors';
+	import { Table } from '$lib/components/ui/table';
+	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 
 	interface Props {
 		logs: DeletionLogEntry[];
@@ -18,16 +20,16 @@
 		});
 	}
 
-	function getTypeColor(type: string): string {
-		const colors: Record<string, string> = {
-			DIRECTORY: '#3b82f6',
-			SESSION: '#10b981',
-			CATEGORY: '#8b5cf6',
-			ASSET: '#f59e0b',
-			ORPHAN: '#ef4444',
-			FULL_RESET: '#dc2626'
+	function getTypeVariant(type: string): BadgeVariant {
+		const variants: Record<string, BadgeVariant> = {
+			DIRECTORY: 'default',
+			SESSION: 'success',
+			CATEGORY: 'secondary',
+			ASSET: 'warning',
+			ORPHAN: 'destructive',
+			FULL_RESET: 'destructive'
 		};
-		return colors[type] || '#6b7280';
+		return variants[type] || 'outline';
 	}
 
 	function getTypeLabel(type: string): string {
@@ -54,40 +56,43 @@
 			<p>No deletion history found.</p>
 		</div>
 	{:else}
-		<table class="logs-table">
-			<thead>
-				<tr>
-					<th>Type</th>
-					<th>Target</th>
-					<th>Count</th>
-					<th>Reason</th>
-					<th>Date</th>
-				</tr>
-			</thead>
-			<tbody>
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Type</Table.Head>
+					<Table.Head>Target</Table.Head>
+					<Table.Head class="text-right">Count</Table.Head>
+					<Table.Head>Reason</Table.Head>
+					<Table.Head>Date</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
 				{#each logs as log (log.id)}
-					<tr>
-						<td class="type-cell">
-							<span class="type-badge" style="background-color: {getTypeColor(log.deletionType)}">
+					<Table.Row>
+						<Table.Cell>
+							<Badge variant={getTypeVariant(log.deletionType)}>
 								{getTypeLabel(log.deletionType)}
-							</span>
-						</td>
-						<td class="target-cell" title={log.deletionTarget}>
+							</Badge>
+						</Table.Cell>
+						<Table.Cell
+							class="max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs"
+							title={log.deletionTarget}
+						>
 							{log.deletionTarget}
-						</td>
-						<td class="count-cell">
+						</Table.Cell>
+						<Table.Cell class="text-right font-semibold text-red-500">
 							{log.vectorCount.toLocaleString()}
-						</td>
-						<td class="reason-cell">
+						</Table.Cell>
+						<Table.Cell class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap italic text-gray-500">
 							{log.deletionReason || '-'}
-						</td>
-						<td class="date-cell">
+						</Table.Cell>
+						<Table.Cell class="whitespace-nowrap text-xs text-gray-500">
 							{formatDate(log.createdAt)}
-						</td>
-					</tr>
+						</Table.Cell>
+					</Table.Row>
 				{/each}
-			</tbody>
-		</table>
+			</Table.Body>
+		</Table.Root>
 	{/if}
 </div>
 
@@ -124,87 +129,5 @@
 		to {
 			transform: rotate(360deg);
 		}
-	}
-
-	.logs-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.logs-table thead {
-		background-color: #f9fafb;
-		border-bottom: 2px solid #e5e7eb;
-	}
-
-	.logs-table th {
-		padding: 0.75rem 1rem;
-		text-align: left;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #374151;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.logs-table tbody tr {
-		border-bottom: 1px solid #e5e7eb;
-		transition: background-color 0.15s;
-	}
-
-	.logs-table tbody tr:hover {
-		background-color: #f9fafb;
-	}
-
-	.logs-table td {
-		padding: 1rem;
-		font-size: 0.875rem;
-		color: #1f2937;
-	}
-
-	.type-cell {
-		width: 120px;
-	}
-
-	.type-badge {
-		display: inline-block;
-		padding: 0.25rem 0.625rem;
-		border-radius: 12px;
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: white;
-		text-transform: uppercase;
-		letter-spacing: 0.025em;
-	}
-
-	.target-cell {
-		max-width: 250px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-		font-size: 0.8rem;
-	}
-
-	.count-cell {
-		font-weight: 600;
-		color: #ef4444;
-		text-align: right;
-		width: 100px;
-	}
-
-	.reason-cell {
-		color: #6b7280;
-		font-style: italic;
-		max-width: 200px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.date-cell {
-		color: #6b7280;
-		font-size: 0.8rem;
-		white-space: nowrap;
-		width: 150px;
 	}
 </style>

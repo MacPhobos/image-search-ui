@@ -4,6 +4,8 @@
 	import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 	import CategoryCreateModal from '$lib/components/CategoryCreateModal.svelte';
 	import CategoryEditModal from '$lib/components/CategoryEditModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Table from '$lib/components/ui/table';
 	import { onMount } from 'svelte';
 
 	let categories = $state<Category[]>([]);
@@ -110,49 +112,59 @@
 		</div>
 	{:else}
 		<div class="categories-table-container">
-			<table class="categories-table">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Description</th>
-						<th>Sessions</th>
-						<th>Created</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Name</Table.Head>
+						<Table.Head>Description</Table.Head>
+						<Table.Head>Sessions</Table.Head>
+						<Table.Head>Created</Table.Head>
+						<Table.Head>Actions</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
 					{#each categories as category}
-						<tr>
-							<td>
+						<Table.Row>
+							<Table.Cell>
 								<CategoryBadge {category} size="medium" />
-							</td>
-							<td class="description">
+							</Table.Cell>
+							<Table.Cell class="text-gray-600 max-w-[400px]">
 								{category.description || '—'}
-							</td>
-							<td class="session-count">
+							</Table.Cell>
+							<Table.Cell class="text-gray-700 font-medium">
 								{getSessionCountLabel(category.sessionCount)}
-							</td>
-							<td class="date">{formatDate(category.createdAt)}</td>
-							<td class="actions">
-								<button class="btn-edit" onclick={() => handleEditClick(category)}> Edit </button>
-								{#if category.isDefault}
-									<button class="btn-delete" disabled title="Cannot delete default category">
-										Delete
-									</button>
-								{:else}
-									<button
-										class="btn-delete"
-										onclick={() => handleDeleteClick(category)}
-										disabled={deletingId === category.id}
-									>
-										{deletingId === category.id ? 'Deleting...' : 'Delete'}
-									</button>
-								{/if}
-							</td>
-						</tr>
+							</Table.Cell>
+							<Table.Cell class="text-gray-600 whitespace-nowrap">
+								{formatDate(category.createdAt)}
+							</Table.Cell>
+							<Table.Cell>
+								<div class="actions">
+									<Button size="sm" onclick={() => handleEditClick(category)}>Edit</Button>
+									{#if category.isDefault}
+										<Button
+											size="sm"
+											variant="destructive"
+											disabled
+											title="Cannot delete default category"
+										>
+											Delete
+										</Button>
+									{:else}
+										<Button
+											size="sm"
+											variant="destructive"
+											onclick={() => handleDeleteClick(category)}
+											disabled={deletingId === category.id}
+										>
+											{deletingId === category.id ? 'Deleting...' : 'Delete'}
+										</Button>
+									{/if}
+								</div>
+							</Table.Cell>
+						</Table.Row>
 					{/each}
-				</tbody>
-			</table>
+				</Table.Body>
+			</Table.Root>
 		</div>
 
 		<div class="summary">
@@ -204,7 +216,9 @@
 			</div>
 			<div class="modal-footer">
 				<button class="btn btn-secondary" onclick={handleCancelDelete}>Cancel</button>
-				<button class="btn btn-danger" onclick={() => handleDelete(deleteConfirm)}> Delete </button>
+				<button class="btn btn-danger" onclick={() => deleteConfirm && handleDelete(deleteConfirm)}>
+					Delete
+				</button>
 			</div>
 		</div>
 	</div>
@@ -288,94 +302,9 @@
 		overflow-x: auto;
 	}
 
-	.categories-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.categories-table thead {
-		background-color: #f9fafb;
-		border-bottom: 2px solid #e5e7eb;
-	}
-
-	.categories-table th {
-		padding: 0.75rem 1rem;
-		text-align: left;
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: #6b7280;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.categories-table td {
-		padding: 1rem;
-		border-bottom: 1px solid #f3f4f6;
-		color: #1f2937;
-		font-size: 0.875rem;
-	}
-
-	.categories-table tbody tr:last-child td {
-		border-bottom: none;
-	}
-
-	.categories-table tbody tr:hover {
-		background-color: #f9fafb;
-	}
-
-	.description {
-		color: #6b7280;
-		max-width: 400px;
-	}
-
-	.session-count {
-		color: #374151;
-		font-weight: 500;
-	}
-
-	.date {
-		color: #6b7280;
-		white-space: nowrap;
-	}
-
 	.actions {
 		display: flex;
 		gap: 0.5rem;
-	}
-
-	.btn-edit,
-	.btn-delete {
-		padding: 0.375rem 0.75rem;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.btn-edit {
-		background-color: #3b82f6;
-		color: white;
-	}
-
-	.btn-edit:hover {
-		background-color: #2563eb;
-	}
-
-	.btn-delete {
-		background-color: #dc2626;
-		color: white;
-	}
-
-	.btn-delete:hover:not(:disabled) {
-		background-color: #b91c1c;
-	}
-
-	.btn-delete:disabled {
-		background-color: #d1d5db;
-		cursor: not-allowed;
-		color: #9ca3af;
 	}
 
 	.summary {

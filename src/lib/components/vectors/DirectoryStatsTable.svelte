@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { DirectoryStats } from '$lib/api/vectors';
+	import * as Table from '$lib/components/ui/table';
+	import { Button } from '$lib/components/ui/button';
 
 	interface Props {
 		directories: DirectoryStats[];
@@ -28,70 +30,66 @@
 	}
 </script>
 
-<div class="table-container">
-	{#if loading}
-		<div class="loading-state">
-			<div class="spinner"></div>
-			<p>Loading directory statistics...</p>
-		</div>
-	{:else if directories.length === 0}
-		<div class="empty-state">
-			<p>No directories with vectors found.</p>
-		</div>
-	{:else}
-		<table class="stats-table">
-			<thead>
-				<tr>
-					<th>Directory</th>
-					<th>Vector Count</th>
-					<th>Last Indexed</th>
-					<th>Actions</th>
-				</tr>
-			</thead>
-			<tbody>
+{#if loading}
+	<div class="loading-state">
+		<div class="spinner"></div>
+		<p>Loading directory statistics...</p>
+	</div>
+{:else if directories.length === 0}
+	<div class="empty-state">
+		<p>No directories with vectors found.</p>
+	</div>
+{:else}
+	<div class="rounded-md border">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Directory</Table.Head>
+					<Table.Head>Vector Count</Table.Head>
+					<Table.Head>Last Indexed</Table.Head>
+					<Table.Head>Actions</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
 				{#each directories as dir (dir.pathPrefix)}
-					<tr>
-						<td class="path-cell" title={dir.pathPrefix}>
+					<Table.Row>
+						<Table.Cell class="font-mono text-xs max-w-[300px] truncate" title={dir.pathPrefix}>
 							{formatPath(dir.pathPrefix)}
-						</td>
-						<td class="count-cell">
+						</Table.Cell>
+						<Table.Cell class="font-semibold text-blue-600">
 							{dir.vectorCount.toLocaleString()}
-						</td>
-						<td class="date-cell">
+						</Table.Cell>
+						<Table.Cell class="text-gray-500 text-xs">
 							{formatDate(dir.lastIndexed)}
-						</td>
-						<td class="actions-cell">
-							<button
-								class="btn btn-warning"
-								onclick={() => onRetrain(dir.pathPrefix)}
-								title="Delete vectors and create new training session"
-							>
-								Retrain
-							</button>
-							<button
-								class="btn btn-danger"
-								onclick={() => onDelete(dir.pathPrefix)}
-								title="Delete all vectors for this directory"
-							>
-								Delete
-							</button>
-						</td>
-					</tr>
+						</Table.Cell>
+						<Table.Cell>
+							<div class="flex gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onclick={() => onRetrain(dir.pathPrefix)}
+									title="Delete vectors and create new training session"
+								>
+									Retrain
+								</Button>
+								<Button
+									variant="destructive"
+									size="sm"
+									onclick={() => onDelete(dir.pathPrefix)}
+									title="Delete all vectors for this directory"
+								>
+									Delete
+								</Button>
+							</div>
+						</Table.Cell>
+					</Table.Row>
 				{/each}
-			</tbody>
-		</table>
-	{/if}
-</div>
+			</Table.Body>
+		</Table.Root>
+	</div>
+{/if}
 
 <style>
-	.table-container {
-		width: 100%;
-		overflow-x: auto;
-		background-color: white;
-		border-radius: 8px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-	}
-
 	.loading-state,
 	.empty-state {
 		display: flex;
@@ -116,98 +114,5 @@
 		to {
 			transform: rotate(360deg);
 		}
-	}
-
-	.stats-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.stats-table thead {
-		background-color: #f9fafb;
-		border-bottom: 2px solid #e5e7eb;
-	}
-
-	.stats-table th {
-		padding: 0.75rem 1rem;
-		text-align: left;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #374151;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.stats-table tbody tr {
-		border-bottom: 1px solid #e5e7eb;
-		transition: background-color 0.15s;
-	}
-
-	.stats-table tbody tr:hover {
-		background-color: #f9fafb;
-	}
-
-	.stats-table td {
-		padding: 1rem;
-		font-size: 0.875rem;
-		color: #1f2937;
-	}
-
-	.path-cell {
-		font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-		font-size: 0.8rem;
-		max-width: 300px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.count-cell {
-		font-weight: 600;
-		color: #3b82f6;
-	}
-
-	.date-cell {
-		color: #6b7280;
-		font-size: 0.8rem;
-	}
-
-	.actions-cell {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.btn {
-		padding: 0.375rem 0.75rem;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.8rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-		white-space: nowrap;
-	}
-
-	.btn:hover {
-		transform: translateY(-1px);
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
-
-	.btn-warning {
-		background-color: #f59e0b;
-		color: white;
-	}
-
-	.btn-warning:hover {
-		background-color: #d97706;
-	}
-
-	.btn-danger {
-		background-color: #ef4444;
-		color: white;
-	}
-
-	.btn-danger:hover {
-		background-color: #dc2626;
 	}
 </style>
