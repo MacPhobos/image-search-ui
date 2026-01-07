@@ -16,7 +16,13 @@
 		testId?: string;
 	}
 
-	let { category, open = $bindable(false), onClose, onUpdated, testId = 'modal__category-edit' }: Props = $props();
+	let {
+		category,
+		open = $bindable(false),
+		onClose,
+		onUpdated,
+		testId = 'modal__category-edit'
+	}: Props = $props();
 
 	// Derived scoped test ID generator (reactive to testId changes)
 	const t = $derived((...segments: string[]) =>
@@ -88,9 +94,7 @@
 	<Dialog.Content data-testid={t()}>
 		<Dialog.Header data-testid={t('header')}>
 			<Dialog.Title>Edit Category</Dialog.Title>
-			<Dialog.Description>
-				Update the category details below.
-			</Dialog.Description>
+			<Dialog.Description>Update the category details below.</Dialog.Description>
 		</Dialog.Header>
 
 		<form
@@ -139,7 +143,12 @@
 							{#each colorPresets as presetColor}
 								<button
 									type="button"
-									style="width: 2rem; height: 2rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; padding: 0; background-color: {presetColor}; border: 2px solid {color === presetColor ? '#1f2937' : 'transparent'}; box-shadow: {color === presetColor ? '0 0 0 2px white, 0 0 0 4px #1f2937' : 'none'};"
+									style="width: 2rem; height: 2rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; padding: 0; background-color: {presetColor}; border: 2px solid {color ===
+									presetColor
+										? '#1f2937'
+										: 'transparent'}; box-shadow: {color === presetColor
+										? '0 0 0 2px white, 0 0 0 4px #1f2937'
+										: 'none'};"
 									onclick={() => (color = presetColor)}
 									disabled={loading}
 									aria-label="Select color {presetColor}"
@@ -164,7 +173,12 @@
 			</div>
 
 			<Dialog.Footer data-testid={t('footer')}>
-				<Button variant="outline" onclick={handleClose} disabled={loading} data-testid={t('btn-cancel')}>
+				<Button
+					variant="outline"
+					onclick={handleClose}
+					disabled={loading}
+					data-testid={t('btn-cancel')}
+				>
 					Cancel
 				</Button>
 				<Button type="submit" disabled={loading} data-testid={t('btn-submit')}>

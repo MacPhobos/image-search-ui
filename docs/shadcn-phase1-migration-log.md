@@ -25,6 +25,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **File**: `src/lib/components/queues/JobStatusBadge.svelte`
 
 **Changes**:
+
 - Replaced custom badge implementation with shadcn Badge component
 - Mapped job statuses to Badge variants:
   - `finished` → `default` (success/green)
@@ -35,6 +36,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 - Maintained size prop (`sm`, `md`, `lg`) via Tailwind classes
 
 **Benefits**:
+
 - Consistent styling across application
 - Reduced CSS maintenance (no custom styles)
 - Type-safe variant mapping
@@ -46,6 +48,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **File**: `src/lib/components/queues/WorkerStatusBadge.svelte`
 
 **Changes**:
+
 - Replaced custom badge with shadcn Badge
 - Mapped worker states to Badge variants:
   - `idle` → `default` (success)
@@ -55,6 +58,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 - Maintained size customization
 
 **Benefits**:
+
 - Consistency with JobStatusBadge
 - Simpler component implementation (from 45 lines → 37 lines)
 
@@ -65,6 +69,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **File**: `src/lib/components/training/StatusBadge.svelte`
 
 **Changes**:
+
 - Migrated to shadcn Badge
 - Mapped training statuses:
   - `completed` → `default`
@@ -75,6 +80,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 - Simplified component logic
 
 **Benefits**:
+
 - Unified badge styling with queue components
 - Easier to extend with new statuses
 
@@ -85,6 +91,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **File**: `src/lib/components/CategoryBadge.svelte`
 
 **Changes**:
+
 - Migrated to shadcn Badge with custom styling
 - Preserved custom color functionality
 - Uses `style` prop for dynamic background/text colors
@@ -92,6 +99,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 - Removed 24 lines of custom CSS
 
 **Special Considerations**:
+
 - Uses `$derived.by()` for reactive color calculations
 - Inline `style` attribute (Svelte 5 doesn't support `style:` directives on components)
 - Preserves accessibility with contrast color logic
@@ -105,6 +113,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **File**: `src/routes/people/+page.svelte`
 
 **Changes**:
+
 - Replaced inline badge spans with Badge component
 - Updated section headers:
   - "Identified" → `<Badge variant="default">`
@@ -113,6 +122,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 - Removed dependency on `.badge-success`, `.badge-warning`, `.badge-error` CSS classes
 
 **Benefits**:
+
 - Consistent badge styling throughout the app
 - No custom CSS classes needed
 - Type-safe variants
@@ -124,6 +134,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 ### CategoryBadge.test.ts
 
 **Changes**:
+
 - Updated selector from `.category-badge` → `[data-slot="badge"]`
 - Updated size assertions to check Tailwind classes:
   - `small` → `text-xs`, `px-2`
@@ -139,6 +150,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **Status**: ⚠️ Some tests failing (pre-existing bugs)
 
 **Issues Found**:
+
 1. Tests expect "Needs Names" section visible by default, but `showUnidentified` defaults to `false`
 2. Not related to Badge migration - tests were already broken
 
@@ -151,6 +163,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 **File**: `src/routes/shadcn-test/+page.svelte`
 
 **Additions**:
+
 - Badge variants showcase (default, secondary, destructive, outline)
 - Input variants (text, email, password, number, disabled, required)
 - Label examples (basic, with `for` attribute, required fields)
@@ -164,13 +177,13 @@ All components are Svelte 5 compatible and TypeScript-first.
 
 ### Lines of Code Changes
 
-| Component | Before | After | Delta | Notes |
-|-----------|--------|-------|-------|-------|
-| JobStatusBadge | 51 | 47 | -4 | Removed 35 lines of CSS |
-| WorkerStatusBadge | 45 | 37 | -8 | Removed 26 lines of CSS |
-| StatusBadge | 86 | 42 | -44 | Removed 51 lines of CSS |
-| CategoryBadge | 69 | 50 | -19 | Removed 24 lines of CSS, kept contrast logic |
-| People Page | N/A | N/A | +1 import | Replaced inline badge markup |
+| Component         | Before | After | Delta     | Notes                                        |
+| ----------------- | ------ | ----- | --------- | -------------------------------------------- |
+| JobStatusBadge    | 51     | 47    | -4        | Removed 35 lines of CSS                      |
+| WorkerStatusBadge | 45     | 37    | -8        | Removed 26 lines of CSS                      |
+| StatusBadge       | 86     | 42    | -44       | Removed 51 lines of CSS                      |
+| CategoryBadge     | 69     | 50    | -19       | Removed 24 lines of CSS, kept contrast logic |
+| People Page       | N/A    | N/A   | +1 import | Replaced inline badge markup                 |
 
 **Total**: ~136 lines of custom CSS removed, ~75 lines of component code simplified
 
@@ -181,6 +194,7 @@ All components are Svelte 5 compatible and TypeScript-first.
 ### None for Consumers
 
 All migrated components maintain the same public API:
+
 - Same props interface
 - Same visual appearance (matched to existing colors)
 - Same size options
@@ -235,6 +249,7 @@ From `shadcn-svelte-migration-analysis.md`:
 ## TypeScript Status
 
 **Current Errors**: 7 pre-existing errors (unrelated to migration)
+
 - `VITE_API_BASE_URL` type issues (pre-existing)
 - `mockFetch` type issue (pre-existing)
 
@@ -251,6 +266,7 @@ From `shadcn-svelte-migration-analysis.md`:
 **Issue**: Cannot use `style:background-color={...}` on components in Svelte 5
 
 **Solution**: Use `style` prop with string:
+
 ```svelte
 <Badge style="background-color: {bgColor}; color: {textColor};" />
 ```
@@ -258,17 +274,16 @@ From `shadcn-svelte-migration-analysis.md`:
 ### Derived Reactivity
 
 **Pattern**: Use `$derived.by()` for function calls in derived values:
-```svelte
-// ✅ Correct
-const textColor = $derived.by(() => getContrastColor(category.color));
 
-// ❌ Wrong
+```svelte
+// ✅ Correct const textColor = $derived.by(() => getContrastColor(category.color)); // ❌ Wrong
 const textColor = $derived(getContrastColor(category.color)); // Warning
 ```
 
 ### Testing Badge Components
 
 **Pattern**: Query by `[data-slot="badge"]` attribute:
+
 ```typescript
 const badge = container.querySelector('[data-slot="badge"]');
 expect(badge).toHaveStyle({ backgroundColor: '#3B82F6' });
@@ -279,6 +294,7 @@ expect(badge).toHaveStyle({ backgroundColor: '#3B82F6' });
 ## Conclusion
 
 Phase 1 migration successfully completed:
+
 - ✅ 4 foundation components installed
 - ✅ 4 custom badge components migrated
 - ✅ 1 page updated (people)

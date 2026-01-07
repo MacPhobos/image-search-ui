@@ -26,3 +26,11 @@ export function cn(...inputs: ClassValue[]) {
 export type WithElementRef<T> = T & {
 	ref?: HTMLElement | null;
 };
+
+/**
+ * Type helpers for shadcn-svelte components
+ * These exclude child/children props for components that manage their own content
+ */
+export type WithoutChildren<T> = Omit<T, 'children'>;
+export type WithoutChild<T> = Omit<T, 'child'>;
+export type WithoutChildrenOrChild<T> = Omit<T, 'children' | 'child'>;

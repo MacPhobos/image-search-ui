@@ -98,6 +98,7 @@
 **Usage Count**: 10+ modals across the app
 
 **Files to Migrate**:
+
 1. `src/lib/components/faces/PersonDetailModal.svelte`
 2. `src/lib/components/faces/PhotoPreviewModal.svelte`
 3. `src/lib/components/faces/SuggestionDetailModal.svelte`
@@ -107,6 +108,7 @@
 7. Any other `*Modal.svelte` files
 
 **Benefits**:
+
 - Consistent modal styling
 - Built-in accessibility (focus trap, ESC key)
 - Portal rendering (avoids z-index issues)
@@ -121,6 +123,7 @@
 **Usage Count**: 20+ card-like containers
 
 **Files to Migrate**:
+
 1. `src/lib/components/faces/ClusterCard.svelte`
 2. `src/lib/components/faces/PersonCard.svelte`
 3. `src/lib/components/faces/UnifiedPersonCard.svelte`
@@ -130,6 +133,7 @@
 7. Any `<article>` or custom card containers
 
 **Benefits**:
+
 - Consistent card styling
 - Built-in hover/focus states
 - Composable card parts (header, content, footer)
@@ -143,11 +147,13 @@
 **Usage Count**: 5-10 select elements
 
 **Files to Migrate**:
+
 1. `src/routes/people/+page.svelte` - Sort by dropdown, Sort order dropdown
 2. Filter dropdowns (if any)
 3. Settings dropdowns
 
 **Benefits**:
+
 - Better mobile experience
 - Searchable options
 - Keyboard navigation
@@ -162,11 +168,13 @@
 **Usage Count**: 3+ checkboxes
 
 **Files to Migrate**:
+
 1. `src/routes/people/+page.svelte` - Show Identified, Show Unidentified, Show Unknown
 2. Multi-select forms (if any)
 3. Settings toggles
 
 **Benefits**:
+
 - Consistent styling
 - Indeterminate state support
 - Accessibility built-in
@@ -180,11 +188,13 @@
 **Usage Count**: 10+ dividers
 
 **Files to Search**:
+
 - Look for `<hr>` elements
 - Look for `<div class="divider">` or similar
 - `src/routes/people/+page.svelte` has `.divider` class
 
 **Benefits**:
+
 - Semantic separators
 - Consistent spacing
 - Vertical/horizontal variants
@@ -200,6 +210,7 @@
 **Usage Count**: 3-5 tables
 
 **Files**:
+
 1. `src/lib/components/vectors/DeletionLogsTable.svelte`
 2. Queue dashboard tables
 3. Face suggestions tables
@@ -214,6 +225,7 @@
 **Usage Count**: 2-3 tabbed interfaces
 
 **Potential Usage**:
+
 1. Person detail page (Photos, Prototypes, Stats tabs)
 2. Training page (Sessions, Face Sessions as tabs - recently consolidated)
 3. Admin panel sections
@@ -227,6 +239,7 @@
 **Usage Count**: 5-10 tooltip opportunities
 
 **Potential Usage**:
+
 - Face confidence explanations
 - Button help text
 - Stat tooltips
@@ -239,6 +252,7 @@
 ### Form Components
 
 **Advanced form primitives**:
+
 - **Textarea** - Description fields
 - **Radio Group** - Exclusive options
 - **Switch** - Toggle settings
@@ -251,17 +265,20 @@
 ## Migration Priority Roadmap
 
 ### Sprint 1: Complete Badge Migrations (3-4 hours)
+
 - Migrate remaining 10 badge usages
 - Consolidate badge styling
 - Update tests
 
 ### Sprint 2: Phase 2 Foundation (8-10 hours)
+
 - Install Dialog, Card, Select, Checkbox, Separator
 - Migrate highest-impact modals (3-4)
 - Migrate card components (5-6)
 - Replace select/checkbox on people page
 
 ### Sprint 3: Polish & Advanced (10-12 hours)
+
 - Complete remaining modal migrations
 - Add Table component for data displays
 - Add Tabs for multi-view pages
@@ -299,16 +316,19 @@
 ## Success Metrics
 
 ### Code Quality
+
 - **LOC Reduction**: Target 30-40% reduction in custom CSS
 - **Type Safety**: 100% TypeScript coverage maintained
 - **Test Coverage**: No decrease in coverage %
 
 ### Consistency
+
 - **Component Reuse**: All badges use Badge component
 - **Styling**: No custom badge CSS classes
 - **Accessibility**: All ARIA attributes preserved
 
 ### Developer Experience
+
 - **Onboarding**: New devs use shadcn components by default
 - **Documentation**: All components documented in shadcn-test page
 - **Maintenance**: Easier to update styles globally
@@ -318,16 +338,19 @@
 ## Risk Mitigation
 
 ### Breaking Changes
+
 - **Gradual Migration**: One component type at a time
 - **Backward Compatibility**: Old and new components coexist
 - **Feature Flags**: Use dev flags for risky migrations
 
 ### Performance
+
 - **Bundle Size**: Monitor bundle size impact
 - **Lazy Loading**: Load shadcn components only when needed
 - **Tree Shaking**: Ensure unused components are excluded
 
 ### Accessibility
+
 - **Screen Reader Testing**: Test each migrated component
 - **Keyboard Navigation**: Verify all interactions work
 - **Focus Management**: Test focus trap in modals

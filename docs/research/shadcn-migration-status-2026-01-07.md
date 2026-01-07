@@ -19,6 +19,7 @@
 - ✅ **Phase 6**: UX (Toast/Sonner, Skeleton, Tooltip, Progress) - **INSTALLED**
 
 **Current State**: All shadcn-svelte components are installed. The project has uncommitted work across Phases 2-6 that includes:
+
 - Component installations
 - Migration examples
 - Verification pages
@@ -33,6 +34,7 @@
 ### Installation Status ✅ COMPLETE
 
 **Components Installed**:
+
 - ✅ Badge (`src/lib/components/ui/badge/`)
 - ✅ Input (`src/lib/components/ui/input/`)
 - ✅ Label (`src/lib/components/ui/label/`)
@@ -43,6 +45,7 @@
 ### Migrations Completed ✅
 
 **Badge Migrations** (5 components):
+
 1. `JobStatusBadge.svelte` - Queue job status indicators
 2. `WorkerStatusBadge.svelte` - Worker state indicators
 3. `StatusBadge.svelte` - Training session status
@@ -50,6 +53,7 @@
 5. `src/routes/people/+page.svelte` - Section header badges
 
 **Code Reduction**:
+
 - ~136 lines of custom CSS removed
 - ~75 lines of component code simplified
 - Maintained 100% backward compatibility (same public APIs)
@@ -61,6 +65,7 @@
 **Pre-existing Test Failures**: 9 failures in `src/tests/routes/people/page.test.ts` (unrelated to Phase 1)
 
 **Pre-existing failures**:
+
 - Tests expect "Needs Names" section visible by default
 - Bug: `showUnidentified` defaults to `false` in component
 - **Not related to Badge migration** - tests were already broken
@@ -70,6 +75,7 @@
 According to `docs/shadcn-remaining-migrations.md`, there are **additional badge migration opportunities**:
 
 **High Impact Badge Candidates** (not yet migrated):
+
 1. Face confidence badges (6 files)
 2. Face detection session badges (1 file)
 3. Temporal timeline badges (1 file)
@@ -79,6 +85,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Estimated Effort**: 3-4 hours for complete badge coverage
 
 **Input/Label Migration Opportunities**:
+
 1. Search bars (2 locations)
 2. Filter inputs (3 files)
 3. Modal forms (5+ files)
@@ -87,6 +94,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Estimated Effort**: 4-5 hours
 
 **Alert Migration Opportunities**:
+
 1. API error displays
 2. Empty states ("No results found")
 3. Success notifications
@@ -100,6 +108,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Installation Status ✅ COMPLETE (Uncommitted)
 
 **Components Installed**:
+
 - ✅ Dialog (`src/lib/components/ui/dialog/`) - 9 component files
 - ✅ AlertDialog (`src/lib/components/ui/alert-dialog/`) - 10 component files
 
@@ -108,6 +117,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Migrations Completed ✅ (2 Examples)
 
 **Example 1: DeleteConfirmationModal.shadcn.svelte**
+
 - Original: 265 lines
 - Migrated: 108 lines
 - **Reduction**: 59% less code, ~200 lines of CSS eliminated
@@ -115,6 +125,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 - Status: ✅ Complete, type-safe, tested
 
 **Example 2: CategoryCreateModal.shadcn.svelte**
+
 - Original: 386 lines
 - Migrated: 171 lines
 - **Reduction**: 56% less code, ~240 lines of CSS eliminated
@@ -126,24 +137,14 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **12 Modal Components Identified**:
 
 **High Priority** (Simple Confirmations):
+
 1. `DeleteAllDataModal.svelte`
 
-**Medium Priority** (Forms):
-2. `CategoryEditModal.svelte`
-3. `CreateSessionModal.svelte`
-4. `ImportPersonDataModal.svelte`
-5. `ExportPersonDataModal.svelte`
+**Medium Priority** (Forms): 2. `CategoryEditModal.svelte` 3. `CreateSessionModal.svelte` 4. `ImportPersonDataModal.svelte` 5. `ExportPersonDataModal.svelte`
 
-**Complex** (Large Forms/Pickers):
-6. `PersonPickerModal.svelte`
-7. `LabelClusterModal.svelte`
-8. `RetrainModal.svelte`
+**Complex** (Large Forms/Pickers): 6. `PersonPickerModal.svelte` 7. `LabelClusterModal.svelte` 8. `RetrainModal.svelte`
 
-**Large Detail Views**:
-9. `SuggestionDetailModal.svelte`
-10. `PhotoPreviewModal.svelte`
-11. `TrainingControlPanel.svelte`
-12. Inline modal in `people/[personId]/+page.svelte`
+**Large Detail Views**: 9. `SuggestionDetailModal.svelte` 10. `PhotoPreviewModal.svelte` 11. `TrainingControlPanel.svelte` 12. Inline modal in `people/[personId]/+page.svelte`
 
 **Estimated Effort**: 6-8 hours total (2 examples complete, 10 remaining)
 
@@ -154,6 +155,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Installation Status ✅ COMPLETE (Uncommitted)
 
 **Components Installed**:
+
 - ✅ Select (`src/lib/components/ui/select/`)
 - ✅ Checkbox (`src/lib/components/ui/checkbox/`)
 - ✅ Separator (`src/lib/components/ui/separator/`)
@@ -168,16 +170,19 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Remaining Phase 3 Work
 
 **Select Migrations** (5-10 select elements):
+
 1. `people/+page.svelte` - Sort by dropdown, Sort order dropdown
 2. Filter dropdowns
 3. Settings dropdowns
 
 **Checkbox Migrations** (3+ checkboxes):
+
 1. `people/+page.svelte` - Show Identified, Show Unidentified, Show Unknown
 2. Multi-select forms
 3. Settings toggles
 
 **Separator Migrations** (10+ dividers):
+
 - Replace `<hr>` elements
 - Replace `<div class="divider">` patterns
 
@@ -190,6 +195,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Installation Status ✅ COMPLETE
 
 **Components Installed**:
+
 - ✅ Table (`src/lib/components/ui/table/`)
   - `table.svelte`, `table-body.svelte`, `table-caption.svelte`
   - `table-cell.svelte`, `table-footer.svelte`, `table-head.svelte`
@@ -200,12 +206,14 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Migrations Completed ✅ (2 Tables)
 
 **Migration 1: Training JobsTable**
+
 - Before: ~190 lines with extensive CSS
 - After: ~146 lines (23% reduction)
 - Removed: 80+ lines of table-specific CSS
 - Status: ✅ Complete
 
 **Migration 2: Queue JobsTable**
+
 - Before: ~210 lines with detailed CSS
 - After: ~160 lines (24% reduction)
 - Simplified: CSS to only container and wrapper styles
@@ -214,6 +222,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Verification
 
 **Demos Added**: `src/routes/shadcn-test/+page.svelte` includes:
+
 1. Basic Table - User list with badges
 2. Table with Alignment - Metrics dashboard
 3. Table with Actions - User management with buttons
@@ -221,6 +230,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Remaining Phase 4 Work
 
 **4 Table Components** (not yet migrated):
+
 1. `vectors/DeletionLogsTable.svelte` - Simple table
 2. `vectors/DirectoryStatsTable.svelte` - Stats table
 3. `queues/WorkersPanel.svelte` - Worker status table
@@ -235,6 +245,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Installation Status ✅ COMPLETE
 
 **Components Installed**:
+
 - ✅ Card (`src/lib/components/ui/card/`) - Header, Content, Footer, Title, Description
 - ✅ Tabs (`src/lib/components/ui/tabs/`) - Root, List, Trigger, Content
 - ✅ Avatar (`src/lib/components/ui/avatar/`) - Root, Image, Fallback
@@ -244,6 +255,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Verification
 
 **Demos Added**: `src/routes/shadcn-test/+page.svelte` includes:
+
 1. Basic Card - Simple card structure
 2. Project Cards - Grid with badges and progress
 3. Avatar Variants - Images, fallbacks, sizes
@@ -253,6 +265,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Migration Opportunities Identified
 
 **High Priority**:
+
 1. **UnifiedPersonCard** → Card + Avatar
    - Most visible component
    - Used across multiple pages
@@ -266,18 +279,14 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
    - Complex multi-tab interface
    - Improved accessibility
 
-**Medium Priority**:
-4. FaceDetectionSessionCard → Card
-5. PersonCard → Card + Avatar
-6. Modal components → Dialog + Card
+**Medium Priority**: 4. FaceDetectionSessionCard → Card 5. PersonCard → Card + Avatar 6. Modal components → Dialog + Card
 
-**Low Priority**:
-7. Search result cards → Card
-8. Category cards → Card
+**Low Priority**: 7. Search result cards → Card 8. Category cards → Card
 
 ### Remaining Phase 5 Work
 
 **Estimated Impact**:
+
 - **Remove**: ~1,500 lines of custom CSS (card and avatar styles)
 - **Add**: ~500 lines of shadcn component usage
 - **Net Change**: -1,000 lines of code
@@ -291,6 +300,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Installation Status ✅ COMPLETE
 
 **Components Installed**:
+
 - ✅ Sonner (Toast) (`src/lib/components/ui/sonner/`)
   - Installed in root layout: `src/routes/+layout.svelte`
   - Import: `import { toast } from 'svelte-sonner'`
@@ -301,12 +311,14 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Documentation**: `PHASE6-TOAST-SKELETON-TOOLTIP-PROGRESS.md` (comprehensive)
 
 **Setup Completed**:
+
 - ✅ Toaster component added to root layout
 - ✅ Missing type exports added to `src/lib/utils.ts`
 
 ### Verification
 
 **Demos Added**: `src/routes/shadcn-test/+page.svelte` includes:
+
 1. Toast notifications - success, error, info, loading, custom
 2. Skeleton loading states - text, cards, grids
 3. Tooltips - buttons, badges, text
@@ -315,6 +327,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Migration Opportunities Identified
 
 **High Priority** (User-Facing):
+
 1. **Replace "Loading..." with Skeletons**
    - `faces/clusters/+page.svelte` - Face clusters loading
    - `faces/PersonDropdown.svelte` - Person list loading
@@ -332,16 +345,19 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
    - Impact: Consistent UX
 
 **Files with `title` Attributes** (15 files identified):
+
 - Can be replaced with Tooltip component
 - Better styling, accessibility, positioning
 
 **Files with "Loading..." Text** (5 files identified):
+
 - Replace with Skeleton component
 - Better visual feedback, layout preservation
 
 ### Remaining Phase 6 Work
 
 **Estimated Effort**:
+
 - Replace loading text: 2-3 hours
 - Add tooltips: 3-4 hours
 - Migrate toasts: 3-4 hours
@@ -357,6 +373,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **ESLint Errors**: Multiple errors found, but **NONE related to shadcn migration**
 
 **Error Sources**:
+
 - `mcp-browser-extensions/chrome/Readability.js` - 11 errors (regex escaping, unused vars)
 - `mcp-browser-extensions/chrome/background-enhanced.js` - 80+ errors (`chrome` global not defined)
 
@@ -371,11 +388,13 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Test Failures**: All 9 failures in `src/tests/routes/people/page.test.ts`
 
 **Root Cause**:
+
 - Tests expect "Needs Names" section visible by default
 - Component has `showUnidentified` defaulting to `false`
 - **Pre-existing bug** - unrelated to shadcn migration
 
 **Phase 1 Component Tests**: ✅ All passing
+
 - CategoryBadge: 8/8 tests passing
 - Migration-related errors: 0
 
@@ -388,6 +407,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Committed Work ✅
 
 **Commit `2df4eb0`**: "feat(ui): complete Phase 1 shadcn-svelte migration - Badge, Input, Label, Alert"
+
 - Phase 1 foundation components
 - 5 badge component migrations
 - Test updates
@@ -396,11 +416,13 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Uncommitted Work (Large Volume)
 
 **Modified Files**: 66 files changed
+
 - **Insertions**: +12,039 lines
 - **Deletions**: -10,596 lines
 - **Net Change**: +1,443 lines
 
 **Key Uncommitted Work**:
+
 1. **Phase 2-6 component installations** - All shadcn-svelte components installed
 2. **Phase 2 examples** - 2 modal migrations (DeleteConfirmationModal, CategoryCreateModal)
 3. **Phase 4 migrations** - 2 table migrations (JobsTable components)
@@ -409,10 +431,11 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 6. **API regeneration** - `src/lib/api/generated.ts` updated (16,919 lines changed)
 
 **Untracked Files**:
+
 - `.pre-commit-config.yaml`
 - Phase documentation files (PHASE2-COMPLETION.md, etc.)
 - New verification routes (shadcn-test-dialogs/)
-- Migrated component examples (*.shadcn.svelte)
+- Migrated component examples (\*.shadcn.svelte)
 
 ---
 
@@ -421,39 +444,24 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Installed shadcn-svelte Components (21 total)
 
 **Foundation** (Phase 0-1):
+
 1. Button ✅
 2. Badge ✅
 3. Input ✅
 4. Label ✅
 5. Alert ✅
 
-**Dialogs** (Phase 2):
-6. Dialog ✅
-7. AlertDialog ✅
+**Dialogs** (Phase 2): 6. Dialog ✅ 7. AlertDialog ✅
 
-**Layout** (Phase 3):
-8. Select ✅
-9. Checkbox ✅
-10. Separator ✅
-11. Switch ✅
+**Layout** (Phase 3): 8. Select ✅ 9. Checkbox ✅ 10. Separator ✅ 11. Switch ✅
 
-**Data Display** (Phase 4):
-12. Table ✅
+**Data Display** (Phase 4): 12. Table ✅
 
-**Content** (Phase 5):
-13. Card ✅
-14. Tabs ✅
-15. Avatar ✅
+**Content** (Phase 5): 13. Card ✅ 14. Tabs ✅ 15. Avatar ✅
 
-**UX** (Phase 6):
-16. Sonner (Toast) ✅
-17. Skeleton ✅
-18. Tooltip ✅
-19. Progress ✅
+**UX** (Phase 6): 16. Sonner (Toast) ✅ 17. Skeleton ✅ 18. Tooltip ✅ 19. Progress ✅
 
-**Bonus** (not in original phases):
-20. AlertDialog ✅
-21. Switch ✅
+**Bonus** (not in original phases): 20. AlertDialog ✅ 21. Switch ✅
 
 ---
 
@@ -502,6 +510,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Completed Work**: ~20-25 hours (Phases 0-6 installation + initial migrations)
 
 **Remaining Work**:
+
 - Complete Badge migrations: 3-4 hours
 - Complete Input/Label/Alert: 6-8 hours
 - Complete Dialog migrations: 6-8 hours
@@ -524,6 +533,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Status**: ✅ **COMPLETE AND COMMITTED**
 
 **Evidence**:
+
 1. Commit `2df4eb0` explicitly states "complete Phase 1"
 2. All 4 foundation components installed
 3. 5 badge components migrated
@@ -535,16 +545,19 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **"Continue with phase 1"** likely means:
 
 **Option 1**: Continue migrating components using Phase 1 components
+
 - Complete remaining badge migrations (~10 components)
 - Migrate inputs and labels in forms
 - Migrate alert usage for error/success messages
 
 **Option 2**: User meant "continue with Phase 2+"
+
 - Proceed to Dialog migrations (12 modals)
 - Work on Card migrations (15-20 components)
 - Complete Table migrations (4 remaining)
 
 **Option 3**: Commit the uncommitted work
+
 - Phases 2-6 installations are uncommitted
 - Migration examples are uncommitted
 - Documentation is uncommitted
@@ -552,15 +565,18 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Critical Decision Points
 
 **Question 1**: Should we commit Phases 2-6 installations?
+
 - **Pros**: All components verified and working
 - **Cons**: Large commit, might want to commit by phase
 - **Recommendation**: Commit Phase 2 separately (Dialog focus)
 
 **Question 2**: Should we continue migrations or document first?
+
 - **Current state**: Some migrations done, many opportunities identified
 - **Recommendation**: Complete Phase 2 Dialog migrations (highest impact)
 
 **Question 3**: How to handle pre-existing test failures?
+
 - **Issue**: 9 failing tests in people page (unrelated to migration)
 - **Recommendation**: Fix in separate commit/PR
 
@@ -658,6 +674,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Documentation Files
 
 **Phase-Specific**:
+
 - `docs/shadcn-phase1-migration-log.md` - Phase 1 complete log
 - `docs/PHASE2-COMPLETION.md` - Phase 2 Dialog status
 - `docs/shadcn-phase2-dialogs.md` - Phase 2 detailed guide
@@ -667,6 +684,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 - `PHASE6-TOAST-SKELETON-TOOLTIP-PROGRESS.md` - Phase 6 complete guide
 
 **General**:
+
 - `docs/shadcn-svelte-migration-analysis.md` - Overall strategy
 - `docs/shadcn-remaining-migrations.md` - Remaining opportunities
 
@@ -678,6 +696,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 ### Migration Examples
 
 **Completed**:
+
 - `src/lib/components/vectors/DeleteConfirmationModal.shadcn.svelte`
 - `src/lib/components/CategoryCreateModal.shadcn.svelte`
 - `src/lib/components/training/JobsTable.svelte` (migrated in place)
@@ -695,6 +714,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Phase 1 Status**: ✅ **COMPLETE AND COMMITTED** (commit `2df4eb0`)
 
 **Overall Migration Status**: **30-40% complete**
+
 - Installation: 100% (all 21 components installed)
 - Migrations: ~10% complete (9 of ~90 opportunities)
 - Documentation: 100% (comprehensive guides for all phases)
@@ -703,6 +723,7 @@ According to `docs/shadcn-remaining-migrations.md`, there are **additional badge
 **Critical Insight**: The project has successfully completed Phase 1 AND installed all components for Phases 2-6. The next step is to systematically migrate existing components to use the new shadcn-svelte primitives.
 
 **Recommended Next Action**: Clarify user intent, then either:
+
 1. Complete Phase 2 Dialog migrations (12 modals, 6-8 hours)
 2. Complete Phase 1 remaining opportunities (badge, input, alert coverage)
 3. Commit uncommitted Phases 2-6 work

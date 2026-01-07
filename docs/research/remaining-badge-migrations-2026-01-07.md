@@ -27,6 +27,7 @@ After Phase 1 migration, **7 badge-like components** remain for conversion to sh
 **File**: `src/lib/components/faces/UnifiedPersonCard.svelte`
 **Lines**: 129-131, 290-317
 **Current Implementation**:
+
 ```svelte
 <span class="type-badge {getBadgeClass(person.type)}">
   {getBadgeLabel(person.type)}
@@ -64,12 +65,14 @@ After Phase 1 migration, **7 badge-like components** remain for conversion to sh
 ```
 
 **Recommended Badge Variant**:
+
 - **Identified** → `variant="default"` with custom green colors (or create `success` variant)
 - **Unidentified** → `variant="secondary"` with amber/orange styling
 - **Noise** → `variant="destructive"`
 - **Default** → `variant="outline"`
 
 **Migration Complexity**: **Medium**
+
 - Need to map person.type → Badge variant
 - 4 different color schemes
 - Custom styling may require shadcn variant extension
@@ -84,6 +87,7 @@ After Phase 1 migration, **7 badge-like components** remain for conversion to sh
 **Current Implementation**:
 
 **A) Status Badge (top-right corner)**:
+
 ```svelte
 <span class="px-2 py-1 text-xs font-medium rounded-full {statusColor()}">
   {liveSession.status}
@@ -103,19 +107,27 @@ let statusColor = $derived(() => {
 ```
 
 **B) Action Buttons** (these are buttons, not badges, but use badge-like styling):
+
 ```svelte
-<button class="px-3 py-1.5 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 disabled:opacity-50">
-  Pause
+<button
+	class="px-3 py-1.5 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 disabled:opacity-50"
+>
+	Pause
 </button>
-<button class="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50">
-  Resume
+<button
+	class="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50"
+>
+	Resume
 </button>
-<button class="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50">
-  Cancel
+<button
+	class="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50"
+>
+	Cancel
 </button>
 ```
 
 **Recommended Badge Variant**:
+
 - **Completed** → `variant="default"` with green colors (or `success` variant)
 - **Failed** → `variant="destructive"`
 - **Processing** → `variant="default"` (primary blue)
@@ -126,6 +138,7 @@ let statusColor = $derived(() => {
 **Note**: Action buttons should remain `<Button>` components (already using shadcn Button).
 
 **Migration Complexity**: **Simple**
+
 - Clear 6-state mapping to Badge variants
 - Badge is purely presentational (no interactions)
 - May need custom `success` and `warning` variants for green/yellow
@@ -137,6 +150,7 @@ let statusColor = $derived(() => {
 **File**: `src/lib/components/faces/CoverageIndicator.svelte`
 **Lines**: 20-23, 39-60
 **Current Implementation**:
+
 ```svelte
 {#if compact}
   <span class="coverage-compact {coverageClass()}">
@@ -170,11 +184,13 @@ let statusColor = $derived(() => {
 ```
 
 **Recommended Badge Variant**:
+
 - **High (≥80%)** → Custom `success` variant (green)
 - **Medium (≥50%)** → Custom `warning` variant (amber/orange)
 - **Low (<50%)** → `variant="destructive"` (red)
 
 **Migration Complexity**: **Simple**
+
 - 3 states with clear color mappings
 - Purely presentational
 - May need custom `success` and `warning` variants
@@ -188,6 +204,7 @@ let statusColor = $derived(() => {
 **Current Implementation**:
 
 **A) Confidence Badge (bottom-right corner)**:
+
 ```svelte
 <div class="confidence-badge" style="background-color: {confidenceColor}">
   {confidencePercent}%
@@ -216,6 +233,7 @@ const confidenceColor = $derived(
 ```
 
 **B) Status Badge (top-right corner, for non-pending suggestions)**:
+
 ```svelte
 <div class="status-badge {suggestion.status === 'accepted' ? 'accepted'
   : suggestion.status === 'rejected' ? 'rejected' : 'expired'}">
@@ -261,16 +279,19 @@ const confidenceColor = $derived(
 **Recommended Badge Variant**:
 
 **Confidence Badge**:
+
 - **High (≥90%)** → Custom `success` variant (green)
 - **Medium (≥80%)** → Custom `warning` variant (yellow)
 - **Low (<80%)** → `variant="secondary"` with orange styling
 
 **Status Badge**:
+
 - **Accepted** → `variant="default"` with green styling (or custom `success`)
 - **Rejected** → `variant="destructive"`
 - **Expired** → `variant="outline"` or `secondary`
 
 **Migration Complexity**: **Medium**
+
 - Two separate badges with different purposes
 - Confidence badge uses inline color computation (dynamic styling)
 - Status badge is circular (requires CSS override or custom variant)
@@ -278,6 +299,7 @@ const confidenceColor = $derived(
 - Icon content (✓, ✗, !) needs to work with Badge component
 
 **Special Considerations**:
+
 - shadcn Badge is `rounded-full` by default (good for status badge)
 - May need to extract color computation to separate function
 - Absolute positioning should be handled by wrapper div, not Badge component
@@ -289,6 +311,7 @@ const confidenceColor = $derived(
 **File**: `src/lib/components/faces/ClusterCard.svelte`
 **Lines**: 87-91, 165-173
 **Current Implementation**:
+
 ```svelte
 {#if cluster.clusterConfidence}
   <span class="confidence-badge" title="Intra-cluster similarity">
@@ -309,10 +332,12 @@ const confidenceColor = $derived(
 ```
 
 **Recommended Badge Variant**:
+
 - `variant="secondary"` with blue color scheme
 - Or `variant="outline"` with blue accent
 
 **Migration Complexity**: **Simple**
+
 - Single state, consistent styling
 - Purely informational
 - Standard badge use case
@@ -324,6 +349,7 @@ const confidenceColor = $derived(
 **File**: `src/lib/dev/DevOverlay.svelte`
 **Lines**: 94, 233-241
 **Current Implementation**:
+
 ```svelte
 <span class="dev-badge">DEV</span>
 
@@ -340,16 +366,19 @@ const confidenceColor = $derived(
 ```
 
 **Recommended Badge Variant**:
+
 - Custom variant with purple-pink gradient
 - Or `variant="default"` with custom gradient styling
 
 **Migration Complexity**: **Simple**
+
 - Development-only component
 - Unique gradient styling (may require CSS override)
 - Very small font size (9px)
 - Low priority (only visible in DEV mode)
 
 **Special Considerations**:
+
 - DEV-only component (not user-facing in production)
 - Unique visual identity (purple-pink gradient)
 - May want to keep as custom badge to preserve distinctive styling
@@ -362,6 +391,7 @@ const confidenceColor = $derived(
 **Lines**: 442, 516-517, 944-979, 1069-1079
 
 **A) Person Status Badge (header area)**:
+
 ```svelte
 <span class="status-badge status-{person.status}">{person.status}</span>
 
@@ -392,6 +422,7 @@ const confidenceColor = $derived(
 ```
 
 **B) Face Count Badge (photo cards, bottom-right overlay)**:
+
 ```svelte
 <span class="face-count-badge">
   {photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}
@@ -415,15 +446,18 @@ const confidenceColor = $derived(
 **Recommended Badge Variant**:
 
 **Person Status Badge**:
+
 - **Active** → Custom `success` variant (green)
 - **Merged** → `variant="secondary"` with blue styling
 - **Hidden** → `variant="outline"` or secondary gray
 
 **Face Count Badge**:
+
 - Custom dark variant with semi-transparent background
 - Or keep as custom styling (overlay badge on images)
 
 **Migration Complexity**: **Medium**
+
 - Status badge: 3 variants, needs uppercase text transformation
 - Face count badge: Unique overlay styling with backdrop blur, may be better as custom component
 
@@ -431,15 +465,15 @@ const confidenceColor = $derived(
 
 ## Migration Priority Matrix
 
-| Component | Priority | Complexity | Impact | Estimated Effort |
-|-----------|----------|------------|--------|------------------|
-| **UnifiedPersonCard** | High | Medium | High (used in People page) | 2 hours |
-| **FaceDetectionSessionCard** | High | Simple | Medium (Training tab) | 1 hour |
-| **Person Detail Page Badges** | Medium | Medium | Medium (single page) | 1.5 hours |
-| **SuggestionThumbnail** | Medium | Medium | Medium (Suggestions page) | 2 hours |
-| **ClusterCard** | Low | Simple | Low (Clusters page) | 30 min |
-| **CoverageIndicator** | Low | Simple | Low (Prototypes tab) | 30 min |
-| **DevOverlay** | Very Low | Simple | Very Low (DEV-only) | 30 min |
+| Component                     | Priority | Complexity | Impact                     | Estimated Effort |
+| ----------------------------- | -------- | ---------- | -------------------------- | ---------------- |
+| **UnifiedPersonCard**         | High     | Medium     | High (used in People page) | 2 hours          |
+| **FaceDetectionSessionCard**  | High     | Simple     | Medium (Training tab)      | 1 hour           |
+| **Person Detail Page Badges** | Medium   | Medium     | Medium (single page)       | 1.5 hours        |
+| **SuggestionThumbnail**       | Medium   | Medium     | Medium (Suggestions page)  | 2 hours          |
+| **ClusterCard**               | Low      | Simple     | Low (Clusters page)        | 30 min           |
+| **CoverageIndicator**         | Low      | Simple     | Low (Prototypes tab)       | 30 min           |
+| **DevOverlay**                | Very Low | Simple     | Very Low (DEV-only)        | 30 min           |
 
 **Total Estimated Effort**: ~8 hours
 
@@ -448,6 +482,7 @@ const confidenceColor = $derived(
 ## Recommended Migration Phases
 
 ### Phase 2A: High-Impact Person Components (3 hours)
+
 1. **UnifiedPersonCard** - Person type badge (2 hours)
    - Used extensively in People page
    - Needs custom `success` variant for green "Identified" state
@@ -459,6 +494,7 @@ const confidenceColor = $derived(
    - May need `success` and `warning` variants
 
 ### Phase 2B: Medium-Impact Detail Pages (3.5 hours)
+
 3. **Person Detail Page** - Status + face count badges (1.5 hours)
    - Status badge similar to UnifiedPersonCard
    - Face count badge may stay custom (overlay styling)
@@ -469,6 +505,7 @@ const confidenceColor = $derived(
    - Circular status badge with icons
 
 ### Phase 2C: Low-Impact Components (1.5 hours)
+
 5. **ClusterCard** - Confidence match badge (30 min)
    - Simple single-state badge
    - Standard Badge use case
@@ -488,6 +525,7 @@ const confidenceColor = $derived(
 Based on analysis, these custom Badge variants are needed:
 
 ### 1. Success Variant (Green)
+
 ```typescript
 success: {
   background: 'bg-green-100 dark:bg-green-900/30',
@@ -500,6 +538,7 @@ success: {
 **Used by**: UnifiedPersonCard (identified), FaceDetectionSessionCard (completed), Person status (active), CoverageIndicator (high), SuggestionThumbnail (high confidence)
 
 ### 2. Warning Variant (Amber/Orange)
+
 ```typescript
 warning: {
   background: 'bg-amber-100 dark:bg-amber-900/30',
@@ -512,15 +551,17 @@ warning: {
 **Used by**: UnifiedPersonCard (unidentified), FaceDetectionSessionCard (paused), CoverageIndicator (medium), SuggestionThumbnail (medium confidence)
 
 ### 3. Consider Adding to shadcn Badge Component
+
 Create `src/lib/components/ui/badge/badge.svelte` variants:
+
 ```typescript
 const variants = {
-  default: '...',
-  secondary: '...',
-  destructive: '...',
-  outline: '...',
-  success: '...',  // NEW
-  warning: '...'   // NEW
+	default: '...',
+	secondary: '...',
+	destructive: '...',
+	outline: '...',
+	success: '...', // NEW
+	warning: '...' // NEW
 };
 ```
 
@@ -529,55 +570,63 @@ const variants = {
 ## Migration Guidelines
 
 ### 1. Pattern: Dynamic Color Mapping
+
 For components with runtime color computation (e.g., SuggestionThumbnail confidence):
 
 **Before**:
+
 ```svelte
 <div class="confidence-badge" style="background-color: {confidenceColor}">
 ```
 
 **After**:
-```svelte
-<Badge variant={getConfidenceVariant(suggestion.confidence)}>
-  {confidencePercent}%
-</Badge>
 
+```svelte
 <script>
-function getConfidenceVariant(confidence: number): 'success' | 'warning' | 'secondary' {
-  if (confidence >= 0.9) return 'success';
-  if (confidence >= 0.8) return 'warning';
-  return 'secondary';
-}
+	function getConfidenceVariant(confidence: number): 'success' | 'warning' | 'secondary' {
+		if (confidence >= 0.9) return 'success';
+		if (confidence >= 0.8) return 'warning';
+		return 'secondary';
+	}
 </script>
+
+<Badge variant={getConfidenceVariant(suggestion.confidence)}>
+	{confidencePercent}%
+</Badge>
 ```
 
 ### 2. Pattern: Positioned Overlay Badges
+
 For absolutely positioned badges (e.g., face count on photo cards):
 
 **Keep wrapper div for positioning**:
+
 ```svelte
 <div class="absolute bottom-2 right-2">
-  <Badge variant="secondary" class="backdrop-blur-md bg-black/70 text-white">
-    {photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}
-  </Badge>
+	<Badge variant="secondary" class="backdrop-blur-md bg-black/70 text-white">
+		{photo.faceCount}
+		{photo.faceCount === 1 ? 'face' : 'faces'}
+	</Badge>
 </div>
 ```
 
 ### 3. Pattern: Icon Badges
+
 For badges with icon content (e.g., status badges with ✓, ✗):
 
 ```svelte
 <Badge variant={suggestion.status === 'accepted' ? 'success' : 'destructive'}>
-  {suggestion.status === 'accepted' ? '✓' : '✗'}
+	{suggestion.status === 'accepted' ? '✓' : '✗'}
 </Badge>
 ```
 
 ### 4. Pattern: Text Transformation
+
 For uppercase badges:
 
 ```svelte
 <Badge variant="secondary" class="uppercase">
-  {person.status}
+	{person.status}
 </Badge>
 ```
 
@@ -622,30 +671,33 @@ For each migrated component:
 ## Implementation Notes
 
 ### Custom Variant Extension
+
 Extend `src/lib/components/ui/badge/badge.svelte`:
 
 ```typescript
 const variants = cva(
-  // ... base classes
-  {
-    variants: {
-      variant: {
-        default: '...',
-        secondary: '...',
-        destructive: '...',
-        outline: '...',
-        success: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200',
-        warning: 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200'
-      }
-    }
-  }
+	// ... base classes
+	{
+		variants: {
+			variant: {
+				default: '...',
+				secondary: '...',
+				destructive: '...',
+				outline: '...',
+				success: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200',
+				warning: 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200'
+			}
+		}
+	}
 );
 ```
 
 ### Dark Mode Support
+
 Ensure custom variants have dark mode variants:
+
 ```typescript
-success: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+success: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
 ```
 
 ---
@@ -659,12 +711,14 @@ success: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
 - **Phase 2C (Low Priority)**: ClusterCard, CoverageIndicator, DevOverlay (1.5 hours)
 
 **Key Requirements**:
+
 - Add `success` and `warning` variants to shadcn Badge component
 - Preserve absolute positioning with wrapper divs
 - Handle dynamic color mapping with variant functions
 - Consider keeping some overlay badges as custom components
 
 **Next Steps**:
+
 1. Extend Badge component with `success` and `warning` variants
 2. Create migration branch: `feat/shadcn-phase2-badges`
 3. Start with high-priority components (UnifiedPersonCard, FaceDetectionSessionCard)

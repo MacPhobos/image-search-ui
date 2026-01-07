@@ -353,11 +353,7 @@ export function createMultiplePersons(count: number, startId: number = 1): Perso
 
 // Unified People Fixtures (for unified people view)
 
-import type {
-	UnifiedPersonResponse,
-	UnifiedPeopleListResponse,
-	PersonType
-} from '$lib/api/faces';
+import type { UnifiedPersonResponse, UnifiedPeopleListResponse, PersonType } from '$lib/api/faces';
 
 /**
  * Create a test UnifiedPersonResponse with sensible defaults
@@ -369,14 +365,19 @@ export function createUnifiedPerson(
 	const type: PersonType = overrides?.type ?? 'identified';
 	const name =
 		overrides?.name ??
-		(type === 'identified' ? 'John Doe' : type === 'noise' ? 'Unknown Faces' : 'Unidentified Person 1');
+		(type === 'identified'
+			? 'John Doe'
+			: type === 'noise'
+				? 'Unknown Faces'
+				: 'Unidentified Person 1');
 
 	const defaults: UnifiedPersonResponse = {
 		id,
 		name,
 		type,
 		faceCount: 10,
-		thumbnailUrl: type === 'identified' ? `http://localhost:8000/api/v1/images/${id}/thumbnail` : null,
+		thumbnailUrl:
+			type === 'identified' ? `http://localhost:8000/api/v1/images/${id}/thumbnail` : null,
 		confidence: type === 'unidentified' ? 0.85 : null
 	};
 

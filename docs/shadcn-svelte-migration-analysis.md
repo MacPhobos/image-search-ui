@@ -10,9 +10,11 @@
 ## Executive Summary
 
 ### Current State
+
 The Image Search UI project has a comprehensive custom component library built with Svelte 5 runes and custom CSS. The application includes **50+ components** organized into domain-specific folders (admin, faces, queues, training, vectors) with consistent patterns for modals, cards, tables, forms, and badges.
 
 ### Migration Opportunity
+
 **shadcn-svelte** offers a strong foundation for migrating custom UI components to a standardized, accessible, and maintainable component system. Based on analysis:
 
 - **High-impact replacements**: 35+ components (70%) can benefit from shadcn-svelte
@@ -22,6 +24,7 @@ The Image Search UI project has a comprehensive custom component library built w
 - **Quick wins**: Dialog, Button, Badge, Table, Input, Select (25+ component instances)
 
 ### Recommendation
+
 **Proceed with phased migration** starting with foundational components (Button, Badge, Input) followed by complex patterns (Dialog, Table, Select). Maintain custom components only for highly specialized features (face bounding boxes, temporal timeline, vector visualizations).
 
 ---
@@ -30,18 +33,19 @@ The Image Search UI project has a comprehensive custom component library built w
 
 ### Domain-Specific Organization
 
-| Domain | Component Count | Primary Patterns | Migration Priority |
-|--------|----------------|------------------|-------------------|
-| **Admin** | 6 components | Modals, settings panels, data management | Medium |
-| **Faces** | 14 components | Cards, thumbnails, modals, timelines | High |
-| **Queues** | 6 components | Tables, badges, status indicators | Medium |
-| **Training** | 10 components | Tables, progress bars, status badges, modals | High |
-| **Vectors** | 5 components | Tables, modals, danger zones | Medium |
-| **Core** | 9 components | Search, filters, categories, results, toast | High |
+| Domain       | Component Count | Primary Patterns                             | Migration Priority |
+| ------------ | --------------- | -------------------------------------------- | ------------------ |
+| **Admin**    | 6 components    | Modals, settings panels, data management     | Medium             |
+| **Faces**    | 14 components   | Cards, thumbnails, modals, timelines         | High               |
+| **Queues**   | 6 components    | Tables, badges, status indicators            | Medium             |
+| **Training** | 10 components   | Tables, progress bars, status badges, modals | High               |
+| **Vectors**  | 5 components    | Tables, modals, danger zones                 | Medium             |
+| **Core**     | 9 components    | Search, filters, categories, results, toast  | High               |
 
 ### Complete Component List
 
 #### Admin Components (`src/lib/components/admin/`)
+
 1. `AdminDataManagement.svelte` - Main admin panel container
 2. `DeleteAllDataModal.svelte` - Confirmation modal for destructive actions
 3. `ExportPersonDataModal.svelte` - Person data export dialog
@@ -50,6 +54,7 @@ The Image Search UI project has a comprehensive custom component library built w
 6. `PersonDataManagement.svelte` - Person-specific data operations
 
 #### Faces Components (`src/lib/components/faces/`)
+
 7. `ClusterCard.svelte` - Face cluster display card
 8. `CoverageIndicator.svelte` - Visual coverage metric
 9. `FaceDetectionSessionCard.svelte` - Session status card
@@ -68,6 +73,7 @@ The Image Search UI project has a comprehensive custom component library built w
 22. `UnifiedPersonCard.svelte` - Enhanced person card with actions
 
 #### Queues Components (`src/lib/components/queues/`)
+
 23. `ConnectionIndicator.svelte` - Real-time connection status
 24. `JobStatusBadge.svelte` - Job status badge (pending/running/completed/failed)
 25. `QueueCard.svelte` - Queue summary card
@@ -76,6 +82,7 @@ The Image Search UI project has a comprehensive custom component library built w
 28. `WorkerStatusBadge.svelte` - Worker status indicator
 
 #### Training Components (`src/lib/components/training/`)
+
 29. `CreateSessionModal.svelte` - Training session creation dialog
 30. `DirectoryBrowser.svelte` - File system directory selector
 31. `ETADisplay.svelte` - Estimated time remaining indicator
@@ -88,6 +95,7 @@ The Image Search UI project has a comprehensive custom component library built w
 38. `TrainingStats.svelte` - Statistics dashboard
 
 #### Vectors Components (`src/lib/components/vectors/`)
+
 39. `DangerZone.svelte` - Destructive action panel
 40. `DeleteConfirmationModal.svelte` - Deletion confirmation dialog
 41. `DeletionLogsTable.svelte` - Deletion history table
@@ -95,6 +103,7 @@ The Image Search UI project has a comprehensive custom component library built w
 43. `RetrainModal.svelte` - Vector retraining dialog
 
 #### Core Components (`src/lib/components/`)
+
 44. `CategoryBadge.svelte` - Category label with color
 45. `CategoryCreateModal.svelte` - Category creation dialog
 46. `CategoryEditModal.svelte` - Category edit dialog
@@ -109,12 +118,15 @@ The Image Search UI project has a comprehensive custom component library built w
 ## UI Pattern Analysis by Route
 
 ### Dashboard (`/`) - Main Search Page
+
 **Components Used**:
+
 - `SearchBar` - Text input + submit button
 - `FiltersPanel` - Date inputs, select dropdowns, person search
 - `ResultsGrid` - Image grid with loading states
 
 **UI Patterns**:
+
 - Form inputs (text, date)
 - Select dropdowns (categories)
 - Autocomplete dropdown (person filter)
@@ -123,6 +135,7 @@ The Image Search UI project has a comprehensive custom component library built w
 - Error alerts
 
 **shadcn-svelte Opportunities**:
+
 - `Input` → Search bar text input
 - `Calendar` → Date range picker (enhanced UX)
 - `Select` → Category dropdown
@@ -133,13 +146,16 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### People Page (`/people`, `/people/[id]`)
+
 **Components Used**:
+
 - `UnifiedPersonCard` - Person summary cards
 - `PersonPhotosTab` - Photo grid
 - `TemporalTimeline` - Age-based prototype visualization
 - Various modals for editing
 
 **UI Patterns**:
+
 - Card layouts
 - Avatar placeholders
 - Status badges
@@ -148,6 +164,7 @@ The Image Search UI project has a comprehensive custom component library built w
 - Modals
 
 **shadcn-svelte Opportunities**:
+
 - `Card` → Person cards
 - `Avatar` → Person avatars (instead of custom gradient circles)
 - `Badge` → Status badges (active, merged, hidden)
@@ -158,12 +175,15 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Face Clusters (`/faces/clusters`, `/faces/clusters/[id]`)
+
 **Components Used**:
+
 - `ClusterCard` - Face cluster cards
 - `LabelClusterModal` - Person assignment modal
 - `FaceThumbnail` - Face thumbnails
 
 **UI Patterns**:
+
 - Image cards
 - Modal dialogs
 - Search within modals
@@ -171,6 +191,7 @@ The Image Search UI project has a comprehensive custom component library built w
 - Empty states
 
 **shadcn-svelte Opportunities**:
+
 - `Card` → Cluster cards
 - `Dialog` → Label cluster modal
 - `Combobox` → Person search in modal
@@ -179,18 +200,22 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Face Suggestions (`/faces/suggestions`)
+
 **Components Used**:
+
 - `SuggestionGroupCard` - Grouped face suggestions
 - `SuggestionDetailModal` - Suggestion review modal
 - `PersonDropdown` - Person selector
 
 **UI Patterns**:
+
 - Grouped card layouts
 - Confidence scores
 - Autocomplete dropdowns
 - Accept/reject actions
 
 **shadcn-svelte Opportunities**:
+
 - `Card` → Suggestion cards
 - `Badge` → Confidence indicators
 - `Combobox` → Person dropdown (custom enhanced version)
@@ -200,7 +225,9 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Training Sessions (`/training`, `/training/[id]`)
+
 **Components Used**:
+
 - `TrainingSessionList` - Session list
 - `JobsTable` - Job listing table
 - `StatusBadge` - Status indicators
@@ -208,6 +235,7 @@ The Image Search UI project has a comprehensive custom component library built w
 - `CreateSessionModal` - Session creation modal
 
 **UI Patterns**:
+
 - Data tables with pagination
 - Progress bars
 - Status badges
@@ -215,6 +243,7 @@ The Image Search UI project has a comprehensive custom component library built w
 - Directory browser (file tree)
 
 **shadcn-svelte Opportunities**:
+
 - `Table` → Jobs table
 - `Badge` → Status badges
 - `Progress` → Progress bars
@@ -225,7 +254,9 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Queues Dashboard (`/queues`, `/queues/[name]`)
+
 **Components Used**:
+
 - `QueueCard` - Queue summary cards
 - `QueueJobsTable` - Job table
 - `JobStatusBadge` - Job status badges
@@ -233,12 +264,14 @@ The Image Search UI project has a comprehensive custom component library built w
 - `ConnectionIndicator` - Real-time status
 
 **UI Patterns**:
+
 - Status indicators
 - Data tables
 - Real-time updates (SSE)
 - Badges
 
 **shadcn-svelte Opportunities**:
+
 - `Card` → Queue cards
 - `Table` → Jobs table
 - `Badge` → Status badges (with variant support)
@@ -247,18 +280,22 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Categories Page (`/categories`)
+
 **Components Used**:
+
 - `CategoryBadge` - Category labels
 - `CategoryCreateModal` - Creation modal
 - `CategoryEditModal` - Edit modal
 - `CategorySelector` - Dropdown selector
 
 **UI Patterns**:
+
 - Badges with custom colors
 - Modals with forms
 - Dropdowns
 
 **shadcn-svelte Opportunities**:
+
 - `Badge` → Category badges (with color variants)
 - `Dialog` → Create/edit modals
 - `Select` → Category selector
@@ -269,18 +306,22 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Admin Panel (`/admin`)
+
 **Components Used**:
+
 - `AdminDataManagement` - Main panel
 - Various modals (delete, import, export)
 - `FaceMatchingSettings` - Settings panel
 
 **UI Patterns**:
+
 - Danger zones (destructive actions)
 - Confirmation modals
 - File uploads
 - Settings forms
 
 **shadcn-svelte Opportunities**:
+
 - `Alert` → Danger zone warnings
 - `AlertDialog` → Destructive action confirmations
 - `Dialog` → Import/export modals
@@ -290,7 +331,9 @@ The Image Search UI project has a comprehensive custom component library built w
 ---
 
 ### Vectors Page (`/vectors`)
+
 **Components Used**:
+
 - `DirectoryStatsTable` - Statistics table
 - `DeletionLogsTable` - Deletion history table
 - `DeleteConfirmationModal` - Confirmation modal
@@ -298,11 +341,13 @@ The Image Search UI project has a comprehensive custom component library built w
 - `DangerZone` - Destructive actions panel
 
 **UI Patterns**:
+
 - Data tables
 - Confirmation dialogs
 - Warning panels
 
 **shadcn-svelte Opportunities**:
+
 - `Table` → Statistics and logs tables
 - `AlertDialog` → Delete confirmation
 - `Dialog` → Retrain modal
@@ -315,71 +360,71 @@ The Image Search UI project has a comprehensive custom component library built w
 
 ### Direct Replacements (High Confidence)
 
-| Current Component | shadcn-svelte Component | Migration Effort | Impact |
-|-------------------|------------------------|------------------|--------|
-| `CategoryBadge` | `Badge` | Low | High (used in 10+ places) |
-| `training/StatusBadge` | `Badge` | Low | High (used in 15+ places) |
-| `queues/JobStatusBadge` | `Badge` | Low | Medium (5+ places) |
-| `queues/WorkerStatusBadge` | `Badge` | Low | Medium (3+ places) |
-| `training/ProgressBar` | `Progress` | Low | Medium (5+ places) |
-| `Toast` | `Toast` + `Sonner` | Medium | High (app-wide) |
-| `DeleteAllDataModal` | `AlertDialog` | Low | High (destructive actions) |
-| `DeleteConfirmationModal` | `AlertDialog` | Low | Medium |
-| Search input in `SearchBar` | `Input` | Low | High (main search) |
-| Date inputs in `FiltersPanel` | `Input` (type="date") or `Calendar` | Medium | Medium |
-| Category select in `FiltersPanel` | `Select` | Medium | Medium |
-| Buttons across all components | `Button` | Low | Very High (50+ instances) |
+| Current Component                 | shadcn-svelte Component             | Migration Effort | Impact                     |
+| --------------------------------- | ----------------------------------- | ---------------- | -------------------------- |
+| `CategoryBadge`                   | `Badge`                             | Low              | High (used in 10+ places)  |
+| `training/StatusBadge`            | `Badge`                             | Low              | High (used in 15+ places)  |
+| `queues/JobStatusBadge`           | `Badge`                             | Low              | Medium (5+ places)         |
+| `queues/WorkerStatusBadge`        | `Badge`                             | Low              | Medium (3+ places)         |
+| `training/ProgressBar`            | `Progress`                          | Low              | Medium (5+ places)         |
+| `Toast`                           | `Toast` + `Sonner`                  | Medium           | High (app-wide)            |
+| `DeleteAllDataModal`              | `AlertDialog`                       | Low              | High (destructive actions) |
+| `DeleteConfirmationModal`         | `AlertDialog`                       | Low              | Medium                     |
+| Search input in `SearchBar`       | `Input`                             | Low              | High (main search)         |
+| Date inputs in `FiltersPanel`     | `Input` (type="date") or `Calendar` | Medium           | Medium                     |
+| Category select in `FiltersPanel` | `Select`                            | Medium           | Medium                     |
+| Buttons across all components     | `Button`                            | Low              | Very High (50+ instances)  |
 
 ### Enhanced Replacements (Custom + shadcn-svelte)
 
-| Current Component | shadcn-svelte Base | Custom Enhancements | Migration Effort | Impact |
-|-------------------|-------------------|---------------------|------------------|--------|
-| `LabelClusterModal` | `Dialog` + `Combobox` | Person search logic | Medium | High |
-| `PersonPickerModal` | `Dialog` + `Combobox` | Multi-select, suggestions | Medium | Medium |
-| `PersonDropdown` | `Combobox` | Suggestion scoring, keyboard nav | High | High |
-| `CategorySelector` | `Select` | "Create new" option | Low | Medium |
-| `FiltersPanel` person search | `Combobox` | Selected person display | Medium | High |
-| `CreateSessionModal` | `Dialog` + `Form` | Directory browser integration | Medium | Medium |
-| `CategoryCreateModal` | `Dialog` + `Form` | Color picker | Medium | Low |
-| `CategoryEditModal` | `Dialog` + `Form` | Color picker | Medium | Low |
-| `ExportPersonDataModal` | `Dialog` + `Form` | Export options | Low | Low |
-| `ImportPersonDataModal` | `Dialog` + `Form` | File upload | Low | Low |
-| `RetrainModal` | `Dialog` + `Form` | Directory selection | Low | Low |
+| Current Component            | shadcn-svelte Base    | Custom Enhancements              | Migration Effort | Impact |
+| ---------------------------- | --------------------- | -------------------------------- | ---------------- | ------ |
+| `LabelClusterModal`          | `Dialog` + `Combobox` | Person search logic              | Medium           | High   |
+| `PersonPickerModal`          | `Dialog` + `Combobox` | Multi-select, suggestions        | Medium           | Medium |
+| `PersonDropdown`             | `Combobox`            | Suggestion scoring, keyboard nav | High             | High   |
+| `CategorySelector`           | `Select`              | "Create new" option              | Low              | Medium |
+| `FiltersPanel` person search | `Combobox`            | Selected person display          | Medium           | High   |
+| `CreateSessionModal`         | `Dialog` + `Form`     | Directory browser integration    | Medium           | Medium |
+| `CategoryCreateModal`        | `Dialog` + `Form`     | Color picker                     | Medium           | Low    |
+| `CategoryEditModal`          | `Dialog` + `Form`     | Color picker                     | Medium           | Low    |
+| `ExportPersonDataModal`      | `Dialog` + `Form`     | Export options                   | Low              | Low    |
+| `ImportPersonDataModal`      | `Dialog` + `Form`     | File upload                      | Low              | Low    |
+| `RetrainModal`               | `Dialog` + `Form`     | Directory selection              | Low              | Low    |
 
 ### Table Components (Medium Complexity)
 
-| Current Component | shadcn-svelte Base | Custom Columns | Migration Effort | Impact |
-|-------------------|-------------------|----------------|------------------|--------|
-| `JobsTable` (training) | `Table` + `Pagination` | Status, duration, error | Medium | High |
-| `QueueJobsTable` | `Table` + `Pagination` | Job ID, function, timestamps | Medium | High |
-| `DeletionLogsTable` | `Table` | Deletion details | Low | Low |
-| `DirectoryStatsTable` | `Table` | Directory, vector counts | Low | Medium |
+| Current Component      | shadcn-svelte Base     | Custom Columns               | Migration Effort | Impact |
+| ---------------------- | ---------------------- | ---------------------------- | ---------------- | ------ |
+| `JobsTable` (training) | `Table` + `Pagination` | Status, duration, error      | Medium           | High   |
+| `QueueJobsTable`       | `Table` + `Pagination` | Job ID, function, timestamps | Medium           | High   |
+| `DeletionLogsTable`    | `Table`                | Deletion details             | Low              | Low    |
+| `DirectoryStatsTable`  | `Table`                | Directory, vector counts     | Low              | Medium |
 
 ### Card Components (Low Complexity)
 
-| Current Component | shadcn-svelte Base | Custom Content | Migration Effort | Impact |
-|-------------------|-------------------|----------------|------------------|--------|
-| `PersonCard` | `Card` + `Avatar` + `Badge` | Stats display | Low | High |
-| `UnifiedPersonCard` | `Card` + `Avatar` + `Badge` | Action buttons | Low | High |
-| `ClusterCard` | `Card` | Thumbnail grid | Low | High |
-| `QueueCard` | `Card` + `Badge` | Queue stats | Low | Medium |
-| `SuggestionGroupCard` | `Card` | Confidence scores | Low | Medium |
-| `FaceDetectionSessionCard` | `Card` + `Badge` | Session details | Low | Low |
+| Current Component          | shadcn-svelte Base          | Custom Content    | Migration Effort | Impact |
+| -------------------------- | --------------------------- | ----------------- | ---------------- | ------ |
+| `PersonCard`               | `Card` + `Avatar` + `Badge` | Stats display     | Low              | High   |
+| `UnifiedPersonCard`        | `Card` + `Avatar` + `Badge` | Action buttons    | Low              | High   |
+| `ClusterCard`              | `Card`                      | Thumbnail grid    | Low              | High   |
+| `QueueCard`                | `Card` + `Badge`            | Queue stats       | Low              | Medium |
+| `SuggestionGroupCard`      | `Card`                      | Confidence scores | Low              | Medium |
+| `FaceDetectionSessionCard` | `Card` + `Badge`            | Session details   | Low              | Low    |
 
 ### Keep Custom (Highly Specialized)
 
-| Component | Reason | Notes |
-|-----------|--------|-------|
-| `ImageWithFaceBoundingBoxes` | Custom SVG overlay logic | Face detection visualization requires precise positioning |
-| `TemporalTimeline` | Complex timeline visualization | Age-based prototype timeline with custom rendering |
-| `FaceThumbnail` | Face-specific loading states | Batch loading, cache integration |
-| `SuggestionThumbnail` | Similar to FaceThumbnail | Face-specific concerns |
-| `DirectoryBrowser` | File tree navigation | Custom file system interaction |
-| `TrainingStats` | Dashboard metrics | Custom chart-like visualization |
-| `CoverageIndicator` | Visual metric display | Custom progress-like indicator |
-| `ConnectionIndicator` | Real-time SSE status | Custom WebSocket/SSE logic |
-| `ETADisplay` | Time remaining calculation | Simple, low complexity, keep as-is |
-| `ResultsGrid` | Image grid with lazy loading | Custom grid logic, keep as-is |
+| Component                    | Reason                         | Notes                                                     |
+| ---------------------------- | ------------------------------ | --------------------------------------------------------- |
+| `ImageWithFaceBoundingBoxes` | Custom SVG overlay logic       | Face detection visualization requires precise positioning |
+| `TemporalTimeline`           | Complex timeline visualization | Age-based prototype timeline with custom rendering        |
+| `FaceThumbnail`              | Face-specific loading states   | Batch loading, cache integration                          |
+| `SuggestionThumbnail`        | Similar to FaceThumbnail       | Face-specific concerns                                    |
+| `DirectoryBrowser`           | File tree navigation           | Custom file system interaction                            |
+| `TrainingStats`              | Dashboard metrics              | Custom chart-like visualization                           |
+| `CoverageIndicator`          | Visual metric display          | Custom progress-like indicator                            |
+| `ConnectionIndicator`        | Real-time SSE status           | Custom WebSocket/SSE logic                                |
+| `ETADisplay`                 | Time remaining calculation     | Simple, low complexity, keep as-is                        |
+| `ResultsGrid`                | Image grid with lazy loading   | Custom grid logic, keep as-is                             |
 
 ---
 
@@ -405,6 +450,7 @@ cat package.json | grep "@tailwindcss/vite"
 ```
 
 **Required Dependencies** (already present in this project):
+
 - ✅ `@tailwindcss/vite` - Tailwind CSS v4 Vite plugin
 - ✅ `tailwindcss` ^4.x
 - ✅ `svelte` ^5.x (Svelte 5 with runes)
@@ -440,11 +486,11 @@ The Tailwind team recommends using the Vite plugin instead of PostCSS. Update:
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 import { svelteTesting } from '@testing-library/svelte/vite';
-import tailwindcss from '@tailwindcss/vite';  // ADD THIS
+import tailwindcss from '@tailwindcss/vite'; // ADD THIS
 
 export default defineConfig({
 	plugins: [
-		tailwindcss(),    // ADD BEFORE sveltekit()
+		tailwindcss(), // ADD BEFORE sveltekit()
 		sveltekit(),
 		svelteTesting()
 	],
@@ -462,17 +508,17 @@ export default defineConfig({
 Create `src/app.css` (shadcn-svelte will generate most of this):
 
 ```css
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* shadcn-svelte will populate color variables here using OKLCH */
-  /* Base colors in OKLCH format for better color accuracy */
-  --color-background: oklch(100% 0 0);
-  --color-foreground: oklch(15% 0 0);
-  /* ... additional theme variables ... */
+	/* shadcn-svelte will populate color variables here using OKLCH */
+	/* Base colors in OKLCH format for better color accuracy */
+	--color-background: oklch(100% 0 0);
+	--color-foreground: oklch(15% 0 0);
+	/* ... additional theme variables ... */
 }
 
 /* Component-specific styles can be added here */
@@ -484,7 +530,7 @@ Add global CSS import at the top of the script section:
 
 ```svelte
 <script lang="ts">
-	import '../app.css';  // ADD THIS LINE
+	import '../app.css'; // ADD THIS LINE
 
 	// ... existing imports and code ...
 </script>
@@ -504,17 +550,17 @@ Expected structure:
 
 ```json
 {
-  "$schema": "https://shadcn-svelte.com/schema.json",
-  "style": "new-york",
-  "tailwind": {
-    "config": "",
-    "css": "src/app.css",
-    "baseColor": "slate"
-  },
-  "aliases": {
-    "components": "$lib/components/ui",
-    "utils": "$lib/utils"
-  }
+	"$schema": "https://shadcn-svelte.com/schema.json",
+	"style": "new-york",
+	"tailwind": {
+		"config": "",
+		"css": "src/app.css",
+		"baseColor": "slate"
+	},
+	"aliases": {
+		"components": "$lib/components/ui",
+		"utils": "$lib/utils"
+	}
 }
 ```
 
@@ -527,6 +573,7 @@ npx shadcn-svelte@latest add button
 ```
 
 This creates `src/lib/components/ui/button/` directory with:
+
 - `button.svelte` - Button component
 - `index.ts` - Type exports
 
@@ -556,9 +603,17 @@ Create `src/routes/shadcn-test/+page.svelte`:
 		<Button size="default">Default</Button>
 		<Button size="lg">Large</Button>
 		<Button size="icon">
-			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M5 12h14"/>
-				<path d="m12 5 7 7-7 7"/>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<path d="M5 12h14" />
+				<path d="m12 5 7 7-7 7" />
 			</svg>
 		</Button>
 	</div>
@@ -573,6 +628,7 @@ make dev
 ```
 
 Visit `http://localhost:5173/shadcn-test` and verify:
+
 - ✅ All button variants render with correct styling
 - ✅ Buttons have proper hover/focus states
 - ✅ No console errors related to Tailwind or shadcn-svelte
@@ -712,6 +768,7 @@ make test
 #### Success Criteria
 
 ✅ **Phase 0 Complete When**:
+
 1. All verification checklist items are complete
 2. Test button component renders correctly
 3. No TypeScript errors introduced
@@ -728,6 +785,7 @@ make test
 **Prerequisites**: ✅ Phase 0 completed successfully
 
 1. **Add Core Components**
+
    ```bash
    npx shadcn-svelte@latest add badge
    npx shadcn-svelte@latest add input
@@ -758,6 +816,7 @@ make test
    - **Outcome**: Consistent error display
 
 **Estimated Impact**:
+
 - **Code Reduction**: ~400 lines of custom CSS removed
 - **Consistency**: Unified styling for 100+ UI elements
 - **Accessibility**: Automatic ARIA attributes for inputs
@@ -902,6 +961,7 @@ it('search bar uses shadcn Button component', () => {
 **Visual Regression Tests** (Manual):
 
 After migration, verify on these pages:
+
 1. **Dashboard** (`/`): Search button, clear button, category badges
 2. **Training** (`/training`): Status badges (pending, running, completed, failed)
 3. **Queues** (`/queues`): Job status badges, worker status badges
@@ -911,6 +971,7 @@ After migration, verify on these pages:
 **Accessibility Tests**:
 
 Run Lighthouse accessibility audit on:
+
 - Dashboard search interface (keyboard navigation for search)
 - Training page (status badges have sufficient color contrast)
 - Any page with form inputs (labels properly associated)
@@ -953,12 +1014,14 @@ make dev
 **Rollback Criteria**:
 
 If Phase 1 migration causes:
+
 - ❌ More than 3 visual regressions on key pages
 - ❌ Accessibility score drops below 90
 - ❌ More than 10% of existing tests fail
 - ❌ Any critical user workflow breaks (search, create session, etc.)
 
 Then rollback by:
+
 ```bash
 git checkout src/lib/components/  # Revert component changes
 make test                         # Verify tests pass again
@@ -971,6 +1034,7 @@ make test                         # Verify tests pass again
 **Goal**: Replace all modal dialogs with shadcn Dialog/AlertDialog
 
 1. **Add Dialog Components**
+
    ```bash
    npx shadcn-svelte@latest add dialog
    npx shadcn-svelte@latest add alert-dialog
@@ -999,6 +1063,7 @@ make test                         # Verify tests pass again
    - **Outcome**: Enhanced UX with better focus management
 
 **Estimated Impact**:
+
 - **Code Reduction**: ~800 lines of modal CSS/structure removed
 - **Accessibility**: Focus trapping, ESC key handling, ARIA attributes
 - **Consistency**: All modals follow same interaction pattern
@@ -1141,6 +1206,7 @@ it('modal uses shadcn Dialog component', () => {
 **Accessibility Tests**:
 
 Focus management verification:
+
 1. **Tab trapping**: When modal opens, tab cycles within modal only
 2. **Focus restoration**: When modal closes, focus returns to trigger element
 3. **ARIA attributes**: `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
@@ -1175,6 +1241,7 @@ make dev
 **Rollback Criteria**:
 
 If Phase 2 causes:
+
 - ❌ Focus trapping breaks (focus escapes modal)
 - ❌ More than 5 modal-related test failures
 - ❌ Critical modal workflows break (delete, create, edit)
@@ -1187,6 +1254,7 @@ If Phase 2 causes:
 **Goal**: Standardize all form controls and dropdowns
 
 1. **Add Form Components**
+
    ```bash
    npx shadcn-svelte@latest add form
    npx shadcn-svelte@latest add select
@@ -1197,9 +1265,11 @@ If Phase 2 causes:
    ```
 
 2. **Integrate Formsnap** (Svelte 5 form library)
+
    ```bash
    npm install formsnap sveltekit-superforms zod
    ```
+
    - Use for category create/edit forms
    - Use for training session creation
    - Use for admin settings
@@ -1220,6 +1290,7 @@ If Phase 2 causes:
    - **Outcome**: Better UX than native date input
 
 **Estimated Impact**:
+
 - **Code Reduction**: ~400 lines of custom select/dropdown code
 - **UX Improvement**: Better keyboard navigation, search-as-you-type
 - **Type Safety**: Formsnap + Zod validation
@@ -1413,6 +1484,7 @@ describe('Form Validation with Formsnap + Zod', () => {
 **Rollback Criteria**:
 
 If Phase 3 causes:
+
 - ❌ Select/Combobox keyboard navigation breaks
 - ❌ Form validation fails to show errors
 - ❌ Person filter search breaks
@@ -1425,6 +1497,7 @@ If Phase 3 causes:
 **Goal**: Standardize all data tables with pagination
 
 1. **Add Table Component**
+
    ```bash
    npx shadcn-svelte@latest add table
    npx shadcn-svelte@latest add pagination
@@ -1445,6 +1518,7 @@ If Phase 3 causes:
    - **Outcome**: Minimal custom code
 
 **Estimated Impact**:
+
 - **Code Reduction**: ~300 lines of table CSS removed
 - **Consistency**: All tables have same look/feel
 - **Features**: Built-in sorting, better responsive design
@@ -1568,6 +1642,7 @@ it('displays pagination controls', () => {
 **Rollback Criteria**:
 
 If Phase 4 causes:
+
 - ❌ Table pagination breaks
 - ❌ More than 15% of table tests fail
 - ❌ Tables don't render data correctly
@@ -1580,6 +1655,7 @@ If Phase 4 causes:
 **Goal**: Replace card layouts and enhance with Avatar
 
 1. **Add Remaining Components**
+
    ```bash
    npx shadcn-svelte@latest add card
    npx shadcn-svelte@latest add avatar
@@ -1610,6 +1686,7 @@ If Phase 4 causes:
    - **Outcome**: Better keyboard navigation, ARIA support
 
 **Estimated Impact**:
+
 - **Code Reduction**: ~350 lines of card/avatar CSS removed
 - **Consistency**: Unified card design across app
 - **Accessibility**: Better tab navigation
@@ -1797,6 +1874,7 @@ describe('Tabs Migration - Person Detail Page', () => {
 **Rollback Criteria**:
 
 If Phase 5 causes:
+
 - ❌ Card layouts break visually
 - ❌ Avatar fallbacks don't work
 - ❌ Tab keyboard navigation breaks
@@ -1809,6 +1887,7 @@ If Phase 5 causes:
 **Goal**: Optional enhancements and refinements
 
 1. **Add Advanced Components**
+
    ```bash
    npx shadcn-svelte@latest add toast
    npx shadcn-svelte@latest add sonner
@@ -1834,6 +1913,7 @@ If Phase 5 causes:
    - Update tests to match new component structure
 
 **Estimated Impact**:
+
 - **UX Improvement**: Better loading states, tooltips
 - **Polish**: Consistent animations, transitions
 
@@ -2002,6 +2082,7 @@ du -h build/
 **Rollback Criteria**:
 
 If Phase 6 causes:
+
 - ❌ Bundle size increases >10KB
 - ❌ Toast notifications don't appear
 - ❌ Skeleton loading states break layout
@@ -2069,12 +2150,14 @@ make lint
 After each phase, manually verify:
 
 **Visual Tests**:
+
 - [ ] No visual regressions on key pages
 - [ ] All variants render correctly (primary, secondary, destructive, etc.)
 - [ ] Hover/focus states work properly
 - [ ] Responsive design works on mobile (test at 375px, 768px, 1024px)
 
 **Accessibility Tests**:
+
 - [ ] Keyboard navigation works (Tab, Enter, ESC, Arrow keys)
 - [ ] Screen reader announces elements correctly
 - [ ] Focus indicators are visible
@@ -2082,6 +2165,7 @@ After each phase, manually verify:
 - [ ] Lighthouse accessibility score ≥95
 
 **Browser Compatibility**:
+
 - [ ] Chrome/Edge (latest)
 - [ ] Firefox (latest)
 - [ ] Safari (latest - macOS/iOS)
@@ -2092,32 +2176,35 @@ After each phase, manually verify:
 
 ### Timeline Overview
 
-| Phase | Duration | Focus Area | Components Migrated | Code Reduction | Test Files |
-|-------|----------|-----------|---------------------|----------------|-----------|
-| **Phase 0** | 2 hours | Installation & Setup | 1 test component | 0 lines | 1 test file |
-| **Phase 1** | 2 weeks | Foundation (Button, Badge, Input) | 25+ instances | ~400 lines | 3 test files |
-| **Phase 2** | 2 weeks | Dialogs & Modals | 15 modals | ~800 lines | 2 test files |
-| **Phase 3** | 2 weeks | Forms & Selects | 10+ form controls | ~400 lines | 3 test files |
-| **Phase 4** | 2 weeks | Tables & Data Display | 5 tables | ~300 lines | 1 test file |
-| **Phase 5** | 2 weeks | Cards & Complex Components | 10+ cards | ~350 lines | 2 test files |
-| **Phase 6** | 2 weeks | Advanced Enhancements | Toast, Skeleton, Tooltip | ~150 lines | 3 test files |
-| **Total** | **~12 weeks** | Full migration | **65+ components** | **~2,400 lines** | **15 test files** |
+| Phase       | Duration      | Focus Area                        | Components Migrated      | Code Reduction   | Test Files        |
+| ----------- | ------------- | --------------------------------- | ------------------------ | ---------------- | ----------------- |
+| **Phase 0** | 2 hours       | Installation & Setup              | 1 test component         | 0 lines          | 1 test file       |
+| **Phase 1** | 2 weeks       | Foundation (Button, Badge, Input) | 25+ instances            | ~400 lines       | 3 test files      |
+| **Phase 2** | 2 weeks       | Dialogs & Modals                  | 15 modals                | ~800 lines       | 2 test files      |
+| **Phase 3** | 2 weeks       | Forms & Selects                   | 10+ form controls        | ~400 lines       | 3 test files      |
+| **Phase 4** | 2 weeks       | Tables & Data Display             | 5 tables                 | ~300 lines       | 1 test file       |
+| **Phase 5** | 2 weeks       | Cards & Complex Components        | 10+ cards                | ~350 lines       | 2 test files      |
+| **Phase 6** | 2 weeks       | Advanced Enhancements             | Toast, Skeleton, Tooltip | ~150 lines       | 3 test files      |
+| **Total**   | **~12 weeks** | Full migration                    | **65+ components**       | **~2,400 lines** | **15 test files** |
 
 ### Migration Strategy
 
 **Approach**: **Incremental Replacement**
+
 - Migrate one domain at a time (e.g., start with Training, then Queues)
 - Keep old components alongside new until fully tested
 - Update tests incrementally
 - Use feature flags for gradual rollout
 
 **Testing Strategy**:
+
 - Update component tests to use shadcn-svelte components
 - Verify accessibility with screen readers
 - Test keyboard navigation thoroughly
 - Ensure no visual regressions
 
 **Rollback Plan**:
+
 - Keep custom components in `src/lib/components/legacy/` during transition
 - Use import aliases to switch between old/new easily
 - Each phase can be reverted independently
@@ -2127,21 +2214,25 @@ After each phase, manually verify:
 ## Risk Assessment
 
 ### Low Risk
+
 - **Button, Badge, Input replacements**: Straightforward, well-documented
 - **AlertDialog for confirmations**: Direct pattern match
 - **Progress bars**: Simple prop mapping
 
 ### Medium Risk
+
 - **Table migrations**: May need custom column renderers
 - **Form migrations with Formsnap**: Learning curve for new form library
 - **Select/Combobox**: Backend data loading patterns need preserved
 
 ### High Risk
+
 - **PersonDropdown**: Complex suggestion logic, may need wrapper component
 - **DirectoryBrowser**: File tree may be too custom for shadcn components
 - **Temporal timeline**: Highly specialized, unlikely to benefit from migration
 
 ### Mitigation Strategies
+
 1. **Start with low-risk components** to build confidence
 2. **Create custom wrapper components** for complex patterns (PersonDropdown)
 3. **Keep specialized components custom** (timeline, bounding boxes, directory browser)
@@ -2153,18 +2244,21 @@ After each phase, manually verify:
 ## Benefits Summary
 
 ### Developer Experience
+
 - **Reduced maintenance**: Less custom CSS to maintain
 - **Faster development**: Pre-built components for new features
 - **Better documentation**: shadcn-svelte docs + examples
 - **Type safety**: TypeScript-first components
 
 ### User Experience
+
 - **Accessibility**: Automatic ARIA attributes, keyboard navigation
 - **Consistency**: Unified design system
 - **Performance**: Optimized animations, focus management
 - **Mobile-friendly**: Better responsive defaults
 
 ### Code Quality
+
 - **Less code**: ~2,400 lines of custom CSS/components removed
 - **Better tests**: Easier to test with standard patterns
 - **Svelte 5 runes**: Modern reactivity patterns
@@ -2175,12 +2269,14 @@ After each phase, manually verify:
 ## Next Steps
 
 ### Immediate Actions (Pre-Migration)
+
 1. **Review shadcn-svelte documentation**: Familiarize team with component APIs
 2. **Audit current component usage**: Confirm inventory with code search
 3. **Set up testing environment**: Ensure component tests work with shadcn-svelte
 4. **Create migration branch**: `feature/shadcn-svelte-migration`
 
 ### Week 1 Kickoff
+
 1. **Install shadcn-svelte**: Run init command, configure Tailwind
 2. **Add Button, Badge, Input**: First three components
 3. **Create demo page**: Test new components in isolation
@@ -2188,6 +2284,7 @@ After each phase, manually verify:
 5. **Team review**: Gather feedback before proceeding
 
 ### Success Criteria
+
 - [ ] All existing tests pass with new components
 - [ ] No visual regressions (screenshot comparison)
 - [ ] Accessibility score maintained or improved (Lighthouse)
@@ -2199,29 +2296,30 @@ After each phase, manually verify:
 ## Appendix: Component Complexity Matrix
 
 ### Complexity Scoring
+
 - **Low** (1-2 points): Simple prop passing, minimal logic
 - **Medium** (3-5 points): State management, event handling, moderate logic
 - **High** (6+ points): Complex state, animations, custom rendering
 
-| Component | Complexity | Lines of Code | Migration Effort | Priority |
-|-----------|-----------|---------------|------------------|----------|
-| `CategoryBadge` | Low (1) | 69 | Low | High |
-| `training/StatusBadge` | Low (1) | 86 | Low | High |
-| `training/ProgressBar` | Low (2) | 53 | Low | Medium |
-| `Toast` | Low (2) | 79 | Low | High |
-| `SearchBar` | Low (2) | 127 | Low | High |
-| `DeleteConfirmationModal` | Medium (3) | ~200 | Low | Medium |
-| `CategorySelector` | Medium (3) | 143 | Medium | Medium |
-| `PersonCard` | Medium (3) | 207 | Low | High |
-| `ClusterCard` | Medium (4) | ~250 | Low | High |
-| `LabelClusterModal` | Medium (4) | 480 | Medium | High |
-| `JobsTable` | Medium (4) | 191 | Medium | High |
-| `QueueJobsTable` | Medium (4) | 211 | Medium | High |
-| `PersonDropdown` | High (7) | 653 | High | High |
-| `FiltersPanel` | High (6) | 577 | High | High |
-| `TemporalTimeline` | High (8) | ~400 | N/A (keep custom) | N/A |
-| `ImageWithFaceBoundingBoxes` | High (7) | ~300 | N/A (keep custom) | N/A |
-| `DirectoryBrowser` | High (6) | ~250 | N/A (keep custom) | N/A |
+| Component                    | Complexity | Lines of Code | Migration Effort  | Priority |
+| ---------------------------- | ---------- | ------------- | ----------------- | -------- |
+| `CategoryBadge`              | Low (1)    | 69            | Low               | High     |
+| `training/StatusBadge`       | Low (1)    | 86            | Low               | High     |
+| `training/ProgressBar`       | Low (2)    | 53            | Low               | Medium   |
+| `Toast`                      | Low (2)    | 79            | Low               | High     |
+| `SearchBar`                  | Low (2)    | 127           | Low               | High     |
+| `DeleteConfirmationModal`    | Medium (3) | ~200          | Low               | Medium   |
+| `CategorySelector`           | Medium (3) | 143           | Medium            | Medium   |
+| `PersonCard`                 | Medium (3) | 207           | Low               | High     |
+| `ClusterCard`                | Medium (4) | ~250          | Low               | High     |
+| `LabelClusterModal`          | Medium (4) | 480           | Medium            | High     |
+| `JobsTable`                  | Medium (4) | 191           | Medium            | High     |
+| `QueueJobsTable`             | Medium (4) | 211           | Medium            | High     |
+| `PersonDropdown`             | High (7)   | 653           | High              | High     |
+| `FiltersPanel`               | High (6)   | 577           | High              | High     |
+| `TemporalTimeline`           | High (8)   | ~400          | N/A (keep custom) | N/A      |
+| `ImageWithFaceBoundingBoxes` | High (7)   | ~300          | N/A (keep custom) | N/A      |
+| `DirectoryBrowser`           | High (6)   | ~250          | N/A (keep custom) | N/A      |
 
 ---
 
@@ -2271,6 +2369,7 @@ The migration to shadcn-svelte represents a **high-value, medium-effort investme
 ### Test Cases Added to Each Phase
 
 **Phase 1: Foundation**
+
 - Badge migration tests (3 test cases)
 - Button migration tests (4 test cases)
 - Input + Label migration tests (3 test cases)
@@ -2279,6 +2378,7 @@ The migration to shadcn-svelte represents a **high-value, medium-effort investme
 - **15 test files total across all phases**
 
 **Phase 2: Dialogs & Modals**
+
 - Dialog migration tests (ESC, backdrop, focus management)
 - AlertDialog tests (destructive actions)
 - Integration tests for CategoryCreateModal
@@ -2286,24 +2386,28 @@ The migration to shadcn-svelte represents a **high-value, medium-effort investme
 - Keyboard navigation tests
 
 **Phase 3: Forms & Selects**
+
 - Select migration tests (options, keyboard nav)
 - Combobox tests (filtering, search-as-you-type)
 - Formsnap + Zod validation tests
 - Integration tests for FiltersPanel
 
 **Phase 4: Tables & Data Display**
+
 - Table component tests (semantic HTML)
 - Pagination tests
 - Integration tests for JobsTable
 - Responsive design verification
 
 **Phase 5: Cards & Complex Components**
+
 - Card component tests (header, content, footer)
 - Avatar tests (image, fallback)
 - Tabs tests (keyboard navigation, arrow keys)
 - Integration tests for PersonCard
 
 **Phase 6: Advanced Enhancements**
+
 - Toast/Sonner tests (auto-dismiss, variants)
 - Skeleton loading state tests
 - Tooltip tests (hover, positioning)
@@ -2312,6 +2416,7 @@ The migration to shadcn-svelte represents a **high-value, medium-effort investme
 ### Testing Strategy Overview (NEW)
 
 Added comprehensive testing strategy section:
+
 - **Test Organization**: 15 test files in `src/tests/shadcn/` directory
 - **Test Execution Commands**: Phase-specific and full suite commands
 - **Manual Testing Checklist**: Visual, accessibility, browser compatibility
@@ -2320,15 +2425,15 @@ Added comprehensive testing strategy section:
 
 ### Updated Timeline
 
-| Phase | Duration | Test Files | Acceptance Criteria |
-|-------|----------|-----------|-------------------|
-| Phase 0 | 2 hours | 1 | 11-point checklist, 6 success criteria |
-| Phase 1 | 2 weeks | 3 | 10-point checklist |
-| Phase 2 | 2 weeks | 2 | 9-point checklist |
-| Phase 3 | 2 weeks | 3 | 8-point checklist |
-| Phase 4 | 2 weeks | 1 | 7-point checklist |
-| Phase 5 | 2 weeks | 2 | 6-point checklist |
-| Phase 6 | 2 weeks | 3 | 8-point checklist |
+| Phase   | Duration | Test Files | Acceptance Criteria                    |
+| ------- | -------- | ---------- | -------------------------------------- |
+| Phase 0 | 2 hours  | 1          | 11-point checklist, 6 success criteria |
+| Phase 1 | 2 weeks  | 3          | 10-point checklist                     |
+| Phase 2 | 2 weeks  | 2          | 9-point checklist                      |
+| Phase 3 | 2 weeks  | 3          | 8-point checklist                      |
+| Phase 4 | 2 weeks  | 1          | 7-point checklist                      |
+| Phase 5 | 2 weeks  | 2          | 6-point checklist                      |
+| Phase 6 | 2 weeks  | 3          | 8-point checklist                      |
 
 **Total**: ~12 weeks + 2 hours initial setup
 
@@ -2357,6 +2462,7 @@ To begin migration:
 **Last Updated**: 2026-01-06
 **Version**: 2.0 (Amended with Phase 0 and Test Cases)
 **Changes**:
+
 - Added Phase 0: Installation & Setup
 - Added test cases for all phases (Phases 1-6)
 - Added Testing Strategy Overview section

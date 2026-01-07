@@ -83,8 +83,8 @@
 				<Alert.Title>Export Person-to-Face Mappings</Alert.Title>
 				<Alert.Description>
 					<p class="mb-2">
-						This will export all persons and their associated face-to-image mappings as a JSON
-						file. The export includes:
+						This will export all persons and their associated face-to-image mappings as a JSON file.
+						The export includes:
 					</p>
 					<ul class="list-disc list-inside space-y-1 text-sm">
 						<li>Person names and statuses</li>
