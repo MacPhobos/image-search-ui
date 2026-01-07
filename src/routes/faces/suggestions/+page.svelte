@@ -32,9 +32,20 @@
 	async function loadPersons() {
 		personsLoading = true;
 		try {
-			// Fetch all active persons (paginate if needed, but assuming reasonable count)
-			const response = await listPersons(1, 1000, 'active');
-			persons = response.items;
+			// Fetch all active persons with pagination (API limits page_size to 100)
+			const allPersons: Person[] = [];
+			let currentPage = 1;
+			const pageSize = 100;
+			let hasMore = true;
+
+			while (hasMore) {
+				const response = await listPersons(currentPage, pageSize, 'active');
+				allPersons.push(...response.items);
+				hasMore = response.items.length === pageSize && allPersons.length < response.total;
+				currentPage++;
+			}
+
+			persons = allPersons;
 		} catch (e) {
 			console.error('Failed to load persons:', e);
 			persons = [];
