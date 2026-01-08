@@ -5,6 +5,7 @@
 	import CategorySelector from '../CategorySelector.svelte';
 	import CategoryCreateModal from '../CategoryCreateModal.svelte';
 	import { onMount } from 'svelte';
+	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -19,11 +20,11 @@
 
 	let { open = $bindable(false), onClose, onSessionCreated }: Props = $props();
 
-	// Storage keys for persisting last used values (per-user scope for future auth)
-	const STORAGE_KEYS = {
-		LAST_ROOT_PATH: 'training.lastRootPath',
-		LAST_CATEGORY_ID: 'training.lastCategoryId'
-	};
+	// Storage keys for persisting last used values (keep same names for backward compatibility)
+	const KEYS = {
+		ROOT_PATH: 'training.lastRootPath',
+		CATEGORY_ID: 'training.lastCategoryId'
+	} as const;
 
 	let sessionName = $state('');
 	let rootPath = $state('');
@@ -35,25 +36,10 @@
 	let showCategoryModal = $state(false);
 	let categorySelectorRef: any; // Component reference for refresh
 
-	// Load last-used values from localStorage on mount
+	// Load last-used values from localSettings on mount
 	onMount(() => {
-		try {
-			const lastRootPath = localStorage.getItem(STORAGE_KEYS.LAST_ROOT_PATH);
-			if (lastRootPath) {
-				rootPath = lastRootPath;
-			}
-
-			const lastCategoryId = localStorage.getItem(STORAGE_KEYS.LAST_CATEGORY_ID);
-			if (lastCategoryId) {
-				const categoryIdNum = parseInt(lastCategoryId, 10);
-				if (!isNaN(categoryIdNum)) {
-					categoryId = categoryIdNum;
-				}
-			}
-		} catch (err) {
-			// Ignore localStorage errors (private browsing, quota exceeded)
-			console.warn('Failed to load last-used values from localStorage:', err);
-		}
+		rootPath = localSettings.get(KEYS.ROOT_PATH, '');
+		categoryId = localSettings.get<number | null>(KEYS.CATEGORY_ID, null);
 	});
 
 	async function handleNextStep() {
@@ -91,15 +77,10 @@
 		error = null;
 
 		try {
-			// Save to localStorage for next time
-			try {
-				localStorage.setItem(STORAGE_KEYS.LAST_ROOT_PATH, rootPath);
-				if (categoryId !== null) {
-					localStorage.setItem(STORAGE_KEYS.LAST_CATEGORY_ID, categoryId.toString());
-				}
-			} catch (err) {
-				// Ignore save errors
-				console.warn('Failed to save last-used values to localStorage:', err);
+			// Save to localSettings for next time
+			localSettings.set(KEYS.ROOT_PATH, rootPath);
+			if (categoryId !== null) {
+				localSettings.set(KEYS.CATEGORY_ID, categoryId);
 			}
 
 			const session = await createSession({

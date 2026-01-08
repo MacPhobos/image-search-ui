@@ -67,6 +67,7 @@ src/
 │   │   ├── training/      # Training session components
 │   │   └── vectors/       # Vector management components
 │   ├── stores/
+│   │   ├── localSettings.svelte.ts   # Browser localStorage for UI preferences
 │   │   └── thumbnailCache.svelte.ts  # Svelte 5 runes-based thumbnail cache
 │   ├── dev/
 │   │   ├── DevOverlay.svelte  # Development route debugger (DEV-only)
@@ -127,6 +128,35 @@ let groupedSuggestions = $derived(suggestions.reduce(...));  // Error-prone
 - **Local state first**: Use `$state` in components
 - **Shared state**: Use runes-based stores (see `thumbnailCache.svelte.ts`)
 - **No writable stores**: Prefer Svelte 5 runes pattern over legacy stores
+- **UI preferences**: Use `localSettings` store for browser localStorage persistence
+
+### Local Storage for UI Preferences
+
+🟡 **Use `localSettings` for persisting UI state** (sort orders, view modes, last-used values):
+
+```typescript
+import { localSettings } from '$lib/stores/localSettings.svelte';
+
+// Define key and type at point of use (no central registry)
+const SORT_KEY = 'search.sortOrder';
+type SortOrder = 'relevance' | 'date_asc' | 'date_desc';
+
+// Get with default (lazy-loads from localStorage)
+let sortOrder = $derived(localSettings.get<SortOrder>(SORT_KEY, 'relevance'));
+
+// Set (persists immediately)
+localSettings.set(SORT_KEY, 'date_desc');
+```
+
+🟢 **Key naming convention**: `domain.settingName` (e.g., `training.lastRootPath`, `people.viewMode`)
+
+🟢 **Features**:
+- SSR-safe (handles server-side rendering)
+- Namespaced (`image-search.` prefix) to avoid conflicts
+- Automatic JSON serialization for objects/arrays
+- Error resilient (graceful handling of private browsing)
+
+🔴 **NOT for backend settings** - Use Admin Settings for database-stored configuration.
 
 ### Pages (`src/routes/`)
 
@@ -158,6 +188,7 @@ let groupedSuggestions = $derived(suggestions.reduce(...));  // Error-prone
 
 - **Components**: `src/tests/components/{ComponentName}.test.ts`
 - **Routes/Pages**: `src/tests/routes/{route}.test.ts`
+- **Stores**: `src/tests/stores/{storeName}.test.ts`
 - **Utilities**: `src/tests/api-client.test.ts`, etc.
 - **Helpers**: `src/tests/helpers/` (shared test utilities)
 
@@ -258,6 +289,7 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 
 🟡 **Recent Patterns** (Last 30 Days):
 
+- **localStorage UI settings** - Use `localSettings` store for persisting UI preferences
 - **Batch thumbnail loading** - Use `thumbnailCache` store for face/person thumbnails
 - **Modal state persistence** - Pass state to modals, receive updates via callbacks
 - **Multi-face images** - Handle images with multiple detected faces
