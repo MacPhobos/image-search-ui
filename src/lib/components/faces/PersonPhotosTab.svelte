@@ -135,6 +135,15 @@
 		}
 		return `${API_BASE_URL}${url}`;
 	}
+
+	function formatDate(dateString: string | null | undefined): string {
+		if (!dateString) return '';
+		try {
+			return new Date(dateString).toLocaleDateString();
+		} catch {
+			return '';
+		}
+	}
 </script>
 
 <div class="photos-tab">
@@ -205,6 +214,9 @@
 							{/if}
 						</div>
 					</button>
+					{#if photo.takenAt}
+						<div class="photo-date">{formatDate(photo.takenAt)}</div>
+					{/if}
 				</div>
 			{/each}
 		</div>
@@ -442,6 +454,15 @@
 
 	.mixed-badge {
 		background: rgba(251, 146, 60, 0.9);
+	}
+
+	.photo-date {
+		padding: 0.5rem 0.75rem;
+		font-size: 0.75rem;
+		color: #666;
+		text-align: center;
+		background: white;
+		border-top: 1px solid #f0f0f0;
 	}
 
 	/* Pagination */

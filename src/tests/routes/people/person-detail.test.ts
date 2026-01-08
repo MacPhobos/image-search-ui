@@ -272,7 +272,7 @@ describe('Person Detail Page', () => {
 				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
 			});
 
-			// Photos should be visible by default on Faces tab
+			// Photos should be visible by default on Photos tab
 			await waitFor(() => {
 				expect(screen.getByText('Photos containing Alice Smith')).toBeInTheDocument();
 			});
@@ -327,7 +327,7 @@ describe('Person Detail Page', () => {
 	});
 
 	describe('Tabs Navigation', () => {
-		it('should have three tabs: Faces, Photos, Prototypes', async () => {
+		it('should have two tabs: Photos and Prototypes', async () => {
 			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
 			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
 			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
@@ -339,12 +339,11 @@ describe('Person Detail Page', () => {
 				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
 			});
 
-			expect(screen.getByRole('button', { name: 'Faces' })).toBeInTheDocument();
 			expect(screen.getByRole('button', { name: 'Photos' })).toBeInTheDocument();
 			expect(screen.getByRole('button', { name: 'Prototypes' })).toBeInTheDocument();
 		});
 
-		it('should default to Faces tab', async () => {
+		it('should default to Photos tab', async () => {
 			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
 			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
 			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
@@ -356,8 +355,8 @@ describe('Person Detail Page', () => {
 				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
 			});
 
-			const facesTab = screen.getByRole('button', { name: 'Faces' });
-			expect(facesTab).toHaveClass('active');
+			const photosTab = screen.getByRole('button', { name: 'Photos' });
+			expect(photosTab).toHaveClass('active');
 		});
 	});
 

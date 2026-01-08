@@ -27,9 +27,11 @@
 	// Get person ID from route params
 	let personId = $derived($page.params.personId);
 
-	// Initialize tab from URL
-	let activeTab = $state<'faces' | 'photos' | 'prototypes'>(
-		($page.url.searchParams.get('tab') as 'faces' | 'photos' | 'prototypes') || 'faces'
+	// Initialize tab from URL (redirect 'faces' to 'photos')
+	const urlTab = $page.url.searchParams.get('tab');
+	const initialTab = urlTab === 'faces' ? 'photos' : urlTab;
+	let activeTab = $state<'photos' | 'prototypes'>(
+		(initialTab as 'photos' | 'prototypes') || 'photos'
 	);
 
 	// State
@@ -223,7 +225,7 @@
 	}
 
 	// Update URL when tab changes
-	function setTab(tab: 'faces' | 'photos' | 'prototypes') {
+	function setTab(tab: 'photos' | 'prototypes') {
 		activeTab = tab;
 		const url = new URL($page.url);
 		url.searchParams.set('tab', tab);
@@ -512,14 +514,6 @@
 			<button
 				type="button"
 				class="tab"
-				class:active={activeTab === 'faces'}
-				onclick={() => setTab('faces')}
-			>
-				Faces
-			</button>
-			<button
-				type="button"
-				class="tab"
 				class:active={activeTab === 'photos'}
 				onclick={() => setTab('photos')}
 			>
@@ -536,53 +530,7 @@
 		</div>
 
 		<!-- Tab Content -->
-		{#if activeTab === 'faces'}
-			<!-- Faces Tab (Original Photos Section) -->
-			<section class="photos-section">
-				<h2>Photos containing {person.name}</h2>
-
-				{#if loadingPhotos}
-					<div class="loading-photos">
-						<div class="spinner-small"></div>
-						<span>Loading photos...</span>
-					</div>
-				{:else if photoError}
-					<div class="photo-error">
-						{photoError}
-					</div>
-				{:else if photos.length === 0}
-					<div class="no-photos">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-							<circle cx="8.5" cy="8.5" r="1.5" />
-							<polyline points="21 15 16 10 5 21" />
-						</svg>
-						<p>No photos found with this person.</p>
-						<p class="hint">
-							Photos will appear here once they are indexed and the person is detected.
-						</p>
-					</div>
-				{:else}
-					<div class="photos-grid">
-						{#each photos as photo (photo.photoId)}
-							<article class="photo-card">
-								<div class="photo-image-container">
-									<img src={photo.thumbnailUrl} alt="" loading="lazy" class="photo-image" />
-									<span class="face-count-badge"
-										>{photo.faceCount} {photo.faceCount === 1 ? 'face' : 'faces'}</span
-									>
-								</div>
-								<div class="photo-info">
-									<span class="photo-date">
-										{photo.takenAt ? formatDate(photo.takenAt) : ''}
-									</span>
-								</div>
-							</article>
-						{/each}
-					</div>
-				{/if}
-			</section>
-		{:else if activeTab === 'photos'}
+		{#if activeTab === 'photos'}
 			<!-- Photos Tab (New Person Photos Review) -->
 			<PersonPhotosTab
 				personId={person.id}
