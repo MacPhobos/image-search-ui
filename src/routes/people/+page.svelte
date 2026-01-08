@@ -20,7 +20,7 @@
 
 	// Filters
 	let showIdentified = $state(true);
-	let showUnidentified = $state(true);
+	let showUnidentified = $state(false);
 	let showNoise = $state(false);
 
 	// Select component values (bits-ui v2 uses simple strings with bind:value)
