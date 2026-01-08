@@ -785,6 +785,12 @@ export interface FaceSuggestion {
 	bboxH: number | null;
 	detectionConfidence: number | null;
 	qualityScore: number | null;
+	// Multi-prototype scoring fields
+	matchingPrototypeIds?: string[] | null;
+	prototypeScores?: Record<string, number> | null;
+	aggregateConfidence?: number | null;
+	prototypeMatchCount?: number | null;
+	isMultiPrototypeMatch?: boolean;
 }
 
 /** A person suggestion item for a face based on face recognition. */

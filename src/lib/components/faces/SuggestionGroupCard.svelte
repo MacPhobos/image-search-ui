@@ -33,8 +33,23 @@
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 
+	// Sort suggestions to prioritize multi-prototype matches
+	const sortedSuggestions = $derived.by(() => {
+		return [...group.suggestions].sort((a, b) => {
+			// Multi-prototype matches first
+			const aMulti = a.isMultiPrototypeMatch ? 1 : 0;
+			const bMulti = b.isMultiPrototypeMatch ? 1 : 0;
+			if (bMulti !== aMulti) return bMulti - aMulti;
+
+			// Then by aggregate confidence (or regular confidence if not multi-prototype)
+			const aConf = a.aggregateConfidence ?? a.confidence;
+			const bConf = b.aggregateConfidence ?? b.confidence;
+			return bConf - aConf;
+		});
+	});
+
 	// Get all pending suggestion IDs in this group
-	const pendingSuggestions = $derived(group.suggestions.filter((s) => s.status === 'pending'));
+	const pendingSuggestions = $derived(sortedSuggestions.filter((s) => s.status === 'pending'));
 	const pendingIds = $derived(pendingSuggestions.map((s) => s.id));
 
 	// Check if all pending suggestions in this group are selected
@@ -142,7 +157,7 @@
 
 	<!-- Thumbnails Grid -->
 	<div class="thumbnails-grid">
-		{#each group.suggestions as suggestion (suggestion.id)}
+		{#each sortedSuggestions as suggestion (suggestion.id)}
 			<SuggestionThumbnail
 				{suggestion}
 				selected={selectedIds.has(suggestion.id)}

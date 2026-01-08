@@ -17,6 +17,12 @@
 	let { suggestion, selected, onSelect, onClick }: Props = $props();
 
 	const confidencePercent = $derived(Math.round(suggestion.confidence * 100));
+	const aggregateConfidencePercent = $derived(
+		suggestion.aggregateConfidence ? Math.round(suggestion.aggregateConfidence * 100) : null
+	);
+	const displayConfidence = $derived(
+		aggregateConfidencePercent !== null ? aggregateConfidencePercent : confidencePercent
+	);
 
 	// Map confidence to badge variant
 	function getConfidenceVariant(confidence: number): ComponentProps<Badge>['variant'] {
@@ -40,9 +46,17 @@
 	}
 
 	function getConfidenceTooltip(confidence: number): string {
-		if (confidence >= 0.7) return 'High confidence - Strong match to this person';
-		if (confidence >= 0.5) return 'Medium confidence - Likely match, review recommended';
-		return 'Low confidence - Uncertain match, manual verification needed';
+		const baseMessage =
+			confidence >= 0.7
+				? 'High confidence - Strong match to this person'
+				: confidence >= 0.5
+					? 'Medium confidence - Likely match, review recommended'
+					: 'Low confidence - Uncertain match, manual verification needed';
+
+		if (suggestion.isMultiPrototypeMatch && suggestion.prototypeMatchCount) {
+			return `${baseMessage} (Matched ${suggestion.prototypeMatchCount} prototypes)`;
+		}
+		return baseMessage;
 	}
 
 	function getStatusTooltip(status: FaceSuggestion['status']): string {
@@ -129,11 +143,34 @@
 		<Tooltip.Root>
 			<Tooltip.Trigger>
 				<Badge variant={confidenceVariant} class="text-[0.625rem] font-bold px-1 py-0 h-auto cursor-help">
-					{confidencePercent}%
+					{displayConfidence}%
+					{#if suggestion.isMultiPrototypeMatch}
+						<span class="multi-proto-indicator" title="Multi-prototype match">⚡</span>
+					{/if}
 				</Badge>
 			</Tooltip.Trigger>
 			<Tooltip.Content>
-				<p class="max-w-xs">{getConfidenceTooltip(suggestion.confidence)}</p>
+				<div class="confidence-tooltip">
+					<p class="max-w-xs">{getConfidenceTooltip(displayConfidence)}</p>
+					{#if suggestion.isMultiPrototypeMatch && suggestion.prototypeScores}
+						<div class="prototype-details">
+							<div class="prototype-details-header">Matching Prototypes:</div>
+							<ul class="prototype-list">
+								{#each Object.entries(suggestion.prototypeScores).slice(0, 5) as [protoId, score]}
+									<li class="prototype-item">
+										<span class="proto-id">{protoId.slice(0, 8)}...</span>
+										<span class="proto-score">{Math.round(score * 100)}%</span>
+									</li>
+								{/each}
+								{#if Object.entries(suggestion.prototypeScores).length > 5}
+									<li class="prototype-item-more">
+										+{Object.entries(suggestion.prototypeScores).length - 5} more
+									</li>
+								{/if}
+							</ul>
+						</div>
+					{/if}
+				</div>
 			</Tooltip.Content>
 		</Tooltip.Root>
 	</div>
@@ -214,5 +251,62 @@
 		top: 2px;
 		right: 2px;
 		pointer-events: none;
+	}
+
+	.multi-proto-indicator {
+		margin-left: 2px;
+		font-size: 0.7rem;
+		opacity: 0.9;
+	}
+
+	.confidence-tooltip {
+		font-size: 0.875rem;
+	}
+
+	.prototype-details {
+		margin-top: 0.5rem;
+		padding-top: 0.5rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+	}
+
+	.prototype-details-header {
+		font-size: 0.75rem;
+		font-weight: 600;
+		margin-bottom: 0.25rem;
+		opacity: 0.9;
+	}
+
+	.prototype-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		font-size: 0.75rem;
+	}
+
+	.prototype-item {
+		display: flex;
+		justify-content: space-between;
+		padding: 0.15rem 0;
+		gap: 0.5rem;
+	}
+
+	.prototype-item-more {
+		padding: 0.15rem 0;
+		font-style: italic;
+		opacity: 0.8;
+	}
+
+	.proto-id {
+		font-family: monospace;
+		opacity: 0.8;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		flex: 1;
+	}
+
+	.proto-score {
+		font-weight: 600;
+		color: #22c55e;
 	}
 </style>
