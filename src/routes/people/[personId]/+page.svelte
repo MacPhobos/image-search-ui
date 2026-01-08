@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import {
+		getPersonById,
 		listPersons,
 		mergePersons,
 		getPersonPhotos,
@@ -81,27 +82,30 @@
 		error = null;
 
 		try {
-			// The API doesn't have a get single person endpoint, so we list and find
-			const response = await listPersons(1, 100, 'active');
-			person = response.items.find((p) => p.id === personId) || null;
+			// Use the new single-person endpoint
+			const personData = await getPersonById(personId);
 
-			if (!person) {
-				// Try merged/hidden
-				const mergedResponse = await listPersons(1, 100, 'merged');
-				person = mergedResponse.items.find((p) => p.id === personId) || null;
-			}
+			// Map PersonDetailResponse to Person type
+			person = {
+				id: personData.id,
+				name: personData.name,
+				status: personData.status as 'active' | 'merged' | 'hidden',
+				faceCount: personData.faceCount,
+				prototypeCount: 0, // PersonDetailResponse doesn't have prototypeCount, will show 0
+				photoCount: personData.photoCount,
+				createdAt: personData.createdAt,
+				updatedAt: personData.createdAt // PersonDetailResponse doesn't have updatedAt, use createdAt
+			};
 
-			if (!person) {
-				error = 'Person not found.';
-			} else {
-				// Load photos for this person
-				loadPhotos();
-				// Load other persons for merge target selection
-				loadMergeTargets();
-			}
+			// Load photos for this person
+			loadPhotos();
+			// Load other persons for merge target selection
+			loadMergeTargets();
 		} catch (err) {
 			console.error('Failed to load person:', err);
-			if (err instanceof ApiError) {
+			if (err instanceof ApiError && err.status === 404) {
+				error = 'Person not found.';
+			} else if (err instanceof ApiError) {
 				error = err.message;
 			} else {
 				error = 'Failed to load person. Please try again.';

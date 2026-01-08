@@ -5,6 +5,7 @@
 
 import { env } from '$env/dynamic/public';
 import { ApiError } from './client';
+import type { components } from './generated';
 
 const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -365,6 +366,18 @@ export async function listPersons(
 		params.set('status', status);
 	}
 	return apiRequest<PersonListResponse>(`/api/v1/faces/persons?${params.toString()}`);
+}
+
+/**
+ * Get a single person by ID.
+ * @param personId - The person ID (UUID)
+ */
+export async function getPersonById(
+	personId: string
+): Promise<components['schemas']['PersonDetailResponse']> {
+	return apiRequest<components['schemas']['PersonDetailResponse']>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}`
+	);
 }
 
 /**
