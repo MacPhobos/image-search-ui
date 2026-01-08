@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { searchImages, checkHealth, ApiError } from '$lib/api/client';
+import { regenerateSuggestions } from '$lib/api/faces';
 import { mockResponse, mockError, getFetchMock } from './helpers/mockFetch';
 import { createSearchResponse, createBeachResult } from './helpers/fixtures';
 
@@ -162,6 +163,89 @@ describe('API Client', () => {
 			} catch (error) {
 				expect(error).toBeInstanceOf(ApiError);
 				expect((error as ApiError).message).toBe('Network request failed');
+			}
+		});
+	});
+
+	describe('regenerateSuggestions', () => {
+		it('calls correct endpoint and returns result', async () => {
+			const mockData = {
+				status: 'queued',
+				message: 'Suggestion regeneration queued',
+				expiredCount: 5
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/suggestions/regenerate',
+				mockData
+			);
+
+			const result = await regenerateSuggestions('person-123');
+
+			const fetchMock = getFetchMock();
+			expect(fetchMock).toHaveBeenCalledWith(
+				'http://localhost:8000/api/v1/faces/persons/person-123/suggestions/regenerate',
+				expect.objectContaining({
+					method: 'POST',
+					headers: expect.objectContaining({
+						'Content-Type': 'application/json'
+					})
+				})
+			);
+
+			expect(result.status).toBe('queued');
+			expect(result.message).toBe('Suggestion regeneration queued');
+			expect(result.expiredCount).toBe(5);
+		});
+
+		it('handles response without expiredCount', async () => {
+			const mockData = {
+				status: 'queued',
+				message: 'Suggestion regeneration queued'
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-456/suggestions/regenerate',
+				mockData
+			);
+
+			const result = await regenerateSuggestions('person-456');
+
+			expect(result.status).toBe('queued');
+			expect(result.message).toBe('Suggestion regeneration queued');
+			expect(result.expiredCount).toBeUndefined();
+		});
+
+		it('throws ApiError on failure', async () => {
+			mockError(
+				'http://localhost:8000/api/v1/faces/persons/person-999/suggestions/regenerate',
+				400,
+				{
+					detail: 'No prototypes found for person'
+				}
+			);
+
+			try {
+				await regenerateSuggestions('person-999');
+				expect.fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(ApiError);
+				expect((error as ApiError).status).toBe(400);
+				expect((error as ApiError).message).toContain('No prototypes found');
+			}
+		});
+
+		it('handles network errors', async () => {
+			mockError(
+				'http://localhost:8000/api/v1/faces/persons/person-error/suggestions/regenerate',
+				new Error('Network failed')
+			);
+
+			try {
+				await regenerateSuggestions('person-error');
+				expect.fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(ApiError);
+				expect((error as ApiError).message).toBe('Network request failed');
+				expect((error as ApiError).status).toBe(0);
 			}
 		});
 	});

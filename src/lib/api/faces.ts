@@ -1209,6 +1209,25 @@ export async function recomputePrototypes(
 	);
 }
 
+/**
+ * Regenerate suggestions for a person using their current prototypes.
+ * This expires old suggestions and queues a new search.
+ * @param personId - The person ID (UUID)
+ * @returns Promise with operation status and expired count
+ */
+export async function regenerateSuggestions(personId: string): Promise<{
+	status: string;
+	message: string;
+	expiredCount?: number;
+}> {
+	return apiRequest<{ status: string; message: string; expiredCount?: number }>(
+		`/api/v1/faces/persons/${encodeURIComponent(personId)}/suggestions/regenerate`,
+		{
+			method: 'POST'
+		}
+	);
+}
+
 // ============ Batch Thumbnail Types ============
 
 /** Request for batch thumbnail retrieval. */

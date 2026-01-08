@@ -11,6 +11,7 @@
 		recomputePrototypes,
 		pinPrototype,
 		deletePrototype,
+		regenerateSuggestions,
 		toAbsoluteUrl
 	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
@@ -50,6 +51,9 @@
 	let pinningPrototypeId = $state<string | null>(null);
 	let selectedPinEra = $state<AgeEraBucket | null>(null);
 	let pinningInProgress = $state(false);
+
+	// Regenerate suggestions state
+	let isRegenerating = $state(false);
 
 	// Merge modal state
 	let showMergeModal = $state(false);
@@ -309,6 +313,25 @@
 			toast.error('Failed to recompute prototypes', {
 				description: err instanceof Error ? err.message : 'Unknown error'
 			});
+		}
+	}
+
+	async function handleRegenerateSuggestions() {
+		if (!personId) return;
+
+		isRegenerating = true;
+		try {
+			const result = await regenerateSuggestions(personId);
+			toast.success(
+				`Re-scan queued! ${result.expiredCount ?? 0} old suggestions expired. Check the Suggestions page in a moment.`
+			);
+		} catch (err) {
+			console.error('Failed to regenerate suggestions:', err);
+			toast.error(
+				err instanceof Error ? err.message : 'Failed to regenerate suggestions'
+			);
+		} finally {
+			isRegenerating = false;
 		}
 	}
 
@@ -572,6 +595,15 @@
 									type="button"
 								>
 									↻ Recompute
+								</button>
+								<button
+									class="rescan-btn"
+									onclick={handleRegenerateSuggestions}
+									disabled={isRegenerating || prototypes.length === 0}
+									title="Re-scan for face suggestions using current prototypes"
+									type="button"
+								>
+									{isRegenerating ? 'Scanning...' : '🔄 Re-scan for Suggestions'}
 								</button>
 							</div>
 						</div>
@@ -1458,10 +1490,10 @@
 		color: #666;
 	}
 
-	.recompute-btn {
+	.recompute-btn,
+	.rescan-btn {
 		padding: 0.35rem 0.75rem;
 		font-size: 0.85rem;
-		background: #6c757d;
 		color: white;
 		border: none;
 		border-radius: 4px;
@@ -1469,8 +1501,26 @@
 		transition: background-color 0.2s;
 	}
 
+	.recompute-btn {
+		background: #6c757d;
+	}
+
 	.recompute-btn:hover {
 		background: #5a6268;
+	}
+
+	.rescan-btn {
+		background: #4a90e2;
+	}
+
+	.rescan-btn:hover:not(:disabled) {
+		background: #3a7bc8;
+	}
+
+	.rescan-btn:disabled {
+		background: #94b8d8;
+		cursor: not-allowed;
+		opacity: 0.6;
 	}
 
 	.prototype-loading,
