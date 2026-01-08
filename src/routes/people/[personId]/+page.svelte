@@ -55,6 +55,10 @@
 	// Regenerate suggestions state
 	let isRegenerating = $state(false);
 
+	// Recompute prototypes state
+	let isRecomputing = $state(false);
+	let triggerRescanOnRecompute = $state(false);
+
 	// Merge modal state
 	let showMergeModal = $state(false);
 	let mergeTargetPersons = $state<Person[]>([]);
@@ -298,21 +302,31 @@
 	}
 
 	async function handleRecomputePrototypes() {
-		if (
-			!confirm(
-				'Recompute all prototypes? This will optimize for temporal coverage while preserving pinned prototypes.'
-			)
-		)
-			return;
+		if (!personId) return;
+
+		isRecomputing = true;
 		try {
-			await recomputePrototypes(personId, true);
+			const result = await recomputePrototypes(personId, {
+				preservePins: true,
+				triggerRescan: triggerRescanOnRecompute
+			});
+
 			await loadPrototypes(); // Refresh the list
-			toast.success('Prototypes recomputed successfully');
+
+			let message = `Prototypes recomputed: ${result.prototypesCreated} created, ${result.prototypesRemoved} removed.`;
+
+			if (result.rescanTriggered && result.rescanMessage) {
+				message += ` ${result.rescanMessage}`;
+			}
+
+			toast.success(message);
 		} catch (err) {
 			console.error('Failed to recompute prototypes:', err);
-			toast.error('Failed to recompute prototypes', {
-				description: err instanceof Error ? err.message : 'Unknown error'
-			});
+			toast.error(
+				err instanceof Error ? err.message : 'Failed to recompute prototypes'
+			);
+		} finally {
+			isRecomputing = false;
 		}
 	}
 
@@ -588,16 +602,31 @@
 							<h3>Temporal Coverage</h3>
 							<div class="prototype-actions">
 								<CoverageIndicator {coverage} />
+							</div>
+						</div>
+
+						<!-- Prototype action controls -->
+						<div class="prototype-controls">
+							<div class="recompute-options">
+								<label class="checkbox-label">
+									<input type="checkbox" bind:checked={triggerRescanOnRecompute} />
+									<span>Also re-scan for suggestions</span>
+								</label>
+							</div>
+
+							<div class="action-buttons">
 								<button
 									class="recompute-btn"
 									onclick={handleRecomputePrototypes}
+									disabled={isRecomputing}
 									title="Recompute prototypes for optimal temporal coverage"
 									type="button"
 								>
-									↻ Recompute
+									{isRecomputing ? 'Recomputing...' : '↻ Recompute Prototypes'}
 								</button>
+
 								<button
-									class="rescan-btn"
+									class="rescan-btn secondary-action"
 									onclick={handleRegenerateSuggestions}
 									disabled={isRegenerating || prototypes.length === 0}
 									title="Re-scan for face suggestions using current prototypes"
@@ -1366,6 +1395,43 @@
 		gap: 0.75rem;
 	}
 
+	.prototype-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1rem;
+		background: #f9f9f9;
+		border-radius: 6px;
+		border: 1px solid #e0e0e0;
+	}
+
+	.recompute-options {
+		display: flex;
+		align-items: center;
+	}
+
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.875rem;
+		color: #666;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.checkbox-label input[type='checkbox'] {
+		width: 1rem;
+		height: 1rem;
+		cursor: pointer;
+	}
+
+	.action-buttons {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
 	.prototype-list {
 		margin-top: 1rem;
 	}
@@ -1492,33 +1558,40 @@
 
 	.recompute-btn,
 	.rescan-btn {
-		padding: 0.35rem 0.75rem;
-		font-size: 0.85rem;
+		padding: 0.5rem 1rem;
+		font-size: 0.9rem;
 		color: white;
 		border: none;
-		border-radius: 4px;
+		border-radius: 6px;
 		cursor: pointer;
 		transition: background-color 0.2s;
+		font-weight: 500;
 	}
 
 	.recompute-btn {
-		background: #6c757d;
-	}
-
-	.recompute-btn:hover {
-		background: #5a6268;
-	}
-
-	.rescan-btn {
 		background: #4a90e2;
 	}
 
-	.rescan-btn:hover:not(:disabled) {
+	.recompute-btn:hover:not(:disabled) {
 		background: #3a7bc8;
 	}
 
-	.rescan-btn:disabled {
+	.recompute-btn:disabled {
 		background: #94b8d8;
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
+
+	.rescan-btn {
+		background: #6c757d;
+	}
+
+	.rescan-btn:hover:not(:disabled) {
+		background: #5a6268;
+	}
+
+	.rescan-btn:disabled {
+		background: #a0a6ab;
 		cursor: not-allowed;
 		opacity: 0.6;
 	}

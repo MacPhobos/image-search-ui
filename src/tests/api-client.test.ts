@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { searchImages, checkHealth, ApiError } from '$lib/api/client';
-import { regenerateSuggestions } from '$lib/api/faces';
+import { regenerateSuggestions, recomputePrototypes } from '$lib/api/faces';
 import { mockResponse, mockError, getFetchMock } from './helpers/mockFetch';
 import { createSearchResponse, createBeachResult } from './helpers/fixtures';
 
@@ -241,6 +241,218 @@ describe('API Client', () => {
 
 			try {
 				await regenerateSuggestions('person-error');
+				expect.fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(ApiError);
+				expect((error as ApiError).message).toBe('Network request failed');
+				expect((error as ApiError).status).toBe(0);
+			}
+		});
+	});
+
+	describe('recomputePrototypes', () => {
+		it('sends request with preservePins only by default', async () => {
+			const mockData = {
+				prototypesCreated: 3,
+				prototypesRemoved: 1,
+				coverage: {
+					coveredEras: ['child', 'adult'],
+					missingEras: ['teen'],
+					coveragePercentage: 66.7,
+					totalPrototypes: 3
+				},
+				rescanTriggered: false
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-123');
+
+			const fetchMock = getFetchMock();
+			expect(fetchMock).toHaveBeenCalledWith(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				expect.objectContaining({
+					method: 'POST',
+					headers: expect.objectContaining({
+						'Content-Type': 'application/json'
+					}),
+					body: JSON.stringify({ preservePins: true })
+				})
+			);
+
+			expect(result.prototypesCreated).toBe(3);
+			expect(result.prototypesRemoved).toBe(1);
+			expect(result.rescanTriggered).toBe(false);
+		});
+
+		it('includes triggerRescan when explicitly set to true', async () => {
+			const mockData = {
+				prototypesCreated: 2,
+				prototypesRemoved: 0,
+				coverage: {
+					coveredEras: ['adult'],
+					missingEras: ['infant', 'child', 'teen', 'young_adult', 'senior'],
+					coveragePercentage: 16.7,
+					totalPrototypes: 2
+				},
+				rescanTriggered: true,
+				rescanMessage: 'Suggestion rescan queued. 5 old suggestions expired.'
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-123', { triggerRescan: true });
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody).toEqual({ preservePins: true, triggerRescan: true });
+
+			expect(result.rescanTriggered).toBe(true);
+			expect(result.rescanMessage).toBe('Suggestion rescan queued. 5 old suggestions expired.');
+		});
+
+		it('includes triggerRescan when explicitly set to false', async () => {
+			const mockData = {
+				prototypesCreated: 1,
+				prototypesRemoved: 0,
+				coverage: {
+					coveredEras: ['adult'],
+					missingEras: ['infant', 'child', 'teen', 'young_adult', 'senior'],
+					coveragePercentage: 16.7,
+					totalPrototypes: 1
+				},
+				rescanTriggered: false
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-123', { triggerRescan: false });
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody).toEqual({ preservePins: true, triggerRescan: false });
+
+			expect(result.rescanTriggered).toBe(false);
+		});
+
+		it('passes custom preservePins value', async () => {
+			const mockData = {
+				prototypesCreated: 0,
+				prototypesRemoved: 2,
+				coverage: {
+					coveredEras: [],
+					missingEras: ['infant', 'child', 'teen', 'young_adult', 'adult', 'senior'],
+					coveragePercentage: 0,
+					totalPrototypes: 0
+				},
+				rescanTriggered: false
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-123', { preservePins: false });
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody).toEqual({ preservePins: false });
+
+			expect(result.prototypesCreated).toBe(0);
+			expect(result.prototypesRemoved).toBe(2);
+		});
+
+		it('combines preservePins and triggerRescan options', async () => {
+			const mockData = {
+				prototypesCreated: 5,
+				prototypesRemoved: 3,
+				coverage: {
+					coveredEras: ['child', 'teen', 'adult'],
+					missingEras: ['infant', 'young_adult', 'senior'],
+					coveragePercentage: 50,
+					totalPrototypes: 5
+				},
+				rescanTriggered: true,
+				rescanMessage: 'Suggestion rescan queued. 12 old suggestions expired.'
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-123', {
+				preservePins: false,
+				triggerRescan: true
+			});
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody).toEqual({ preservePins: false, triggerRescan: true });
+
+			expect(result.prototypesCreated).toBe(5);
+			expect(result.prototypesRemoved).toBe(3);
+			expect(result.rescanTriggered).toBe(true);
+			expect(result.rescanMessage).toBe('Suggestion rescan queued. 12 old suggestions expired.');
+		});
+
+		it('handles response without rescanMessage', async () => {
+			const mockData = {
+				prototypesCreated: 2,
+				prototypesRemoved: 1,
+				coverage: {
+					coveredEras: ['adult'],
+					missingEras: ['infant', 'child', 'teen', 'young_adult', 'senior'],
+					coveragePercentage: 16.7,
+					totalPrototypes: 2
+				},
+				rescanTriggered: false
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-456/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-456');
+
+			expect(result.prototypesCreated).toBe(2);
+			expect(result.prototypesRemoved).toBe(1);
+			expect(result.rescanTriggered).toBe(false);
+			expect(result.rescanMessage).toBeUndefined();
+		});
+
+		it('throws ApiError on failure', async () => {
+			mockError(
+				'http://localhost:8000/api/v1/faces/persons/invalid-id/prototypes/recompute',
+				404,
+				{
+					detail: 'Person not found'
+				}
+			);
+
+			try {
+				await recomputePrototypes('invalid-id');
+				expect.fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(ApiError);
+				expect((error as ApiError).status).toBe(404);
+				expect((error as ApiError).message).toContain('Person not found');
+			}
+		});
+
+		it('handles network errors', async () => {
+			mockError(
+				'http://localhost:8000/api/v1/faces/persons/person-error/prototypes/recompute',
+				new Error('Network failed')
+			);
+
+			try {
+				await recomputePrototypes('person-error');
 				expect.fail('Should have thrown an error');
 			} catch (error) {
 				expect(error).toBeInstanceOf(ApiError);

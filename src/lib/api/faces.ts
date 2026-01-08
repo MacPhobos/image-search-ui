@@ -1038,6 +1038,7 @@ export interface PinPrototypeRequest {
 /** Request to recompute prototypes. */
 export interface RecomputePrototypesRequest {
 	preservePins?: boolean;
+	triggerRescan?: boolean;
 }
 
 /** Response from recompute operation. */
@@ -1045,6 +1046,8 @@ export interface RecomputePrototypesResponse {
 	prototypesCreated: number;
 	prototypesRemoved: number;
 	coverage: TemporalCoverage;
+	rescanTriggered: boolean;
+	rescanMessage?: string;
 }
 
 // ============ Unified People API Functions ============
@@ -1191,20 +1194,27 @@ export async function deletePrototype(personId: string, prototypeId: string): Pr
 }
 
 /**
- * Recompute prototypes for a person.
+ * Recompute prototypes for a person with optional suggestion rescan.
  * @param personId - The person ID (UUID)
- * @param preservePins - Whether to preserve pinned prototypes
+ * @param options - Recompute options (preservePins, triggerRescan)
  * @returns Promise with operation results and updated coverage
  */
 export async function recomputePrototypes(
 	personId: string,
-	preservePins: boolean = true
+	options: RecomputePrototypesRequest = {}
 ): Promise<RecomputePrototypesResponse> {
+	const { preservePins = true, triggerRescan } = options;
+
+	const body: Record<string, unknown> = { preservePins };
+	if (triggerRescan !== undefined) {
+		body.triggerRescan = triggerRescan;
+	}
+
 	return apiRequest<RecomputePrototypesResponse>(
 		`/api/v1/faces/persons/${encodeURIComponent(personId)}/prototypes/recompute`,
 		{
 			method: 'POST',
-			body: JSON.stringify({ preservePins })
+			body: JSON.stringify(body)
 		}
 	);
 }
