@@ -20,22 +20,24 @@
 
 	// Filters
 	let showIdentified = $state(true);
-	let showUnidentified = $state(false);
+	let showUnidentified = $state(true);
 	let showNoise = $state(false);
 
-	// Select component values (shadcn uses objects with value/label)
-	let sortBySelection = $state<{ value: string; label: string }>({
-		value: 'faceCount',
-		label: 'Face Count'
-	});
-	let sortOrderSelection = $state<{ value: string; label: string }>({
-		value: 'desc',
-		label: 'Descending'
-	});
+	// Select component values (bits-ui v2 uses simple strings with bind:value)
+	let sortBySelection = $state<string>('faceCount');
+	let sortOrderSelection = $state<string>('desc');
 
 	// Derived values for API calls
-	let sortBy = $derived(sortBySelection.value as 'faceCount' | 'name');
-	let sortOrder = $derived(sortOrderSelection.value as 'asc' | 'desc');
+	let sortBy = $derived(sortBySelection as 'faceCount' | 'name');
+	let sortOrder = $derived(sortOrderSelection as 'asc' | 'desc');
+
+	// Derived labels for Select triggers
+	let sortByLabel = $derived(
+		sortBySelection === 'faceCount' ? 'Face Count' : sortBySelection === 'name' ? 'Name' : 'Sort by'
+	);
+	let sortOrderLabel = $derived(
+		sortOrderSelection === 'desc' ? 'Descending' : sortOrderSelection === 'asc' ? 'Ascending' : 'Sort order'
+	);
 
 	// Derived - filter people by type
 	let identifiedPeople = $derived(data?.people.filter((p) => p.type === 'identified') ?? []);
@@ -190,9 +192,9 @@
 
 		<div class="sort-controls">
 			<Label for="sortBy" class="sort-label">Sort by:</Label>
-			<Select.Root bind:selected={sortBySelection}>
+			<Select.Root type="single" bind:value={sortBySelection}>
 				<Select.Trigger id="sortBy" class="w-[160px]">
-					<Select.Value />
+					{sortByLabel}
 				</Select.Trigger>
 				<Select.Content>
 					<Select.Item value="faceCount" label="Face Count">Face Count</Select.Item>
@@ -200,9 +202,9 @@
 				</Select.Content>
 			</Select.Root>
 
-			<Select.Root bind:selected={sortOrderSelection}>
+			<Select.Root type="single" bind:value={sortOrderSelection}>
 				<Select.Trigger class="w-[140px]" aria-label="Sort order">
-					<Select.Value />
+					{sortOrderLabel}
 				</Select.Trigger>
 				<Select.Content>
 					<Select.Item value="desc" label="Descending">Descending</Select.Item>

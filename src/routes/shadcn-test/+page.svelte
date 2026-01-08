@@ -27,9 +27,28 @@
 	let passwordInput = $state('');
 	let numberInput = $state('');
 
-	// Phase 3: Form Controls State
-	let selectedFruit = $state<{ value: string; label: string } | undefined>(undefined);
-	let selectedSort = $state<{ value: string; label: string } | undefined>(undefined);
+	// Phase 3: Form Controls State (bits-ui v2 uses simple strings)
+	let selectedFruit = $state<string | undefined>(undefined);
+	let selectedSort = $state<string | undefined>(undefined);
+
+	// Derived labels for Select triggers
+	let fruitLabel = $derived(
+		selectedFruit === 'apple' ? '🍎 Apple' :
+		selectedFruit === 'banana' ? '🍌 Banana' :
+		selectedFruit === 'orange' ? '🍊 Orange' :
+		selectedFruit === 'grape' ? '🍇 Grape' :
+		selectedFruit === 'strawberry' ? '🍓 Strawberry' :
+		'Choose your favorite fruit'
+	);
+	let sortLabel = $derived(
+		selectedSort === 'date_desc' ? 'Newest First' :
+		selectedSort === 'date_asc' ? 'Oldest First' :
+		selectedSort === 'name_asc' ? 'Name (A-Z)' :
+		selectedSort === 'name_desc' ? 'Name (Z-A)' :
+		selectedSort === 'size_desc' ? 'Largest First' :
+		selectedSort === 'size_asc' ? 'Smallest First' :
+		'Select sort order'
+	);
 	let termsAccepted = $state(false);
 	let newsletterSubscribed = $state(false);
 	let notificationsEnabled = $state(true);
@@ -245,9 +264,9 @@
 				<!-- Basic Select -->
 				<div>
 					<Label for="fruit-select">Select a Fruit</Label>
-					<Select.Root bind:selected={selectedFruit}>
+					<Select.Root type="single" bind:value={selectedFruit}>
 						<Select.Trigger id="fruit-select" class="w-[280px]">
-							<Select.Value placeholder="Choose your favorite fruit" />
+							{fruitLabel}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="apple" label="Apple">🍎 Apple</Select.Item>
@@ -259,7 +278,7 @@
 					</Select.Root>
 					{#if selectedFruit}
 						<p style="margin-top: 0.5rem; color: #6b7280;">
-							Selected: {selectedFruit.label}
+							Selected: {fruitLabel}
 						</p>
 					{/if}
 				</div>
@@ -267,9 +286,9 @@
 				<!-- Sort By Select (Filter Pattern) -->
 				<div>
 					<Label for="sort-select">Sort By</Label>
-					<Select.Root bind:selected={selectedSort}>
+					<Select.Root type="single" bind:value={selectedSort}>
 						<Select.Trigger id="sort-select" class="w-[280px]">
-							<Select.Value placeholder="Select sort order" />
+							{sortLabel}
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="date_desc" label="Newest First">Newest First</Select.Item>
@@ -281,7 +300,7 @@
 						</Select.Content>
 					</Select.Root>
 					{#if selectedSort}
-						<p style="margin-top: 0.5rem; color: #6b7280;">Sort: {selectedSort.label}</p>
+						<p style="margin-top: 0.5rem; color: #6b7280;">Sort: {sortLabel}</p>
 					{/if}
 				</div>
 			</div>
