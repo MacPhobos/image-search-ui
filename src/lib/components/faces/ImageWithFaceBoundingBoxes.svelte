@@ -147,7 +147,8 @@
 				<!-- Label below bounding box -->
 				{#if face.labelStyle === 'assigned'}
 					<!-- Assigned person label (green background) -->
-					<g class="face-label assigned-label">
+					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+					<g class="face-label assigned-label clickable-label" onclick={() => handleFaceClick(face.id)}>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -168,7 +169,8 @@
 					</g>
 				{:else if face.labelStyle === 'loading'}
 					<!-- Loading state (gray, animated) -->
-					<g class="face-label loading-label">
+					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+					<g class="face-label loading-label clickable-label" onclick={() => handleFaceClick(face.id)}>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -192,7 +194,8 @@
 						? `${face.label} (${Math.round(face.suggestionConfidence * 100)}%)`
 						: face.label}
 					{@const labelWidth = Math.max(face.bboxW, labelText.length * labelFontSize * 0.6)}
-					<g class="face-label suggestion-label">
+					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+					<g class="face-label suggestion-label clickable-label" onclick={() => handleFaceClick(face.id)}>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -213,7 +216,8 @@
 					</g>
 				{:else}
 					<!-- Unknown label (gray, italic) -->
-					<g class="face-label unknown-label">
+					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+					<g class="face-label unknown-label clickable-label" onclick={() => handleFaceClick(face.id)}>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -314,6 +318,19 @@
 	.face-label {
 		pointer-events: none;
 		transition: opacity 0.2s ease;
+	}
+
+	.face-label.clickable-label {
+		pointer-events: auto;
+		cursor: pointer;
+	}
+
+	.face-label.clickable-label rect {
+		transition: opacity 0.2s ease;
+	}
+
+	.face-label.clickable-label:hover rect {
+		opacity: 0.9;
 	}
 
 	.face-label text {

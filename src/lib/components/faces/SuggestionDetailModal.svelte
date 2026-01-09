@@ -76,8 +76,9 @@
 	let assignmentSubmitting = $state(false);
 	let assignmentError = $state<string | null>(null);
 
-	// Face highlight state
+	// Face highlight state (for bidirectional selection between boxes and list)
 	let highlightedFaceId = $state<string | null>(null);
+	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());
 
 	// Pin prototype state
 	let pinningFaceId = $state<string | null>(null);
@@ -530,12 +531,50 @@
 		}
 	}
 
+	/**
+	 * Scroll a face card into view with smooth animation
+	 */
+	function scrollFaceCardIntoView(faceId: string) {
+		const element = faceListItems.get(faceId);
+		if (element) {
+			element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		}
+	}
+
+	/**
+	 * Handle face selection from the face list (clicking a face card)
+	 * Highlights the corresponding bounding box on the image
+	 */
 	function handleHighlightFace(faceId: string) {
+		// Toggle selection: if already selected, deselect; otherwise select
 		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
+	/**
+	 * Handle face selection from the image (clicking a bounding box or label)
+	 * Scrolls the face list to show the corresponding face card
+	 */
 	function handleFaceClick(faceId: string) {
-		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
+		// Toggle selection
+		const wasSelected = highlightedFaceId === faceId;
+		highlightedFaceId = wasSelected ? null : faceId;
+
+		// Scroll to the face card in the list (unless deselecting)
+		if (!wasSelected) {
+			scrollFaceCardIntoView(faceId);
+		}
+	}
+
+	/**
+	 * Register a face list item element for scroll-into-view functionality
+	 */
+	function registerFaceListItem(node: HTMLLIElement, faceId: string) {
+		faceListItems.set(faceId, node);
+		return {
+			destroy() {
+				faceListItems.delete(faceId);
+			}
+		};
 	}
 
 	// Pin prototype handlers
@@ -622,6 +661,7 @@
 								{@const topSuggestion = suggestionState?.suggestions?.[0]}
 
 								<li
+									use:registerFaceListItem={face.id}
 									class="face-item"
 									class:highlighted={highlightedFaceId === face.id}
 									style="--highlight-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
@@ -961,8 +1001,9 @@
 		border: 1px solid #e5e7eb;
 		background: #fafafa;
 		transition:
-			background-color 0.2s,
-			box-shadow 0.2s;
+			background-color 0.25s ease,
+			box-shadow 0.25s ease,
+			transform 0.15s ease;
 	}
 
 	.face-item:hover {
@@ -971,7 +1012,22 @@
 
 	.face-item.highlighted {
 		background-color: #e0f2fe;
-		box-shadow: inset 3px 0 0 0 var(--highlight-color, #3b82f6);
+		box-shadow:
+			inset 4px 0 0 0 var(--highlight-color, #3b82f6),
+			0 0 0 2px var(--highlight-color, #3b82f6);
+		animation: highlight-pulse 1s ease-out;
+	}
+
+	@keyframes highlight-pulse {
+		0% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.02);
+		}
+		100% {
+			transform: scale(1);
+		}
 	}
 
 	.face-item-content {
@@ -992,10 +1048,16 @@
 		text-align: left;
 		font: inherit;
 		color: inherit;
+		transition: background-color 0.2s ease;
 	}
 
 	.face-item-button:hover {
 		background-color: #f1f5f9;
+	}
+
+	.face-item-button:focus {
+		outline: 2px solid #3b82f6;
+		outline-offset: -2px;
 	}
 
 	.face-indicator {

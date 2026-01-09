@@ -1478,4 +1478,204 @@ describe('SuggestionDetailModal', () => {
 			// No assertions needed - just verify no crashes
 		});
 	});
+
+	// ============ Bidirectional Face Selection Tests ============
+
+	describe('Bidirectional Face Selection', () => {
+		/**
+		 * Note: SVG overlay rendering depends on image load events which can be difficult
+		 * to test reliably in jsdom. These tests focus on the face list selection behavior.
+		 * The actual bounding box<->list synchronization is tested in the component manually
+		 * and through E2E tests.
+		 */
+
+		it('highlights face card when face card button is clicked', async () => {
+			const suggestion = createMockSuggestion();
+
+			render(SuggestionDetailModal, {
+				suggestion,
+				onClose: mockOnClose,
+				onAccept: mockOnAccept,
+				onReject: mockOnReject
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/All Faces \(3\)/i)).toBeInTheDocument();
+			});
+
+			const dialog = screen.getByRole('dialog');
+
+			// Find face cards
+			const faceCards = dialog.querySelectorAll('.face-item-button');
+			expect(faceCards.length).toBeGreaterThan(0);
+
+			// Click the first face card
+			await fireEvent.click(faceCards[0]);
+
+			// The face card should be highlighted
+			const faceItems = dialog.querySelectorAll('.face-item');
+			const highlightedCard = Array.from(faceItems).find((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCard).toBeInTheDocument();
+		});
+
+		it('toggles selection when clicking same face card twice', async () => {
+			const suggestion = createMockSuggestion();
+
+			render(SuggestionDetailModal, {
+				suggestion,
+				onClose: mockOnClose,
+				onAccept: mockOnAccept,
+				onReject: mockOnReject
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/All Faces \(3\)/i)).toBeInTheDocument();
+			});
+
+			const dialog = screen.getByRole('dialog');
+			const faceCards = dialog.querySelectorAll('.face-item-button');
+			expect(faceCards.length).toBeGreaterThan(0);
+
+			// Click the first face card
+			await fireEvent.click(faceCards[0]);
+
+			// Face should be highlighted
+			let faceItems = dialog.querySelectorAll('.face-item');
+			let highlightedCard = Array.from(faceItems).find((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCard).toBeInTheDocument();
+
+			// Click the same face card again
+			await fireEvent.click(faceCards[0]);
+
+			// Face should no longer be highlighted
+			faceItems = dialog.querySelectorAll('.face-item');
+			highlightedCard = Array.from(faceItems).find((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCard).toBeUndefined();
+		});
+
+		it('applies highlighted CSS class to selected face card', async () => {
+			const suggestion = createMockSuggestion();
+
+			render(SuggestionDetailModal, {
+				suggestion,
+				onClose: mockOnClose,
+				onAccept: mockOnAccept,
+				onReject: mockOnReject
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/All Faces \(3\)/i)).toBeInTheDocument();
+			});
+
+			const dialog = screen.getByRole('dialog');
+			const faceCards = dialog.querySelectorAll('.face-item-button');
+
+			// Click the first face card
+			await fireEvent.click(faceCards[0]);
+
+			// The parent face-item should have the 'highlighted' class
+			const faceItems = dialog.querySelectorAll('.face-item');
+			const highlightedItem = faceItems[0];
+			expect(highlightedItem.classList.contains('highlighted')).toBe(true);
+		});
+
+		it('selection persists across face assignment workflow', async () => {
+			const suggestion = createMockSuggestion();
+
+			mockResponse('/api/v1/faces/faces/face-uuid-2/assign', {
+				faceId: 'face-uuid-2',
+				personId: 'person-uuid-3',
+				personName: 'Alice Johnson'
+			});
+
+			render(SuggestionDetailModal, {
+				suggestion,
+				onClose: mockOnClose,
+				onAccept: mockOnAccept,
+				onReject: mockOnReject
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/All Faces \(3\)/i)).toBeInTheDocument();
+			});
+
+			const dialog = screen.getByRole('dialog');
+
+			// Select a face by clicking its card
+			const faceCards = dialog.querySelectorAll('.face-item-button');
+			await fireEvent.click(faceCards[1]); // Click the second face (unknown face)
+
+			// Face should be highlighted
+			let faceItems = dialog.querySelectorAll('.face-item');
+			let highlightedCard = Array.from(faceItems).find((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCard).toBeInTheDocument();
+
+			// Open assignment panel
+			const assignButton = screen.getAllByRole('button', {
+				name: /Assign this face to a person/i
+			})[0];
+			await fireEvent.click(assignButton);
+
+			// Assignment panel should be visible
+			expect(screen.getByPlaceholderText(/Search or create person/i)).toBeInTheDocument();
+
+			// Selection should still be visible (highlighted class should remain)
+			faceItems = dialog.querySelectorAll('.face-item');
+			highlightedCard = Array.from(faceItems).find((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCard).toBeInTheDocument();
+		});
+
+		it('selection updates when different faces are clicked in sequence', async () => {
+			const suggestion = createMockSuggestion();
+
+			render(SuggestionDetailModal, {
+				suggestion,
+				onClose: mockOnClose,
+				onAccept: mockOnAccept,
+				onReject: mockOnReject
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/All Faces \(3\)/i)).toBeInTheDocument();
+			});
+
+			const dialog = screen.getByRole('dialog');
+			const faceCards = dialog.querySelectorAll('.face-item-button');
+			expect(faceCards.length).toBeGreaterThanOrEqual(3);
+
+			// Click first face
+			await fireEvent.click(faceCards[0]);
+			let faceItems = dialog.querySelectorAll('.face-item');
+			let highlightedCards = Array.from(faceItems).filter((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCards.length).toBe(1);
+
+			// Click second face
+			await fireEvent.click(faceCards[1]);
+			faceItems = dialog.querySelectorAll('.face-item');
+			highlightedCards = Array.from(faceItems).filter((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCards.length).toBe(1);
+
+			// Click third face
+			await fireEvent.click(faceCards[2]);
+			faceItems = dialog.querySelectorAll('.face-item');
+			highlightedCards = Array.from(faceItems).filter((item) =>
+				item.classList.contains('highlighted')
+			);
+			expect(highlightedCards.length).toBe(1);
+		});
+	});
 });
