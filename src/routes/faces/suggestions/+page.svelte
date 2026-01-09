@@ -15,9 +15,19 @@
 	import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
 	import PersonSearchBar from '$lib/components/faces/PersonSearchBar.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
+	import { localSettings } from '$lib/stores/localSettings.svelte';
+
+	// localStorage key for persisting groups per page preference
+	const GROUPS_PER_PAGE_KEY = 'suggestions.groupsPerPage';
+	const GROUPS_PER_PAGE_OPTIONS = [10, 20, 50] as const;
+	type GroupsPerPageOption = (typeof GROUPS_PER_PAGE_OPTIONS)[number];
 
 	let groupedResponse = $state<GroupedSuggestionsResponse | null>(null);
 	let settings = $state<FaceSuggestionSettings>({ groupsPerPage: 20, itemsPerGroup: 20 });
+	// Initialize groupsPerPage from localStorage (default 10 per user request)
+	let groupsPerPage = $state<GroupsPerPageOption>(
+		localSettings.get<GroupsPerPageOption>(GROUPS_PER_PAGE_KEY, 10)
+	);
 	let page = $state(1);
 	let statusFilter = $state<string>('pending');
 	let personFilter = $state<string | null>(null);
@@ -60,7 +70,7 @@
 		try {
 			groupedResponse = await listGroupedSuggestions({
 				page,
-				groupsPerPage: settings.groupsPerPage,
+				groupsPerPage: groupsPerPage,
 				suggestionsPerGroup: settings.itemsPerGroup,
 				status: statusFilter || undefined,
 				personId: personFilter || undefined
@@ -70,6 +80,15 @@
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	function handleGroupsPerPageChange(value: number) {
+		const validValue = GROUPS_PER_PAGE_OPTIONS.includes(value as GroupsPerPageOption)
+			? (value as GroupsPerPageOption)
+			: 10;
+		groupsPerPage = validValue;
+		localSettings.set(GROUPS_PER_PAGE_KEY, validValue);
+		page = 1; // Reset to first page when changing page size
 	}
 
 	function handlePersonSelect(personId: string | null) {
@@ -223,8 +242,8 @@
 	});
 
 	$effect(() => {
-		// Reload when filter or page changes
-		if (statusFilter !== undefined || page || personFilter !== undefined) {
+		// Reload when filter, page, or groupsPerPage changes
+		if (statusFilter !== undefined || page || personFilter !== undefined || groupsPerPage) {
 			loadSuggestions();
 		}
 	});
@@ -240,7 +259,7 @@
 	});
 
 	const totalPages = $derived(
-		groupedResponse ? Math.ceil(groupedResponse.totalGroups / settings.groupsPerPage) : 0
+		groupedResponse ? Math.ceil(groupedResponse.totalGroups / groupsPerPage) : 0
 	);
 	const totalPendingCount = $derived.by(() => {
 		if (!groupedResponse) return 0;
@@ -311,6 +330,20 @@
 					testId="suggestion-person-filter"
 				/>
 			</div>
+		</div>
+
+		<div class="flex items-center gap-2">
+			<label for="groups-per-page" class="text-sm font-medium text-gray-700">Show:</label>
+			<select
+				id="groups-per-page"
+				value={groupsPerPage}
+				onchange={(e) => handleGroupsPerPageChange(parseInt(e.currentTarget.value, 10))}
+				class="rounded border-gray-300 text-sm"
+			>
+				{#each GROUPS_PER_PAGE_OPTIONS as option}
+					<option value={option}>{option} persons</option>
+				{/each}
+			</select>
 		</div>
 
 		{#if totalPendingCount > 0}
