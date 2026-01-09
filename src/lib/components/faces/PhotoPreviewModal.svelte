@@ -891,21 +891,21 @@
 
 	.face-item.highlighted {
 		background-color: #e0f2fe;
-		box-shadow:
-			inset 4px 0 0 0 var(--highlight-color, #3b82f6),
-			0 0 0 2px var(--highlight-color, #3b82f6);
+		box-shadow: inset 4px 0 0 0 var(--highlight-color, #3b82f6);
+		outline: 2px solid var(--highlight-color, #3b82f6);
+		outline-offset: -2px;
 		animation: highlight-pulse 1s ease-out;
 	}
 
 	@keyframes highlight-pulse {
 		0% {
-			transform: scale(1);
+			opacity: 1;
 		}
 		50% {
-			transform: scale(1.02);
+			opacity: 0.95;
 		}
 		100% {
-			transform: scale(1);
+			opacity: 1;
 		}
 	}
 
