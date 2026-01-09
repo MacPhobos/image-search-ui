@@ -1878,6 +1878,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/faces/persons/{person_id}/suggestions/regenerate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Regenerate Suggestions For Person
+         * @description Trigger background job to regenerate suggestions using current prototypes.
+         *
+         *     This expires existing pending suggestions and queues a new search
+         *     using the highest quality prototype.
+         *
+         *     Args:
+         *         person_id: UUID of the person to regenerate suggestions for
+         *         db: Database session dependency
+         *
+         *     Returns:
+         *         SuggestionRegenerationResponse with status and message
+         *
+         *     Raises:
+         *         HTTPException: 404 if person not found, 400 if no prototypes exist
+         */
+        post: operations["regenerate_suggestions_for_person_api_v1_faces_persons__person_id__suggestions_regenerate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/faces/persons/{person_id}/merge": {
         parameters: {
             query?: never;
@@ -2247,6 +2280,7 @@ export interface paths {
          *     - Ensures coverage across age eras
          *     - Respects pinned prototypes (if preserve_pins=True)
          *     - Prunes excess prototypes while maintaining quality
+         *     - Optionally triggers suggestion rescan after recomputation
          */
         post: operations["recompute_prototypes_endpoint_api_v1_faces_persons__person_id__prototypes_recompute_post"];
         delete?: never;
@@ -2601,6 +2635,10 @@ export interface components {
             createdAt: string;
             /** Indexedat */
             indexedAt?: string | null;
+            /** Takenat */
+            takenAt?: string | null;
+            camera?: components["schemas"]["CameraMetadata"] | null;
+            location?: components["schemas"]["LocationMetadata"] | null;
             /**
              * Url
              * @description Full-size image URL.
@@ -2797,6 +2835,16 @@ export interface components {
              * @default []
              */
             errors: string[];
+        };
+        /**
+         * CameraMetadata
+         * @description Camera info from EXIF.
+         */
+        CameraMetadata: {
+            /** Make */
+            make?: string | null;
+            /** Model */
+            model?: string | null;
         };
         /**
          * CategoryCreate
@@ -3730,6 +3778,21 @@ export interface components {
             detectionConfidence?: number | null;
             /** Qualityscore */
             qualityScore?: number | null;
+            /** Matchingprototypeids */
+            matchingPrototypeIds?: string[] | null;
+            /** Prototypescores */
+            prototypeScores?: {
+                [key: string]: number;
+            } | null;
+            /** Aggregateconfidence */
+            aggregateConfidence?: number | null;
+            /** Prototypematchcount */
+            prototypeMatchCount?: number | null;
+            /**
+             * Ismultiprototypematch
+             * @description True if multiple prototypes matched this face.
+             */
+            readonly isMultiPrototypeMatch: boolean;
         };
         /**
          * FaceSuggestionSettingsResponse
@@ -4127,6 +4190,16 @@ export interface components {
             facesLabeled: number;
             /** Prototypescreated */
             prototypesCreated: number;
+        };
+        /**
+         * LocationMetadata
+         * @description GPS location from EXIF.
+         */
+        LocationMetadata: {
+            /** Lat */
+            lat: number;
+            /** Lng */
+            lng: number;
         };
         /**
          * MergePersonsRequest
@@ -4685,9 +4758,15 @@ export interface components {
         RecomputePrototypesRequest: {
             /**
              * Preservepins
+             * @description Whether to preserve manually pinned prototypes
              * @default true
              */
             preservePins: boolean;
+            /**
+             * Triggerrescan
+             * @description Trigger suggestion rescan after recompute. If None, uses config default.
+             */
+            triggerRescan?: boolean | null;
         };
         /**
          * RecomputePrototypesResponse
@@ -4699,6 +4778,13 @@ export interface components {
             /** Prototypesremoved */
             prototypesRemoved: number;
             coverage: components["schemas"]["TemporalCoverage"];
+            /**
+             * Rescantriggered
+             * @default false
+             */
+            rescanTriggered: boolean;
+            /** Rescanmessage */
+            rescanMessage?: string | null;
         };
         /**
          * RejectSuggestionRequest
@@ -4879,6 +4965,18 @@ export interface components {
             maxConfidence: number;
             /** Suggestions */
             suggestions: components["schemas"]["FaceSuggestionResponse"][];
+        };
+        /**
+         * SuggestionRegenerationResponse
+         * @description Response for suggestion regeneration request.
+         */
+        SuggestionRegenerationResponse: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string;
+            /** Expiredcount */
+            expiredCount?: number | null;
         };
         /**
          * TemporalCoverage
@@ -7585,6 +7683,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PersonPhotosResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    regenerate_suggestions_for_person_api_v1_faces_persons__person_id__suggestions_regenerate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionRegenerationResponse"];
                 };
             };
             /** @description Validation Error */

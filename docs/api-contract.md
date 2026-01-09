@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.9.0
-> **Last Updated**: 2025-12-31
+> **Version**: 1.11.0
+> **Last Updated**: 2026-01-09
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -308,6 +308,16 @@ Asset management for image files.
 #### Asset Schema
 
 ```typescript
+interface LocationMetadata {
+	lat: number; // Latitude in decimal degrees (-90 to 90)
+	lng: number; // Longitude in decimal degrees (-180 to 180)
+}
+
+interface CameraMetadata {
+	make: string | null; // Camera manufacturer (e.g., "Apple", "Canon")
+	model: string | null; // Camera model (e.g., "iPhone 15 Pro", "EOS 5D Mark IV")
+}
+
 interface Asset {
 	id: string; // UUID
 	path: string; // Original file path
@@ -320,14 +330,9 @@ interface Asset {
 	fileSize: number; // Bytes
 	createdAt: string; // ISO 8601 timestamp
 	updatedAt: string; // ISO 8601 timestamp
-	metadata?: {
-		camera?: string;
-		dateTaken?: string;
-		location?: {
-			latitude: number;
-			longitude: number;
-		};
-	};
+	takenAt?: string | null; // ISO 8601 datetime when photo was taken (from EXIF DateTimeOriginal)
+	camera?: CameraMetadata | null; // Camera identification from EXIF
+	location?: LocationMetadata | null; // GPS coordinates from EXIF
 }
 ```
 
@@ -361,13 +366,14 @@ List all assets with pagination.
 			"fileSize": 3542890,
 			"createdAt": "2024-12-19T10:30:00Z",
 			"updatedAt": "2024-12-19T10:30:00Z",
-			"metadata": {
-				"camera": "iPhone 15 Pro",
-				"dateTaken": "2024-12-15T14:22:00Z",
-				"location": {
-					"latitude": 25.7617,
-					"longitude": -80.1918
-				}
+			"takenAt": "2024-12-15T14:22:00Z",
+			"camera": {
+				"make": "Apple",
+				"model": "iPhone 15 Pro"
+			},
+			"location": {
+				"lat": 25.7617,
+				"lng": -80.1918
 			}
 		}
 	],
@@ -2133,6 +2139,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data. |
 | 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields. |
 | 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses. |
 | 1.8.0   | 2025-12-30 | Added Face Clusters section with GET /api/v1/faces/clusters endpoint supporting optional filtering by min_confidence and min_cluster_size query parameters. Enhanced ClusterSummary schema with clusterConfidence (average pairwise similarity) and representativeFaceId (highest quality face) fields. Added Configuration section with GET /api/v1/config/face-clustering-unknown and PUT /api/v1/config/face-clustering-unknown endpoints for managing unknown face clustering display settings. |

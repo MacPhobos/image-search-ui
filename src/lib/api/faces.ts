@@ -187,6 +187,8 @@ export interface PersonPhotoGroup {
 	faces: FaceInPhoto[];
 	faceCount: number;
 	hasNonPersonFaces: boolean;
+	camera?: { make?: string | null; model?: string | null } | null;
+	location?: { lat: number; lng: number } | null;
 }
 
 /** Paginated list of photos for a person. */

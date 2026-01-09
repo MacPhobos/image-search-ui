@@ -502,14 +502,48 @@
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
 	<Dialog.Content class="!max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-0 gap-0 flex flex-col" showCloseButton={false}>
 		<Dialog.Header class="border-b px-6 py-4 flex-row justify-between items-center flex-shrink-0">
-			<Dialog.Title class="text-lg font-semibold">
-				{#if currentPersonName}
-					Photo Preview - {currentPersonName}
-				{:else}
-					Photo Preview
+			<div class="flex flex-col gap-1 flex-1">
+				<Dialog.Title class="text-lg font-semibold">
+					{#if currentPersonName}
+						Photo Preview - {currentPersonName}
+					{:else}
+						Photo Preview
+					{/if}
+				</Dialog.Title>
+				{#if photo.takenAt || photo.camera || photo.location}
+					<div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
+						{#if photo.takenAt}
+							<span class="flex items-center gap-1">
+								<span aria-hidden="true">📅</span>
+								<span>
+									{new Date(photo.takenAt).toLocaleDateString('en-US', {
+										year: 'numeric',
+										month: 'long',
+										day: 'numeric'
+									})}
+								</span>
+							</span>
+						{/if}
+						{#if photo.camera && (photo.camera.make || photo.camera.model)}
+							<span class="flex items-center gap-1">
+								<span aria-hidden="true">📷</span>
+								<span>
+									{[photo.camera.make, photo.camera.model].filter(Boolean).join(' ')}
+								</span>
+							</span>
+						{/if}
+						{#if photo.location}
+							<span class="flex items-center gap-1">
+								<span aria-hidden="true">📍</span>
+								<span>
+									{photo.location.lat.toFixed(4)}°, {photo.location.lng.toFixed(4)}°
+								</span>
+							</span>
+						{/if}
+					</div>
 				{/if}
-			</Dialog.Title>
-			<Dialog.Close class="relative opacity-70 hover:opacity-100">
+			</div>
+			<Dialog.Close class="relative opacity-70 hover:opacity-100 ml-4">
 				<svg
 					class="h-5 w-5"
 					viewBox="0 0 24 24"

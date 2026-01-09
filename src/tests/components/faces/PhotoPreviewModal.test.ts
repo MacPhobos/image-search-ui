@@ -720,4 +720,169 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			}
 		});
 	});
+
+	describe('EXIF Metadata Display', () => {
+		it('displays date taken when available', async () => {
+			const photoWithDate = createMockPhoto();
+			photoWithDate.takenAt = '2023-12-15T14:30:00Z';
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithDate,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				// Check for date display (formatted as "December 15, 2023")
+				expect(screen.getByText(/December 15, 2023/i)).toBeInTheDocument();
+				// Check for calendar emoji
+				expect(screen.getByText('📅')).toBeInTheDocument();
+			});
+		});
+
+		it('displays camera info when available', async () => {
+			const photoWithCamera = createMockPhoto();
+			photoWithCamera.camera = {
+				make: 'Apple',
+				model: 'iPhone 14 Pro'
+			};
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithCamera,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				// Check for combined camera make and model
+				expect(screen.getByText(/Apple iPhone 14 Pro/i)).toBeInTheDocument();
+				// Check for camera emoji
+				expect(screen.getByText('📷')).toBeInTheDocument();
+			});
+		});
+
+		it('displays camera model only when make is missing', async () => {
+			const photoWithCameraModelOnly = createMockPhoto();
+			photoWithCameraModelOnly.camera = {
+				make: null,
+				model: 'iPhone 14 Pro'
+			};
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithCameraModelOnly,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/iPhone 14 Pro/i)).toBeInTheDocument();
+				expect(screen.getByText('📷')).toBeInTheDocument();
+			});
+		});
+
+		it('displays location when available', async () => {
+			const photoWithLocation = createMockPhoto();
+			photoWithLocation.location = {
+				lat: 40.7128,
+				lng: -74.006
+			};
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithLocation,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				// Check for coordinates (formatted to 4 decimal places)
+				expect(screen.getByText(/40\.7128°, -74\.0060°/i)).toBeInTheDocument();
+				// Check for location emoji
+				expect(screen.getByText('📍')).toBeInTheDocument();
+			});
+		});
+
+		it('displays all EXIF metadata when all fields are available', async () => {
+			const photoWithAllMetadata = createMockPhoto();
+			photoWithAllMetadata.takenAt = '2023-12-15T14:30:00Z';
+			photoWithAllMetadata.camera = {
+				make: 'Apple',
+				model: 'iPhone 14 Pro'
+			};
+			photoWithAllMetadata.location = {
+				lat: 40.7128,
+				lng: -74.006
+			};
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithAllMetadata,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				// All three types of metadata should be displayed
+				expect(screen.getByText(/December 15, 2023/i)).toBeInTheDocument();
+				expect(screen.getByText(/Apple iPhone 14 Pro/i)).toBeInTheDocument();
+				expect(screen.getByText(/40\.7128°, -74\.0060°/i)).toBeInTheDocument();
+
+				// All three emojis should be present
+				expect(screen.getByText('📅')).toBeInTheDocument();
+				expect(screen.getByText('📷')).toBeInTheDocument();
+				expect(screen.getByText('📍')).toBeInTheDocument();
+			});
+		});
+
+		it('does not display EXIF section when no metadata is available', async () => {
+			const photoWithoutMetadata = createMockPhoto();
+			photoWithoutMetadata.takenAt = null;
+			photoWithoutMetadata.camera = null;
+			photoWithoutMetadata.location = null;
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithoutMetadata,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				// No metadata emojis should be present
+				expect(screen.queryByText('📅')).not.toBeInTheDocument();
+				expect(screen.queryByText('📷')).not.toBeInTheDocument();
+				expect(screen.queryByText('📍')).not.toBeInTheDocument();
+			});
+		});
+
+		it('does not display camera when both make and model are null', async () => {
+			const photoWithEmptyCamera = createMockPhoto();
+			photoWithEmptyCamera.camera = {
+				make: null,
+				model: null
+			};
+
+			render(PhotoPreviewModal, {
+				props: {
+					open: true,
+					photo: photoWithEmptyCamera,
+					onClose: mockOnClose
+				}
+			});
+
+			await waitFor(() => {
+				// Camera emoji should not be present
+				expect(screen.queryByText('📷')).not.toBeInTheDocument();
+			});
+		});
+	});
 });
