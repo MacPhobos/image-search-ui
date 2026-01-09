@@ -112,7 +112,7 @@
 </script>
 
 <Card.Root
-	class="flex gap-4 p-4 transition-all {isClickable
+	class="flex flex-row gap-4 p-4 transition-all {isClickable
 		? 'cursor-pointer hover:border-primary hover:shadow-md hover:-translate-y-0.5'
 		: ''} {selected ? 'border-primary bg-primary/5' : ''} {person.type === 'noise' ? 'opacity-85' : ''}"
 	onclick={handleClick}

@@ -17,7 +17,7 @@
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 
 	let groupedResponse = $state<GroupedSuggestionsResponse | null>(null);
-	let settings = $state<FaceSuggestionSettings>({ groupsPerPage: 10, itemsPerGroup: 20 });
+	let settings = $state<FaceSuggestionSettings>({ groupsPerPage: 20, itemsPerGroup: 20 });
 	let page = $state(1);
 	let statusFilter = $state<string>('pending');
 	let personFilter = $state<string | null>(null);
@@ -35,7 +35,7 @@
 			// Fetch all active persons with pagination (API limits page_size to 100)
 			const allPersons: Person[] = [];
 			let currentPage = 1;
-			const pageSize = 100;
+			const pageSize = 200;
 			let hasMore = true;
 
 			while (hasMore) {
