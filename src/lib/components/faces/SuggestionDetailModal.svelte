@@ -386,6 +386,10 @@
 	}
 
 	function getFaceLabel(face: FaceInstance): string {
+		// For primary face, use suggestion's person name (more reliable)
+		if (suggestion && face.id === suggestion.faceInstanceId && suggestion.personName) {
+			return suggestion.personName;
+		}
 		if (face.personName) return face.personName;
 		return 'Unknown';
 	}
