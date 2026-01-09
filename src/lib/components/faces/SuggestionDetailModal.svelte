@@ -10,6 +10,34 @@
 	} from '$lib/api/faces';
 	import type { AgeEraBucket } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
+	import { localSettings } from '$lib/stores/localSettings.svelte';
+
+	// Recent persons tracking for smart sorting
+	const RECENT_PERSONS_KEY = 'suggestions.recentPersonIds';
+	const MAX_RECENT_PERSONS = 20;
+
+	/**
+	 * Record a person ID as recently assigned.
+	 * Moves existing entries to front (MRU list behavior).
+	 */
+	function recordRecentPerson(personId: string): void {
+		const recent = localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
+		// Remove if already exists (will be moved to front)
+		const filtered = recent.filter((id) => id !== personId);
+		// Add to front, limit size
+		const updated = [personId, ...filtered].slice(0, MAX_RECENT_PERSONS);
+		localSettings.set(RECENT_PERSONS_KEY, updated);
+	}
+
+	/**
+	 * Get the recency rank for a person (0 = most recent, higher = older).
+	 * Returns Infinity if person has never been assigned.
+	 */
+	function getPersonRecencyRank(personId: string): number {
+		const recent = localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
+		const index = recent.indexOf(personId);
+		return index === -1 ? Infinity : index;
+	}
 	import ImageWithFaceBoundingBoxes, {
 		type FaceBox
 	} from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
@@ -178,8 +206,22 @@
 	// Derived states for assignment panel
 	let filteredPersons = $derived(() => {
 		const query = personSearchQuery.toLowerCase().trim();
-		if (!query) return persons;
-		return persons.filter((p) => p.name.toLowerCase().includes(query));
+		let results = query
+			? persons.filter((p) => p.name.toLowerCase().includes(query))
+			: persons;
+
+		// Sort by recency (most recently assigned first), then alphabetically
+		return [...results].sort((a, b) => {
+			const rankA = getPersonRecencyRank(a.id);
+			const rankB = getPersonRecencyRank(b.id);
+
+			// If both have same recency (or both never used), sort alphabetically
+			if (rankA === rankB) {
+				return a.name.localeCompare(b.name);
+			}
+			// Lower rank (more recent) comes first
+			return rankA - rankB;
+		});
 	});
 
 	let showCreateOption = $derived(
@@ -371,6 +413,9 @@
 		try {
 			await assignFaceToPerson(faceId, personId);
 
+			// Record this person as recently assigned
+			recordRecentPerson(personId);
+
 			// Optimistically update local state
 			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
 			if (faceIndex >= 0) {
@@ -404,6 +449,9 @@
 
 		try {
 			await assignFaceToPerson(faceId, person.id);
+
+			// Record this person as recently assigned
+			recordRecentPerson(person.id);
 
 			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
 			if (faceIndex !== -1) {
@@ -439,6 +487,9 @@
 		try {
 			const newPerson = await createPerson(newName);
 			await assignFaceToPerson(faceId, newPerson.id);
+
+			// Record this newly created person as recently assigned
+			recordRecentPerson(newPerson.id);
 
 			persons = [
 				...persons,
@@ -598,7 +649,7 @@
 													<span
 														title="How confident the AI is that this region contains a face (not person matching)"
 													>
-														Detection: {(face.detectionConfidence * 100).toFixed(0)}%
+														IsFace: {(face.detectionConfidence * 100).toFixed(0)}%
 													</span>
 													{#if face.qualityScore !== null}
 														<span title="Face quality based on clarity, lighting, and pose">

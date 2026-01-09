@@ -573,7 +573,7 @@
 											<span
 												title="How confident the AI is that this region contains a face (not person matching)"
 											>
-												Detection: {(face.detectionConfidence * 100).toFixed(0)}%
+												IsFace: {(face.detectionConfidence * 100).toFixed(0)}%
 											</span>
 											{#if face.qualityScore !== null}
 												<span title="Face quality based on clarity, lighting, and pose">
