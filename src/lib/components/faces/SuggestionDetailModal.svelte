@@ -52,7 +52,13 @@
 		onClose: () => void;
 		onAccept: (suggestion: FaceSuggestion) => void;
 		onReject: (suggestion: FaceSuggestion) => void;
-		onFaceAssigned?: (faceId: string, personId: string, personName: string) => void;
+		onFaceAssigned?: (assignment: {
+			faceId: string;
+			personId: string;
+			personName: string;
+			thumbnailUrl: string;
+			photoFilename: string;
+		}) => void;
 		onPrototypePinned?: () => void;
 		onFaceUnassigned?: (faceId: string) => void;
 	}
@@ -457,8 +463,16 @@
 			newMap.delete(faceId);
 			faceSuggestions = newMap;
 
-			// Notify parent
-			onFaceAssigned?.(faceId, personId, personName);
+			// Notify parent with full assignment data
+			if (onFaceAssigned && suggestion) {
+				onFaceAssigned({
+					faceId,
+					personId,
+					personName,
+					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
+					photoFilename: suggestion.path?.split('/').pop() || suggestion.fullImageUrl?.split('/').pop() || 'Unknown'
+				});
+			}
 		} catch (error) {
 			console.error('Failed to assign face:', error);
 			assignmentError = error instanceof Error ? error.message : 'Failed to assign face to person.';
@@ -491,8 +505,16 @@
 			assigningFaceId = null;
 			personSearchQuery = '';
 
-			// Notify parent
-			onFaceAssigned?.(faceId, person.id, person.name);
+			// Notify parent with full assignment data
+			if (onFaceAssigned && suggestion) {
+				onFaceAssigned({
+					faceId,
+					personId: person.id,
+					personName: person.name,
+					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
+					photoFilename: suggestion.path?.split('/').pop() || suggestion.fullImageUrl?.split('/').pop() || 'Unknown'
+				});
+			}
 		} catch (err) {
 			console.error('Failed to assign face:', err);
 			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
@@ -542,8 +564,16 @@
 			assigningFaceId = null;
 			personSearchQuery = '';
 
-			// Notify parent
-			onFaceAssigned?.(faceId, newPerson.id, newPerson.name);
+			// Notify parent with full assignment data
+			if (onFaceAssigned && suggestion) {
+				onFaceAssigned({
+					faceId,
+					personId: newPerson.id,
+					personName: newPerson.name,
+					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
+					photoFilename: suggestion.path?.split('/').pop() || suggestion.fullImageUrl?.split('/').pop() || 'Unknown'
+				});
+			}
 		} catch (err) {
 			console.error('Failed to create person and assign:', err);
 			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';

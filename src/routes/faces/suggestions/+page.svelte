@@ -249,6 +249,30 @@
 	}
 
 	/**
+	 * Handle face assignment from All Faces list in SuggestionDetailModal.
+	 * Adds the assignment to the recently assigned panel.
+	 */
+	function handleFaceAssigned(assignment: {
+		faceId: string;
+		personId: string;
+		personName: string;
+		thumbnailUrl: string;
+		photoFilename: string;
+	}) {
+		const recentAssignment: RecentAssignment = {
+			faceId: assignment.faceId,
+			personId: assignment.personId,
+			personName: assignment.personName,
+			thumbnailUrl: assignment.thumbnailUrl,
+			photoFilename: assignment.photoFilename,
+			assignedAt: new Date()
+		};
+
+		// Add to front, keep max 10
+		recentAssignments = [recentAssignment, ...recentAssignments].slice(0, 10);
+	}
+
+	/**
 	 * Track a face assignment in the recent assignments list.
 	 */
 	function trackAssignment(suggestion: FaceSuggestion) {
@@ -539,6 +563,7 @@
 	onClose={handleModalClose}
 	onAccept={handleModalAccept}
 	onReject={handleModalReject}
+	onFaceAssigned={handleFaceAssigned}
 	onFaceUnassigned={handleFaceUnassigned}
 />
 
