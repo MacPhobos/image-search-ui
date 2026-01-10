@@ -79,6 +79,7 @@
 	// Face highlight state (for bidirectional selection between boxes and list)
 	let highlightedFaceId = $state<string | null>(null);
 	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());
+	let pathCopied = $state(false);
 
 	// Pin prototype state
 	let pinningFaceId = $state<string | null>(null);
@@ -614,12 +615,52 @@
 			pinningInProgress = false;
 		}
 	}
+
+	async function copyPath() {
+		// Note: FaceSuggestion doesn't include a 'path' field yet
+		// This would need to be added to the backend API response
+		// For now, we can copy the fullImageUrl or asset ID
+		if (!suggestion?.fullImageUrl) return;
+
+		try {
+			// Extract a useful identifier (fullImageUrl in this case)
+			await navigator.clipboard.writeText(suggestion.fullImageUrl);
+			pathCopied = true;
+			setTimeout(() => {
+				pathCopied = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy path:', err);
+		}
+	}
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
 	<Dialog.Content class="!max-w-[98vw] !max-h-[98vh] w-[98vw] h-[98vh] p-0 gap-0 flex flex-col">
 		<Dialog.Header class="px-6 py-4 border-b flex-shrink-0">
-			<Dialog.Title>Face Suggestion Details</Dialog.Title>
+			<div class="flex flex-col gap-1 flex-1">
+				<Dialog.Title>Face Suggestion Details</Dialog.Title>
+				{#if suggestion?.fullImageUrl}
+					<div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
+						<!-- Image URL Display (until path field is added to backend) -->
+						<span class="flex items-center gap-1" title={suggestion.fullImageUrl}>
+							<span aria-hidden="true">📁</span>
+							<span class="truncate max-w-[300px]">
+								{suggestion.fullImageUrl.split('/').pop() || 'Image URL'}
+							</span>
+							<button
+								type="button"
+								onclick={copyPath}
+								class="copy-path-btn"
+								title="Copy image URL"
+								aria-label="Copy image URL to clipboard"
+							>
+								{pathCopied ? '✓' : '📋'}
+							</button>
+						</span>
+					</div>
+				{/if}
+			</div>
 		</Dialog.Header>
 
 		{#if suggestion}
@@ -1058,6 +1099,34 @@
 	.face-item-button:focus {
 		outline: 2px solid #3b82f6;
 		outline-offset: -2px;
+	}
+
+	/* Copy path button */
+	.copy-path-btn {
+		border: none;
+		background: none;
+		cursor: pointer;
+		padding: 0;
+		margin: 0;
+		font-size: 0.875rem;
+		line-height: 1;
+		opacity: 0.6;
+		transition: opacity 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.copy-path-btn:hover {
+		opacity: 1;
+	}
+
+	.copy-path-btn:focus {
+		outline: 2px solid #3b82f6;
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
+
+	.copy-path-btn:active {
+		transform: scale(0.95);
 	}
 
 	.face-indicator {
