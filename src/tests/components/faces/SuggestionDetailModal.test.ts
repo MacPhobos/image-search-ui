@@ -30,6 +30,7 @@ describe('SuggestionDetailModal', () => {
 		faceThumbnailUrl: 'http://localhost:8000/api/v1/images/123/face_thumb/face-uuid-1',
 		personName: 'John Doe',
 		fullImageUrl: '/api/v1/images/123/full',
+		path: '/photos/2024/vacation/beach.jpg',
 		bboxX: 100,
 		bboxY: 100,
 		bboxW: 200,

@@ -799,6 +799,7 @@ export interface FaceSuggestion {
 	faceThumbnailUrl: string | null;
 	personName: string | null;
 	fullImageUrl: string | null;
+	path: string; // Original filesystem path of the image asset
 	bboxX: number | null;
 	bboxY: number | null;
 	bboxW: number | null;

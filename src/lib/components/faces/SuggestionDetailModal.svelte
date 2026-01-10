@@ -617,14 +617,12 @@
 	}
 
 	async function copyPath() {
-		// Note: FaceSuggestion doesn't include a 'path' field yet
-		// This would need to be added to the backend API response
-		// For now, we can copy the fullImageUrl or asset ID
-		if (!suggestion?.fullImageUrl) return;
+		// Use the path field (original filesystem path) if available, fallback to fullImageUrl
+		const pathToCopy = suggestion?.path || suggestion?.fullImageUrl;
+		if (!pathToCopy) return;
 
 		try {
-			// Extract a useful identifier (fullImageUrl in this case)
-			await navigator.clipboard.writeText(suggestion.fullImageUrl);
+			await navigator.clipboard.writeText(pathToCopy);
 			pathCopied = true;
 			setTimeout(() => {
 				pathCopied = false;
@@ -640,9 +638,28 @@
 		<Dialog.Header class="px-6 py-4 border-b flex-shrink-0">
 			<div class="flex flex-col gap-1 flex-1">
 				<Dialog.Title>Face Suggestion Details</Dialog.Title>
-				{#if suggestion?.fullImageUrl}
+				{#if suggestion?.path}
 					<div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
-						<!-- Image URL Display (until path field is added to backend) -->
+						<!-- Display real filesystem path -->
+						<span class="flex items-center gap-1" title={suggestion.path}>
+							<span aria-hidden="true">📁</span>
+							<span class="truncate max-w-[300px]">
+								{suggestion.path.split('/').pop() || 'Path'}
+							</span>
+							<button
+								type="button"
+								onclick={copyPath}
+								class="copy-path-btn"
+								title="Copy filesystem path"
+								aria-label="Copy filesystem path to clipboard"
+							>
+								{pathCopied ? '✓' : '📋'}
+							</button>
+						</span>
+					</div>
+				{:else if suggestion?.fullImageUrl}
+					<div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
+						<!-- Fallback: Image URL Display -->
 						<span class="flex items-center gap-1" title={suggestion.fullImageUrl}>
 							<span aria-hidden="true">📁</span>
 							<span class="truncate max-w-[300px]">

@@ -3786,6 +3786,11 @@ export interface components {
             personName?: string | null;
             /** Fullimageurl */
             fullImageUrl?: string | null;
+            /**
+             * Path
+             * @default
+             */
+            path: string;
             /** Bboxx */
             bboxX?: number | null;
             /** Bboxy */
