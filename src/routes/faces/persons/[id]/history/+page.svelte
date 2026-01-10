@@ -9,6 +9,7 @@
 		type PersonPhotoGroup
 	} from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
+	import { API_BASE_URL } from '$lib/api/client';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 
 	const personId = $page.params.id;
@@ -139,7 +140,7 @@
 	 * Get thumbnail URL for an asset
 	 */
 	function getThumbnailUrl(assetId: number): string {
-		return `/api/v1/images/${assetId}/thumbnail`;
+		return `${API_BASE_URL}/api/v1/images/${assetId}/thumbnail`;
 	}
 
 	/**
@@ -149,7 +150,7 @@
 		try {
 			// Create a minimal PersonPhotoGroup from the asset ID
 			// This is a simplified version - the modal will load the full data
-			const fullUrl = `/api/v1/images/${assetId}/full`;
+			const fullUrl = `${API_BASE_URL}/api/v1/images/${assetId}/full`;
 
 			previewPhoto = {
 				assetId,
