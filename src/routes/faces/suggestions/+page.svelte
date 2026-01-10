@@ -14,8 +14,12 @@
 	import SuggestionGroupCard from '$lib/components/faces/SuggestionGroupCard.svelte';
 	import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
 	import PersonSearchBar from '$lib/components/faces/PersonSearchBar.svelte';
+	import RecentlyAssignedPanel, {
+		type RecentAssignment
+	} from '$lib/components/faces/RecentlyAssignedPanel.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
+	import { unassignFace } from '$lib/api/faces';
 
 	// localStorage key for persisting groups per page preference
 	const GROUPS_PER_PAGE_KEY = 'suggestions.groupsPerPage';
@@ -38,6 +42,7 @@
 	let selectedSuggestion = $state<FaceSuggestion | null>(null);
 	let persons = $state<Person[]>([]);
 	let personsLoading = $state(false);
+	let recentAssignments = $state<RecentAssignment[]>([]);
 
 	async function loadPersons() {
 		personsLoading = true;
@@ -191,6 +196,9 @@
 		try {
 			const updated = await acceptSuggestion(suggestion.id);
 			handleSuggestionUpdate(updated);
+
+			// Track this assignment in recent list
+			trackAssignment(suggestion);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to accept suggestion';
 		}
@@ -202,6 +210,50 @@
 			handleSuggestionUpdate(updated);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to reject suggestion';
+		}
+	}
+
+	function handleFaceUnassigned() {
+		// Reload suggestions after undoing an assignment
+		// The face should now appear in the suggestions again
+		loadSuggestions();
+	}
+
+	/**
+	 * Track a face assignment in the recent assignments list.
+	 */
+	function trackAssignment(suggestion: FaceSuggestion) {
+		if (!suggestion.personName) return;
+
+		const assignment: RecentAssignment = {
+			faceId: suggestion.faceInstanceId,
+			personId: suggestion.suggestedPersonId,
+			personName: suggestion.personName,
+			thumbnailUrl:
+				suggestion.faceThumbnailUrl || `/api/v1/faces/faces/${suggestion.faceInstanceId}/thumbnail`,
+			photoFilename: suggestion.path.split('/').pop() || 'Unknown',
+			assignedAt: new Date()
+		};
+
+		// Add to front, keep max 10
+		recentAssignments = [assignment, ...recentAssignments].slice(0, 10);
+	}
+
+	/**
+	 * Handle undo from recently assigned panel.
+	 */
+	async function handleRecentUndo(faceId: string) {
+		try {
+			await unassignFace(faceId);
+
+			// Remove from recent list
+			recentAssignments = recentAssignments.filter((a) => a.faceId !== faceId);
+
+			// Reload suggestions to show the face again
+			await loadSuggestions();
+		} catch (err) {
+			console.error('Failed to undo assignment:', err);
+			error = err instanceof Error ? err.message : 'Failed to undo assignment';
 		}
 	}
 
@@ -293,18 +345,21 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
-	<div class="flex items-center justify-between mb-6">
-		<h1 class="text-2xl font-bold text-gray-900">Face Suggestions</h1>
-		<div class="text-sm text-gray-500">
-			{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions ===
-			1
-				? ''
-				: 's'}
-			{#if groupedResponse}
-				· {groupedResponse.totalGroups} group{groupedResponse.totalGroups === 1 ? '' : 's'}
-			{/if}
-		</div>
-	</div>
+	<div class="page-layout">
+		<!-- Main content area -->
+		<div class="main-content">
+			<div class="flex items-center justify-between mb-6">
+				<h1 class="text-2xl font-bold text-gray-900">Face Suggestions</h1>
+				<div class="text-sm text-gray-500">
+					{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions ===
+					1
+						? ''
+						: 's'}
+					{#if groupedResponse}
+						· {groupedResponse.totalGroups} group{groupedResponse.totalGroups === 1 ? '' : 's'}
+					{/if}
+				</div>
+			</div>
 
 	<!-- Filters and Bulk Actions -->
 	<div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
@@ -440,6 +495,13 @@
 			</div>
 		{/if}
 	{/if}
+		</div>
+
+		<!-- Sidebar with Recently Assigned Panel -->
+		<aside class="sidebar">
+			<RecentlyAssignedPanel assignments={recentAssignments} onUndo={handleRecentUndo} />
+		</aside>
+	</div>
 </div>
 
 <!-- Detail Modal -->
@@ -448,4 +510,33 @@
 	onClose={handleModalClose}
 	onAccept={handleModalAccept}
 	onReject={handleModalReject}
+	onFaceUnassigned={handleFaceUnassigned}
 />
+
+<style>
+	.page-layout {
+		display: grid;
+		grid-template-columns: 1fr 320px;
+		gap: 1.5rem;
+		align-items: start;
+	}
+
+	.main-content {
+		min-width: 0;
+	}
+
+	.sidebar {
+		position: relative;
+	}
+
+	/* Responsive layout */
+	@media (max-width: 1024px) {
+		.page-layout {
+			grid-template-columns: 1fr;
+		}
+
+		.sidebar {
+			order: -1; /* Show panel above main content on mobile */
+		}
+	}
+</style>

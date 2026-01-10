@@ -6,7 +6,8 @@
 		assignFaceToPerson,
 		createPerson,
 		getFaceSuggestions,
-		pinPrototype
+		pinPrototype,
+		unassignFace
 	} from '$lib/api/faces';
 	import type { AgeEraBucket } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
@@ -53,10 +54,18 @@
 		onReject: (suggestion: FaceSuggestion) => void;
 		onFaceAssigned?: (faceId: string, personId: string, personName: string) => void;
 		onPrototypePinned?: () => void;
+		onFaceUnassigned?: (faceId: string) => void;
 	}
 
-	let { suggestion, onClose, onAccept, onReject, onFaceAssigned, onPrototypePinned }: Props =
-		$props();
+	let {
+		suggestion,
+		onClose,
+		onAccept,
+		onReject,
+		onFaceAssigned,
+		onPrototypePinned,
+		onFaceUnassigned
+	}: Props = $props();
 
 	// Derive open state from suggestion
 	let open = $derived(suggestion !== null);
@@ -86,6 +95,12 @@
 	let showPinOptions = $state(false);
 	let pinningInProgress = $state(false);
 	let selectedEra = $state<AgeEraBucket | null>(null);
+
+	// Undo assignment state
+	let showUndoConfirm = $state(false);
+	let undoInProgress = $state(false);
+	let undoError = $state<string | null>(null);
+	let undoSuccess = $state<string | null>(null);
 
 	// Face suggestions state
 	interface FaceSuggestionsState {
@@ -631,6 +646,59 @@
 			console.error('Failed to copy path:', err);
 		}
 	}
+
+	// Undo assignment handlers
+	function startUndoAssignment() {
+		showUndoConfirm = true;
+		undoError = null;
+		undoSuccess = null;
+	}
+
+	function cancelUndoAssignment() {
+		showUndoConfirm = false;
+		undoError = null;
+	}
+
+	async function confirmUndoAssignment() {
+		if (!suggestion || undoInProgress) return;
+
+		undoInProgress = true;
+		undoError = null;
+		undoSuccess = null;
+
+		try {
+			const response = await unassignFace(suggestion.faceInstanceId);
+
+			// Update local state - reset face to unassigned
+			const faceIndex = allFaces.findIndex((f) => f.id === suggestion.faceInstanceId);
+			if (faceIndex >= 0) {
+				allFaces[faceIndex] = {
+					...allFaces[faceIndex],
+					personId: null,
+					personName: null
+				};
+			}
+
+			// Show success message
+			undoSuccess = `Assignment undone. Face removed from ${response.previousPersonName}.`;
+
+			// Notify parent component
+			onFaceUnassigned?.(suggestion.faceInstanceId);
+
+			// Close confirmation dialog
+			showUndoConfirm = false;
+
+			// Auto-hide success message after 3 seconds
+			setTimeout(() => {
+				undoSuccess = null;
+			}, 3000);
+		} catch (err) {
+			console.error('Failed to undo assignment:', err);
+			undoError = err instanceof Error ? err.message : 'Failed to undo assignment';
+		} finally {
+			undoInProgress = false;
+		}
+	}
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
@@ -952,6 +1020,31 @@
 							<span class="detail-label">Created:</span>
 							<span class="detail-value">{formatDate(suggestion.createdAt)}</span>
 						</div>
+
+						<!-- Undo Assignment Button -->
+						{#if suggestion.status === 'accepted' || allFaces.find((f) => f.id === suggestion.faceInstanceId)?.personId}
+							<div class="undo-section">
+								{#if undoSuccess}
+									<Alert.Root class="mb-2 bg-green-50 border-green-200">
+										<Alert.Description class="text-green-800">{undoSuccess}</Alert.Description>
+									</Alert.Root>
+								{/if}
+								{#if undoError}
+									<Alert.Root variant="destructive" class="mb-2">
+										<Alert.Description>{undoError}</Alert.Description>
+									</Alert.Root>
+								{/if}
+								<button
+									type="button"
+									class="undo-assignment-btn"
+									onclick={startUndoAssignment}
+									disabled={undoInProgress}
+									title="Remove this face from the assigned person"
+								>
+									{undoInProgress ? 'Undoing...' : 'Undo Assignment'}
+								</button>
+							</div>
+						{/if}
 					</div>
 				</aside>
 			</div>
@@ -972,6 +1065,46 @@
 				</Dialog.Footer>
 			{/if}
 		{/if}
+	</Dialog.Content>
+</Dialog.Root>
+
+<!-- Undo Confirmation Dialog -->
+<Dialog.Root open={showUndoConfirm} onOpenChange={(open) => !open && cancelUndoAssignment()}>
+	<Dialog.Content class="max-w-md">
+		<Dialog.Header>
+			<Dialog.Title>Undo Assignment</Dialog.Title>
+		</Dialog.Header>
+
+		<div class="py-4">
+			<p class="text-sm text-gray-700 mb-4">
+				{#if suggestion}
+					Remove this face from <strong>{suggestion.personName}</strong>? The face will return to
+					unassigned state and can be reassigned later.
+				{:else}
+					Remove this face assignment?
+				{/if}
+			</p>
+
+			{#if undoError}
+				<Alert.Root variant="destructive" class="mb-2">
+					<Alert.Description>{undoError}</Alert.Description>
+				</Alert.Root>
+			{/if}
+		</div>
+
+		<Dialog.Footer class="gap-2">
+			<Button variant="outline" onclick={cancelUndoAssignment} disabled={undoInProgress}>
+				Cancel
+			</Button>
+			<Button
+				variant="destructive"
+				onclick={confirmUndoAssignment}
+				disabled={undoInProgress}
+				class="bg-orange-600 hover:bg-orange-700"
+			>
+				{undoInProgress ? 'Undoing...' : 'Confirm Undo'}
+			</Button>
+		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
 
@@ -1575,5 +1708,36 @@
 		.face-sidebar {
 			max-height: 300px;
 		}
+	}
+
+	/* Undo assignment styles */
+	.undo-section {
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid #e5e7eb;
+	}
+
+	.undo-assignment-btn {
+		width: 100%;
+		padding: 0.5rem 1rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		background-color: #f97316;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
+	}
+
+	.undo-assignment-btn:hover:not(:disabled) {
+		background-color: #ea580c;
+	}
+
+	.undo-assignment-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 </style>
