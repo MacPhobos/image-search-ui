@@ -1292,3 +1292,62 @@ export async function getBatchThumbnails(assetIds: number[]): Promise<BatchThumb
 		body: JSON.stringify({ assetIds })
 	});
 }
+
+// ============ Person Assignment History Types ============
+
+/** Assignment operation type. */
+export type AssignmentOperation =
+	| 'ASSIGN_TO_PERSON'
+	| 'UNASSIGN_FROM_PERSON'
+	| 'MOVE_TO_PERSON'
+	| 'BULK_ASSIGN'
+	| 'BULK_UNASSIGN'
+	| 'BULK_MOVE';
+
+/** A single assignment event in history. */
+export interface AssignmentEvent {
+	id: string;
+	operation: AssignmentOperation;
+	createdAt: string;
+	faceCount: number;
+	photoCount: number;
+	faceInstanceIds: string[];
+	assetIds: number[];
+	fromPersonId: string | null;
+	toPersonId: string | null;
+	fromPersonName: string | null;
+	toPersonName: string | null;
+	note: string | null;
+}
+
+/** Response from assignment history endpoint. */
+export interface AssignmentHistoryResponse {
+	events: AssignmentEvent[];
+	total: number;
+	offset: number;
+	limit: number;
+}
+
+// ============ Person Assignment History API Functions ============
+
+/**
+ * Get assignment history for a person.
+ * @param personId - The person ID (UUID)
+ * @param options - Query parameters
+ * @returns Promise with paginated assignment events
+ */
+export async function getPersonAssignmentHistory(
+	personId: string,
+	options: { limit?: number; offset?: number; operation?: string; since?: string } = {}
+): Promise<AssignmentHistoryResponse> {
+	const params = new URLSearchParams();
+	if (options.limit !== undefined) params.set('limit', options.limit.toString());
+	if (options.offset !== undefined) params.set('offset', options.offset.toString());
+	if (options.operation) params.set('operation', options.operation);
+	if (options.since) params.set('since', options.since);
+
+	const queryString = params.toString();
+	const endpoint = `/api/v1/faces/persons/${encodeURIComponent(personId)}/assignment-history${queryString ? `?${queryString}` : ''}`;
+
+	return apiRequest<AssignmentHistoryResponse>(endpoint);
+}

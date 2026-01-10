@@ -626,6 +626,9 @@
 			</div>
 
 			<div class="person-actions">
+				<a href="/faces/persons/{person.id}/history" class="secondary-button">
+					View Assignment History
+				</a>
 				{#if person.status === 'active'}
 					<button type="button" class="secondary-button" onclick={handleOpenMergeModal}>
 						Merge into Another Person
@@ -1123,6 +1126,7 @@
 	}
 
 	.secondary-button {
+		display: inline-block;
 		padding: 0.625rem 1.25rem;
 		background-color: white;
 		color: #666;
@@ -1132,6 +1136,7 @@
 		font-weight: 500;
 		cursor: pointer;
 		transition: background-color 0.2s;
+		text-decoration: none;
 	}
 
 	.secondary-button:hover {

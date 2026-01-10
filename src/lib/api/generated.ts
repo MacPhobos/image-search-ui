@@ -1926,6 +1926,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/faces/persons/{person_id}/assignment-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Person Assignment History
+         * @description Get assignment history for a specific person.
+         *
+         *     Returns events where this person is either:
+         *     - The source (from_person_id) - faces were removed from this person
+         *     - The destination (to_person_id) - faces were assigned to this person
+         *
+         *     Args:
+         *         person_id: UUID of the person to get history for
+         *         limit: Maximum number of events to return (1-100)
+         *         offset: Offset for pagination
+         *         operation: Optional filter by operation type (REMOVE_FROM_PERSON, MOVE_TO_PERSON)
+         *         since: Optional filter to only show events after this timestamp
+         *         db: Database session dependency
+         *
+         *     Returns:
+         *         AssignmentHistoryResponse with paginated events
+         *
+         *     Raises:
+         *         HTTPException: 404 if person not found
+         */
+        get: operations["get_person_assignment_history_api_v1_faces_persons__person_id__assignment_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/faces/persons/{person_id}/merge": {
         parameters: {
             query?: never;
@@ -2710,6 +2748,56 @@ export interface components {
             personId: string;
             /** Personname */
             personName: string;
+        };
+        /**
+         * AssignmentEventResponse
+         * @description Single assignment event in history.
+         */
+        AssignmentEventResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Operation */
+            operation: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Facecount */
+            faceCount: number;
+            /** Photocount */
+            photoCount: number;
+            /** Faceinstanceids */
+            faceInstanceIds: string[];
+            /** Assetids */
+            assetIds: number[];
+            /** Frompersonid */
+            fromPersonId?: string | null;
+            /** Topersonid */
+            toPersonId?: string | null;
+            /** Frompersonname */
+            fromPersonName?: string | null;
+            /** Topersonname */
+            toPersonName?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * AssignmentHistoryResponse
+         * @description Paginated assignment history for a person.
+         */
+        AssignmentHistoryResponse: {
+            /** Events */
+            events: components["schemas"]["AssignmentEventResponse"][];
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
         };
         /**
          * BatchThumbnailRequest
@@ -7813,6 +7901,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuggestionRegenerationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_person_assignment_history_api_v1_faces_persons__person_id__assignment_history_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum events to return */
+                limit?: number;
+                /** @description Offset for pagination */
+                offset?: number;
+                /** @description Filter by operation type */
+                operation?: string | null;
+                /** @description Only events after this time */
+                since?: string | null;
+            };
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentHistoryResponse"];
                 };
             };
             /** @description Validation Error */
