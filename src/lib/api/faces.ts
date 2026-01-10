@@ -374,6 +374,35 @@ export async function listPersons(
 }
 
 /**
+ * Fetches ALL persons using pagination loop.
+ * Use this for dropdowns, selectors, and operations requiring full list.
+ * For paginated list views, use listPersons() directly instead.
+ *
+ * @param status - Filter by status: 'active' (default) or 'all'
+ * @returns Promise<Person[]> - Complete array of all persons
+ */
+export async function fetchAllPersons(status: 'active' | 'all' = 'active'): Promise<Person[]> {
+	const allPersons: Person[] = [];
+	let page = 1;
+	const pageSize = 1000; // Backend maximum
+
+	while (true) {
+		const statusFilter = status === 'all' ? undefined : status;
+		const response = await listPersons(page, pageSize, statusFilter);
+		allPersons.push(...response.items);
+
+		// Stop if we've fetched all items or got a partial page
+		if (allPersons.length >= response.total || response.items.length < pageSize) {
+			break;
+		}
+
+		page++;
+	}
+
+	return allPersons;
+}
+
+/**
  * Get a single person by ID.
  * @param personId - The person ID (UUID)
  */

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { listPersons } from '$lib/api/faces';
+	import { fetchAllPersons } from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
 
 	interface Props {
@@ -38,9 +38,9 @@
 		error = null;
 		try {
 			// Load all active persons
-			const response = await listPersons(1, 100, 'active');
+			const allPersons = await fetchAllPersons('active');
 			// Exclude the current person
-			persons = response.items.filter((p) => p.id !== excludePersonId);
+			persons = allPersons.filter((p) => p.id !== excludePersonId);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load persons';
 		} finally {

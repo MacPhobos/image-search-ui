@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { listPersons, labelCluster } from '$lib/api/faces';
+	import { fetchAllPersons, labelCluster } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import type { Person } from '$lib/types';
 	import { onMount } from 'svelte';
@@ -44,9 +44,9 @@
 		loading = true;
 		error = null;
 		try {
-			const response = await listPersons(1, 100, 'active');
-			persons = response.items;
-			filteredPersons = response.items;
+			const allPersons = await fetchAllPersons('active');
+			persons = allPersons;
+			filteredPersons = allPersons;
 		} catch (err) {
 			console.error('Failed to load persons:', err);
 			error = 'Failed to load existing persons.';
@@ -72,7 +72,14 @@
 		error = null;
 
 		try {
-			const name = createNewMode ? newPersonName.trim() : selectedPerson!.name;
+			// Ensure we have a person selected in non-create mode
+			if (!createNewMode && !selectedPerson) {
+				error = 'No person selected';
+				submitting = false;
+				return;
+			}
+
+			const name = createNewMode ? newPersonName.trim() : selectedPerson.name;
 			const response = await labelCluster(clusterId, name);
 			onSuccess(response.personName, response.personId);
 		} catch (err) {

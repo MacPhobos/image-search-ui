@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	import {
 		getPersonById,
-		listPersons,
+		fetchAllPersons,
 		mergePersons,
 		getPersonPhotos,
 		getPrototypes,
@@ -171,9 +171,9 @@
 
 	async function loadMergeTargets() {
 		try {
-			const response = await listPersons(1, 100, 'active');
+			const allPersons = await fetchAllPersons('active');
 			// Exclude current person
-			mergeTargetPersons = response.items.filter((p) => p.id !== personId);
+			mergeTargetPersons = allPersons.filter((p) => p.id !== personId);
 		} catch (err) {
 			console.error('Failed to load merge targets:', err);
 		}

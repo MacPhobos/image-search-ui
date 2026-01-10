@@ -147,8 +147,9 @@ describe('FiltersPanel - People Filter (Single-Select)', () => {
 			'http://localhost:8000/api/v1/categories?page=1&page_size=100',
 			createCategoryResponse([])
 		);
+		// fetchAllPersons uses page_size=1000 to fetch all persons efficiently
 		mockResponse(
-			'http://localhost:8000/api/v1/faces/persons?page=1&page_size=100&status=active',
+			'http://localhost:8000/api/v1/faces/persons?page=1&page_size=1000&status=active',
 			createPersonResponse(testPersons)
 		);
 	});
@@ -432,8 +433,9 @@ describe('FiltersPanel - Clear All Filters', () => {
 			'http://localhost:8000/api/v1/categories?page=1&page_size=100',
 			createCategoryResponse([])
 		);
+		// fetchAllPersons uses page_size=1000 to fetch all persons efficiently
 		mockResponse(
-			'http://localhost:8000/api/v1/faces/persons?page=1&page_size=100&status=active',
+			'http://localhost:8000/api/v1/faces/persons?page=1&page_size=1000&status=active',
 			createPersonResponse(testPersons)
 		);
 	});

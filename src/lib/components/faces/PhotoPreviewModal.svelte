@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { PersonPhotoGroup, FaceInPhoto, FaceSuggestionItem } from '$lib/api/faces';
 	import {
-		listPersons,
+		fetchAllPersons,
 		assignFaceToPerson,
 		createPerson,
 		unassignFace,
@@ -274,8 +274,7 @@
 		personsLoading = true;
 		personsError = null;
 		try {
-			const response = await listPersons(1, 100, 'active');
-			persons = response.items;
+			persons = await fetchAllPersons('active');
 		} catch (err) {
 			console.error('Failed to load persons:', err);
 			personsError = 'Failed to load persons.';

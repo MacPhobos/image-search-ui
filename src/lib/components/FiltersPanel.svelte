@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { SearchFilters, Category, Person } from '$lib/types';
 	import { listCategories } from '$lib/api/categories';
-	import { listPersons } from '$lib/api/faces';
+	import { fetchAllPersons } from '$lib/api/faces';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
 	import { tid } from '$lib/testing/testid';
@@ -67,8 +67,7 @@
 
 	async function loadPersons() {
 		try {
-			const response = await listPersons(1, 100, 'active');
-			persons = response.items;
+			persons = await fetchAllPersons('active');
 		} catch (err) {
 			console.error('Failed to load persons:', err);
 		} finally {

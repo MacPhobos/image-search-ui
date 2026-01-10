@@ -881,7 +881,8 @@ describe('Person Detail Page', () => {
 				birthDate: '1990-05-15',
 				updatedAt: '2024-12-20T10:00:00Z'
 			};
-			mockResponse('/api/v1/faces/persons/person-uuid-1', updatedPerson, 'PATCH');
+			// Mock PATCH response (fetch mock doesn't distinguish HTTP methods, just URLs)
+			mockResponse('/api/v1/faces/persons/person-uuid-1', updatedPerson);
 
 			const { container } = render(PersonDetailPage);
 
@@ -921,13 +922,13 @@ describe('Person Detail Page', () => {
 			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
 			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
 
+			// Mock PATCH error response (fetch mock doesn't distinguish HTTP methods, just URLs)
 			mockError(
 				'/api/v1/faces/persons/person-uuid-1',
 				500,
 				{
 					message: 'Failed to update person'
-				},
-				'PATCH'
+				}
 			);
 
 			const { container } = render(PersonDetailPage);
@@ -978,7 +979,8 @@ describe('Person Detail Page', () => {
 				birthDate: null,
 				updatedAt: '2024-12-20T10:00:00Z'
 			};
-			mockResponse('/api/v1/faces/persons/person-uuid-1', updatedPerson, 'PATCH');
+			// Mock PATCH response (fetch mock doesn't distinguish HTTP methods, just URLs)
+			mockResponse('/api/v1/faces/persons/person-uuid-1', updatedPerson);
 
 			const { container } = render(PersonDetailPage);
 
