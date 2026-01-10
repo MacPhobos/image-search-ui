@@ -156,6 +156,20 @@
 
 		bulkLoading = true;
 		try {
+			// Track assignments before API call (while we still have suggestion data)
+			if (action === 'accept' && groupedResponse) {
+				const acceptedSuggestions: FaceSuggestion[] = [];
+				for (const group of groupedResponse.groups) {
+					for (const suggestion of group.suggestions) {
+						if (selectedIds.has(suggestion.id)) {
+							acceptedSuggestions.push(suggestion);
+						}
+					}
+				}
+				// Track all accepted suggestions
+				acceptedSuggestions.forEach((s) => trackAssignment(s));
+			}
+
 			await bulkSuggestionAction([...selectedIds], action);
 			await loadSuggestions();
 			selectedIds = new Set();
@@ -168,6 +182,21 @@
 
 	async function handleGroupAcceptAll(ids: number[]) {
 		if (ids.length === 0) return;
+
+		// Track assignments before API call (while we still have suggestion data)
+		if (groupedResponse) {
+			const acceptedSuggestions: FaceSuggestion[] = [];
+			for (const group of groupedResponse.groups) {
+				for (const suggestion of group.suggestions) {
+					if (ids.includes(suggestion.id)) {
+						acceptedSuggestions.push(suggestion);
+					}
+				}
+			}
+			// Track all accepted suggestions
+			acceptedSuggestions.forEach((s) => trackAssignment(s));
+		}
+
 		await bulkSuggestionAction(ids, 'accept');
 		await loadSuggestions();
 		// Remove accepted IDs from selection
