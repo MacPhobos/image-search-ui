@@ -647,7 +647,7 @@ describe('ImageWithFaceBoundingBoxes', () => {
 
 			const wrapper = container.querySelector('.image-with-faces');
 			const style = wrapper?.getAttribute('style');
-			expect(style).toContain('--max-height: 80vh');
+			expect(style).toContain('--max-height: 100%');
 		});
 
 		it('should handle many faces efficiently', async () => {

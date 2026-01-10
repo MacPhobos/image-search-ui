@@ -600,7 +600,6 @@
 					faces={faceBoxes}
 					{highlightedFaceId}
 					onFaceClick={handleFaceClick}
-					maxHeight="calc(98vh - 120px)"
 				/>
 
 				{#if onNext}
@@ -872,6 +871,7 @@
 		position: relative;
 		min-width: 0;
 		min-height: 0;
+		max-height: 100%;
 		overflow: hidden;
 		background: #000;
 		border-radius: 8px;

@@ -35,7 +35,7 @@
 		highlightedFaceId = null,
 		primaryFaceId = null,
 		onFaceClick,
-		maxHeight = '80vh'
+		maxHeight = '100%'
 	}: Props = $props();
 
 	// Image loading state
