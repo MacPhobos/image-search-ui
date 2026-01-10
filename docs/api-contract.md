@@ -1,6 +1,6 @@
 # Image Search API Contract
 
-> **Version**: 1.11.0
+> **Version**: 1.12.0
 > **Last Updated**: 2026-01-09
 > **Status**: FROZEN - Changes require version bump and UI sync
 
@@ -564,6 +564,7 @@ Face detection and person labeling.
 interface Person {
 	id: string; // UUID
 	name: string; // Display name (unique, required)
+	birthDate?: string | null; // ISO 8601 date (YYYY-MM-DD)
 	status: string; // Person status: "active" or "inactive"
 	thumbnailUrl?: string; // Representative face thumbnail
 	faceCount: number; // Number of detected faces
@@ -579,6 +580,7 @@ interface Face {
 	id: string; // UUID
 	assetId: string; // Parent asset ID
 	personId?: string; // Assigned person (null if unassigned)
+	personAgeAtPhoto?: number | null; // Calculated age when photo was taken
 	boundingBox: {
 		x: number; // Top-left X (0.0-1.0 normalized)
 		y: number; // Top-left Y (0.0-1.0 normalized)
@@ -642,6 +644,7 @@ Get a single person by ID with detailed information including face count, photo 
 {
 	"id": "550e8400-e29b-41d4-a716-446655440000",
 	"name": "John Smith",
+	"birthDate": "1990-05-15",
 	"status": "active",
 	"faceCount": 42,
 	"photoCount": 15,
@@ -655,6 +658,7 @@ Get a single person by ID with detailed information including face count, photo 
 | ------------- | ------------ | ---------------------------------------------- |
 | `id`          | string       | Person UUID                                    |
 | `name`        | string       | Person name                                    |
+| `birthDate`   | string\|null | ISO 8601 date (YYYY-MM-DD)                     |
 | `status`      | string       | Status: `active`, `merged`, `hidden`           |
 | `faceCount`   | integer      | Total number of face instances                 |
 | `photoCount`  | integer      | Total number of distinct photos (assets)       |
@@ -667,6 +671,69 @@ Get a single person by ID with detailed information including face count, photo 
 ```json
 {
 	"detail": "Person not found"
+}
+```
+
+#### `PATCH /api/v1/faces/persons/{personId}`
+
+Update person's name and/or birth date.
+
+**Path Parameters**
+
+| Parameter  | Type   | Required | Description      |
+| ---------- | ------ | -------- | ---------------- |
+| `personId` | string | Yes      | Person ID (UUID) |
+
+**Request Body**
+
+```json
+{
+	"name": "John Smith",
+	"birthDate": "1990-05-15"
+}
+```
+
+| Field       | Type         | Required | Description                                    |
+| ----------- | ------------ | -------- | ---------------------------------------------- |
+| `name`      | string       | No       | Person name (unique)                           |
+| `birthDate` | string\|null | No       | ISO 8601 date (YYYY-MM-DD), null to clear      |
+
+All fields are optional. Only provided fields are updated.
+
+**Response** `200 OK`
+
+```json
+{
+	"id": "550e8400-e29b-41d4-a716-446655440000",
+	"name": "John Smith",
+	"birthDate": "1990-05-15",
+	"status": "active",
+	"createdAt": "2024-12-24T10:00:00Z",
+	"updatedAt": "2024-12-25T14:30:00Z"
+}
+```
+
+**Response** `404 Not Found` - Person not found
+
+```json
+{
+	"detail": "Person not found"
+}
+```
+
+**Response** `409 Conflict` - Duplicate name
+
+```json
+{
+	"detail": "Person with name 'John Smith' already exists"
+}
+```
+
+**Response** `422 Unprocessable Entity` - Invalid birth date format
+
+```json
+{
+	"detail": "Birth date must be in YYYY-MM-DD format"
 }
 ```
 
@@ -693,15 +760,23 @@ Get person details.
 
 #### `PATCH /api/v1/people/{id}`
 
-Update person (e.g., rename).
+Update person name and/or birth date.
 
 **Request Body**
 
 ```json
 {
-	"name": "John Smith"
+	"name": "John Smith",
+	"birthDate": "1990-05-15"
 }
 ```
+
+| Field       | Type         | Required | Description                        |
+| ----------- | ------------ | -------- | ---------------------------------- |
+| `name`      | string       | No       | Person name (unique)               |
+| `birthDate` | string\|null | No       | ISO 8601 date (YYYY-MM-DD), null to clear |
+
+All fields are optional. Only provided fields are updated.
 
 **Response** `200 OK` - Updated Person object
 
@@ -2139,6 +2214,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field. |
 | 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data. |
 | 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields. |
 | 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses. |

@@ -112,6 +112,7 @@ export interface ClusterDetailResponse {
 export interface Person {
 	id: string; // UUID
 	name: string;
+	birthDate?: string | null; // ISO 8601 date (YYYY-MM-DD)
 	status: 'active' | 'merged' | 'hidden';
 	faceCount: number;
 	prototypeCount: number;
@@ -175,6 +176,7 @@ export interface FaceInPhoto {
 	qualityScore: number | null;
 	personId: string | null;
 	personName: string | null;
+	personAgeAtPhoto?: number | null; // Calculated age when photo was taken
 	clusterId: string | null;
 }
 
@@ -390,6 +392,21 @@ export async function createPerson(name: string): Promise<CreatePersonResponse> 
 	return apiRequest<CreatePersonResponse>('/api/v1/faces/persons', {
 		method: 'POST',
 		body: JSON.stringify({ name })
+	});
+}
+
+/**
+ * Update a person's name and/or birth date.
+ * @param personId - The person ID (UUID)
+ * @param data - Fields to update (name, birthDate)
+ */
+export async function updatePerson(
+	personId: string,
+	data: { name?: string; birthDate?: string | null }
+): Promise<Person> {
+	return apiRequest<Person>(`/api/v1/faces/persons/${encodeURIComponent(personId)}`, {
+		method: 'PATCH',
+		body: JSON.stringify(data)
 	});
 }
 

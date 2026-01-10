@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { mockResponse, mockError } from '../../helpers/mockFetch';
-import { get, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { components } from '$lib/api/generated';
 
 type PersonDetailResponse = components['schemas']['PersonDetailResponse'];
@@ -755,6 +755,258 @@ describe('Person Detail Page', () => {
 			await waitFor(() => {
 				expect(screen.getByRole('alert')).toBeInTheDocument();
 				expect(screen.getByText(/failed to regenerate suggestions/i)).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Birth Date Editing', () => {
+		it('should display "Not set" when birth date is not available', async () => {
+			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			expect(screen.getByText('Birth Date:')).toBeInTheDocument();
+			expect(screen.getByText('Not set')).toBeInTheDocument();
+		});
+
+		it('should display birth date and calculated age when available', async () => {
+			const personWithBirthDate: PersonDetailResponse = {
+				...mockPersonDetail,
+				birthDate: '1990-05-15'
+			};
+
+			mockResponse('/api/v1/faces/persons/person-uuid-1', personWithBirthDate);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			expect(screen.getByText('Birth Date:')).toBeInTheDocument();
+			expect(screen.getByText(/May 15, 1990/)).toBeInTheDocument();
+			// Age will vary based on current date, so just check it exists
+			expect(screen.getByText(/Age \d+/)).toBeInTheDocument();
+		});
+
+		it('should show edit button for birth date', async () => {
+			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			const editButton = screen.getByRole('button', { name: /edit birth date/i });
+			expect(editButton).toBeInTheDocument();
+		});
+
+		it('should show date input when edit button is clicked', async () => {
+			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			const { container } = render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			const editButton = screen.getByRole('button', { name: /edit birth date/i });
+			editButton.click();
+
+			await waitFor(() => {
+				const dateInput = container.querySelector('input[type="date"]');
+				expect(dateInput).toBeInTheDocument();
+				expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+				expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+			});
+		});
+
+		it('should cancel editing when cancel button is clicked', async () => {
+			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			// Start editing
+			const editButton = screen.getByRole('button', { name: /edit birth date/i });
+			editButton.click();
+
+			await waitFor(() => {
+				expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+			});
+
+			// Cancel editing
+			const cancelButton = screen.getByRole('button', { name: /cancel/i });
+			cancelButton.click();
+
+			await waitFor(() => {
+				// Edit button should be back
+				expect(screen.getByRole('button', { name: /edit birth date/i })).toBeInTheDocument();
+				// Date input should be gone
+				expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+			});
+		});
+
+		it('should save birth date when save button is clicked', async () => {
+			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			const updatedPerson: PersonDetailResponse = {
+				...mockPersonDetail,
+				birthDate: '1990-05-15',
+				updatedAt: '2024-12-20T10:00:00Z'
+			};
+			mockResponse('/api/v1/faces/persons/person-uuid-1', updatedPerson, 'PATCH');
+
+			const { container } = render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			// Start editing
+			const editButton = screen.getByRole('button', { name: /edit birth date/i });
+			editButton.click();
+
+			await waitFor(() => {
+				const dateInput = container.querySelector('input[type="date"]');
+				expect(dateInput).toBeInTheDocument();
+			});
+
+			// Set birth date
+			const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+			dateInput.value = '1990-05-15';
+			dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+			// Save
+			const saveButton = screen.getByRole('button', { name: /save/i });
+			saveButton.click();
+
+			await waitFor(() => {
+				// Should display the new birth date
+				expect(screen.getByText(/May 15, 1990/)).toBeInTheDocument();
+				// Edit button should be back
+				expect(screen.getByRole('button', { name: /edit birth date/i })).toBeInTheDocument();
+			});
+		});
+
+		it('should display error when save fails', async () => {
+			mockResponse('/api/v1/faces/persons/person-uuid-1', mockPersonDetail);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			mockError(
+				'/api/v1/faces/persons/person-uuid-1',
+				500,
+				{
+					message: 'Failed to update person'
+				},
+				'PATCH'
+			);
+
+			const { container } = render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			// Start editing
+			const editButton = screen.getByRole('button', { name: /edit birth date/i });
+			editButton.click();
+
+			await waitFor(() => {
+				const dateInput = container.querySelector('input[type="date"]');
+				expect(dateInput).toBeInTheDocument();
+			});
+
+			// Set birth date
+			const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+			dateInput.value = '1990-05-15';
+			dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+			// Save
+			const saveButton = screen.getByRole('button', { name: /save/i });
+			saveButton.click();
+
+			await waitFor(() => {
+				// Should display error
+				const errorAlert = screen.getByRole('alert');
+				expect(errorAlert).toBeInTheDocument();
+				expect(errorAlert.textContent).toContain('Failed to update person');
+			});
+		});
+
+		it('should clear birth date when empty value is saved', async () => {
+			const personWithBirthDate: PersonDetailResponse = {
+				...mockPersonDetail,
+				birthDate: '1990-05-15'
+			};
+
+			mockResponse('/api/v1/faces/persons/person-uuid-1', personWithBirthDate);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/photos.*', mockPersonPhotos);
+			mockResponse('/api/v1/faces/persons.*', mockMergeTargets);
+			mockResponse('/api/v1/faces/persons/person-uuid-1/prototypes', mockPrototypes);
+
+			const updatedPerson: PersonDetailResponse = {
+				...mockPersonDetail,
+				birthDate: null,
+				updatedAt: '2024-12-20T10:00:00Z'
+			};
+			mockResponse('/api/v1/faces/persons/person-uuid-1', updatedPerson, 'PATCH');
+
+			const { container } = render(PersonDetailPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+			});
+
+			// Start editing
+			const editButton = screen.getByRole('button', { name: /edit birth date/i });
+			editButton.click();
+
+			await waitFor(() => {
+				const dateInput = container.querySelector('input[type="date"]');
+				expect(dateInput).toBeInTheDocument();
+			});
+
+			// Clear birth date
+			const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+			dateInput.value = '';
+			dateInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+			// Save
+			const saveButton = screen.getByRole('button', { name: /save/i });
+			saveButton.click();
+
+			await waitFor(() => {
+				// Should display "Not set"
+				expect(screen.getByText('Not set')).toBeInTheDocument();
 			});
 		});
 	});

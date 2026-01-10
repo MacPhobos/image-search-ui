@@ -1852,7 +1852,22 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Person
+         * @description Update person's name and/or birth_date.
+         *
+         *     Args:
+         *         person_id: UUID of the person to update
+         *         request: UpdatePersonRequest with optional name and/or birth_date
+         *         db: Database session dependency
+         *
+         *     Returns:
+         *         UpdatePersonResponse with updated person details
+         *
+         *     Raises:
+         *         HTTPException: 404 if person not found, 409 if name already exists
+         */
+        patch: operations["update_person_api_v1_faces_persons__person_id__patch"];
         trace?: never;
     };
     "/api/v1/faces/persons/{person_id}/photos": {
@@ -3585,6 +3600,11 @@ export interface components {
             personName?: string | null;
             /** Clusterid */
             clusterId?: string | null;
+            /**
+             * Personageatphoto
+             * @description Person's age in years when photo was taken (requires birth_date and taken_at)
+             */
+            personAgeAtPhoto?: number | null;
         };
         /**
          * FaceInstanceListResponse
@@ -5371,6 +5391,43 @@ export interface components {
             minConfidence: number;
             /** Minclustersize */
             minClusterSize: number;
+        };
+        /**
+         * UpdatePersonRequest
+         * @description Request to update person name and/or birth_date.
+         */
+        UpdatePersonRequest: {
+            /** Name */
+            name?: string | null;
+            /** Birthdate */
+            birthDate?: string | null;
+        };
+        /**
+         * UpdatePersonResponse
+         * @description Response from updating a person.
+         */
+        UpdatePersonResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Birthdate */
+            birthDate?: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -7649,6 +7706,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PersonDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_person_api_v1_faces_persons__person_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePersonRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdatePersonResponse"];
                 };
             };
             /** @description Validation Error */

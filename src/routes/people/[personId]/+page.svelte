@@ -12,6 +12,7 @@
 		pinPrototype,
 		deletePrototype,
 		regenerateSuggestions,
+		updatePerson,
 		toAbsoluteUrl
 	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
@@ -60,6 +61,12 @@
 	// Recompute prototypes state
 	let isRecomputing = $state(false);
 	let triggerRescanOnRecompute = $state(false);
+
+	// Birth date editing state
+	let editingBirthDate = $state(false);
+	let birthDateInput = $state<string>('');
+	let savingBirthDate = $state(false);
+	let birthDateError = $state<string | null>(null);
 
 	// Merge modal state
 	let showMergeModal = $state(false);
@@ -410,6 +417,62 @@
 		imageErrors = newErrors;
 	}
 
+	function startEditingBirthDate() {
+		editingBirthDate = true;
+		birthDateInput = person?.birthDate || '';
+		birthDateError = null;
+	}
+
+	function cancelEditingBirthDate() {
+		editingBirthDate = false;
+		birthDateInput = '';
+		birthDateError = null;
+	}
+
+	async function saveBirthDate() {
+		if (!person || savingBirthDate) return;
+
+		savingBirthDate = true;
+		birthDateError = null;
+
+		try {
+			const updatedPerson = await updatePerson(person.id, {
+				birthDate: birthDateInput.trim() || null
+			});
+
+			// Update local person state
+			person = {
+				...person,
+				birthDate: updatedPerson.birthDate,
+				updatedAt: updatedPerson.updatedAt
+			};
+
+			editingBirthDate = false;
+			birthDateInput = '';
+			toast.success('Birth date updated successfully');
+		} catch (err) {
+			console.error('Failed to update birth date:', err);
+			birthDateError = err instanceof ApiError ? err.message : 'Failed to update birth date';
+		} finally {
+			savingBirthDate = false;
+		}
+	}
+
+	function calculateAge(birthDate: string): number | null {
+		try {
+			const birth = new Date(birthDate);
+			const today = new Date();
+			let age = today.getFullYear() - birth.getFullYear();
+			const monthDiff = today.getMonth() - birth.getMonth();
+			if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+				age--;
+			}
+			return age;
+		} catch {
+			return null;
+		}
+	}
+
 	async function handlePrototypeClick(proto: Prototype) {
 		if (!proto.faceInstanceId || !person) return;
 
@@ -495,6 +558,68 @@
 					<span class="stat"><strong>{person.prototypeCount}</strong> prototypes</span>
 					<span class="stat">Created {formatDate(person.createdAt)}</span>
 				</div>
+
+				<!-- Birth date section -->
+				<div class="birth-date-section">
+					{#if editingBirthDate}
+						<div class="birth-date-editor">
+							<input
+								type="date"
+								bind:value={birthDateInput}
+								class="birth-date-input"
+								placeholder="YYYY-MM-DD"
+								aria-label="Birth date"
+							/>
+							<button
+								type="button"
+								class="save-button"
+								onclick={saveBirthDate}
+								disabled={savingBirthDate}
+							>
+								{savingBirthDate ? 'Saving...' : 'Save'}
+							</button>
+							<button
+								type="button"
+								class="cancel-button-inline"
+								onclick={cancelEditingBirthDate}
+								disabled={savingBirthDate}
+							>
+								Cancel
+							</button>
+						</div>
+						{#if birthDateError}
+							<div class="birth-date-error" role="alert">{birthDateError}</div>
+						{/if}
+					{:else}
+						<div class="birth-date-display">
+							<span class="birth-date-label">Birth Date:</span>
+							{#if person.birthDate}
+								{@const age = calculateAge(person.birthDate)}
+								<span class="birth-date-value">
+									{new Date(person.birthDate).toLocaleDateString('en-US', {
+										year: 'numeric',
+										month: 'long',
+										day: 'numeric'
+									})}
+									{#if age !== null}
+										<span class="age-display">(Age {age})</span>
+									{/if}
+								</span>
+							{:else}
+								<span class="birth-date-value not-set">Not set</span>
+							{/if}
+							<button
+								type="button"
+								class="edit-birth-date-button"
+								onclick={startEditingBirthDate}
+								aria-label="Edit birth date"
+							>
+								Edit
+							</button>
+						</div>
+					{/if}
+				</div>
+
 				<div class="person-status">
 					<span class="status-badge status-{person.status}">{person.status}</span>
 				</div>
@@ -1680,5 +1805,123 @@
 
 	.delete-prototype-btn:hover {
 		background: rgb(200, 35, 51);
+	}
+
+	/* Birth date editing styles */
+	.birth-date-section {
+		margin-bottom: 0.75rem;
+	}
+
+	.birth-date-display {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.95rem;
+	}
+
+	.birth-date-label {
+		color: #666;
+		font-weight: 500;
+	}
+
+	.birth-date-value {
+		color: #333;
+	}
+
+	.birth-date-value.not-set {
+		color: #999;
+		font-style: italic;
+	}
+
+	.age-display {
+		color: #4a90e2;
+		font-weight: 600;
+		margin-left: 0.25rem;
+	}
+
+	.edit-birth-date-button {
+		padding: 0.25rem 0.75rem;
+		background-color: transparent;
+		color: #4a90e2;
+		border: 1px solid #4a90e2;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.edit-birth-date-button:hover {
+		background-color: #4a90e2;
+		color: white;
+	}
+
+	.birth-date-editor {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.birth-date-input {
+		padding: 0.5rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 0.95rem;
+		transition: border-color 0.2s;
+	}
+
+	.birth-date-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+	}
+
+	.save-button {
+		padding: 0.5rem 1rem;
+		background-color: #4a90e2;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.95rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.save-button:hover:not(:disabled) {
+		background-color: #3a7bc8;
+	}
+
+	.save-button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.cancel-button-inline {
+		padding: 0.5rem 1rem;
+		background-color: transparent;
+		color: #666;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 0.95rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.cancel-button-inline:hover:not(:disabled) {
+		background-color: #f5f5f5;
+	}
+
+	.cancel-button-inline:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.birth-date-error {
+		color: #dc2626;
+		font-size: 0.875rem;
+		margin-top: 0.5rem;
+		padding: 0.5rem;
+		background-color: #fef2f2;
+		border-radius: 4px;
 	}
 </style>

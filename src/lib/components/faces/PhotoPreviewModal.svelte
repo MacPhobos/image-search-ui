@@ -264,6 +264,11 @@
 		return 'Unknown';
 	}
 
+	function formatAgeDisplay(age: number | null | undefined): string {
+		if (age === null || age === undefined) return '';
+		return ` (Age ${age})`;
+	}
+
 	async function loadPersons() {
 		personsLoading = true;
 		personsError = null;
@@ -638,7 +643,7 @@
 									></span>
 									<div class="face-info">
 										<span class="face-name">
-											{getFaceLabel(face)}
+											{getFaceLabel(face)}{formatAgeDisplay(face.personAgeAtPhoto)}
 											{#if currentPersonId && face.personId === currentPersonId}
 												<span class="current-badge">(current)</span>
 											{/if}
