@@ -515,7 +515,7 @@
 						Photo Preview
 					{/if}
 				</Dialog.Title>
-				{#if photo.takenAt || photo.camera || photo.location}
+				{#if photo.takenAt || photo.camera || photo.location || photo.path}
 					<div class="flex flex-wrap gap-3 text-sm text-muted-foreground">
 						{#if photo.takenAt}
 							<span class="flex items-center gap-1">
@@ -542,6 +542,14 @@
 								<span aria-hidden="true">📍</span>
 								<span>
 									{photo.location.lat.toFixed(4)}°, {photo.location.lng.toFixed(4)}°
+								</span>
+							</span>
+						{/if}
+						{#if photo.path}
+							<span class="flex items-center gap-1" title={photo.path}>
+								<span aria-hidden="true">📁</span>
+								<span class="truncate max-w-[300px]">
+									{photo.path.split('/').pop() || photo.path}
 								</span>
 							</span>
 						{/if}

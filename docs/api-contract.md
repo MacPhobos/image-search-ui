@@ -1,6 +1,6 @@
 # Image Search API Contract
 
-> **Version**: 1.12.0
+> **Version**: 1.13.0
 > **Last Updated**: 2026-01-09
 > **Status**: FROZEN - Changes require version bump and UI sync
 
@@ -2214,6 +2214,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset. |
 | 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field. |
 | 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data. |
 | 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields. |

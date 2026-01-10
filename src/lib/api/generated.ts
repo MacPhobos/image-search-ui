@@ -4488,6 +4488,8 @@ export interface components {
             thumbnailUrl: string;
             /** Fullurl */
             fullUrl: string;
+            /** Path */
+            path: string;
             /** Faces */
             faces: components["schemas"]["FaceInPhoto"][];
             /** Facecount */

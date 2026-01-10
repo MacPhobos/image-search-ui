@@ -186,6 +186,7 @@ export interface PersonPhotoGroup {
 	takenAt: string | null;
 	thumbnailUrl: string;
 	fullUrl: string;
+	path: string;
 	faces: FaceInPhoto[];
 	faceCount: number;
 	hasNonPersonFaces: boolean;
