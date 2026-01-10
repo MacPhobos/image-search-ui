@@ -52,6 +52,7 @@
 	// State
 	let highlightedFaceId = $state<string | null>(null);
 	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());
+	let pathCopied = $state(false);
 
 	// Face assignment state
 	let assigningFaceId = $state<string | null>(null);
@@ -500,6 +501,20 @@
 			pinningInProgress = false;
 		}
 	}
+
+	async function copyPath() {
+		if (!photo.path) return;
+
+		try {
+			await navigator.clipboard.writeText(photo.path);
+			pathCopied = true;
+			setTimeout(() => {
+				pathCopied = false;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy path:', err);
+		}
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -551,6 +566,15 @@
 								<span class="truncate max-w-[300px]">
 									{photo.path.split('/').pop() || photo.path}
 								</span>
+								<button
+									type="button"
+									onclick={copyPath}
+									class="copy-path-btn"
+									title="Copy full path"
+									aria-label="Copy full path to clipboard"
+								>
+									{pathCopied ? '✓' : '📋'}
+								</button>
 							</span>
 						{/if}
 					</div>
@@ -982,6 +1006,34 @@
 	.face-item-button:focus {
 		outline: 2px solid #3b82f6;
 		outline-offset: -2px;
+	}
+
+	/* Copy path button */
+	.copy-path-btn {
+		border: none;
+		background: none;
+		cursor: pointer;
+		padding: 0;
+		margin: 0;
+		font-size: 0.875rem;
+		line-height: 1;
+		opacity: 0.6;
+		transition: opacity 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.copy-path-btn:hover {
+		opacity: 1;
+	}
+
+	.copy-path-btn:focus {
+		outline: 2px solid #3b82f6;
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
+
+	.copy-path-btn:active {
+		transform: scale(0.95);
 	}
 
 
