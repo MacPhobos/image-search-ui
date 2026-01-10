@@ -5,9 +5,11 @@
 		getPersonAssignmentHistory,
 		unassignFace,
 		getPersonById,
-		type AssignmentEvent
+		type AssignmentEvent,
+		type PersonPhotoGroup
 	} from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
+	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 
 	const personId = $page.params.id;
 
@@ -21,6 +23,10 @@
 
 	// Track which events are being undone
 	let undoingEvents = $state<Set<string>>(new Set());
+
+	// Photo preview state
+	let previewPhoto = $state<PersonPhotoGroup | null>(null);
+	let showPreviewModal = $state(false);
 
 	async function loadHistory() {
 		loading = true;
@@ -129,6 +135,45 @@
 		loadHistory();
 	}
 
+	/**
+	 * Get thumbnail URL for an asset
+	 */
+	function getThumbnailUrl(assetId: number): string {
+		return `/api/v1/images/${assetId}/thumbnail`;
+	}
+
+	/**
+	 * Open photo preview modal for a given asset ID
+	 */
+	async function openPhotoPreview(assetId: number) {
+		try {
+			// Create a minimal PersonPhotoGroup from the asset ID
+			// This is a simplified version - the modal will load the full data
+			const fullUrl = `/api/v1/images/${assetId}/full`;
+
+			previewPhoto = {
+				assetId,
+				fullUrl,
+				path: null,
+				takenAt: null,
+				faceCount: 0,
+				faces: [],
+				camera: null,
+				location: null
+			};
+
+			showPreviewModal = true;
+		} catch (err) {
+			console.error('Failed to open photo preview:', err);
+			error = err instanceof Error ? err.message : 'Failed to open photo preview';
+		}
+	}
+
+	function closePreviewModal() {
+		showPreviewModal = false;
+		previewPhoto = null;
+	}
+
 	onMount(loadHistory);
 </script>
 
@@ -171,9 +216,47 @@
 								from {event.fromPersonName}
 							{/if}
 						</p>
-						<p class="photos">
-							{event.photoCount} photo{event.photoCount !== 1 ? 's' : ''} affected
-						</p>
+
+						<!-- Thumbnails grid -->
+						{#if event.assetIds && event.assetIds.length > 0}
+							{@const maxVisible = 5}
+							{@const visibleAssets = event.assetIds.slice(0, maxVisible)}
+							{@const remainingCount = event.assetIds.length - maxVisible}
+							<div class="thumbnails-container">
+								<div class="thumbnails-grid">
+									{#each visibleAssets as assetId (assetId)}
+										<button
+											type="button"
+											class="thumbnail-button"
+											onclick={() => openPhotoPreview(assetId)}
+											aria-label="View photo {assetId}"
+										>
+											<img
+												src={getThumbnailUrl(assetId)}
+												alt="Thumbnail for photo {assetId}"
+												class="thumbnail-img"
+												loading="lazy"
+											/>
+										</button>
+									{/each}
+
+									{#if remainingCount > 0}
+										<div class="thumbnail-more">
+											+{remainingCount} more
+										</div>
+									{/if}
+								</div>
+
+								<p class="photos">
+									{event.photoCount} photo{event.photoCount !== 1 ? 's' : ''} affected
+								</p>
+							</div>
+						{:else}
+							<p class="photos">
+								{event.photoCount} photo{event.photoCount !== 1 ? 's' : ''} affected
+							</p>
+						{/if}
+
 						{#if event.note}
 							<p class="note">{event.note}</p>
 						{/if}
@@ -206,6 +289,17 @@
 		{/if}
 	{/if}
 </div>
+
+<!-- Photo Preview Modal -->
+{#if previewPhoto && showPreviewModal}
+	<PhotoPreviewModal
+		bind:open={showPreviewModal}
+		photo={previewPhoto}
+		currentPersonId={personId}
+		currentPersonName={person?.name ?? null}
+		onClose={closePreviewModal}
+	/>
+{/if}
 
 <style>
 	.history-page {
@@ -302,6 +396,65 @@
 		font-size: 0.875rem;
 		font-style: italic;
 		color: rgb(75 85 99);
+	}
+
+	.thumbnails-container {
+		margin-top: 0.75rem;
+	}
+
+	.thumbnails-grid {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		flex-wrap: wrap;
+		margin-bottom: 0.5rem;
+	}
+
+	.thumbnail-button {
+		border: 2px solid rgb(209 213 219);
+		border-radius: 0.375rem;
+		padding: 0;
+		background: white;
+		cursor: pointer;
+		transition: all 0.15s;
+		overflow: hidden;
+		width: 60px;
+		height: 60px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.thumbnail-button:hover {
+		border-color: rgb(59 130 246);
+		box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+		transform: scale(1.05);
+	}
+
+	.thumbnail-button:focus {
+		outline: 2px solid rgb(59 130 246);
+		outline-offset: 2px;
+	}
+
+	.thumbnail-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.thumbnail-more {
+		width: 60px;
+		height: 60px;
+		border: 2px dashed rgb(209 213 219);
+		border-radius: 0.375rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: rgb(107 114 128);
+		background: rgb(249 250 251);
 	}
 
 	.event-actions {
