@@ -102,6 +102,11 @@
 	let undoError = $state<string | null>(null);
 	let undoSuccess = $state<string | null>(null);
 
+	// Per-face undo state (for All Faces list)
+	let undoingFaceId = $state<string | null>(null);
+	let faceUndoError = $state<string | null>(null);
+	let faceUndoSuccess = $state<string | null>(null);
+
 	// Face suggestions state
 	interface FaceSuggestionsState {
 		suggestions: FaceSuggestionItem[];
@@ -699,6 +704,50 @@
 			undoInProgress = false;
 		}
 	}
+
+	// Undo assignment for individual faces in the All Faces list
+	async function handleUndoFaceAssignment(faceId: string) {
+		if (undoingFaceId) return; // Prevent concurrent undo operations
+
+		undoingFaceId = faceId;
+		faceUndoError = null;
+		faceUndoSuccess = null;
+
+		try {
+			const response = await unassignFace(faceId);
+
+			// Update local state - reset face to unassigned
+			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
+			if (faceIndex >= 0) {
+				allFaces[faceIndex] = {
+					...allFaces[faceIndex],
+					personId: null,
+					personName: null
+				};
+			}
+
+			// Show success message
+			faceUndoSuccess = `Face removed from ${response.previousPersonName}`;
+
+			// Notify parent component
+			onFaceUnassigned?.(faceId);
+
+			// Auto-hide success message after 2 seconds
+			setTimeout(() => {
+				faceUndoSuccess = null;
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to undo face assignment:', err);
+			faceUndoError = err instanceof Error ? err.message : 'Failed to undo assignment';
+
+			// Auto-hide error message after 4 seconds
+			setTimeout(() => {
+				faceUndoError = null;
+			}, 4000);
+		} finally {
+			undoingFaceId = null;
+		}
+	}
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
@@ -775,6 +824,18 @@
 				<aside class="face-sidebar" aria-label="Detected faces">
 					<h3>All Faces ({allFaces.length})</h3>
 
+					<!-- Feedback for face undo operations -->
+					{#if faceUndoSuccess}
+						<Alert.Root class="mb-2 bg-green-50 border-green-200">
+							<Alert.Description class="text-green-800 text-sm">{faceUndoSuccess}</Alert.Description>
+						</Alert.Root>
+					{/if}
+					{#if faceUndoError}
+						<Alert.Root variant="destructive" class="mb-2">
+							<Alert.Description class="text-sm">{faceUndoError}</Alert.Description>
+						</Alert.Root>
+					{/if}
+
 					{#if facesLoading}
 						<div class="loading-state">Loading faces...</div>
 					{:else if facesError}
@@ -839,6 +900,20 @@
 												aria-label="Assign this face to a person"
 											>
 												Assign
+											</button>
+										{/if}
+
+										<!-- Undo button for assigned faces (non-primary) -->
+										{#if !isPrimary && face.personId && assigningFaceId !== face.id}
+											<button
+												type="button"
+												class="undo-btn-compact"
+												onclick={() => handleUndoFaceAssignment(face.id)}
+												disabled={undoingFaceId === face.id}
+												aria-label="Undo assignment for {face.personName}"
+												title="Remove this face from {face.personName}"
+											>
+												{undoingFaceId === face.id ? 'Undoing...' : 'Undo'}
 											</button>
 										{/if}
 									</div>
@@ -1339,6 +1414,30 @@
 
 	.assign-btn:hover {
 		background-color: #3a7bc8;
+	}
+
+	.undo-btn-compact {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		background-color: #f97316;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
+		flex-shrink: 0;
+	}
+
+	.undo-btn-compact:hover:not(:disabled) {
+		background-color: #ea580c;
+	}
+
+	.undo-btn-compact:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	/* Suggestion hint styles */
