@@ -278,7 +278,10 @@ describe('API Client', () => {
 					headers: expect.objectContaining({
 						'Content-Type': 'application/json'
 					}),
-					body: JSON.stringify({ preservePins: true })
+					body: JSON.stringify({
+						preserve_pins: true,
+						preserve_existing_suggestions: true
+					})
 				})
 			);
 
@@ -309,7 +312,11 @@ describe('API Client', () => {
 
 			const fetchMock = getFetchMock();
 			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-			expect(callBody).toEqual({ preservePins: true, triggerRescan: true });
+			expect(callBody).toEqual({
+				preserve_pins: true,
+				trigger_rescan: true,
+				preserve_existing_suggestions: true
+			});
 
 			expect(result.rescanTriggered).toBe(true);
 			expect(result.rescanMessage).toBe('Suggestion rescan queued. 5 old suggestions expired.');
@@ -336,7 +343,11 @@ describe('API Client', () => {
 
 			const fetchMock = getFetchMock();
 			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-			expect(callBody).toEqual({ preservePins: true, triggerRescan: false });
+			expect(callBody).toEqual({
+				preserve_pins: true,
+				trigger_rescan: false,
+				preserve_existing_suggestions: true
+			});
 
 			expect(result.rescanTriggered).toBe(false);
 		});
@@ -362,7 +373,10 @@ describe('API Client', () => {
 
 			const fetchMock = getFetchMock();
 			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-			expect(callBody).toEqual({ preservePins: false });
+			expect(callBody).toEqual({
+				preserve_pins: false,
+				preserve_existing_suggestions: true
+			});
 
 			expect(result.prototypesCreated).toBe(0);
 			expect(result.prototypesRemoved).toBe(2);
@@ -393,12 +407,48 @@ describe('API Client', () => {
 
 			const fetchMock = getFetchMock();
 			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
-			expect(callBody).toEqual({ preservePins: false, triggerRescan: true });
+			expect(callBody).toEqual({
+				preserve_pins: false,
+				trigger_rescan: true,
+				preserve_existing_suggestions: true
+			});
 
 			expect(result.prototypesCreated).toBe(5);
 			expect(result.prototypesRemoved).toBe(3);
 			expect(result.rescanTriggered).toBe(true);
 			expect(result.rescanMessage).toBe('Suggestion rescan queued. 12 old suggestions expired.');
+		});
+
+		it('passes preserveExistingSuggestions when explicitly set to false', async () => {
+			const mockData = {
+				prototypesCreated: 3,
+				prototypesRemoved: 1,
+				coverage: {
+					coveredEras: ['child', 'adult'],
+					missingEras: ['teen'],
+					coveragePercentage: 66.7,
+					totalPrototypes: 3
+				},
+				rescanTriggered: false
+			};
+			mockResponse(
+				'http://localhost:8000/api/v1/faces/persons/person-123/prototypes/recompute',
+				mockData
+			);
+
+			const result = await recomputePrototypes('person-123', {
+				preserveExistingSuggestions: false
+			});
+
+			const fetchMock = getFetchMock();
+			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			expect(callBody).toEqual({
+				preserve_pins: true,
+				preserve_existing_suggestions: false
+			});
+
+			expect(result.prototypesCreated).toBe(3);
+			expect(result.prototypesRemoved).toBe(1);
 		});
 
 		it('handles response without rescanMessage', async () => {

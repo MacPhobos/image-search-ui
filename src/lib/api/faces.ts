@@ -1095,6 +1095,7 @@ export interface PinPrototypeRequest {
 export interface RecomputePrototypesRequest {
 	preservePins?: boolean;
 	triggerRescan?: boolean;
+	preserveExistingSuggestions?: boolean;
 }
 
 /** Response from recompute operation. */
@@ -1104,6 +1105,8 @@ export interface RecomputePrototypesResponse {
 	coverage: TemporalCoverage;
 	rescanTriggered: boolean;
 	rescanMessage?: string;
+	preservedCount?: number;
+	skippedDuplicates?: number;
 }
 
 // ============ Unified People API Functions ============
@@ -1252,18 +1255,21 @@ export async function deletePrototype(personId: string, prototypeId: string): Pr
 /**
  * Recompute prototypes for a person with optional suggestion rescan.
  * @param personId - The person ID (UUID)
- * @param options - Recompute options (preservePins, triggerRescan)
+ * @param options - Recompute options (preservePins, triggerRescan, preserveExistingSuggestions)
  * @returns Promise with operation results and updated coverage
  */
 export async function recomputePrototypes(
 	personId: string,
 	options: RecomputePrototypesRequest = {}
 ): Promise<RecomputePrototypesResponse> {
-	const { preservePins = true, triggerRescan } = options;
+	const { preservePins = true, triggerRescan, preserveExistingSuggestions = true } = options;
 
-	const body: Record<string, unknown> = { preservePins };
+	const body: Record<string, unknown> = {
+		preserve_pins: preservePins,
+		preserve_existing_suggestions: preserveExistingSuggestions
+	};
 	if (triggerRescan !== undefined) {
-		body.triggerRescan = triggerRescan;
+		body.trigger_rescan = triggerRescan;
 	}
 
 	return apiRequest<RecomputePrototypesResponse>(
