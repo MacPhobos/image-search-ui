@@ -22,6 +22,7 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		takenAt: '2024-12-19T10:00:00Z',
 		thumbnailUrl: 'http://localhost:8000/api/v1/images/1/thumbnail',
 		fullUrl: 'http://localhost:8000/api/v1/images/1/full',
+		path: '/photos/test-photo.jpg',
 		faceCount: withUnknownFaces ? 2 : 1,
 		hasNonPersonFaces: withUnknownFaces,
 		faces: withUnknownFaces

@@ -20,7 +20,8 @@ describe('TemporalTimeline', () => {
 			decadeBucket: '2000s',
 			isPinned: false,
 			qualityScore: 0.9,
-			createdAt: '2025-01-01T00:00:00Z'
+			createdAt: '2025-01-01T00:00:00Z',
+			thumbnailUrl: '/api/v1/faces/thumbnails/f1'
 		},
 		{
 			id: '2',
@@ -30,7 +31,8 @@ describe('TemporalTimeline', () => {
 			decadeBucket: '2020s',
 			isPinned: true,
 			qualityScore: 0.95,
-			createdAt: '2025-01-01T00:00:00Z'
+			createdAt: '2025-01-01T00:00:00Z',
+			thumbnailUrl: '/api/v1/faces/thumbnails/f2'
 		}
 	];
 
@@ -167,7 +169,8 @@ describe('TemporalTimeline', () => {
 				decadeBucket: '1990s',
 				isPinned: false,
 				qualityScore: 0.8,
-				createdAt: '2025-01-01T00:00:00Z'
+				createdAt: '2025-01-01T00:00:00Z',
+				thumbnailUrl: '/api/v1/faces/thumbnails/f1'
 			},
 			{
 				id: '2',
@@ -177,7 +180,8 @@ describe('TemporalTimeline', () => {
 				decadeBucket: '2000s',
 				isPinned: false,
 				qualityScore: 0.85,
-				createdAt: '2025-01-01T00:00:00Z'
+				createdAt: '2025-01-01T00:00:00Z',
+				thumbnailUrl: '/api/v1/faces/thumbnails/f2'
 			},
 			{
 				id: '3',
@@ -187,7 +191,8 @@ describe('TemporalTimeline', () => {
 				decadeBucket: '2010s',
 				isPinned: false,
 				qualityScore: 0.9,
-				createdAt: '2025-01-01T00:00:00Z'
+				createdAt: '2025-01-01T00:00:00Z',
+				thumbnailUrl: '/api/v1/faces/thumbnails/f3'
 			},
 			{
 				id: '4',
@@ -197,7 +202,8 @@ describe('TemporalTimeline', () => {
 				decadeBucket: '2015s',
 				isPinned: false,
 				qualityScore: 0.92,
-				createdAt: '2025-01-01T00:00:00Z'
+				createdAt: '2025-01-01T00:00:00Z',
+				thumbnailUrl: '/api/v1/faces/thumbnails/f4'
 			},
 			{
 				id: '5',
@@ -207,7 +213,8 @@ describe('TemporalTimeline', () => {
 				decadeBucket: '2020s',
 				isPinned: true,
 				qualityScore: 0.95,
-				createdAt: '2025-01-01T00:00:00Z'
+				createdAt: '2025-01-01T00:00:00Z',
+				thumbnailUrl: '/api/v1/faces/thumbnails/f5'
 			},
 			{
 				id: '6',
@@ -217,7 +224,8 @@ describe('TemporalTimeline', () => {
 				decadeBucket: '2025s',
 				isPinned: false,
 				qualityScore: 0.88,
-				createdAt: '2025-01-01T00:00:00Z'
+				createdAt: '2025-01-01T00:00:00Z',
+				thumbnailUrl: '/api/v1/faces/thumbnails/f6'
 			}
 		];
 

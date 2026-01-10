@@ -21,6 +21,7 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 		takenAt: '2024-12-28T10:00:00Z',
 		thumbnailUrl: 'http://localhost:8000/api/v1/images/1/thumbnail',
 		fullUrl: 'http://localhost:8000/api/v1/images/1/full',
+		path: '/photos/test-photo.jpg',
 		faceCount: 3,
 		hasNonPersonFaces: true,
 		faces: [

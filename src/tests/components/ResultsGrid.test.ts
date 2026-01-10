@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import ResultsGrid from '$lib/components/ResultsGrid.svelte';
-import { createBeachResult, createMountainResult, createSearchResult } from '../helpers/fixtures';
+import { createAsset, createBeachResult, createMountainResult, createSearchResult } from '../helpers/fixtures';
 
 describe('ResultsGrid', () => {
 	it('shows initial empty state when no search performed', () => {
@@ -69,7 +69,7 @@ describe('ResultsGrid', () => {
 				score: 0.95
 			}),
 			createSearchResult({
-				asset: { id: 2, path: '/photos/test2.jpg', createdAt: '2024-12-19T10:00:00Z' },
+				asset: createAsset({ id: 2, path: '/photos/test2.jpg', createdAt: '2024-12-19T10:00:00Z' }),
 				score: 0.78
 			})
 		];
@@ -139,12 +139,12 @@ describe('ResultsGrid', () => {
 	it('formats dates correctly', () => {
 		const results = [
 			createSearchResult({
-				asset: {
+				asset: createAsset({
 					id: 1,
 					path: '/photos/test.jpg',
 					createdAt: '2024-12-19T10:00:00Z',
 					indexedAt: null
-				}
+				})
 			})
 		];
 

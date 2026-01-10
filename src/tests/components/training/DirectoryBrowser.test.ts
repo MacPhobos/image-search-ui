@@ -5,10 +5,10 @@ import { mockResponse, mockError } from '../../helpers/mockFetch';
 import type { SubdirectoryInfo } from '$lib/types';
 
 const mockSubdirs: SubdirectoryInfo[] = [
-	{ path: 'vacation-photos', imageCount: 50 },
-	{ path: 'family-2024', imageCount: 30 },
-	{ path: 'work-events', imageCount: 20 },
-	{ path: 'vacation-summer', imageCount: 45 }
+	{ path: 'vacation-photos', name: 'vacation-photos', imageCount: 50 },
+	{ path: 'family-2024', name: 'family-2024', imageCount: 30 },
+	{ path: 'work-events', name: 'work-events', imageCount: 20 },
+	{ path: 'vacation-summer', name: 'vacation-summer', imageCount: 45 }
 ];
 
 describe('DirectoryBrowser - Filter Functionality', () => {

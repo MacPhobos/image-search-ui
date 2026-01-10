@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FaceSuggestion, FaceInstance, Person, FaceSuggestionItem } from '$lib/api/faces';
+	import type { AgeEraBucket } from '$lib/api/faces';
 	import {
 		getFacesForAsset,
 		listPersons,
@@ -9,9 +10,19 @@
 		pinPrototype,
 		unassignFace
 	} from '$lib/api/faces';
-	import type { AgeEraBucket } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
+	import ImageWithFaceBoundingBoxes, {
+		type FaceBox
+	} from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
+	import FaceListSidebar from '$lib/components/faces/FaceListSidebar.svelte';
+	import PersonAssignmentPanel from '$lib/components/faces/PersonAssignmentPanel.svelte';
+	import PrototypePinningPanel from '$lib/components/faces/PrototypePinningPanel.svelte';
+	import { getFaceColorByIndex } from '$lib/components/faces/face-colors';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import * as Alert from '$lib/components/ui/alert';
 
 	// Recent persons tracking for smart sorting
 	const RECENT_PERSONS_KEY = 'suggestions.recentPersonIds';
@@ -23,29 +34,17 @@
 	 */
 	function recordRecentPerson(personId: string): void {
 		const recent = localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
-		// Remove if already exists (will be moved to front)
 		const filtered = recent.filter((id) => id !== personId);
-		// Add to front, limit size
 		const updated = [personId, ...filtered].slice(0, MAX_RECENT_PERSONS);
 		localSettings.set(RECENT_PERSONS_KEY, updated);
 	}
 
 	/**
-	 * Get the recency rank for a person (0 = most recent, higher = older).
-	 * Returns Infinity if person has never been assigned.
+	 * Get recent person IDs for MRU sorting
 	 */
-	function getPersonRecencyRank(personId: string): number {
-		const recent = localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
-		const index = recent.indexOf(personId);
-		return index === -1 ? Infinity : index;
+	function getRecentPersonIds(): string[] {
+		return localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
 	}
-	import ImageWithFaceBoundingBoxes, {
-		type FaceBox
-	} from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Alert from '$lib/components/ui/alert';
 
 	interface Props {
 		suggestion: FaceSuggestion | null;
@@ -85,7 +84,6 @@
 
 	// Face assignment state
 	let assigningFaceId = $state<string | null>(null);
-	let personSearchQuery = $state('');
 	let persons = $state<Person[]>([]);
 	let personsLoading = $state(false);
 	let assignmentSubmitting = $state(false);
@@ -93,25 +91,18 @@
 
 	// Face highlight state (for bidirectional selection between boxes and list)
 	let highlightedFaceId = $state<string | null>(null);
-	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());
 	let pathCopied = $state(false);
 
 	// Pin prototype state
 	let pinningFaceId = $state<string | null>(null);
 	let showPinOptions = $state(false);
 	let pinningInProgress = $state(false);
-	let selectedEra = $state<AgeEraBucket | null>(null);
 
-	// Undo assignment state
+	// Undo assignment state (for primary suggestion)
 	let showUndoConfirm = $state(false);
 	let undoInProgress = $state(false);
 	let undoError = $state<string | null>(null);
 	let undoSuccess = $state<string | null>(null);
-
-	// Per-face undo state (for All Faces list)
-	let undoingFaceId = $state<string | null>(null);
-	let faceUndoError = $state<string | null>(null);
-	let faceUndoSuccess = $state<string | null>(null);
 
 	// Face suggestions state
 	interface FaceSuggestionsState {
@@ -130,16 +121,6 @@
 				? '#eab308' // yellow-500
 				: '#f97316'; // orange-500
 	});
-
-	// Age era options for prototype pinning
-	const ageEras: { value: AgeEraBucket; label: string }[] = [
-		{ value: 'infant', label: 'Infant (0-3)' },
-		{ value: 'child', label: 'Child (4-12)' },
-		{ value: 'teen', label: 'Teen (13-19)' },
-		{ value: 'young_adult', label: 'Young Adult (20-35)' },
-		{ value: 'adult', label: 'Adult (36-55)' },
-		{ value: 'senior', label: 'Senior (56+)' }
-	];
 
 	// Get full image URL (backend now provides this directly)
 	const fullImageUrl = $derived(() => {
@@ -164,24 +145,6 @@
 		console.warn('Could not extract assetId from fullImageUrl:', suggestion.fullImageUrl);
 		return null;
 	});
-
-	// Color palette for distinct face colors (matches ImageWithFaceBoundingBoxes)
-	const FACE_COLORS = [
-		'#3b82f6', // Blue
-		'#22c55e', // Green
-		'#f59e0b', // Amber
-		'#ef4444', // Red
-		'#8b5cf6', // Purple
-		'#ec4899', // Pink
-		'#14b8a6', // Teal
-		'#f97316', // Orange
-		'#06b6d4', // Cyan
-		'#84cc16' // Lime
-	];
-
-	function getFaceColorByIndex(index: number): string {
-		return FACE_COLORS[index % FACE_COLORS.length];
-	}
 
 	// Create FaceBox array for all faces in image
 	const allFaceBoxes = $derived<FaceBox[]>(
@@ -229,32 +192,6 @@
 				};
 			});
 		})()
-	);
-
-	// Derived states for assignment panel
-	let filteredPersons = $derived(() => {
-		const query = personSearchQuery.toLowerCase().trim();
-		let results = query
-			? persons.filter((p) => p.name.toLowerCase().includes(query))
-			: persons;
-
-		// Sort by recency (most recently assigned first), then alphabetically
-		return [...results].sort((a, b) => {
-			const rankA = getPersonRecencyRank(a.id);
-			const rankB = getPersonRecencyRank(b.id);
-
-			// If both have same recency (or both never used), sort alphabetically
-			if (rankA === rankB) {
-				return a.name.localeCompare(b.name);
-			}
-			// Lower rank (more recent) comes first
-			return rankA - rankB;
-		});
-	});
-
-	let showCreateOption = $derived(
-		personSearchQuery.trim().length > 0 &&
-			!persons.some((p) => p.name.toLowerCase() === personSearchQuery.trim().toLowerCase())
 	);
 
 	// Helper to update faceSuggestions with proper reactivity
@@ -413,35 +350,142 @@
 		return `${API_BASE_URL}${url}`;
 	}
 
-	function getFaceLabel(face: FaceInstance): string {
-		// For primary face, use suggestion's person name (more reliable)
-		if (suggestion && face.id === suggestion.faceInstanceId && suggestion.personName) {
-			return suggestion.personName;
-		}
-		if (face.personName) return face.personName;
-		return 'Unknown';
-	}
-
 	function handleOpenChange(newOpen: boolean) {
 		if (!newOpen) {
 			onClose();
 		}
 	}
 
-	// Assignment handlers
-	function startAssignment(faceId: string) {
-		assigningFaceId = faceId;
-		personSearchQuery = '';
+	// Assignment handlers (delegated to PersonAssignmentPanel)
+	async function handleAssignToExisting(personId: string) {
+		if (!assigningFaceId || assignmentSubmitting) return;
+
+		assignmentSubmitting = true;
 		assignmentError = null;
+
+		const faceId = assigningFaceId;
+		const person = persons.find((p) => p.id === personId);
+		if (!person) {
+			assignmentError = 'Person not found';
+			assignmentSubmitting = false;
+			return;
+		}
+
+		try {
+			await assignFaceToPerson(faceId, personId);
+
+			// Record this person as recently assigned
+			recordRecentPerson(personId);
+
+			// Optimistically update local state
+			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
+			if (faceIndex !== -1) {
+				allFaces[faceIndex] = {
+					...allFaces[faceIndex],
+					personId: person.id,
+					personName: person.name
+				};
+			}
+
+			// Clear suggestions for this face
+			const newMap = new Map(faceSuggestions);
+			newMap.delete(faceId);
+			faceSuggestions = newMap;
+
+			// Notify parent with full assignment data
+			if (onFaceAssigned && suggestion) {
+				onFaceAssigned({
+					faceId,
+					personId: person.id,
+					personName: person.name,
+					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
+					photoFilename:
+						suggestion.path?.split('/').pop() ||
+						suggestion.fullImageUrl?.split('/').pop() ||
+						'Unknown'
+				});
+			}
+
+			// Close assignment panel
+			assigningFaceId = null;
+		} catch (err) {
+			console.error('Failed to assign face:', err);
+			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
+		} finally {
+			assignmentSubmitting = false;
+		}
 	}
 
-	function cancelAssignment() {
-		assigningFaceId = null;
-		personSearchQuery = '';
+	async function handleCreateAndAssign(newName: string) {
+		if (!assigningFaceId || assignmentSubmitting) return;
+
+		assignmentSubmitting = true;
 		assignmentError = null;
+
+		const faceId = assigningFaceId;
+
+		try {
+			const newPerson = await createPerson(newName);
+			await assignFaceToPerson(faceId, newPerson.id);
+
+			// Record this newly created person as recently assigned
+			recordRecentPerson(newPerson.id);
+
+			// Add to persons list
+			persons = [
+				...persons,
+				{
+					id: newPerson.id,
+					name: newPerson.name,
+					status: newPerson.status as 'active' | 'merged' | 'hidden',
+					faceCount: 1,
+					prototypeCount: 0,
+					createdAt: newPerson.createdAt,
+					updatedAt: newPerson.createdAt
+				}
+			];
+
+			// Optimistically update local state
+			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
+			if (faceIndex !== -1) {
+				allFaces[faceIndex] = {
+					...allFaces[faceIndex],
+					personId: newPerson.id,
+					personName: newPerson.name
+				};
+			}
+
+			// Clear suggestions for this face
+			const newMap = new Map(faceSuggestions);
+			newMap.delete(faceId);
+			faceSuggestions = newMap;
+
+			// Notify parent with full assignment data
+			if (onFaceAssigned && suggestion) {
+				onFaceAssigned({
+					faceId,
+					personId: newPerson.id,
+					personName: newPerson.name,
+					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
+					photoFilename:
+						suggestion.path?.split('/').pop() ||
+						suggestion.fullImageUrl?.split('/').pop() ||
+						'Unknown'
+				});
+			}
+
+			// Close assignment panel
+			assigningFaceId = null;
+		} catch (err) {
+			console.error('Failed to create person and assign:', err);
+			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';
+		} finally {
+			assignmentSubmitting = false;
+		}
 	}
 
-	async function handleAssignFace(faceId: string, personId: string, personName: string) {
+	// Accept suggestion from face list (for non-primary faces)
+	async function handleSuggestionAccept(faceId: string, personId: string, personName: string) {
 		try {
 			await assignFaceToPerson(faceId, personId);
 
@@ -470,178 +514,28 @@
 					personId,
 					personName,
 					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
-					photoFilename: suggestion.path?.split('/').pop() || suggestion.fullImageUrl?.split('/').pop() || 'Unknown'
+					photoFilename:
+						suggestion.path?.split('/').pop() ||
+						suggestion.fullImageUrl?.split('/').pop() ||
+						'Unknown'
 				});
 			}
 		} catch (error) {
 			console.error('Failed to assign face:', error);
-			assignmentError = error instanceof Error ? error.message : 'Failed to assign face to person.';
+			// Error handling could be improved here
 		}
-	}
-
-	async function handleAssignToExisting(person: Person) {
-		if (!assigningFaceId || assignmentSubmitting) return;
-
-		assignmentSubmitting = true;
-		assignmentError = null;
-
-		const faceId = assigningFaceId;
-
-		try {
-			await assignFaceToPerson(faceId, person.id);
-
-			// Record this person as recently assigned
-			recordRecentPerson(person.id);
-
-			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
-			if (faceIndex !== -1) {
-				allFaces[faceIndex] = {
-					...allFaces[faceIndex],
-					personId: person.id,
-					personName: person.name
-				};
-			}
-
-			assigningFaceId = null;
-			personSearchQuery = '';
-
-			// Notify parent with full assignment data
-			if (onFaceAssigned && suggestion) {
-				onFaceAssigned({
-					faceId,
-					personId: person.id,
-					personName: person.name,
-					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
-					photoFilename: suggestion.path?.split('/').pop() || suggestion.fullImageUrl?.split('/').pop() || 'Unknown'
-				});
-			}
-		} catch (err) {
-			console.error('Failed to assign face:', err);
-			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
-		} finally {
-			assignmentSubmitting = false;
-		}
-	}
-
-	async function handleCreateAndAssign() {
-		if (!assigningFaceId || !personSearchQuery.trim() || assignmentSubmitting) return;
-
-		assignmentSubmitting = true;
-		assignmentError = null;
-
-		const newName = personSearchQuery.trim();
-		const faceId = assigningFaceId;
-
-		try {
-			const newPerson = await createPerson(newName);
-			await assignFaceToPerson(faceId, newPerson.id);
-
-			// Record this newly created person as recently assigned
-			recordRecentPerson(newPerson.id);
-
-			persons = [
-				...persons,
-				{
-					id: newPerson.id,
-					name: newPerson.name,
-					status: newPerson.status as 'active' | 'merged' | 'hidden',
-					faceCount: 1,
-					prototypeCount: 0,
-					createdAt: newPerson.createdAt,
-					updatedAt: newPerson.createdAt
-				}
-			];
-
-			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
-			if (faceIndex !== -1) {
-				allFaces[faceIndex] = {
-					...allFaces[faceIndex],
-					personId: newPerson.id,
-					personName: newPerson.name
-				};
-			}
-
-			assigningFaceId = null;
-			personSearchQuery = '';
-
-			// Notify parent with full assignment data
-			if (onFaceAssigned && suggestion) {
-				onFaceAssigned({
-					faceId,
-					personId: newPerson.id,
-					personName: newPerson.name,
-					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
-					photoFilename: suggestion.path?.split('/').pop() || suggestion.fullImageUrl?.split('/').pop() || 'Unknown'
-				});
-			}
-		} catch (err) {
-			console.error('Failed to create person and assign:', err);
-			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';
-		} finally {
-			assignmentSubmitting = false;
-		}
-	}
-
-	/**
-	 * Scroll a face card into view with smooth animation
-	 */
-	function scrollFaceCardIntoView(faceId: string) {
-		const element = faceListItems.get(faceId);
-		if (element) {
-			element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-		}
-	}
-
-	/**
-	 * Handle face selection from the face list (clicking a face card)
-	 * Highlights the corresponding bounding box on the image
-	 */
-	function handleHighlightFace(faceId: string) {
-		// Toggle selection: if already selected, deselect; otherwise select
-		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
 	/**
 	 * Handle face selection from the image (clicking a bounding box or label)
-	 * Scrolls the face list to show the corresponding face card
 	 */
 	function handleFaceClick(faceId: string) {
 		// Toggle selection
-		const wasSelected = highlightedFaceId === faceId;
-		highlightedFaceId = wasSelected ? null : faceId;
-
-		// Scroll to the face card in the list (unless deselecting)
-		if (!wasSelected) {
-			scrollFaceCardIntoView(faceId);
-		}
+		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
-	/**
-	 * Register a face list item element for scroll-into-view functionality
-	 */
-	function registerFaceListItem(node: HTMLLIElement, faceId: string) {
-		faceListItems.set(faceId, node);
-		return {
-			destroy() {
-				faceListItems.delete(faceId);
-			}
-		};
-	}
-
-	// Pin prototype handlers
-	function startPinning(faceId: string) {
-		pinningFaceId = faceId;
-		showPinOptions = true;
-		selectedEra = null;
-	}
-
-	function cancelPinning() {
-		pinningFaceId = null;
-		showPinOptions = false;
-		selectedEra = null;
-	}
-
-	async function handlePinAsPrototype() {
+	// Pin prototype handlers (delegated to PrototypePinningPanel)
+	async function handlePinConfirm(era: AgeEraBucket | null) {
 		if (!pinningFaceId) return;
 
 		const face = allFaces.find((f) => f.id === pinningFaceId);
@@ -653,11 +547,15 @@
 		pinningInProgress = true;
 		try {
 			await pinPrototype(face.personId, face.id, {
-				ageEraBucket: selectedEra ?? undefined,
+				ageEraBucket: era ?? undefined,
 				role: 'temporal'
 			});
 
-			cancelPinning();
+			// Close pinning panel
+			pinningFaceId = null;
+			showPinOptions = false;
+
+			// Notify parent
 			onPrototypePinned?.();
 		} catch (err) {
 			console.error('Failed to pin prototype:', err);
@@ -682,7 +580,7 @@
 		}
 	}
 
-	// Undo assignment handlers
+	// Undo assignment handlers (for primary suggestion and face list)
 	function startUndoAssignment() {
 		showUndoConfirm = true;
 		undoError = null;
@@ -735,16 +633,10 @@
 		}
 	}
 
-	// Undo assignment for individual faces in the All Faces list
-	async function handleUndoFaceAssignment(faceId: string) {
-		if (undoingFaceId) return; // Prevent concurrent undo operations
-
-		undoingFaceId = faceId;
-		faceUndoError = null;
-		faceUndoSuccess = null;
-
+	// Undo assignment for individual faces in the face list (delegated from FaceListSidebar)
+	async function handleUnassignClick(faceId: string) {
 		try {
-			const response = await unassignFace(faceId);
+			await unassignFace(faceId);
 
 			// Update local state - reset face to unassigned
 			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
@@ -756,26 +648,11 @@
 				};
 			}
 
-			// Show success message
-			faceUndoSuccess = `Face removed from ${response.previousPersonName}`;
-
 			// Notify parent component
 			onFaceUnassigned?.(faceId);
-
-			// Auto-hide success message after 2 seconds
-			setTimeout(() => {
-				faceUndoSuccess = null;
-			}, 2000);
 		} catch (err) {
 			console.error('Failed to undo face assignment:', err);
-			faceUndoError = err instanceof Error ? err.message : 'Failed to undo assignment';
-
-			// Auto-hide error message after 4 seconds
-			setTimeout(() => {
-				faceUndoError = null;
-			}, 4000);
-		} finally {
-			undoingFaceId = null;
+			// Error handling could be improved here
 		}
 	}
 </script>
@@ -850,244 +727,72 @@
 					{/if}
 				</div>
 
-				<!-- Faces sidebar -->
-				<aside class="face-sidebar" aria-label="Detected faces">
-					<h3>All Faces ({allFaces.length})</h3>
-
-					<!-- Feedback for face undo operations -->
-					{#if faceUndoSuccess}
-						<Alert.Root class="mb-2 bg-green-50 border-green-200">
-							<Alert.Description class="text-green-800 text-sm">{faceUndoSuccess}</Alert.Description>
-						</Alert.Root>
-					{/if}
-					{#if faceUndoError}
-						<Alert.Root variant="destructive" class="mb-2">
-							<Alert.Description class="text-sm">{faceUndoError}</Alert.Description>
-						</Alert.Root>
-					{/if}
-
+				<!-- Faces sidebar and details -->
+				<aside class="face-sidebar-container" aria-label="Detected faces and primary suggestion">
 					{#if facesLoading}
-						<div class="loading-state">Loading faces...</div>
+						<div class="sidebar-loading">Loading faces...</div>
 					{:else if facesError}
-						<div class="error-state">{facesError}</div>
+						<div class="sidebar-error">{facesError}</div>
 					{:else}
-						<ul class="face-list">
-							{#each allFaces as face (face.id)}
-								{@const isPrimary = face.id === suggestion.faceInstanceId}
-								{@const suggestionState = faceSuggestions.get(face.id)}
-								{@const topSuggestion = suggestionState?.suggestions?.[0]}
+						<FaceListSidebar
+							faces={allFaces}
+							{highlightedFaceId}
+							primaryFaceId={suggestion.faceInstanceId}
+							{faceSuggestions}
+							showUnassignButton={true}
+							showPinButton={true}
+							showSuggestions={true}
+							onFaceClick={handleFaceClick}
+							onAssignClick={(faceId) => {
+								assigningFaceId = faceId;
+							}}
+							onUnassignClick={handleUnassignClick}
+							onPinClick={(faceId) => {
+								const face = allFaces.find((f) => f.id === faceId);
+								if (face?.personId) {
+									pinningFaceId = faceId;
+									showPinOptions = true;
+								}
+							}}
+							onSuggestionAccept={handleSuggestionAccept}
+						/>
+					{/if}
 
-								<li
-									use:registerFaceListItem={face.id}
-									class="face-item"
-									class:highlighted={highlightedFaceId === face.id}
-									style="--highlight-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
-								>
-									<div class="face-item-content">
-										<button
-											type="button"
-											class="face-item-button"
-											onclick={() => handleHighlightFace(face.id)}
-											aria-label="Highlight face of {getFaceLabel(face)}"
-										>
-											<span
-												class="face-indicator"
-												style="background-color: {getFaceColorByIndex(allFaces.indexOf(face))};"
-											></span>
-											<div class="face-info">
-												<span class="face-name">
-													{#if isPrimary}
-														<span class="primary-badge">Primary</span>
-													{/if}
-													{getFaceLabel(face)}
-													{#if isPrimary}
-														<span class="confidence-text">
-															({confidencePercent}%)
-														</span>
-													{/if}
-												</span>
-												<span class="face-meta">
-													<span
-														title="How confident the AI is that this region contains a face (not person matching)"
-													>
-														IsFace: {(face.detectionConfidence * 100).toFixed(0)}%
-													</span>
-													{#if face.qualityScore !== null}
-														<span title="Face quality based on clarity, lighting, and pose">
-															| Quality: {face.qualityScore.toFixed(1)}
-														</span>
-													{/if}
-												</span>
-											</div>
-										</button>
+					<!-- Person Assignment Panel (for assigning faces to persons) -->
+					{#if assigningFaceId}
+						<PersonAssignmentPanel
+							open={true}
+							faceId={assigningFaceId}
+							{persons}
+							{personsLoading}
+							submitting={assignmentSubmitting}
+							error={assignmentError}
+							recentPersonIds={getRecentPersonIds()}
+							onCancel={() => {
+								assigningFaceId = null;
+							}}
+							onAssignToExisting={handleAssignToExisting}
+							onCreateAndAssign={handleCreateAndAssign}
+						/>
+					{/if}
 
-										<!-- Assign button for non-primary unknown faces -->
-										{#if !isPrimary && !face.personName && assigningFaceId !== face.id}
-											<button
-												type="button"
-												class="assign-btn"
-												onclick={() => startAssignment(face.id)}
-												aria-label="Assign this face to a person"
-											>
-												Assign
-											</button>
-										{/if}
-
-										<!-- Undo button for assigned faces (non-primary) -->
-										{#if !isPrimary && face.personId && assigningFaceId !== face.id}
-											<button
-												type="button"
-												class="undo-btn-compact"
-												onclick={() => handleUndoFaceAssignment(face.id)}
-												disabled={undoingFaceId === face.id}
-												aria-label="Undo assignment for {face.personName}"
-												title="Remove this face from {face.personName}"
-											>
-												{undoingFaceId === face.id ? 'Undoing...' : 'Undo'}
-											</button>
-										{/if}
-									</div>
-
-									<!-- Suggestion hint for non-primary unknown faces -->
-									{#if !isPrimary && !face.personName && assigningFaceId !== face.id && topSuggestion}
-										<div class="suggestion-hint">
-											<span class="suggestion-icon">💡</span>
-											<span class="suggestion-text">
-												Suggested: {topSuggestion.personName} ({Math.round(
-													topSuggestion.confidence * 100
-												)}%)
-											</span>
-											<button
-												type="button"
-												class="accept-suggestion-btn"
-												onclick={() =>
-													handleAssignFace(
-														face.id,
-														topSuggestion.personId,
-														topSuggestion.personName
-													)}
-												title="Accept suggestion"
-											>
-												✓ Accept
-											</button>
-										</div>
-									{/if}
-
-									<!-- Assignment panel -->
-									{#if assigningFaceId === face.id}
-										<div class="assignment-panel">
-											<div class="assignment-header">
-												<h4>Assign Face</h4>
-												<button
-													type="button"
-													class="close-assignment"
-													onclick={cancelAssignment}
-													aria-label="Cancel assignment"
-												>
-													×
-												</button>
-											</div>
-
-											{#if assignmentError}
-												<Alert.Root variant="destructive" class="mb-2">
-													<Alert.Description>{assignmentError}</Alert.Description>
-												</Alert.Root>
-											{/if}
-
-											<input
-												type="text"
-												placeholder="Search or create person..."
-												bind:value={personSearchQuery}
-												class="person-search-input"
-												aria-label="Search persons or enter new name"
-											/>
-
-											<div class="person-options">
-												{#if personsLoading}
-													<div class="loading-option">Loading...</div>
-												{:else}
-													<!-- Create new option -->
-													{#if showCreateOption}
-														<button
-															type="button"
-															class="person-option create-new"
-															onclick={handleCreateAndAssign}
-															disabled={assignmentSubmitting}
-														>
-															<span class="person-avatar create-avatar">+</span>
-															<span>Create "{personSearchQuery.trim()}"</span>
-														</button>
-													{/if}
-
-													<!-- Existing persons -->
-													{#each filteredPersons() as person (person.id)}
-														<button
-															type="button"
-															class="person-option"
-															onclick={() => handleAssignToExisting(person)}
-															disabled={assignmentSubmitting}
-														>
-															<span class="person-avatar">
-																{person.name.charAt(0).toUpperCase()}
-															</span>
-															<div class="person-option-info">
-																<span class="person-option-name">{person.name}</span>
-																<span class="person-option-meta">{person.faceCount} faces</span>
-															</div>
-														</button>
-													{/each}
-
-													{#if filteredPersons().length === 0 && !showCreateOption}
-														<div class="no-results">No persons found</div>
-													{/if}
-												{/if}
-											</div>
-										</div>
-									{/if}
-
-									<!-- Pin as Prototype Section -->
-									{#if face.personId && assigningFaceId !== face.id}
-										<div class="pin-prototype-section">
-											{#if pinningFaceId === face.id && showPinOptions}
-												<div class="pin-options">
-													<label>
-														Age Era (optional):
-														<select bind:value={selectedEra}>
-															<option value={null}>Auto-detect</option>
-															{#each ageEras as era}
-																<option value={era.value}>{era.label}</option>
-															{/each}
-														</select>
-													</label>
-													<div class="pin-actions">
-														<button
-															type="button"
-															class="confirm-pin-btn"
-															onclick={handlePinAsPrototype}
-															disabled={pinningInProgress}
-														>
-															{pinningInProgress ? 'Pinning...' : 'Confirm Pin'}
-														</button>
-														<button type="button" class="cancel-pin-btn" onclick={cancelPinning}>
-															Cancel
-														</button>
-													</div>
-												</div>
-											{:else}
-												<button
-													type="button"
-													class="pin-prototype-btn"
-													onclick={() => startPinning(face.id)}
-													title="Pin this face as a prototype for the person"
-												>
-													Pin as Prototype
-												</button>
-											{/if}
-										</div>
-									{/if}
-								</li>
-							{/each}
-						</ul>
+					<!-- Prototype Pinning Panel (for pinning face as prototype) -->
+					{#if pinningFaceId && showPinOptions}
+						{@const pinningFace = allFaces.find((f) => f.id === pinningFaceId)}
+						{#if pinningFace?.personId}
+							<PrototypePinningPanel
+								open={true}
+								faceId={pinningFaceId}
+								personId={pinningFace.personId}
+								personName={pinningFace.personName ?? 'Unknown'}
+								submitting={pinningInProgress}
+								onCancel={() => {
+									pinningFaceId = null;
+									showPinOptions = false;
+								}}
+								onConfirm={handlePinConfirm}
+							/>
+						{/if}
 					{/if}
 
 					<!-- Primary suggestion details -->
@@ -1249,7 +954,7 @@
 		opacity: 0.8;
 	}
 
-	.face-sidebar {
+	.face-sidebar-container {
 		width: 320px;
 		flex-shrink: 0;
 		display: flex;
@@ -1259,101 +964,16 @@
 		padding-left: 1rem;
 	}
 
-	.face-sidebar h3 {
-		margin: 0 0 0.75rem 0;
-		font-size: 1rem;
-		font-weight: 600;
-		color: #333;
-		flex-shrink: 0;
-	}
-
-	.loading-state,
-	.error-state {
+	.sidebar-loading,
+	.sidebar-error {
 		padding: 1rem;
 		text-align: center;
 		color: #666;
 		font-size: 0.875rem;
 	}
 
-	.error-state {
+	.sidebar-error {
 		color: #dc2626;
-	}
-
-	.face-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		flex: 1;
-		min-height: 0;
-		overflow-y: auto;
-		margin-bottom: 1rem;
-	}
-
-	.face-item {
-		border-radius: 6px;
-		border: 1px solid #e5e7eb;
-		background: #fafafa;
-		transition:
-			background-color 0.25s ease,
-			box-shadow 0.25s ease,
-			transform 0.15s ease;
-	}
-
-	.face-item:hover {
-		background-color: #f3f4f6;
-	}
-
-	.face-item.highlighted {
-		background-color: #e0f2fe;
-		box-shadow: inset 4px 0 0 0 var(--highlight-color, #3b82f6);
-		outline: 2px solid var(--highlight-color, #3b82f6);
-		outline-offset: -2px;
-		animation: highlight-pulse 1s ease-out;
-	}
-
-	@keyframes highlight-pulse {
-		0% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.95;
-		}
-		100% {
-			opacity: 1;
-		}
-	}
-
-	.face-item-content {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.face-item-button {
-		display: flex;
-		align-items: center;
-		gap: 0.625rem;
-		flex: 1;
-		padding: 0.75rem;
-		border: none;
-		background: none;
-		cursor: pointer;
-		text-align: left;
-		font: inherit;
-		color: inherit;
-		transition: background-color 0.2s ease;
-	}
-
-	.face-item-button:hover {
-		background-color: #f1f5f9;
-	}
-
-	.face-item-button:focus {
-		outline: 2px solid #3b82f6;
-		outline-offset: -2px;
 	}
 
 	/* Copy path button */
@@ -1382,382 +1002,6 @@
 
 	.copy-path-btn:active {
 		transform: scale(0.95);
-	}
-
-	.face-indicator {
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-
-	.face-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.face-name {
-		font-weight: 500;
-		color: #333;
-		font-size: 0.875rem;
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		flex-wrap: wrap;
-	}
-
-	.primary-badge {
-		display: inline-block;
-		padding: 0.125rem 0.5rem;
-		border-radius: 12px;
-		font-size: 0.6875rem;
-		font-weight: 600;
-		background-color: #fef3c7;
-		color: #92400e;
-	}
-
-	.confidence-text {
-		font-size: 0.75rem;
-		color: #666;
-	}
-
-	.face-meta {
-		font-size: 0.75rem;
-		color: #999;
-	}
-
-	.assign-btn {
-		padding: 0.375rem 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		background-color: #4a90e2;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: background-color 0.2s;
-		flex-shrink: 0;
-	}
-
-	.assign-btn:hover {
-		background-color: #3a7bc8;
-	}
-
-	.undo-btn-compact {
-		padding: 0.375rem 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		background-color: #f97316;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		transition:
-			background-color 0.2s,
-			opacity 0.2s;
-		flex-shrink: 0;
-	}
-
-	.undo-btn-compact:hover:not(:disabled) {
-		background-color: #ea580c;
-	}
-
-	.undo-btn-compact:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	/* Suggestion hint styles */
-	.suggestion-hint {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 0.75rem;
-		background-color: #fffbeb;
-		border: 1px solid #fef3c7;
-		border-top: none;
-		margin: 0;
-		font-size: 0.75rem;
-	}
-
-	.suggestion-icon {
-		font-size: 1rem;
-		flex-shrink: 0;
-	}
-
-	.suggestion-text {
-		flex: 1;
-		color: #92400e;
-		font-weight: 500;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.accept-suggestion-btn {
-		padding: 0.25rem 0.5rem;
-		background-color: #22c55e;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.6875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: background-color 0.2s;
-		flex-shrink: 0;
-		white-space: nowrap;
-	}
-
-	.accept-suggestion-btn:hover {
-		background-color: #16a34a;
-	}
-
-	/* Assignment panel styles */
-	.assignment-panel {
-		background-color: #f8f9fa;
-		border-top: 1px solid #e0e0e0;
-		padding: 0.75rem;
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		min-height: 0;
-	}
-
-	.assignment-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 0.5rem;
-	}
-
-	.assignment-header h4 {
-		margin: 0;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: #333;
-	}
-
-	.close-assignment {
-		width: 24px;
-		height: 24px;
-		padding: 0;
-		border: none;
-		background: none;
-		cursor: pointer;
-		font-size: 1.5rem;
-		line-height: 1;
-		color: #666;
-		border-radius: 4px;
-		transition: background-color 0.2s;
-	}
-
-	.close-assignment:hover {
-		background-color: #e0e0e0;
-	}
-
-	.person-search-input {
-		width: 100%;
-		padding: 0.5rem;
-		border: 1px solid #ddd;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		margin-bottom: 0.5rem;
-		transition: border-color 0.2s;
-	}
-
-	.person-search-input:focus {
-		outline: none;
-		border-color: #4a90e2;
-	}
-
-	.person-options {
-		flex: 1;
-		min-height: 100px;
-		max-height: min(400px, 50vh);
-		overflow-y: auto;
-		border: 1px solid #e0e0e0;
-		border-radius: 6px;
-		background-color: white;
-	}
-
-	.loading-option,
-	.no-results {
-		padding: 0.75rem;
-		text-align: center;
-		color: #666;
-		font-size: 0.75rem;
-	}
-
-	.person-option {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		width: 100%;
-		padding: 0.5rem;
-		border: none;
-		background: none;
-		text-align: left;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.person-option:hover:not(:disabled) {
-		background-color: #f5f5f5;
-	}
-
-	.person-option:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.person-option:not(:last-child) {
-		border-bottom: 1px solid #f0f0f0;
-	}
-
-	.person-option.create-new {
-		background-color: #f0f7ff;
-		color: #4a90e2;
-		font-weight: 500;
-		font-size: 0.8125rem;
-	}
-
-	.person-option.create-new:hover:not(:disabled) {
-		background-color: #e0efff;
-	}
-
-	.person-avatar {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		color: white;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: 600;
-		font-size: 0.75rem;
-		flex-shrink: 0;
-	}
-
-	.person-avatar.create-avatar {
-		background: #4a90e2;
-		font-size: 1rem;
-	}
-
-	.person-option-info {
-		display: flex;
-		flex-direction: column;
-		gap: 0.125rem;
-		flex: 1;
-		min-width: 0;
-	}
-
-	.person-option-name {
-		font-weight: 500;
-		color: #333;
-		font-size: 0.8125rem;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.person-option-meta {
-		font-size: 0.6875rem;
-		color: #999;
-	}
-
-	/* Pin prototype styles */
-	.pin-prototype-section {
-		margin: 0.5rem 0.75rem;
-		padding-top: 0.5rem;
-		border-top: 1px solid #e0e0e0;
-	}
-
-	.pin-prototype-btn {
-		width: 100%;
-		padding: 0.375rem 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		background-color: #4a90e2;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.pin-prototype-btn:hover {
-		background-color: #3a7bc8;
-	}
-
-	.pin-options {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.pin-options label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		font-size: 0.8125rem;
-		color: #333;
-		font-weight: 500;
-	}
-
-	.pin-options select {
-		padding: 0.4rem;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		font-size: 0.8125rem;
-		background: white;
-	}
-
-	.pin-options select:focus {
-		outline: none;
-		border-color: #4a90e2;
-	}
-
-	.pin-actions {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.confirm-pin-btn {
-		flex: 1;
-		padding: 0.375rem 0.75rem;
-		font-size: 0.75rem;
-		font-weight: 500;
-		background-color: #22c55e;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.confirm-pin-btn:hover:not(:disabled) {
-		background-color: #16a34a;
-	}
-
-	.confirm-pin-btn:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.cancel-pin-btn {
-		padding: 0.375rem 0.75rem;
-		font-size: 0.75rem;
-		border: 1px solid #ddd;
-		background: white;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.cancel-pin-btn:hover {
-		background-color: #f5f5f5;
 	}
 
 	/* Primary suggestion details */
@@ -1814,17 +1058,12 @@
 			flex-direction: column;
 		}
 
-		.face-sidebar {
+		.face-sidebar-container {
 			width: 100%;
-			max-height: 350px;
 			border-left: none;
 			border-top: 1px solid #e5e7eb;
 			padding-left: 0;
 			padding-top: 1rem;
-		}
-
-		.person-options {
-			max-height: min(200px, 30vh);
 		}
 	}
 
@@ -1832,10 +1071,6 @@
 		.image-placeholder {
 			width: 320px;
 			height: 320px;
-		}
-
-		.face-sidebar {
-			max-height: 300px;
 		}
 	}
 

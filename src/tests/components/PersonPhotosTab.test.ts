@@ -14,6 +14,7 @@ describe('PersonPhotosTab', () => {
 			takenAt: '2024-01-15T10:30:00Z',
 			thumbnailUrl: `/api/v1/assets/${i + 1}/thumbnail`,
 			fullUrl: `/api/v1/assets/${i + 1}/full`,
+			path: `/photos/photo-${i + 1}.jpg`,
 			faces: [
 				{
 					faceInstanceId: `face-${i}-1`,
