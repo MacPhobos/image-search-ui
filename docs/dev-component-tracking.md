@@ -263,6 +263,81 @@ When components are tracked, the DevOverlay shows:
 </script>
 ```
 
+### 3. Calling Cleanup Immediately Instead of Returning It
+
+```svelte
+<!-- ❌ WRONG - cleanup() called immediately, component unregisters right away -->
+<script>
+  import { onMount } from 'svelte';
+  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+  const cleanup = registerComponent('MyComponent', {...});
+  onMount(() => {
+    cleanup();  // ❌ Called immediately - unregisters right away!
+  });
+</script>
+
+<!-- ✅ CORRECT - Return cleanup to be called on unmount -->
+<script>
+  import { onMount } from 'svelte';
+  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+  const cleanup = registerComponent('MyComponent', {...});
+  onMount(() => cleanup);  // ✅ Returned - called when component unmounts
+</script>
+```
+
+### 4. Existing onMount with Other Code
+
+When your component already has `onMount` with other code, return cleanup from it:
+
+```svelte
+<!-- ❌ WRONG - cleanup not returned from existing onMount -->
+<script>
+  import { onMount } from 'svelte';
+  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+  const cleanup = registerComponent('MyComponent', {...});
+
+  onMount(() => {
+    loadData();
+    setupEventListeners();
+    // cleanup is never called!
+  });
+</script>
+
+<!-- ✅ CORRECT - Return cleanup from existing onMount -->
+<script>
+  import { onMount } from 'svelte';
+  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+  const cleanup = registerComponent('MyComponent', {...});
+
+  onMount(() => {
+    loadData();
+    setupEventListeners();
+    return cleanup;  // ✅ Return cleanup at the end
+  });
+</script>
+
+<!-- ✅ ALSO CORRECT - Combine with existing cleanup function -->
+<script>
+  import { onMount } from 'svelte';
+  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+  const trackingCleanup = registerComponent('MyComponent', {...});
+
+  onMount(() => {
+    const subscription = setupSubscription();
+
+    return () => {
+      subscription.unsubscribe();
+      trackingCleanup();  // ✅ Call tracking cleanup in combined cleanup
+    };
+  });
+</script>
+```
+
 ### 3. Wrong File Path
 
 ```svelte
