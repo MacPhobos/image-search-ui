@@ -58,9 +58,6 @@
 	}
 
 	$effect(() => {
-		// Component tracking cleanup
-		cleanup();
-
 		// Initial fetch
 		fetchData();
 
@@ -69,11 +66,12 @@
 			fetchData();
 		}, POLL_INTERVAL_MS);
 
-		// Cleanup on destroy
+		// Cleanup on destroy (clear interval and component tracking)
 		return () => {
 			if (pollingInterval) {
 				clearInterval(pollingInterval);
 			}
+			cleanup();
 		};
 	});
 </script>

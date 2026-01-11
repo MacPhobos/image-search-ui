@@ -182,8 +182,8 @@
 	}
 
 	onMount(() => {
-		cleanup();
 		loadHistory();
+		return cleanup;
 	});
 </script>
 

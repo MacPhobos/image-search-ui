@@ -39,8 +39,8 @@
 	}
 
 	onMount(() => {
-		cleanup();
 		loadCategories();
+		return cleanup;
 	});
 
 	async function handleDelete(category: Category) {

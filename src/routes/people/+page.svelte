@@ -116,8 +116,8 @@
 	}
 
 	onMount(() => {
-		cleanup();
 		loadPeople();
+		return cleanup;
 	});
 
 	onDestroy(() => {

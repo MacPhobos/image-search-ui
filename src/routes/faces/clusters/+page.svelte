@@ -52,7 +52,6 @@
 
 	// Load configuration and clusters on mount
 	onMount(async () => {
-		cleanup();
 		try {
 			config = await getUnknownClusteringConfig();
 		} catch (err) {
@@ -61,6 +60,7 @@
 			config = { minConfidence: 0.7, minClusterSize: 2 };
 		}
 		loadClusters(true);
+		return cleanup;
 	});
 
 	async function loadClusters(reset: boolean = false) {

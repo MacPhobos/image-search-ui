@@ -14,12 +14,16 @@
 		filePath: 'src/routes/+page.svelte'
 	});
 
-	// DEV: Set view ID for DevOverlay breadcrumb
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
-		cleanup();
 		if (import.meta.env.DEV) {
-			return setViewId('page:/');
+			const clearViewId = setViewId('page:/');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
 		}
+		return cleanup;
 	});
 
 	let query = $state('');

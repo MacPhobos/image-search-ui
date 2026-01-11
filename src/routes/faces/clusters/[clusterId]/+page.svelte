@@ -52,8 +52,8 @@
 	let qualityStats = $derived(calculateQualityStats(cluster?.faces ?? []));
 
 	onMount(() => {
-		cleanup();
 		loadCluster();
+		return cleanup;
 	});
 
 	// Reload when clusterId changes

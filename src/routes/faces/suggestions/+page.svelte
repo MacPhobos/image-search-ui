@@ -408,7 +408,6 @@
 	}
 
 	onMount(async () => {
-		cleanup();
 		try {
 			settings = await getFaceSuggestionSettings();
 		} catch (e) {
@@ -417,6 +416,7 @@
 		}
 		await loadPersons();
 		await loadSuggestions();
+		return cleanup;
 	});
 
 	onDestroy(() => {

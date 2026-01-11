@@ -49,8 +49,8 @@
 	}
 
 	onMount(() => {
-		cleanup();
 		loadSessions();
+		return cleanup;
 	});
 
 	let totalPages = $derived(Math.ceil(total / pageSize));

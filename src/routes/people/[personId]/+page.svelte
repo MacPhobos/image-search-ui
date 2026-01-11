@@ -91,8 +91,8 @@
 	let lightboxIndex = $state(0);
 
 	onMount(() => {
-		cleanup();
 		loadPerson();
+		return cleanup;
 	});
 
 	// Reload when personId changes

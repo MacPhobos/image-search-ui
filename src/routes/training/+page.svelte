@@ -141,12 +141,11 @@
 
 	// Component tracking and load face detection sessions only when on that tab
 	$effect(() => {
-		// Component tracking cleanup
-		cleanup();
-
 		if (activeTab === 'face-detection') {
 			loadFaceSessions();
 		}
+		// Return cleanup function for component tracking
+		return cleanup;
 	});
 </script>
 

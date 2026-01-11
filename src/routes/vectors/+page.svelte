@@ -137,9 +137,9 @@
 	}
 
 	onMount(() => {
-		cleanup();
 		loadDirectoryStats();
 		loadLogs();
+		return cleanup;
 	});
 </script>
 
