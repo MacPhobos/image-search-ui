@@ -238,13 +238,10 @@
 
 <style>
 	.face-sidebar {
-		width: 320px;
 		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		border-left: 1px solid #e5e7eb;
-		padding-left: 1rem;
 	}
 
 	.face-sidebar h3 {
@@ -415,15 +412,10 @@
 		border-top: 1px solid #e0e0e0;
 	}
 
-	/* Responsive adjustments */
+	/* Responsive adjustments - handled by parent containers */
 	@media (max-width: 768px) {
 		.face-sidebar {
-			width: 100%;
 			max-height: 250px;
-			border-left: none;
-			border-top: 1px solid #e5e7eb;
-			padding-left: 0;
-			padding-top: 1rem;
 		}
 	}
 </style>

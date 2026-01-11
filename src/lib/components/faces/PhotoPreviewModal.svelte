@@ -596,21 +596,23 @@
 			</div>
 
 			<!-- Face list sidebar (shared component) -->
-			<FaceListSidebar
-				bind:this={sidebarRef}
-				faces={faceInstances}
-				{highlightedFaceId}
-				{currentPersonId}
-				{faceSuggestions}
-				showUnassignButton={true}
-				showPinButton={true}
-				showSuggestions={true}
-				onFaceClick={handleSidebarFaceClick}
-				onAssignClick={handleAssignClick}
-				onUnassignClick={handleUnassignClick}
-				onPinClick={handlePinClick}
-				onSuggestionAccept={handleSuggestionAccept}
-			/>
+			<aside class="face-sidebar-container" aria-label="Detected faces">
+				<FaceListSidebar
+					bind:this={sidebarRef}
+					faces={faceInstances}
+					{highlightedFaceId}
+					{currentPersonId}
+					{faceSuggestions}
+					showUnassignButton={true}
+					showPinButton={true}
+					showSuggestions={true}
+					onFaceClick={handleSidebarFaceClick}
+					onAssignClick={handleAssignClick}
+					onUnassignClick={handleUnassignClick}
+					onPinClick={handlePinClick}
+					onSuggestionAccept={handleSuggestionAccept}
+				/>
+			</aside>
 		</div>
 
 		<!-- Assignment panel (shown when a face is being assigned) -->
@@ -708,10 +710,29 @@
 		transform: scale(0.95);
 	}
 
+	/* Face sidebar container */
+	.face-sidebar-container {
+		width: 320px;
+		flex-shrink: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		border-left: 1px solid #e5e7eb;
+		padding-left: 1rem;
+	}
+
 	/* Responsive adjustments */
 	@media (max-width: 768px) {
 		.modal-body {
 			flex-direction: column;
+		}
+
+		.face-sidebar-container {
+			width: 100%;
+			border-left: none;
+			border-top: 1px solid #e5e7eb;
+			padding-left: 0;
+			padding-top: 1rem;
 		}
 	}
 </style>
