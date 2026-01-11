@@ -1,10 +1,18 @@
 # DevOverlay Component Tracking Enhancement
 
 **Created:** 2026-01-10
-**Implemented:** 2026-01-11
-**Status:** ✅ Implemented
+**Updated:** 2026-01-11
+**Status:** ✅ Implemented (Manual Registration)
 **Priority:** Medium
 **Complexity:** Medium
+
+> **Implementation Note:** The original Vite plugin approach for automatic component tracking was found to be incompatible with Svelte 5's SSR compilation. The solution uses **manual registration** for components that need tracking. This approach provides:
+> - Full control over which components are tracked
+> - Zero overhead for components that don't need tracking
+> - Simple, explicit registration pattern
+> - No build tooling conflicts
+>
+> See **[Dev Component Tracking Guide](../dev-component-tracking.md)** for implementation instructions.
 
 ## Problem Statement
 

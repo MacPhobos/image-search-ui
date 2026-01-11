@@ -70,8 +70,10 @@ src/
 │   │   ├── localSettings.svelte.ts   # Browser localStorage for UI preferences
 │   │   └── thumbnailCache.svelte.ts  # Svelte 5 runes-based thumbnail cache
 │   ├── dev/
-│   │   ├── DevOverlay.svelte  # Development route debugger (DEV-only)
-│   │   └── viewId.ts          # View breadcrumb tracking
+│   │   ├── DevOverlay.svelte           # Development route debugger (DEV-only)
+│   │   ├── componentRegistry.svelte.ts # Component tracking registry
+│   │   ├── ComponentTree.svelte        # Component hierarchy visualization
+│   │   └── viewId.ts                   # View breadcrumb tracking
 │   ├── testing/
 │   │   └── testid.ts      # Test ID generation utilities
 │   ├── utils/             # Shared utilities
@@ -111,6 +113,8 @@ src/
 - **Props conventions** (`$bindable()` vs callbacks)
 
 See **[Code Quality Guard-Rails](docs/code-quality-guardrails.md)** for complete standards with examples.
+
+🟡 **DevOverlay Component Tracking**: For debugging component hierarchy in development, see **[Dev Component Tracking Guide](docs/dev-component-tracking.md)**.
 
 ---
 
@@ -281,9 +285,11 @@ const deleteBtn = getByTestId(tid('person-card', 'btn-delete'));
 
 🟢 **Development Tools**:
 
-- `DevOverlay.svelte` - Shows route info, params, breadcrumbs in DEV mode
+- `DevOverlay.svelte` - Shows route info, params, breadcrumbs, component hierarchy in DEV mode
+- `componentRegistry.svelte.ts` - Manual component tracking (see [Dev Component Tracking Guide](docs/dev-component-tracking.md))
+- `ComponentTree.svelte` - Visual component hierarchy display
 - `viewId.ts` - Breadcrumb tracking for route debugging
-- Both integrated in `+layout.svelte` behind `import.meta.env.DEV` check
+- All integrated in `+layout.svelte` behind `import.meta.env.DEV` check
 
 ## Accessibility
 

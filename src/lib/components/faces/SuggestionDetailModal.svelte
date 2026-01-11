@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { FaceSuggestion, FaceInstance, Person, FaceSuggestionItem } from '$lib/api/faces';
 	import type { AgeEraBucket } from '$lib/api/faces';
 	import {
@@ -23,6 +24,12 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Alert from '$lib/components/ui/alert';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking for modals (visibility-based, not mount-based)
+	// Modals are always in the DOM, so we track when they become visible
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
 
 	// Recent persons tracking for smart sorting
 	const RECENT_PERSONS_KEY = 'suggestions.recentPersonIds';
@@ -74,6 +81,30 @@
 
 	// Derive open state from suggestion
 	let open = $derived(suggestion !== null);
+
+	// Track component visibility (register when modal opens, unregister when it closes)
+	$effect(() => {
+		if (open && componentStack) {
+			// Modal opened - register component
+			trackingCleanup = untrack(() =>
+				registerComponent('SuggestionDetailModal', {
+					filePath: 'src/lib/components/faces/SuggestionDetailModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			// Modal closed - unregister component
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+
+		// Cleanup when effect re-runs or component unmounts
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	let isActionLoading = $state(false);
 

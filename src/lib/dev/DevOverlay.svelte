@@ -28,7 +28,9 @@
 	let copied = $state(false);
 	let timestamp = $state<string>('');
 	let showComponentDetails = $state(false);
-	let componentStack = $state<ComponentInfo[]>([]);
+
+	// Get component stack synchronously during component init (required for context API)
+	const stack = getComponentStack();
 
 	// Derived route info from $page
 	let pathname = $derived($page.url.pathname);
@@ -41,7 +43,8 @@
 	let paramsJson = $derived(JSON.stringify(params, null, 2));
 	let hasParams = $derived(Object.keys(params).length > 0);
 
-	// Component tracking
+	// Component tracking - derive from the reactive stack
+	let componentStack = $derived(stack?.components ?? []);
 	let componentPath = $derived(
 		componentStack.length > 0 ? componentStack.map((c) => c.name).join(' → ') : ''
 	);
@@ -72,14 +75,6 @@
 		}
 		updateTime();
 		const interval = setInterval(updateTime, 1000);
-
-		// Subscribe to component stack
-		const stack = getComponentStack();
-		if (stack) {
-			$effect(() => {
-				componentStack = stack.components;
-			});
-		}
 
 		return () => clearInterval(interval);
 	});
