@@ -59,6 +59,16 @@
 	// Track face list item elements for scroll-into-view functionality
 	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());
 
+	// Sort faces with primary face first
+	let sortedFaces = $derived.by(() => {
+		if (!primaryFaceId) return faces;
+		return [...faces].sort((a, b) => {
+			if (a.id === primaryFaceId) return -1;
+			if (b.id === primaryFaceId) return 1;
+			return 0;
+		});
+	});
+
 	/**
 	 * Get face label (person name or "Unknown")
 	 * For suggestions, the primary face may not have personName yet, but we can use primaryFacePersonName
@@ -128,7 +138,7 @@
 <aside class="face-sidebar" aria-label="Detected faces">
 	<h3>Faces ({faces.length})</h3>
 	<ul class="face-list">
-		{#each faces as face (face.id)}
+		{#each sortedFaces as face (face.id)}
 			{@const isPrimary = primaryFaceId && face.id === primaryFaceId}
 			{@const isCurrentPerson = currentPersonId && face.personId === currentPersonId}
 			{@const suggestionState = faceSuggestions.get(face.id)}
