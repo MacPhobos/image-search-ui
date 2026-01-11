@@ -129,7 +129,7 @@ describe('vitePluginComponentTracking', () => {
 
 		it('should not double-inject if tracking code already exists', () => {
 			const input = `<script>
-import { registerComponent } from '$lib/dev/componentRegistry';
+import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 </script>
 
 <button>Click</button>`;

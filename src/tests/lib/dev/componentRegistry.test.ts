@@ -6,7 +6,7 @@ import {
 	getComponentCounts,
 	formatComponentPath,
 	getComponentType
-} from '$lib/dev/componentRegistry';
+} from '$lib/dev/componentRegistry.svelte';
 
 // Mock import.meta.env.DEV
 vi.stubGlobal('import', {

@@ -12,8 +12,8 @@
 -->
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import type { ComponentInfo } from './componentRegistry';
-	import { getComponentType } from './componentRegistry';
+	import type { ComponentInfo } from './componentRegistry.svelte';
+	import { getComponentType } from './componentRegistry.svelte';
 
 	interface Props {
 		components: ComponentInfo[];

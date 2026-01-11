@@ -5,7 +5,7 @@
 	import { checkHealth } from '$lib/api/client';
 	import { tid } from '$lib/testing/testid';
 	import { setViewId } from '$lib/dev/viewId';
-	import { createComponentStack } from '$lib/dev/componentRegistry';
+	import { createComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 

@@ -71,7 +71,7 @@ function getTrackingCode(componentName: string, filePath: string): string {
 
 	return `// Auto-generated component tracking (dev only)
 import { onMount } from 'svelte';
-import { registerComponent } from '$lib/dev/componentRegistry';
+import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
 if (import.meta.env.DEV) {
 	onMount(() => registerComponent('${safeName}', { filePath: '${safePath}' }));

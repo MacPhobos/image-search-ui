@@ -19,7 +19,7 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { viewIdBreadcrumb } from './viewId';
-	import { getComponentStack, formatComponentPath, type ComponentInfo } from './componentRegistry';
+	import { getComponentStack, formatComponentPath, type ComponentInfo } from './componentRegistry.svelte';
 	import ComponentTree from './ComponentTree.svelte';
 	import { tid } from '$lib/testing/testid';
 
