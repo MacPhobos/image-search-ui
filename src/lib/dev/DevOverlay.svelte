@@ -19,12 +19,16 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { viewIdBreadcrumb } from './viewId';
+	import { getComponentStack, formatComponentPath, type ComponentInfo } from './componentRegistry';
+	import ComponentTree from './ComponentTree.svelte';
 	import { tid } from '$lib/testing/testid';
 
 	// State
 	let expanded = $state(false);
 	let copied = $state(false);
 	let timestamp = $state<string>('');
+	let showComponentDetails = $state(false);
+	let componentStack = $state<ComponentInfo[]>([]);
 
 	// Derived route info from $page
 	let pathname = $derived($page.url.pathname);
@@ -37,14 +41,24 @@
 	let paramsJson = $derived(JSON.stringify(params, null, 2));
 	let hasParams = $derived(Object.keys(params).length > 0);
 
-	// Copy payload
+	// Component tracking
+	let componentPath = $derived(
+		componentStack.length > 0 ? componentStack.map((c) => c.name).join(' → ') : ''
+	);
+
+	// Copy payload (includes component info)
 	let copyPayload = $derived(
 		JSON.stringify(
 			{
 				pathname,
 				search: search || undefined,
 				params,
-				routeId
+				routeId,
+				components: componentStack.map((c) => ({
+					name: c.name,
+					filePath: c.filePath,
+					mountedAt: c.mountedAt
+				}))
 			},
 			null,
 			2
@@ -58,6 +72,15 @@
 		}
 		updateTime();
 		const interval = setInterval(updateTime, 1000);
+
+		// Subscribe to component stack
+		const stack = getComponentStack();
+		if (stack) {
+			$effect(() => {
+				componentStack = stack.components;
+			});
+		}
+
 		return () => clearInterval(interval);
 	});
 
@@ -155,6 +178,39 @@
 							{$viewIdBreadcrumb.join(' > ')}
 						</code>
 					</div>
+				{/if}
+
+				<!-- Component Stack -->
+				{#if componentStack.length > 0}
+					<div class="info-row components-header">
+						<span class="label">components:</span>
+						<button
+							class="detail-toggle"
+							onclick={() => (showComponentDetails = !showComponentDetails)}
+							aria-label={showComponentDetails
+								? 'Hide component details'
+								: 'Show component details'}
+							data-testid={tid('dev-overlay', 'btn-components-toggle')}
+						>
+							{showComponentDetails ? '▼' : '▶'} {componentStack.length}
+						</button>
+					</div>
+
+					{#if !showComponentDetails}
+						<!-- Compact path view -->
+						<div class="info-row">
+							<span class="label"></span>
+							<code class="value component-path">
+								{componentPath}
+							</code>
+						</div>
+					{:else}
+						<!-- Detailed tree view -->
+						<div class="info-row tree-container">
+							<span class="label"></span>
+							<ComponentTree components={componentStack} />
+						</div>
+					{/if}
 				{/if}
 
 				<!-- Data keys (expandable section) -->
@@ -321,6 +377,41 @@
 	.value.data-keys {
 		color: #86efac;
 		font-size: 10px;
+	}
+
+	.value.component-path {
+		color: #fbbf24;
+		font-size: 10px;
+		line-height: 1.5;
+		word-break: break-word;
+	}
+
+	.components-header {
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		padding-top: 6px;
+		margin-top: 4px;
+	}
+
+	.detail-toggle {
+		background: none;
+		border: none;
+		color: #9ca3af;
+		cursor: pointer;
+		font: inherit;
+		padding: 0;
+		font-size: 11px;
+	}
+
+	.detail-toggle:hover {
+		color: #e0e0e0;
+	}
+
+	.tree-container {
+		align-items: stretch;
+	}
+
+	.tree-container :global(.component-tree) {
+		flex: 1;
 	}
 
 	code {

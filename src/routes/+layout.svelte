@@ -5,6 +5,7 @@
 	import { checkHealth } from '$lib/api/client';
 	import { tid } from '$lib/testing/testid';
 	import { setViewId } from '$lib/dev/viewId';
+	import { createComponentStack } from '$lib/dev/componentRegistry';
 	import { Toaster } from '$lib/components/ui/sonner';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
@@ -13,6 +14,11 @@
 	}
 
 	let { children }: Props = $props();
+
+	// DEV: Initialize component tracking
+	if (import.meta.env.DEV) {
+		createComponentStack();
+	}
 
 	// DEV: Set view ID for DevOverlay breadcrumb
 	onMount(() => {
