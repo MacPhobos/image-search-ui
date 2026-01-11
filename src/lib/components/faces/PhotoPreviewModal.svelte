@@ -3,17 +3,16 @@
 	import type { PersonPhotoGroup, FaceInPhoto, FaceSuggestionItem } from '$lib/api/faces';
 	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import {
-		fetchAllPersons,
 		assignFaceToPerson,
-		createPerson,
 		unassignFace,
 		getFaceSuggestions,
 		pinPrototype
 	} from '$lib/api/faces';
-	import type { Person, AgeEraBucket } from '$lib/api/faces';
+	import type { AgeEraBucket } from '$lib/api/faces';
+	import type { AssignmentResult } from '$lib/hooks/useFaceAssignment.svelte';
 	import ImageWithFaceBoundingBoxes, { type FaceBox } from './ImageWithFaceBoundingBoxes.svelte';
 	import FaceListSidebar from './FaceListSidebar.svelte';
-	import PersonAssignmentPanel from './PersonAssignmentPanel.svelte';
+	import PersonAssignmentModal from './PersonAssignmentModal.svelte';
 	import PrototypePinningPanel from './PrototypePinningPanel.svelte';
 	import { getFaceColorByIndex } from './face-colors';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -99,10 +98,7 @@
 
 	// Face assignment state
 	let assigningFaceId = $state<string | null>(null);
-	let persons = $state<Person[]>([]);
-	let personsLoading = $state(false);
-	let assignmentSubmitting = $state(false);
-	let assignmentError = $state<string | null>(null);
+	let showAssignmentModal = $state(false);
 
 	// Face unassignment state
 	let unassigningFaceId = $state<string | null>(null);
@@ -190,13 +186,8 @@
 		faceSuggestions = newMap;
 	}
 
-	// Load persons list and fetch suggestions when modal opens
+	// Fetch suggestions when modal opens
 	onMount(() => {
-		// Load persons if not already loaded
-		if (persons.length === 0) {
-			loadPersons();
-		}
-
 		// Fetch suggestions for unknown faces
 		const unknownFaces = photo.faces.filter((f) => !f.personId);
 		const controller = new AbortController();
@@ -267,17 +258,6 @@
 		highlightedFaceId = highlightedFaceId === faceId ? null : faceId;
 	}
 
-	async function loadPersons() {
-		personsLoading = true;
-		try {
-			persons = await fetchAllPersons('active');
-		} catch (err) {
-			console.error('Failed to load persons:', err);
-		} finally {
-			personsLoading = false;
-		}
-	}
-
 	// Face assignment handlers
 	function handleAssignClick(faceId: string) {
 		const face = photo.faces.find((f) => f.faceInstanceId === faceId);
@@ -285,100 +265,31 @@
 
 		assigningFaceId = faceId;
 		highlightedFaceId = faceId;
-		assignmentError = null;
-
-		if (persons.length === 0) {
-			loadPersons();
-		}
+		showAssignmentModal = true;
 	}
 
-	async function handleAssignToExisting(personId: string) {
-		if (!assigningFaceId || assignmentSubmitting) return;
+	function handleAssignmentSuccess(result: AssignmentResult) {
+		const { faceId, personId, personName } = result;
 
-		assignmentSubmitting = true;
-		assignmentError = null;
-
-		const faceId = assigningFaceId;
-		const person = persons.find((p) => p.id === personId);
-		if (!person) return;
-
-		try {
-			await assignFaceToPerson(faceId, person.id);
-
-			// Update local state
-			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
-			if (faceIndex !== -1) {
-				photo.faces[faceIndex] = {
-					...photo.faces[faceIndex],
-					personId: person.id,
-					personName: person.name
-				};
-			}
-
-			// Clear suggestions for this face
-			const newMap = new Map(faceSuggestions);
-			newMap.delete(faceId);
-			faceSuggestions = newMap;
-
-			assigningFaceId = null;
-			onFaceAssigned?.(faceId, person.id, person.name);
-		} catch (err) {
-			console.error('Failed to assign face:', err);
-			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
-		} finally {
-			assignmentSubmitting = false;
+		// Optimistic UI update - update local face state
+		const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
+		if (faceIndex !== -1) {
+			const face = photo.faces[faceIndex];
+			photo.faces[faceIndex] = { ...face, personId, personName };
+			photo.faces = [...photo.faces]; // Trigger reactivity
 		}
-	}
 
-	async function handleCreateAndAssign(newName: string) {
-		if (!assigningFaceId || assignmentSubmitting) return;
+		// Clear suggestions for this face
+		const newMap = new Map(faceSuggestions);
+		newMap.delete(faceId);
+		faceSuggestions = newMap;
 
-		assignmentSubmitting = true;
-		assignmentError = null;
+		// Notify parent component (uses 3-arg signature)
+		onFaceAssigned?.(faceId, personId, personName);
 
-		const faceId = assigningFaceId;
-
-		try {
-			const newPerson = await createPerson(newName);
-			await assignFaceToPerson(faceId, newPerson.id);
-
-			// Add to persons list
-			persons = [
-				...persons,
-				{
-					id: newPerson.id,
-					name: newPerson.name,
-					status: newPerson.status as 'active' | 'merged' | 'hidden',
-					faceCount: 1,
-					prototypeCount: 0,
-					createdAt: newPerson.createdAt,
-					updatedAt: newPerson.createdAt
-				}
-			];
-
-			// Update local state
-			const faceIndex = photo.faces.findIndex((f) => f.faceInstanceId === faceId);
-			if (faceIndex !== -1) {
-				photo.faces[faceIndex] = {
-					...photo.faces[faceIndex],
-					personId: newPerson.id,
-					personName: newPerson.name
-				};
-			}
-
-			// Clear suggestions for this face
-			const newMap = new Map(faceSuggestions);
-			newMap.delete(faceId);
-			faceSuggestions = newMap;
-
-			assigningFaceId = null;
-			onFaceAssigned?.(faceId, newPerson.id, newPerson.name);
-		} catch (err) {
-			console.error('Failed to create person and assign:', err);
-			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';
-		} finally {
-			assignmentSubmitting = false;
-		}
+		// Reset state
+		assigningFaceId = null;
+		showAssignmentModal = false;
 	}
 
 	async function handleUnassignClick(faceId: string) {
@@ -643,21 +554,6 @@
 			</aside>
 		</div>
 
-		<!-- Assignment panel (shown when a face is being assigned) -->
-		{#if assigningFaceId}
-			<PersonAssignmentPanel
-				open={true}
-				faceId={assigningFaceId}
-				{persons}
-				{personsLoading}
-				submitting={assignmentSubmitting}
-				error={assignmentError}
-				onCancel={() => { assigningFaceId = null; }}
-				onAssignToExisting={handleAssignToExisting}
-				onCreateAndAssign={handleCreateAndAssign}
-			/>
-		{/if}
-
 		<!-- Pin prototype panel (shown when pinning a face) -->
 		{#if pinningFaceId && showPinOptions}
 			{@const face = photo.faces.find((f) => f.faceInstanceId === pinningFaceId)}
@@ -675,6 +571,14 @@
 		{/if}
 	</Dialog.Content>
 </Dialog.Root>
+
+<!-- Assignment modal (stacked on top when assigning a face) -->
+<PersonAssignmentModal
+	bind:open={showAssignmentModal}
+	faceId={assigningFaceId ?? ''}
+	onSuccess={handleAssignmentSuccess}
+	onCancel={() => { assigningFaceId = null; showAssignmentModal = false; }}
+/>
 
 <style>
 	.modal-body {

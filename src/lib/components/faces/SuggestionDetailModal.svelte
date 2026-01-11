@@ -1,23 +1,21 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { FaceSuggestion, FaceInstance, Person, FaceSuggestionItem } from '$lib/api/faces';
+	import type { FaceSuggestion, FaceInstance, FaceSuggestionItem } from '$lib/api/faces';
 	import type { AgeEraBucket } from '$lib/api/faces';
 	import {
 		getFacesForAsset,
-		listPersons,
 		assignFaceToPerson,
-		createPerson,
 		getFaceSuggestions,
 		pinPrototype,
 		unassignFace
 	} from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
-	import { localSettings } from '$lib/stores/localSettings.svelte';
+	import type { AssignmentResult } from '$lib/hooks/useFaceAssignment.svelte';
 	import ImageWithFaceBoundingBoxes, {
 		type FaceBox
 	} from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
 	import FaceListSidebar from '$lib/components/faces/FaceListSidebar.svelte';
-	import PersonAssignmentPanel from '$lib/components/faces/PersonAssignmentPanel.svelte';
+	import PersonAssignmentModal from '$lib/components/faces/PersonAssignmentModal.svelte';
 	import PrototypePinningPanel from '$lib/components/faces/PrototypePinningPanel.svelte';
 	import { getFaceColorByIndex } from '$lib/components/faces/face-colors';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -30,28 +28,6 @@
 	// Modals are always in the DOM, so we track when they become visible
 	const componentStack = getComponentStack();
 	let trackingCleanup: (() => void) | null = null;
-
-	// Recent persons tracking for smart sorting
-	const RECENT_PERSONS_KEY = 'suggestions.recentPersonIds';
-	const MAX_RECENT_PERSONS = 20;
-
-	/**
-	 * Record a person ID as recently assigned.
-	 * Moves existing entries to front (MRU list behavior).
-	 */
-	function recordRecentPerson(personId: string): void {
-		const recent = localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
-		const filtered = recent.filter((id) => id !== personId);
-		const updated = [personId, ...filtered].slice(0, MAX_RECENT_PERSONS);
-		localSettings.set(RECENT_PERSONS_KEY, updated);
-	}
-
-	/**
-	 * Get recent person IDs for MRU sorting
-	 */
-	function getRecentPersonIds(): string[] {
-		return localSettings.get<string[]>(RECENT_PERSONS_KEY, []);
-	}
 
 	interface Props {
 		suggestion: FaceSuggestion | null;
@@ -115,10 +91,7 @@
 
 	// Face assignment state
 	let assigningFaceId = $state<string | null>(null);
-	let persons = $state<Person[]>([]);
-	let personsLoading = $state(false);
-	let assignmentSubmitting = $state(false);
-	let assignmentError = $state<string | null>(null);
+	let showAssignmentModal = $state(false);
 
 	// Face highlight state (for bidirectional selection between boxes and list)
 	let highlightedFaceId = $state<string | null>(null);
@@ -301,37 +274,6 @@
 				facesLoading = false;
 			});
 
-		// Load persons list (fetch all pages)
-		if (persons.length === 0 && !personsLoading) {
-			personsLoading = true;
-			const fetchAllPersons = async () => {
-				let allPersons: Person[] = [];
-				let page = 1;
-				const pageSize = 100;
-				let hasMore = true;
-
-				while (hasMore) {
-					const response = await listPersons(page, pageSize, 'active');
-					allPersons = [...allPersons, ...response.items];
-					hasMore = response.items.length === pageSize;
-					page++;
-				}
-
-				return allPersons;
-			};
-
-			fetchAllPersons()
-				.then((allPersons) => {
-					persons = allPersons;
-				})
-				.catch((err) => {
-					console.error('Failed to load persons:', err);
-				})
-				.finally(() => {
-					personsLoading = false;
-				});
-		}
-
 		// Cleanup: abort pending requests when effect re-runs or component unmounts
 		return () => {
 			controller.abort();
@@ -387,141 +329,41 @@
 		}
 	}
 
-	// Assignment handlers (delegated to PersonAssignmentPanel)
-	async function handleAssignToExisting(personId: string) {
-		if (!assigningFaceId || assignmentSubmitting) return;
+	// Assignment success handler (called by PersonAssignmentModal)
+	function handleAssignmentSuccess(result: AssignmentResult) {
+		const { faceId, personId, personName } = result;
 
-		assignmentSubmitting = true;
-		assignmentError = null;
-
-		const faceId = assigningFaceId;
-		const person = persons.find((p) => p.id === personId);
-		if (!person) {
-			assignmentError = 'Person not found';
-			assignmentSubmitting = false;
-			return;
+		// Optimistic UI update - update local face state
+		const faceIndex = allFaces.findIndex((f) => f.id === faceId);
+		if (faceIndex !== -1) {
+			const face = allFaces[faceIndex];
+			allFaces[faceIndex] = { ...face, personId, personName };
 		}
 
-		try {
-			await assignFaceToPerson(faceId, personId);
+		// Clear suggestions for this face
+		const newMap = new Map(faceSuggestions);
+		newMap.delete(faceId);
+		faceSuggestions = newMap;
 
-			// Record this person as recently assigned
-			recordRecentPerson(personId);
+		// Get thumbnail URL for callback
+		const thumbnailUrl = `/api/v1/faces/faces/${faceId}/thumbnail`;
+		const photoFilename =
+			suggestion?.path?.split('/').pop() ||
+			suggestion?.fullImageUrl?.split('/').pop() ||
+			'Unknown';
 
-			// Optimistically update local state
-			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
-			if (faceIndex !== -1) {
-				allFaces[faceIndex] = {
-					...allFaces[faceIndex],
-					personId: person.id,
-					personName: person.name
-				};
-			}
+		// Notify parent component
+		onFaceAssigned?.({ faceId, personId, personName, thumbnailUrl, photoFilename });
 
-			// Clear suggestions for this face
-			const newMap = new Map(faceSuggestions);
-			newMap.delete(faceId);
-			faceSuggestions = newMap;
-
-			// Notify parent with full assignment data
-			if (onFaceAssigned && suggestion) {
-				onFaceAssigned({
-					faceId,
-					personId: person.id,
-					personName: person.name,
-					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
-					photoFilename:
-						suggestion.path?.split('/').pop() ||
-						suggestion.fullImageUrl?.split('/').pop() ||
-						'Unknown'
-				});
-			}
-
-			// Close assignment panel
-			assigningFaceId = null;
-		} catch (err) {
-			console.error('Failed to assign face:', err);
-			assignmentError = err instanceof Error ? err.message : 'Failed to assign face.';
-		} finally {
-			assignmentSubmitting = false;
-		}
-	}
-
-	async function handleCreateAndAssign(newName: string) {
-		if (!assigningFaceId || assignmentSubmitting) return;
-
-		assignmentSubmitting = true;
-		assignmentError = null;
-
-		const faceId = assigningFaceId;
-
-		try {
-			const newPerson = await createPerson(newName);
-			await assignFaceToPerson(faceId, newPerson.id);
-
-			// Record this newly created person as recently assigned
-			recordRecentPerson(newPerson.id);
-
-			// Add to persons list
-			persons = [
-				...persons,
-				{
-					id: newPerson.id,
-					name: newPerson.name,
-					status: newPerson.status as 'active' | 'merged' | 'hidden',
-					faceCount: 1,
-					prototypeCount: 0,
-					createdAt: newPerson.createdAt,
-					updatedAt: newPerson.createdAt
-				}
-			];
-
-			// Optimistically update local state
-			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
-			if (faceIndex !== -1) {
-				allFaces[faceIndex] = {
-					...allFaces[faceIndex],
-					personId: newPerson.id,
-					personName: newPerson.name
-				};
-			}
-
-			// Clear suggestions for this face
-			const newMap = new Map(faceSuggestions);
-			newMap.delete(faceId);
-			faceSuggestions = newMap;
-
-			// Notify parent with full assignment data
-			if (onFaceAssigned && suggestion) {
-				onFaceAssigned({
-					faceId,
-					personId: newPerson.id,
-					personName: newPerson.name,
-					thumbnailUrl: `/api/v1/faces/faces/${faceId}/thumbnail`,
-					photoFilename:
-						suggestion.path?.split('/').pop() ||
-						suggestion.fullImageUrl?.split('/').pop() ||
-						'Unknown'
-				});
-			}
-
-			// Close assignment panel
-			assigningFaceId = null;
-		} catch (err) {
-			console.error('Failed to create person and assign:', err);
-			assignmentError = err instanceof Error ? err.message : 'Failed to create person.';
-		} finally {
-			assignmentSubmitting = false;
-		}
+		// Reset state
+		assigningFaceId = null;
+		showAssignmentModal = false;
 	}
 
 	// Accept suggestion from face list (for non-primary faces)
 	async function handleSuggestionAccept(faceId: string, personId: string, personName: string) {
 		try {
 			await assignFaceToPerson(faceId, personId);
-
-			// Record this person as recently assigned
-			recordRecentPerson(personId);
 
 			// Optimistically update local state
 			const faceIndex = allFaces.findIndex((f) => f.id === faceId);
@@ -777,6 +619,7 @@
 							onFaceClick={handleFaceClick}
 							onAssignClick={(faceId) => {
 								assigningFaceId = faceId;
+								showAssignmentModal = true;
 							}}
 							onUnassignClick={handleUnassignClick}
 							onPinClick={(faceId) => {
@@ -854,23 +697,6 @@
 				</aside>
 			</div>
 
-			<!-- Person Assignment Panel (shown when a face is being assigned) -->
-			{#if assigningFaceId}
-				<PersonAssignmentPanel
-					open={true}
-					faceId={assigningFaceId}
-					{persons}
-					{personsLoading}
-					submitting={assignmentSubmitting}
-					error={assignmentError}
-					recentPersonIds={getRecentPersonIds()}
-					onCancel={() => {
-						assigningFaceId = null;
-					}}
-					onAssignToExisting={handleAssignToExisting}
-					onCreateAndAssign={handleCreateAndAssign}
-				/>
-			{/if}
 
 			<!-- Prototype Pinning Panel (shown when pinning a face) -->
 			{#if pinningFaceId && showPinOptions}
@@ -909,6 +735,17 @@
 		{/if}
 	</Dialog.Content>
 </Dialog.Root>
+
+<!-- Person Assignment Modal (stacked on top of main modal) -->
+<PersonAssignmentModal
+	bind:open={showAssignmentModal}
+	faceId={assigningFaceId ?? ''}
+	onSuccess={handleAssignmentSuccess}
+	onCancel={() => {
+		assigningFaceId = null;
+		showAssignmentModal = false;
+	}}
+/>
 
 <!-- Undo Confirmation Dialog -->
 <Dialog.Root open={showUndoConfirm} onOpenChange={(open) => !open && cancelUndoAssignment()}>
