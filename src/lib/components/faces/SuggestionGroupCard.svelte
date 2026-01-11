@@ -1,13 +1,16 @@
 <script lang="ts">
 	import type { FaceSuggestion } from '$lib/api/faces';
 	import SuggestionThumbnail from './SuggestionThumbnail.svelte';
+	import FindMoreDialog from './FindMoreDialog.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Button } from '$lib/components/ui/button';
 
 	interface SuggestionGroup {
 		personId: string;
 		personName: string | null;
 		suggestions: FaceSuggestion[];
 		pendingCount: number;
+		labeledFaceCount?: number; // Total labeled faces for this person
 	}
 
 	interface Props {
@@ -18,6 +21,7 @@
 		onAcceptAll: (ids: number[]) => Promise<void>;
 		onRejectAll: (ids: number[]) => Promise<void>;
 		onThumbnailClick: (suggestion: FaceSuggestion) => void;
+		onFindMoreComplete?: () => void;
 	}
 
 	let {
@@ -27,11 +31,13 @@
 		onSelectAllInGroup,
 		onAcceptAll,
 		onRejectAll,
-		onThumbnailClick
+		onThumbnailClick,
+		onFindMoreComplete
 	}: Props = $props();
 
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
+	let showFindMoreDialog = $state(false);
 
 	// Sort suggestions to prioritize multi-prototype matches
 	const sortedSuggestions = $derived.by(() => {
@@ -99,6 +105,12 @@
 			isLoading = false;
 		}
 	}
+
+	function handleFindMoreComplete() {
+		showFindMoreDialog = false;
+		// Notify parent to refresh suggestions
+		onFindMoreComplete?.();
+	}
 </script>
 
 <article class="group-card">
@@ -124,8 +136,29 @@
 			</div>
 		</div>
 
-		{#if group.pendingCount > 0}
-			<div class="header-actions">
+		<div class="header-actions">
+			{#if group.labeledFaceCount && group.labeledFaceCount >= 10}
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={() => (showFindMoreDialog = true)}
+					title="Find more suggestions using additional prototypes"
+				>
+					<svg
+						class="icon"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<circle cx="11" cy="11" r="8" />
+						<path d="M21 21l-4.35-4.35" />
+					</svg>
+					Find More
+				</Button>
+			{/if}
+
+			{#if group.pendingCount > 0}
 				<button
 					type="button"
 					class="action-btn accept-btn"
@@ -144,8 +177,8 @@
 				>
 					{isLoading ? 'Processing...' : `✗ Reject All (${pendingIds.length})`}
 				</button>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</header>
 
 	<!-- Error message -->
@@ -167,6 +200,18 @@
 		{/each}
 	</div>
 </article>
+
+<!-- Find More Dialog -->
+{#if showFindMoreDialog && group.labeledFaceCount}
+	<FindMoreDialog
+		open={showFindMoreDialog}
+		personId={group.personId}
+		personName={group.personName || 'Unknown'}
+		labeledFaceCount={group.labeledFaceCount}
+		onClose={() => (showFindMoreDialog = false)}
+		onComplete={handleFindMoreComplete}
+	/>
+{/if}
 
 <style>
 	.group-card {
@@ -227,6 +272,13 @@
 		display: flex;
 		gap: 0.5rem;
 		flex-wrap: wrap;
+		align-items: center;
+	}
+
+	.icon {
+		width: 1rem;
+		height: 1rem;
+		margin-right: 0.25rem;
 	}
 
 	.action-btn {

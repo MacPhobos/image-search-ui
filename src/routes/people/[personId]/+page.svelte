@@ -20,6 +20,7 @@
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
 	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
+	import FindMoreDialog from '$lib/components/faces/FindMoreDialog.svelte';
 	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
@@ -37,11 +38,10 @@
 
 	// State
 	let person = $state<Person | null>(null);
-	let photos = $state<PersonPhotoGroup[]>([]);
 	let loading = $state(true);
-	let loadingPhotos = $state(true);
 	let error = $state<string | null>(null);
-	let photoError = $state<string | null>(null);
+	// Photos used by lightbox functionality for prototypes
+	let photos = $state<PersonPhotoGroup[]>([]);
 
 	// Prototype state
 	let prototypes = $state<Prototype[]>([]);
@@ -74,6 +74,9 @@
 	let selectedMergeTarget = $state<Person | null>(null);
 	let merging = $state(false);
 	let mergeError = $state<string | null>(null);
+
+	// Find More dialog state
+	let showFindMoreDialog = $state(false);
 
 	// Lightbox state
 	let showLightbox = $state(false);
@@ -114,8 +117,6 @@
 				updatedAt: personData.createdAt // PersonDetailResponse doesn't have updatedAt, use createdAt
 			};
 
-			// Load photos for this person
-			loadPhotos();
 			// Load other persons for merge target selection
 			loadMergeTargets();
 		} catch (err) {
@@ -132,26 +133,6 @@
 		}
 	}
 
-	async function loadPhotos() {
-		if (!person) return;
-
-		loadingPhotos = true;
-		photoError = null;
-
-		try {
-			// Get photos with faces for this person
-			const response = await getPersonPhotos(person.id, 1, 50);
-			photos = response.items;
-		} catch (err) {
-			console.error('Failed to load photos:', err);
-			// Don't show error if it's just empty results
-			if (err instanceof ApiError && err.status !== 404) {
-				photoError = 'Failed to load photos for this person.';
-			}
-		} finally {
-			loadingPhotos = false;
-		}
-	}
 
 	async function loadPrototypes() {
 		if (!personId) return;
@@ -506,6 +487,16 @@
 			console.warn('Photo not found for prototype face:', proto.faceInstanceId);
 		}
 	}
+
+	/**
+	 * Handle completion of "Find More" job.
+	 * Shows toast notification with result.
+	 */
+	function handleFindMoreComplete() {
+		showFindMoreDialog = false;
+		// Success toast already shown by FindMoreDialog
+		// Could optionally refresh data or navigate to suggestions page
+	}
 </script>
 
 <svelte:head>
@@ -626,6 +617,26 @@
 			</div>
 
 			<div class="person-actions">
+				{#if person.faceCount >= 10}
+					<button
+						type="button"
+						class="secondary-button"
+						onclick={() => (showFindMoreDialog = true)}
+						title="Find more face suggestions using additional prototypes"
+					>
+						<svg
+							class="action-icon"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<path d="M21 21l-4.35-4.35" />
+						</svg>
+						Find More Suggestions
+					</button>
+				{/if}
 				<a href="/faces/persons/{person.id}/history" class="secondary-button">
 					View Assignment History
 				</a>
@@ -849,6 +860,18 @@
 		onNext={lightboxIndex < lightboxPhotos.length - 1 ? handleLightboxNext : undefined}
 		onPrevious={lightboxIndex > 0 ? handleLightboxPrev : undefined}
 		onPrototypePinned={loadPrototypes}
+	/>
+{/if}
+
+<!-- Find More Dialog -->
+{#if showFindMoreDialog && person}
+	<FindMoreDialog
+		open={showFindMoreDialog}
+		personId={person.id}
+		personName={person.name}
+		labeledFaceCount={person.faceCount}
+		onClose={() => (showFindMoreDialog = false)}
+		onComplete={handleFindMoreComplete}
 	/>
 {/if}
 
@@ -1123,10 +1146,13 @@
 	.person-actions {
 		display: flex;
 		gap: 0.75rem;
+		flex-wrap: wrap;
 	}
 
 	.secondary-button {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		padding: 0.625rem 1.25rem;
 		background-color: white;
 		color: #666;
@@ -1143,85 +1169,11 @@
 		background-color: #f5f5f5;
 	}
 
-	/* Photos Section */
-	.photos-section {
-		margin-top: 2rem;
+	.action-icon {
+		width: 1rem;
+		height: 1rem;
 	}
 
-	.photos-section h2 {
-		font-size: 1.25rem;
-		font-weight: 600;
-		color: #333;
-		margin: 0 0 1rem 0;
-	}
-
-	.loading-photos {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 2rem;
-		color: #666;
-	}
-
-	.photo-error {
-		padding: 1rem;
-		background-color: #fef2f2;
-		color: #dc2626;
-		border-radius: 6px;
-	}
-
-	.no-photos {
-		text-align: center;
-		padding: 3rem;
-		color: #666;
-	}
-
-	.no-photos svg {
-		width: 48px;
-		height: 48px;
-		color: #ccc;
-		margin-bottom: 1rem;
-	}
-
-	.no-photos p {
-		margin: 0;
-	}
-
-	.no-photos .hint {
-		margin-top: 0.5rem;
-		font-size: 0.875rem;
-		color: #999;
-	}
-
-	.photos-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: 1rem;
-	}
-
-	.photo-card {
-		background: white;
-		border: 1px solid #e0e0e0;
-		border-radius: 8px;
-		overflow: hidden;
-		transition: box-shadow 0.2s;
-	}
-
-	.photo-card:hover {
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	}
-
-	.photo-image-container {
-		position: relative;
-		aspect-ratio: 1;
-		background-color: #f0f0f0;
-	}
-
-	.photo-image {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
 
 	.face-count-badge {
 		position: absolute;

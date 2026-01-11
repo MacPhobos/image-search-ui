@@ -9,8 +9,11 @@
 		rejectSuggestion,
 		listPersons,
 		type GroupedSuggestionsResponse,
-		type FaceSuggestionSettings
+		type FaceSuggestionSettings,
+		type FindMoreJobInfo
 	} from '$lib/api/faces';
+	import { jobProgressStore } from '$lib/stores/jobProgressStore.svelte';
+	import { toast } from 'svelte-sonner';
 	import SuggestionGroupCard from '$lib/components/faces/SuggestionGroupCard.svelte';
 	import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
 	import PersonSearchBar from '$lib/components/faces/PersonSearchBar.svelte';
@@ -170,7 +173,17 @@
 				acceptedSuggestions.forEach((s) => trackAssignment(s));
 			}
 
-			await bulkSuggestionAction([...selectedIds], action);
+			// Call API with auto-find-more enabled for accept actions
+			const response = await bulkSuggestionAction([...selectedIds], action, {
+				autoFindMore: action === 'accept',
+				findMorePrototypeCount: 50
+			});
+
+			// Track any auto-triggered find-more jobs
+			if (response.findMoreJobs && response.findMoreJobs.length > 0) {
+				handleFindMoreJobs(response.findMoreJobs);
+			}
+
 			await loadSuggestions();
 			selectedIds = new Set();
 		} catch (e) {
@@ -197,7 +210,17 @@
 			acceptedSuggestions.forEach((s) => trackAssignment(s));
 		}
 
-		await bulkSuggestionAction(ids, 'accept');
+		// Call API with auto-find-more enabled
+		const response = await bulkSuggestionAction(ids, 'accept', {
+			autoFindMore: true,
+			findMorePrototypeCount: 50
+		});
+
+		// Track any auto-triggered find-more jobs
+		if (response.findMoreJobs && response.findMoreJobs.length > 0) {
+			handleFindMoreJobs(response.findMoreJobs);
+		}
+
 		await loadSuggestions();
 		// Remove accepted IDs from selection
 		ids.forEach((id) => selectedIds.delete(id));
@@ -307,6 +330,54 @@
 		} catch (err) {
 			console.error('Failed to undo assignment:', err);
 			error = err instanceof Error ? err.message : 'Failed to undo assignment';
+		}
+	}
+
+	/**
+	 * Handle completion of "Find More" job.
+	 * Refreshes suggestions to show newly discovered faces.
+	 */
+	async function handleFindMoreComplete() {
+		// Reload suggestions to show the new suggestions
+		await loadSuggestions();
+	}
+
+	/**
+	 * Handle auto-triggered find-more jobs from bulk accept.
+	 * Tracks each job with progress and shows toasts.
+	 */
+	function handleFindMoreJobs(jobs: FindMoreJobInfo[]) {
+		for (const job of jobs) {
+			// Look up person name from persons list
+			const person = persons.find((p) => p.id === job.personId);
+			const personName = person?.name || 'Unknown';
+
+			// Track job with progress store
+			jobProgressStore.trackJob(
+				job.jobId,
+				job.progressKey,
+				job.personId,
+				personName,
+				(completedJob) => {
+					// Success callback
+					const count = completedJob.result?.suggestionsCreated || 0;
+					toast.success(`Found ${count} new suggestions for ${personName}`, {
+						id: `find-more-${job.jobId}`
+					});
+					loadSuggestions(); // Refresh to show new suggestions
+				},
+				(errorMsg) => {
+					// Error callback
+					toast.error(`Find more failed for ${personName}: ${errorMsg}`, {
+						id: `find-more-${job.jobId}`
+					});
+				}
+			);
+
+			// Show loading toast
+			toast.loading(`Finding more suggestions for ${personName}...`, {
+				id: `find-more-${job.jobId}`
+			});
 		}
 	}
 
@@ -508,7 +579,9 @@
 					// Otherwise, count pending in displayed suggestions.
 					pendingCount: statusFilter === 'pending'
 						? group.suggestionCount
-						: group.suggestions.filter((s) => s.status === 'pending').length
+						: group.suggestions.filter((s) => s.status === 'pending').length,
+					// Get labeled face count for this person (from persons list)
+					labeledFaceCount: persons.find((p) => p.id === group.personId)?.faceCount
 				}}
 				<SuggestionGroupCard
 					group={groupWithPendingCount}
@@ -518,6 +591,7 @@
 					onAcceptAll={handleGroupAcceptAll}
 					onRejectAll={handleGroupRejectAll}
 					onThumbnailClick={handleThumbnailClick}
+					onFindMoreComplete={handleFindMoreComplete}
 				/>
 			{/each}
 		</div>

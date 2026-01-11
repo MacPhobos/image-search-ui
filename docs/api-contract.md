@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.14.0
-> **Last Updated**: 2026-01-09
+> **Version**: 1.15.0
+> **Last Updated**: 2026-01-10
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -24,6 +24,7 @@ This document defines the API contract between `image-search-service` (backend) 
    - [Temporal Prototypes](#temporal-prototypes)
    - [Configuration](#configuration)
    - [Jobs](#jobs)
+   - [Job Progress](#job-progress)
    - [Corrections](#corrections)
    - [Queue Monitoring](#queue-monitoring)
 5. [Pagination](#pagination)
@@ -1165,6 +1166,76 @@ Reject a face suggestion without assigning the face.
 
 **Response** `409 Conflict` - Suggestion already reviewed
 
+#### `POST /api/v1/faces/suggestions/persons/{person_id}/find-more`
+
+Start a background job to find additional face suggestions using dynamic prototype sampling. Samples random labeled faces (weighted by quality and diversity) as temporary prototypes to search for similar unknown faces.
+
+**Path Parameters**
+
+| Parameter   | Type   | Required | Description      |
+| ----------- | ------ | -------- | ---------------- |
+| `person_id` | string | Yes      | Person ID (UUID) |
+
+**Request Body**
+
+```json
+{
+	"prototypeCount": 50,
+	"maxSuggestions": 100
+}
+```
+
+| Field            | Type    | Required | Default | Description                                               |
+| ---------------- | ------- | -------- | ------- | --------------------------------------------------------- |
+| `prototypeCount` | integer | No       | 50      | Number of labeled faces to sample as prototypes (10-1000) |
+| `maxSuggestions` | integer | No       | 100     | Maximum number of new suggestions to create (1-500)       |
+
+**Response** `201 Created`
+
+```json
+{
+	"jobId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+	"personId": "550e8400-e29b-41d4-a716-446655440000",
+	"personName": "John Smith",
+	"prototypeCount": 50,
+	"labeledFaceCount": 234,
+	"status": "queued",
+	"progressKey": "find_more:progress:550e8400-e29b-41d4-a716-446655440000:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+| Field              | Type    | Description                                    |
+| ------------------ | ------- | ---------------------------------------------- |
+| `jobId`            | string  | Background job UUID                            |
+| `personId`         | string  | Person UUID                                    |
+| `personName`       | string  | Person display name                            |
+| `prototypeCount`   | integer | Actual number of prototypes to be used         |
+| `labeledFaceCount` | integer | Total labeled faces available for sampling     |
+| `status`           | string  | Job status (always "queued" on creation)       |
+| `progressKey`      | string  | Redis key for tracking job progress via SSE    |
+
+**Response** `404 Not Found` - Person not found
+
+```json
+{
+	"detail": "Person not found"
+}
+```
+
+**Response** `400 Bad Request` - Insufficient labeled faces
+
+```json
+{
+	"detail": "Person has only 5 labeled faces. Minimum 10 required."
+}
+```
+
+**Notes:**
+- Does NOT modify the person's configured prototypes
+- Uses the same similarity threshold as normal suggestion generation
+- Automatically adjusts `prototypeCount` if it exceeds available labeled faces
+- Job progress can be monitored via `/api/v1/job-progress/events` endpoint
+
 #### `POST /api/v1/faces/suggestions/bulk-action`
 
 Accept or reject multiple suggestions in a single request.
@@ -1174,14 +1245,18 @@ Accept or reject multiple suggestions in a single request.
 ```json
 {
 	"suggestionIds": [1, 2, 3, 4, 5],
-	"action": "accept"
+	"action": "accept",
+	"autoFindMore": true,
+	"findMorePrototypeCount": 50
 }
 ```
 
-| Field           | Type     | Required | Description                      |
-| --------------- | -------- | -------- | -------------------------------- |
-| `suggestionIds` | integer[] | Yes     | Array of suggestion IDs          |
-| `action`        | string   | Yes      | Action: "accept" or "reject"     |
+| Field                     | Type      | Required | Default | Description                                                    |
+| ------------------------- | --------- | -------- | ------- | -------------------------------------------------------------- |
+| `suggestionIds`           | integer[] | Yes      | -       | Array of suggestion IDs                                        |
+| `action`                  | string    | Yes      | -       | Action: "accept" or "reject"                                   |
+| `autoFindMore`            | boolean   | No       | false   | Auto-trigger find-more job after accepting suggestions         |
+| `findMorePrototypeCount`  | integer   | No       | 50      | Prototype count for auto-triggered find-more jobs (10-1000)    |
 
 **Response** `200 OK`
 
@@ -1194,9 +1269,31 @@ Accept or reject multiple suggestions in a single request.
 			"suggestionId": 3,
 			"reason": "Suggestion has already been reviewed"
 		}
+	],
+	"findMoreJobs": [
+		{
+			"personId": "550e8400-e29b-41d4-a716-446655440000",
+			"jobId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+			"progressKey": "find_more:progress:550e8400-e29b-41d4-a716-446655440000:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+		}
 	]
 }
 ```
+
+| Field           | Type      | Description                                           |
+| --------------- | --------- | ----------------------------------------------------- |
+| `successCount`  | integer   | Number of successfully processed suggestions          |
+| `failedCount`   | integer   | Number of failed suggestions                          |
+| `errors`        | array     | Array of error objects with `suggestionId` and `reason` |
+| `findMoreJobs`  | array     | Array of auto-triggered find-more jobs (optional, only present when `autoFindMore: true`) |
+
+**FindMoreJob Object:**
+
+| Field         | Type   | Description                            |
+| ------------- | ------ | -------------------------------------- |
+| `personId`    | string | Person UUID                            |
+| `jobId`       | string | Background job UUID                    |
+| `progressKey` | string | Redis key for tracking job progress    |
 
 **Response** `400 Bad Request` - Invalid request
 
@@ -1808,6 +1905,149 @@ Cancel a pending or running job.
 
 ---
 
+### Job Progress
+
+Real-time progress monitoring for background jobs using Server-Sent Events (SSE) or polling. Used for long-running operations like face suggestion discovery.
+
+#### JobProgress Schema
+
+```typescript
+interface JobProgress {
+	phase: string; // Current phase: selecting, searching, creating, completed, failed
+	current: number; // Items processed in current phase
+	total: number; // Total items in current phase
+	message: string; // Human-readable status message
+	timestamp: string; // ISO 8601 timestamp
+	// Additional fields when phase is "completed"
+	suggestionsCreated?: number; // Number of new suggestions created
+	prototypesUsed?: number; // Number of prototypes used
+	candidatesFound?: number; // Number of candidate faces found
+	duplicatesSkipped?: number; // Number of duplicate suggestions skipped
+	error?: string; // Error message if phase is "failed"
+}
+```
+
+#### `GET /api/v1/job-progress/events`
+
+Stream real-time progress updates for a background job via Server-Sent Events (SSE). The connection remains open until the job completes or fails.
+
+**Query Parameters**
+
+| Parameter      | Type   | Required | Description                                |
+| -------------- | ------ | -------- | ------------------------------------------ |
+| `progress_key` | string | Yes      | Progress key from job creation response    |
+
+**Response** - Server-Sent Events stream
+
+```
+event: progress
+data: {"phase":"searching","current":25,"total":50,"message":"Processing prototype 25/50","timestamp":"2026-01-10T15:30:00Z"}
+
+event: progress
+data: {"phase":"creating","current":42,"total":50,"message":"Creating suggestions...","timestamp":"2026-01-10T15:30:15Z"}
+
+event: complete
+data: {"phase":"completed","current":50,"total":50,"message":"Found 42 new suggestions","suggestionsCreated":42,"prototypesUsed":50,"candidatesFound":156,"duplicatesSkipped":114,"timestamp":"2026-01-10T15:30:20Z"}
+```
+
+**Event Types:**
+
+| Event      | Description                                                |
+| ---------- | ---------------------------------------------------------- |
+| `progress` | Periodic progress updates during job execution             |
+| `complete` | Final result when job finishes successfully                |
+| `error`    | Error message if job fails                                 |
+
+**Response Headers:**
+
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+X-Accel-Buffering: no
+```
+
+**Response** `404 Not Found` - Job not found or expired
+
+```json
+{
+	"detail": "Job not found or expired"
+}
+```
+
+**Notes:**
+- Connection automatically closes when job completes or fails
+- Progress updates sent approximately every 1 second
+- Connection timeout: 10 minutes (600 seconds)
+- Job data expires from Redis after 1 hour
+
+#### `GET /api/v1/job-progress/status`
+
+Get current status of a background job without streaming (polling alternative to SSE).
+
+**Query Parameters**
+
+| Parameter      | Type   | Required | Description                                |
+| -------------- | ------ | -------- | ------------------------------------------ |
+| `progress_key` | string | Yes      | Progress key from job creation response    |
+
+**Response** `200 OK`
+
+```json
+{
+	"phase": "searching",
+	"current": 25,
+	"total": 50,
+	"message": "Processing prototype 25/50",
+	"timestamp": "2026-01-10T15:30:00Z"
+}
+```
+
+When job completes:
+
+```json
+{
+	"phase": "completed",
+	"current": 50,
+	"total": 50,
+	"message": "Found 42 new suggestions",
+	"timestamp": "2026-01-10T15:30:20Z",
+	"suggestionsCreated": 42,
+	"prototypesUsed": 50,
+	"candidatesFound": 156,
+	"duplicatesSkipped": 114
+}
+```
+
+When job fails:
+
+```json
+{
+	"phase": "failed",
+	"current": 15,
+	"total": 50,
+	"message": "Job failed",
+	"timestamp": "2026-01-10T15:30:10Z",
+	"error": "Database connection lost"
+}
+```
+
+**Response** `404 Not Found` - Job not found or expired
+
+```json
+{
+	"detail": "Job not found or expired"
+}
+```
+
+**Notes:**
+- Use SSE endpoint (`/events`) for real-time updates when possible
+- Use this endpoint for polling when SSE connection limit is reached (browsers limit ~6 SSE connections per domain)
+- Recommended polling interval: 2 seconds
+- Job data expires from Redis after 1 hour
+
+---
+
 ### Corrections
 
 User feedback for improving search quality. **This is a future feature placeholder.**
@@ -2215,6 +2455,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                      |
 | ------- | ---------- | -------------------------------------------------------------------------------------------- |
+| 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking. |
 | 1.14.0  | 2026-01-09 | Added `path` field to FaceSuggestion schema exposing the original filesystem path of the image asset. |
 | 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset. |
 | 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field. |

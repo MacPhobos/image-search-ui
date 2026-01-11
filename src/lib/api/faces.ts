@@ -872,11 +872,19 @@ export interface FaceSuggestionListResponse {
 	pageSize: number;
 }
 
+/** Info about an auto-triggered find-more job. */
+export interface FindMoreJobInfo {
+	personId: string;
+	jobId: string;
+	progressKey: string;
+}
+
 /** Response from bulk suggestion action. */
 export interface BulkSuggestionActionResponse {
 	processed: number;
 	failed: number;
 	errors: string[];
+	findMoreJobs?: FindMoreJobInfo[];
 }
 
 // ============ Face Suggestion API Functions ============
@@ -926,18 +934,38 @@ export async function rejectSuggestion(suggestionId: number): Promise<FaceSugges
 	});
 }
 
+/** Options for bulk suggestion action. */
+export interface BulkSuggestionOptions {
+	autoFindMore?: boolean;
+	findMorePrototypeCount?: number;
+}
+
 /**
  * Perform bulk action on multiple suggestions.
  * @param suggestionIds - Array of suggestion IDs
  * @param action - Action to perform (accept or reject)
+ * @param options - Optional auto-find-more configuration
  */
 export async function bulkSuggestionAction(
 	suggestionIds: number[],
-	action: 'accept' | 'reject'
+	action: 'accept' | 'reject',
+	options?: BulkSuggestionOptions
 ): Promise<BulkSuggestionActionResponse> {
+	const body: Record<string, unknown> = {
+		suggestionIds,
+		action
+	};
+
+	if (options?.autoFindMore !== undefined) {
+		body.autoFindMore = options.autoFindMore;
+	}
+	if (options?.findMorePrototypeCount !== undefined) {
+		body.findMorePrototypeCount = options.findMorePrototypeCount;
+	}
+
 	return apiRequest<BulkSuggestionActionResponse>('/api/v1/faces/suggestions/bulk-action', {
 		method: 'POST',
-		body: JSON.stringify({ suggestionIds, action })
+		body: JSON.stringify(body)
 	});
 }
 
@@ -1385,4 +1413,51 @@ export async function getPersonAssignmentHistory(
 	const endpoint = `/api/v1/faces/persons/${encodeURIComponent(personId)}/assignment-history${queryString ? `?${queryString}` : ''}`;
 
 	return apiRequest<AssignmentHistoryResponse>(endpoint);
+}
+
+// ============ Find More Suggestions API ============
+
+/** Options for find-more suggestions request. */
+export interface FindMoreSuggestionsOptions {
+	prototypeCount?: number;
+	maxSuggestions?: number;
+}
+
+/** Response when starting a find-more suggestions job. */
+export interface FindMoreJobResponse {
+	jobId: string;
+	personId: string;
+	personName: string;
+	prototypeCount: number;
+	labeledFaceCount: number;
+	status: string;
+	progressKey: string;
+}
+
+/**
+ * Start a job to find more suggestions using dynamic prototypes.
+ * Samples random labeled faces as temporary prototypes to discover additional matches.
+ * @param personId - The person ID (UUID)
+ * @param options - Configuration for prototype count and max suggestions
+ * @returns Promise with job information including progressKey for tracking
+ */
+export async function startFindMoreSuggestions(
+	personId: string,
+	options?: FindMoreSuggestionsOptions
+): Promise<FindMoreJobResponse> {
+	const body: Record<string, number> = {};
+	if (options?.prototypeCount !== undefined) {
+		body.prototypeCount = options.prototypeCount;
+	}
+	if (options?.maxSuggestions !== undefined) {
+		body.maxSuggestions = options.maxSuggestions;
+	}
+
+	return apiRequest<FindMoreJobResponse>(
+		`/api/v1/faces/suggestions/persons/${encodeURIComponent(personId)}/find-more`,
+		{
+			method: 'POST',
+			body: JSON.stringify(body)
+		}
+	);
 }
