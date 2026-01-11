@@ -99,6 +99,21 @@ src/
     └── setup.ts           # Auto-mocking setup
 ```
 
+## Code Quality Guard-Rails
+
+🔴 **CRITICAL**: Before implementing any feature, review **[docs/code-quality-guardrails.md](docs/code-quality-guardrails.md)** for:
+- **Component complexity limits** (MAX 300 lines per `.svelte` file)
+- **Error handling standards** (centralized `handleError()` pattern)
+- **Svelte 5 state management** (`$state()` vs `$state.raw()` decision tree)
+- **Test coverage requirements** (mandatory tests for user interactions)
+- **Effect loop prevention** (`untrack()` for callback props)
+- **API client organization** (single `apiRequest()` from `client.ts`)
+- **Props conventions** (`$bindable()` vs callbacks)
+
+See **[Code Quality Guard-Rails](docs/code-quality-guardrails.md)** for complete standards with examples.
+
+---
+
 ## Code Rules
 
 ### Components (`src/lib/components/`)
