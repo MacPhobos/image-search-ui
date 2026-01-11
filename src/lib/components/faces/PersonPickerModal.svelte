@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { fetchAllPersons } from '$lib/api/faces';
 	import type { Person } from '$lib/api/faces';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 
 	interface Props {
 		onSelect: (destination: { toPersonId: string } | { toPersonName: string }) => void;
@@ -9,6 +11,30 @@
 	}
 
 	let { onSelect, onClose, excludePersonId }: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+	const open = true; // This modal is always open when rendered
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('PersonPickerModal', {
+					filePath: 'src/lib/components/faces/PersonPickerModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// State
 	let persons = $state<Person[]>([]);

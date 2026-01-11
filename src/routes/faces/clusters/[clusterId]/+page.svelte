@@ -15,6 +15,12 @@
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
 	import { env } from '$env/dynamic/public';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/faces/clusters/[clusterId]/+page', {
+		filePath: 'src/routes/faces/clusters/[clusterId]/+page.svelte'
+	});
 
 	// Type assertion needed due to SvelteKit's dynamic env types
 	const API_BASE_URL =
@@ -46,6 +52,7 @@
 	let qualityStats = $derived(calculateQualityStats(cluster?.faces ?? []));
 
 	onMount(() => {
+		cleanup();
 		loadCluster();
 	});
 

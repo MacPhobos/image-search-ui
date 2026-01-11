@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
+
 	interface Props {
 		title: string;
 		message: string;
@@ -16,6 +19,30 @@
 		onConfirm,
 		onCancel
 	}: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+	const open = true; // This modal is always open when rendered
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('DeleteConfirmationModal', {
+					filePath: 'src/lib/components/vectors/DeleteConfirmationModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	let reason = $state('');
 	let inputValue = $state('');

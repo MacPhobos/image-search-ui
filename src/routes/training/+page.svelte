@@ -13,6 +13,12 @@
 	} from '$lib/api/faces';
 	import FaceDetectionSessionCard from '$lib/components/faces/FaceDetectionSessionCard.svelte';
 	import * as Tabs from '$lib/components/ui/tabs';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/training/+page', {
+		filePath: 'src/routes/training/+page.svelte'
+	});
 
 	interface Props {
 		data: PageData;
@@ -133,8 +139,11 @@
 		}
 	}
 
-	// Load face detection sessions only when on that tab
+	// Component tracking and load face detection sessions only when on that tab
 	$effect(() => {
+		// Component tracking cleanup
+		cleanup();
+
 		if (activeTab === 'face-detection') {
 			loadFaceSessions();
 		}

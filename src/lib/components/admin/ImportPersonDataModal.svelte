@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import {
 		importPersonMetadata,
 		type PersonMetadataExport,
@@ -14,6 +16,29 @@
 	}
 
 	let { open, onClose, onSuccess }: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('ImportPersonDataModal', {
+					filePath: 'src/lib/components/admin/ImportPersonDataModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	type Step = 'upload' | 'preview' | 'importing' | 'results';
 

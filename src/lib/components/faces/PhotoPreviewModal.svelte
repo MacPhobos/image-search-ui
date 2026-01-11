@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import type { PersonPhotoGroup, FaceInPhoto, FaceSuggestionItem } from '$lib/api/faces';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import {
 		fetchAllPersons,
 		assignFaceToPerson,
@@ -67,6 +68,29 @@
 		onFaceAssigned,
 		onPrototypePinned
 	}: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('PhotoPreviewModal', {
+					filePath: 'src/lib/components/faces/PhotoPreviewModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// State
 	let highlightedFaceId = $state<string | null>(null);

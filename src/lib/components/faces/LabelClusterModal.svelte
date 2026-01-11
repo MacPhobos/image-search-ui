@@ -2,7 +2,8 @@
 	import { fetchAllPersons, labelCluster } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import type { Person } from '$lib/types';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -18,6 +19,30 @@
 	}
 
 	let { clusterId, onSuccess, onClose }: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+	const open = true; // This modal is always open when rendered
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('LabelClusterModal', {
+					filePath: 'src/lib/components/faces/LabelClusterModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// State
 	let searchQuery = $state('');

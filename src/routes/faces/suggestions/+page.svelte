@@ -23,6 +23,12 @@
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { unassignFace } from '$lib/api/faces';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/faces/suggestions/+page', {
+		filePath: 'src/routes/faces/suggestions/+page.svelte'
+	});
 
 	// localStorage key for persisting groups per page preference
 	const GROUPS_PER_PAGE_KEY = 'suggestions.groupsPerPage';
@@ -402,6 +408,7 @@
 	}
 
 	onMount(async () => {
+		cleanup();
 		try {
 			settings = await getFaceSuggestionSettings();
 		} catch (e) {

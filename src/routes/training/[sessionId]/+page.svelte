@@ -3,6 +3,14 @@
 	import { getSession } from '$lib/api/training';
 	import SessionDetailView from '$lib/components/training/SessionDetailView.svelte';
 	import type { PageData } from './$types';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { onMount } from 'svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/training/[sessionId]/+page', {
+		filePath: 'src/routes/training/[sessionId]/+page.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		data: PageData;

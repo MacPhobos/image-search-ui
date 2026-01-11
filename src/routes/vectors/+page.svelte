@@ -17,6 +17,12 @@
 		type DirectoryStats,
 		type DeletionLogEntry
 	} from '$lib/api/vectors';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/vectors/+page', {
+		filePath: 'src/routes/vectors/+page.svelte'
+	});
 
 	// State
 	let directories = $state<DirectoryStats[]>([]);
@@ -131,6 +137,7 @@
 	}
 
 	onMount(() => {
+		cleanup();
 		loadDirectoryStats();
 		loadLogs();
 	});

@@ -8,6 +8,12 @@
 	import type { ClusterSummary } from '$lib/types';
 	import { onMount } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/faces/clusters/+page', {
+		filePath: 'src/routes/faces/clusters/+page.svelte'
+	});
 
 	// State
 	let clusters = $state<ClusterSummary[]>([]);
@@ -46,6 +52,7 @@
 
 	// Load configuration and clusters on mount
 	onMount(async () => {
+		cleanup();
 		try {
 			config = await getUnknownClusteringConfig();
 		} catch (err) {

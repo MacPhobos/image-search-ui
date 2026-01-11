@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import AdminDataManagement from '$lib/components/admin/AdminDataManagement.svelte';
 	import FaceMatchingSettings from '$lib/components/admin/FaceMatchingSettings.svelte';
 	import * as Tabs from '$lib/components/ui/tabs';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/admin/+page', {
+		filePath: 'src/routes/admin/+page.svelte'
+	});
+	onMount(() => cleanup);
 </script>
 
 <svelte:head>

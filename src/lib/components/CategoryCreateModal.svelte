@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import type { Category } from '$lib/api/categories';
 	import { createCategory } from '$lib/api/categories';
 	import { tid } from '$lib/testing/testid';
@@ -11,6 +13,29 @@
 	}
 
 	let { open, onClose, onCreated, testId = 'modal__category-create' }: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('CategoryCreateModal', {
+					filePath: 'src/lib/components/CategoryCreateModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// Derived scoped test ID generator (reactive to testId changes)
 	const t = $derived((...segments: string[]) =>

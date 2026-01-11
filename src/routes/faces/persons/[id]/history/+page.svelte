@@ -11,6 +11,12 @@
 	import type { Person } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/faces/persons/[id]/history/+page', {
+		filePath: 'src/routes/faces/persons/[id]/history/+page.svelte'
+	});
 
 	const personId = $page.params.id;
 
@@ -175,7 +181,10 @@
 		previewPhoto = null;
 	}
 
-	onMount(loadHistory);
+	onMount(() => {
+		cleanup();
+		loadHistory();
+	});
 </script>
 
 <div class="history-page">

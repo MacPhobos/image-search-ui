@@ -25,6 +25,12 @@
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/people/[personId]/+page', {
+		filePath: 'src/routes/people/[personId]/+page.svelte'
+	});
 
 	// Get person ID from route params
 	let personId = $derived($page.params.personId);
@@ -85,6 +91,7 @@
 	let lightboxIndex = $state(0);
 
 	onMount(() => {
+		cleanup();
 		loadPerson();
 	});
 

@@ -7,9 +7,16 @@
 	import type { SearchResult, SearchFilters } from '$lib/types';
 	import { tid } from '$lib/testing/testid';
 	import { setViewId } from '$lib/dev/viewId';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/+page', {
+		filePath: 'src/routes/+page.svelte'
+	});
 
 	// DEV: Set view ID for DevOverlay breadcrumb
 	onMount(() => {
+		cleanup();
 		if (import.meta.env.DEV) {
 			return setViewId('page:/');
 		}

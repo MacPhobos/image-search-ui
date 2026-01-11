@@ -12,6 +12,12 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/people/+page', {
+		filePath: 'src/routes/people/+page.svelte'
+	});
 
 	// State
 	let loading = $state(true);
@@ -110,6 +116,7 @@
 	}
 
 	onMount(() => {
+		cleanup();
 		loadPeople();
 	});
 

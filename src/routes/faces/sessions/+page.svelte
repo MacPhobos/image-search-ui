@@ -6,6 +6,12 @@
 		type FaceDetectionSession
 	} from '$lib/api/faces';
 	import FaceDetectionSessionCard from '$lib/components/faces/FaceDetectionSessionCard.svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/faces/sessions/+page', {
+		filePath: 'src/routes/faces/sessions/+page.svelte'
+	});
 
 	let sessions = $state<FaceDetectionSession[]>([]);
 	let loading = $state(true);
@@ -43,6 +49,7 @@
 	}
 
 	onMount(() => {
+		cleanup();
 		loadSessions();
 	});
 

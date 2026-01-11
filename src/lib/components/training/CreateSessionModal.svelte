@@ -4,8 +4,9 @@
 	import DirectoryBrowser from './DirectoryBrowser.svelte';
 	import CategorySelector from '../CategorySelector.svelte';
 	import CategoryCreateModal from '../CategoryCreateModal.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -19,6 +20,29 @@
 	}
 
 	let { open = $bindable(false), onClose, onSessionCreated }: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('CreateSessionModal', {
+					filePath: 'src/lib/components/training/CreateSessionModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// Storage keys for persisting last used values (keep same names for backward compatibility)
 	const KEYS = {

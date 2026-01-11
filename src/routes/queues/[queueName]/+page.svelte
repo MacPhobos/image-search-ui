@@ -3,6 +3,12 @@
 	import { getQueueDetail, type QueueDetailResponse } from '$lib/api/queues';
 	import QueueJobsTable from '$lib/components/queues/QueueJobsTable.svelte';
 	import JobStatusBadge from '$lib/components/queues/JobStatusBadge.svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/queues/[queueName]/+page', {
+		filePath: 'src/routes/queues/[queueName]/+page.svelte'
+	});
 
 	interface Props {
 		data: { queueName: string };
@@ -42,6 +48,9 @@
 	}
 
 	$effect(() => {
+		// Component tracking cleanup
+		cleanup();
+
 		// Initial fetch
 		fetchQueueDetail();
 

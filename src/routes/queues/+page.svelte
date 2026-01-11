@@ -10,6 +10,13 @@
 	import WorkersPanel from '$lib/components/queues/WorkersPanel.svelte';
 	import ConnectionIndicator from '$lib/components/queues/ConnectionIndicator.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { onMount, onDestroy } from 'svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/queues/+page', {
+		filePath: 'src/routes/queues/+page.svelte'
+	});
 
 	let overview = $state<QueuesOverviewResponse | null>(null);
 	let workers = $state<WorkersResponse | null>(null);
@@ -51,6 +58,9 @@
 	}
 
 	$effect(() => {
+		// Component tracking cleanup
+		cleanup();
+
 		// Initial fetch
 		fetchData();
 

@@ -8,6 +8,12 @@
 	import * as Table from '$lib/components/ui/table';
 	import { onMount } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('routes/categories/+page', {
+		filePath: 'src/routes/categories/+page.svelte'
+	});
 
 	let categories = $state<Category[]>([]);
 	let total = $state(0);
@@ -33,6 +39,7 @@
 	}
 
 	onMount(() => {
+		cleanup();
 		loadCategories();
 	});
 
