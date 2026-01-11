@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { SubdirectoryInfo } from '$lib/types';
 	import { listDirectories } from '$lib/api/training';
 	import { Switch } from '$lib/components/ui/switch';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('training/DirectoryBrowser', {
+		filePath: 'src/lib/components/training/DirectoryBrowser.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		rootPath: string;

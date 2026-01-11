@@ -1,8 +1,16 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { JobInfo } from '$lib/api/queues';
 	import JobStatusBadge from './JobStatusBadge.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('queues/QueueJobsTable', {
+		filePath: 'src/lib/components/queues/QueueJobsTable.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		jobs: JobInfo[];

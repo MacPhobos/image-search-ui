@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { DeletionLogEntry } from '$lib/api/vectors';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('vectors/DeletionLogsTable', {
+		filePath: 'src/lib/components/vectors/DeletionLogsTable.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		logs: DeletionLogEntry[];

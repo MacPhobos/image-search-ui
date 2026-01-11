@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import ExportPersonDataModal from './ExportPersonDataModal.svelte';
 	import ImportPersonDataModal from './ImportPersonDataModal.svelte';
 	import type { PersonMetadataExport, ImportResponse } from '$lib/api/admin';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('admin/PersonDataManagement', {
+		filePath: 'src/lib/components/admin/PersonDataManagement.svelte'
+	});
+	onMount(() => cleanup);
 
 	let showExportModal = $state(false);
 	let showImportModal = $state(false);

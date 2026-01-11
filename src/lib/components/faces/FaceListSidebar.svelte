@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { FaceInstance as BaseFaceInstance, FaceSuggestionItem } from '$lib/api/faces';
 	import { getFaceColorByIndex } from './face-colors';
 	import { Button } from '$lib/components/ui/button';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('faces/FaceListSidebar', {
+		filePath: 'src/lib/components/faces/FaceListSidebar.svelte'
+	});
+	onMount(() => cleanup);
 
 	// Extended FaceInstance with optional personAgeAtPhoto (used by PhotoPreviewModal)
 	interface FaceInstance extends BaseFaceInstance {

@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import DeleteAllDataModal from './DeleteAllDataModal.svelte';
 	import PersonDataManagement from './PersonDataManagement.svelte';
 	import type { DeleteAllDataResponse } from '$lib/api/admin';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('admin/AdminDataManagement', {
+		filePath: 'src/lib/components/admin/AdminDataManagement.svelte'
+	});
+	onMount(() => cleanup);
 
 	let showDeleteModal = $state(false);
 	let lastDeletionResult = $state<DeleteAllDataResponse | null>(null);

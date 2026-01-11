@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import {
 		getFaceSuggestionSettings,
 		updateFaceSuggestionSettings,
@@ -10,6 +11,12 @@
 		updateUnknownClusteringConfig,
 		type UnknownFaceClusteringConfig
 	} from '$lib/api/admin';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('admin/FaceMatchingSettings', {
+		filePath: 'src/lib/components/admin/FaceMatchingSettings.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface FaceMatchingConfig {
 		autoAssignThreshold: number;

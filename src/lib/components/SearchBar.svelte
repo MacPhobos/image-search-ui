@@ -1,5 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import { tid } from '$lib/testing/testid';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('SearchBar', {
+		filePath: 'src/lib/components/SearchBar.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		onSearch: (query: string) => void;

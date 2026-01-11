@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { TrainingSession, TrainingProgress, TrainingJob } from '$lib/types';
 	import { getProgress, listJobs } from '$lib/api/training';
 	import type { FaceDetectionSession } from '$lib/api/faces';
@@ -11,6 +12,12 @@
 	import TrainingStats from './TrainingStats.svelte';
 	import TrainingControlPanel from './TrainingControlPanel.svelte';
 	import JobsTable from './JobsTable.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('training/SessionDetailView', {
+		filePath: 'src/lib/components/training/SessionDetailView.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		session: TrainingSession;

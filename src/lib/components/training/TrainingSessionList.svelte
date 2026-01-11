@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { TrainingSession } from '$lib/types';
 	import { deleteSession } from '$lib/api/training';
 	import StatusBadge from './StatusBadge.svelte';
 	import { Progress } from '$lib/components/ui/progress';
 	import { toast } from 'svelte-sonner';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('training/TrainingSessionList', {
+		filePath: 'src/lib/components/training/TrainingSessionList.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		sessions: TrainingSession[];

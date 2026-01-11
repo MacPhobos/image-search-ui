@@ -1,7 +1,14 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { Category } from '$lib/api/categories';
 	import { listCategories } from '$lib/api/categories';
-	import { onMount } from 'svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('CategorySelector', {
+		filePath: 'src/lib/components/CategorySelector.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		selectedId: number | null;

@@ -7,6 +7,15 @@
 	 * face highlighting with configurable stroke weights.
 	 */
 
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('faces/ImageWithFaceBoundingBoxes', {
+		filePath: 'src/lib/components/faces/ImageWithFaceBoundingBoxes.svelte'
+	});
+	onMount(() => cleanup);
+
 	export interface FaceBox {
 		id: string;
 		bboxX: number;

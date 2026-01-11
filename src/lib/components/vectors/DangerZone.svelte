@@ -1,4 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('vectors/DangerZone', {
+		filePath: 'src/lib/components/vectors/DangerZone.svelte'
+	});
+	onMount(() => cleanup);
+
 	interface Props {
 		onOrphanCleanup: () => void;
 		onFullReset: () => void;

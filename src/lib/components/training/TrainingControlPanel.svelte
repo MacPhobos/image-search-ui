@@ -1,5 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import { startTraining, pauseTraining, cancelTraining, restartTraining } from '$lib/api/training';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('training/TrainingControlPanel', {
+		filePath: 'src/lib/components/training/TrainingControlPanel.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		sessionId: number;

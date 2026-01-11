@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { Person } from '$lib/api/faces';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('faces/PersonAssignmentPanel', {
+		filePath: 'src/lib/components/faces/PersonAssignmentPanel.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		open: boolean;

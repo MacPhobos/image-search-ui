@@ -1,5 +1,13 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { Prototype, AgeEraBucket, TemporalCoverage } from '$lib/types';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('faces/TemporalTimeline', {
+		filePath: 'src/lib/components/faces/TemporalTimeline.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		/** Array of prototypes for the person */

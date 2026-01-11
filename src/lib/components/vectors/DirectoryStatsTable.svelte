@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { DirectoryStats } from '$lib/api/vectors';
 	import * as Table from '$lib/components/ui/table';
 	import { Button } from '$lib/components/ui/button';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('vectors/DirectoryStatsTable', {
+		filePath: 'src/lib/components/vectors/DirectoryStatsTable.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		directories: DirectoryStats[];

@@ -1,10 +1,18 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { SearchResult, Asset } from '$lib/types';
 	import { API_BASE_URL } from '$lib/api/client';
 	import PhotoPreviewModal from './faces/PhotoPreviewModal.svelte';
 	import { getFacesForAsset, transformFaceInstancesToFaceInPhoto } from '$lib/api/faces';
 	import type { PersonPhotoGroup, FaceInPhoto } from '$lib/api/faces';
 	import { tid } from '$lib/testing/testid';
+
+	// Component tracking (DEV only)
+	const cleanup = registerComponent('ResultsGrid', {
+		filePath: 'src/lib/components/ResultsGrid.svelte'
+	});
+	onMount(() => cleanup);
 
 	interface Props {
 		results: SearchResult[];
