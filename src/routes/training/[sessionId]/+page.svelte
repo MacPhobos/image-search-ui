@@ -18,12 +18,19 @@
 
 	let { data }: Props = $props();
 
-	// Initialize session directly from page data (not via $effect to avoid timing issues)
-	let session = $state<TrainingSession>(data.session);
+	// Initialize session from page data (synced via effect to avoid state_referenced_locally warning)
+	let session = $state<TrainingSession | null>(null);
+
+	// Initialize and sync session when data changes
+	$effect(() => {
+		session = data.session;
+	});
 
 	async function handleSessionUpdate() {
 		try {
-			session = await getSession(session.id);
+			if (session) {
+				session = await getSession(session.id);
+			}
 		} catch (err) {
 			console.error('Failed to update session:', err);
 		}
@@ -31,7 +38,9 @@
 </script>
 
 <div class="session-detail-page">
-	<SessionDetailView {session} onSessionUpdate={handleSessionUpdate} />
+	{#if session}
+		<SessionDetailView {session} onSessionUpdate={handleSessionUpdate} />
+	{/if}
 </div>
 
 <style>

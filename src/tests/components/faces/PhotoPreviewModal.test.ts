@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
@@ -66,6 +67,15 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 
 	const mockOnClose = vi.fn();
 
+	// Helper to trigger image load event (SVG only renders after image loads)
+	const triggerImageLoad = async () => {
+		const img = screen.getByRole('img', { name: /Image with/i });
+		// Set naturalWidth and naturalHeight to simulate actual image
+		Object.defineProperty(img, 'naturalWidth', { value: 1200, configurable: true });
+		Object.defineProperty(img, 'naturalHeight', { value: 800, configurable: true });
+		await fireEvent.load(img);
+	};
+
 	beforeEach(() => {
 		resetMocks();
 		mockOnClose.mockClear();
@@ -124,6 +134,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
 
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
+
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');
 			expect(svg).toBeInTheDocument();
@@ -155,6 +168,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
+
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
 
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');
@@ -191,6 +207,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
 
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
+
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');
 			const faceBoxes = svg?.querySelectorAll('rect.face-box');
@@ -223,6 +242,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
+
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
 
 			const dialog = screen.getByRole('dialog');
 
@@ -280,6 +302,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
+
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
 
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');
@@ -359,6 +384,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
+
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
 
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');
@@ -505,6 +533,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
+
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
 
 			const dialog = screen.getByRole('dialog');
 			const faceCards = dialog.querySelectorAll('.face-item-button');
@@ -674,6 +705,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
 
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
+
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');
 			const faceBoxes = svg?.querySelectorAll('rect.face-box');
@@ -699,6 +733,9 @@ describe('PhotoPreviewModal - Bidirectional Face Selection', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/Faces \(3\)/i)).toBeInTheDocument();
 			});
+
+			// Trigger image load so SVG overlay renders
+			await triggerImageLoad();
 
 			const dialog = screen.getByRole('dialog');
 			const svg = dialog.querySelector('.face-overlay');

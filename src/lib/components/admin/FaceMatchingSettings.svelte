@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { env } from '$env/dynamic/public';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import {
 		getFaceSuggestionSettings,
@@ -27,7 +28,7 @@
 		prototypeMaxExemplars: number;
 	}
 
-	const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+	const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 	let config = $state<FaceMatchingConfig>({
 		autoAssignThreshold: 0.85,

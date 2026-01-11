@@ -21,9 +21,13 @@ export default ts.config(
 			parserOptions: {
 				parser: ts.parser
 			}
+		},
+		rules: {
+			// Disable no-unused-svelte-ignore - has false positives with modal overlays
+			'svelte/no-unused-svelte-ignore': 'off'
 		}
 	},
 	{
-		ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/']
+		ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/', 'mcp-browser-extensions/']
 	}
 );

@@ -6,14 +6,15 @@
 	import { ApiError } from '$lib/api/client';
 	import ClusterCard from '$lib/components/faces/ClusterCard.svelte';
 	import type { ClusterSummary } from '$lib/types';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
 	// Component tracking (DEV only)
-	const cleanup = registerComponent('routes/faces/clusters/+page', {
+	const componentCleanup = registerComponent('routes/faces/clusters/+page', {
 		filePath: 'src/routes/faces/clusters/+page.svelte'
 	});
+	onDestroy(() => componentCleanup());
 
 	// State
 	let clusters = $state<ClusterSummary[]>([]);
@@ -60,7 +61,6 @@
 			config = { minConfidence: 0.7, minClusterSize: 2 };
 		}
 		loadClusters(true);
-		return cleanup;
 	});
 
 	async function loadClusters(reset: boolean = false) {
@@ -257,26 +257,6 @@
 	/* Content */
 	.content {
 		min-height: 400px;
-	}
-
-	/* Loading state */
-	.loading-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 4rem 2rem;
-		color: #666;
-	}
-
-	.spinner {
-		width: 40px;
-		height: 40px;
-		border: 3px solid #f0f0f0;
-		border-top-color: #4a90e2;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 1rem;
 	}
 
 	@keyframes spin {

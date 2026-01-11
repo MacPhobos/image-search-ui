@@ -190,8 +190,8 @@
 						</div>
 					</button>
 
-					<!-- Assign button for unknown faces -->
-					{#if !face.personName && onAssignClick}
+					<!-- Assign button for unknown faces (but not primary, which has Accept/Reject workflow) -->
+					{#if !face.personName && !isPrimary && onAssignClick}
 						<Button
 							size="sm"
 							class="flex-shrink-0 mr-2 h-6 px-2 text-xs"
@@ -228,19 +228,13 @@
 					<div class="suggestion-hint">
 						<span class="suggestion-icon">💡</span>
 						<span class="suggestion-text">
-							Suggested: {topSuggestion.personName} ({Math.round(
-								topSuggestion.confidence * 100
-							)}%)
+							Suggested: {topSuggestion.personName} ({Math.round(topSuggestion.confidence * 100)}%)
 						</span>
 						<Button
 							size="sm"
 							class="flex-shrink-0 h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
 							onclick={() =>
-								onSuggestionAccept?.(
-									face.id,
-									topSuggestion.personId,
-									topSuggestion.personName
-								)}
+								onSuggestionAccept?.(face.id, topSuggestion.personId, topSuggestion.personName)}
 							title="Accept suggestion"
 						>
 							✓ Accept

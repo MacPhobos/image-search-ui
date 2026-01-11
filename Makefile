@@ -49,13 +49,13 @@ preview:
 # =============================================================================
 
 test:
-	npm run test
+	NODE_OPTIONS="--max-old-space-size=8192" npm run test
 
 test-watch:
 	npm run test:watch
 
 lint:
-	npm run lint
+	npm run lint -- --max-warnings=0
 
 format:
 	npm run format

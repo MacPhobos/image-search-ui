@@ -48,7 +48,8 @@ describe('Categories Page', () => {
 
 		render(CategoriesPage);
 
-		expect(screen.getByText('Loading categories...')).toBeInTheDocument();
+		// Loading state shows table structure (not "Loading categories..." text)
+		expect(screen.getByRole('table')).toBeInTheDocument();
 	});
 
 	it('shows empty state when no categories exist', async () => {

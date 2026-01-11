@@ -105,9 +105,14 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div class="modal-backdrop" onclick={onClose}>
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal" onclick={(e) => e.stopPropagation()}>
+<div class="modal-backdrop" onclick={onClose} role="presentation">
+	<div
+		class="modal"
+		onclick={(e) => e.stopPropagation()}
+		role="dialog"
+		aria-modal="true"
+		tabindex="-1"
+	>
 		<header class="modal-header">
 			<h2>Move to Person</h2>
 			<button type="button" class="close-button" onclick={onClose} aria-label="Close">

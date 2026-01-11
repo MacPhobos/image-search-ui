@@ -235,6 +235,7 @@
 {/if}
 
 {#if deleteConfirm}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 	<div class="modal-overlay" onclick={handleCancelDelete} role="presentation">
 		<div
 			class="modal-content confirm-dialog"
@@ -325,7 +326,6 @@
 		height: 1.5rem;
 	}
 
-	.loading,
 	.empty-state {
 		padding: 3rem;
 		text-align: center;

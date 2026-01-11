@@ -140,7 +140,6 @@
 				{@const highlighted = isHighlighted(face)}
 
 				<!-- Face bounding box -->
-				<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 				<rect
 					x={face.bboxX}
 					y={face.bboxY}
@@ -150,14 +149,34 @@
 					class:primary
 					class:highlighted
 					style="stroke: {faceColor}; stroke-width: {strokeWidth};"
+					role="button"
+					tabindex="0"
+					aria-label="Face bounding box - {face.label || 'Unknown'}"
 					onclick={() => handleFaceClick(face.id)}
+					onkeydown={(e) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							handleFaceClick(face.id);
+						}
+					}}
 				/>
 
 				<!-- Label below bounding box -->
 				{#if face.labelStyle === 'assigned'}
 					<!-- Assigned person label (green background) -->
-					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-					<g class="face-label assigned-label clickable-label" onclick={() => handleFaceClick(face.id)}>
+					<g
+						class="face-label assigned-label clickable-label"
+						role="button"
+						tabindex="0"
+						aria-label="Assigned to {face.label}"
+						onclick={() => handleFaceClick(face.id)}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleFaceClick(face.id);
+							}
+						}}
+					>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -178,8 +197,19 @@
 					</g>
 				{:else if face.labelStyle === 'loading'}
 					<!-- Loading state (gray, animated) -->
-					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-					<g class="face-label loading-label clickable-label" onclick={() => handleFaceClick(face.id)}>
+					<g
+						class="face-label loading-label clickable-label"
+						role="button"
+						tabindex="0"
+						aria-label="Loading face label"
+						onclick={() => handleFaceClick(face.id)}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleFaceClick(face.id);
+							}
+						}}
+					>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -203,8 +233,19 @@
 						? `${face.label} (${Math.round(face.suggestionConfidence * 100)}%)`
 						: face.label}
 					{@const labelWidth = Math.max(face.bboxW, labelText.length * labelFontSize * 0.6)}
-					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-					<g class="face-label suggestion-label clickable-label" onclick={() => handleFaceClick(face.id)}>
+					<g
+						class="face-label suggestion-label clickable-label"
+						role="button"
+						tabindex="0"
+						aria-label="Suggested: {labelText}"
+						onclick={() => handleFaceClick(face.id)}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleFaceClick(face.id);
+							}
+						}}
+					>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}
@@ -225,8 +266,19 @@
 					</g>
 				{:else}
 					<!-- Unknown label (gray, italic) -->
-					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-					<g class="face-label unknown-label clickable-label" onclick={() => handleFaceClick(face.id)}>
+					<g
+						class="face-label unknown-label clickable-label"
+						role="button"
+						tabindex="0"
+						aria-label="Unknown face"
+						onclick={() => handleFaceClick(face.id)}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleFaceClick(face.id);
+							}
+						}}
+					>
 						<rect
 							x={face.bboxX}
 							y={face.bboxY + face.bboxH + LABEL_GAP}

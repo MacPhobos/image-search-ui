@@ -54,9 +54,9 @@
 		segments.length === 0 ? testId : tid(testId, ...segments)
 	);
 
-	let name = $state(category.name);
-	let description = $state(category.description || '');
-	let color = $state(category.color || '#3B82F6');
+	let name = $state('');
+	let description = $state('');
+	let color = $state('#3B82F6');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -71,7 +71,7 @@
 		'#6B7280' // Gray
 	];
 
-	// Reset form when category changes
+	// Initialize and reset form when category changes
 	$effect(() => {
 		name = category.name;
 		description = category.description || '';

@@ -113,7 +113,6 @@
 			bind:value={personSearchQuery}
 			class="person-search-input"
 			aria-label="Search persons or enter new name"
-			autofocus
 		/>
 
 		<div class="person-options">
@@ -158,9 +157,7 @@
 		</div>
 
 		<div class="assignment-footer">
-			<Button variant="outline" size="sm" onclick={onCancel} disabled={submitting}>
-				Cancel
-			</Button>
+			<Button variant="outline" size="sm" onclick={onCancel} disabled={submitting}>Cancel</Button>
 		</div>
 	</div>
 {/if}

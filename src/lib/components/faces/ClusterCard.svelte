@@ -71,14 +71,15 @@
 	}
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <article
 	class="cluster-card"
 	class:selected
 	class:clickable={!!onClick}
 	onclick={handleClick}
 	onkeydown={handleKeyDown}
-	role={onClick ? 'button' : 'article'}
-	tabindex={onClick ? 0 : -1}
+	role={onClick ? 'button' : undefined}
+	tabindex={onClick ? 0 : undefined}
 	aria-label="Face cluster with {cluster.faceCount} faces"
 >
 	<div class="card-header">

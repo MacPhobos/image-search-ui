@@ -140,7 +140,6 @@
 		}
 	}
 
-
 	async function loadPrototypes() {
 		if (!personId) return;
 		prototypesLoading = true;
@@ -319,9 +318,7 @@
 			toast.success(message);
 		} catch (err) {
 			console.error('Failed to recompute prototypes:', err);
-			toast.error(
-				err instanceof Error ? err.message : 'Failed to recompute prototypes'
-			);
+			toast.error(err instanceof Error ? err.message : 'Failed to recompute prototypes');
 		} finally {
 			isRecomputing = false;
 		}
@@ -338,9 +335,7 @@
 			);
 		} catch (err) {
 			console.error('Failed to regenerate suggestions:', err);
-			toast.error(
-				err instanceof Error ? err.message : 'Failed to regenerate suggestions'
-			);
+			toast.error(err instanceof Error ? err.message : 'Failed to regenerate suggestions');
 		} finally {
 			isRegenerating = false;
 		}
@@ -885,9 +880,14 @@
 <!-- Merge Modal -->
 {#if showMergeModal && person}
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal-backdrop" onclick={handleCloseMergeModal}>
-		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div class="modal" onclick={(e) => e.stopPropagation()}>
+	<div class="modal-backdrop" onclick={handleCloseMergeModal} role="presentation">
+		<div
+			class="modal"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+		>
 			<header class="modal-header">
 				<h2>Merge Person</h2>
 				<button
@@ -1180,7 +1180,6 @@
 		width: 1rem;
 		height: 1rem;
 	}
-
 
 	.face-count-badge {
 		position: absolute;

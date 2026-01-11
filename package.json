@@ -11,7 +11,10 @@
 		"format": "prettier --write .",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"gen:api": "openapi-typescript ${VITE_API_BASE_URL:-http://localhost:8000}/openapi.json -o src/lib/api/generated.ts"
+		"typecheck": "svelte-check --tsconfig ./tsconfig.json",
+		"check": "npm run lint && npm run typecheck && npm run test",
+		"gen:api": "openapi-typescript ${VITE_API_BASE_URL:-http://localhost:8000}/openapi.json -o src/lib/api/generated.ts",
+		"prepare": "husky"
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.10.1",
@@ -29,7 +32,9 @@
 		"eslint-plugin-svelte": "^2.46.1",
 		"globals": "^15.13.0",
 		"happy-dom": "^20.0.11",
+		"husky": "^9.1.7",
 		"jsdom": "^25.0.1",
+		"lint-staged": "^16.2.7",
 		"magic-string": "^0.30.21",
 		"micromatch": "^4.0.8",
 		"mode-watcher": "^1.1.0",
@@ -51,5 +56,14 @@
 		"tailwind-merge": "^3.4.0",
 		"tailwind-variants": "^3.2.2",
 		"tailwindcss": "^4.1.18"
+	},
+	"lint-staged": {
+		"*.{js,ts,svelte}": [
+			"eslint --fix",
+			"prettier --write"
+		],
+		"*.{json,md,css}": [
+			"prettier --write"
+		]
 	}
 }

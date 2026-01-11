@@ -98,6 +98,7 @@
 </script>
 
 {#if open}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 	<div class="modal-overlay" onclick={handleClose} role="presentation" data-testid={t('overlay')}>
 		<div
 			class="modal-content"
@@ -147,7 +148,7 @@
 							disabled={loading}
 							rows="3"
 							data-testid={t('input-description')}
-						/>
+						></textarea>
 					</div>
 
 					<div class="form-group">
@@ -163,7 +164,7 @@
 										onclick={() => (color = presetColor)}
 										disabled={loading}
 										aria-label="Select color {presetColor}"
-									/>
+									></button>
 								{/each}
 							</div>
 							<input
