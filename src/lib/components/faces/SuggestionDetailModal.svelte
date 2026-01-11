@@ -758,43 +758,6 @@
 						/>
 					{/if}
 
-					<!-- Person Assignment Panel (for assigning faces to persons) -->
-					{#if assigningFaceId}
-						<PersonAssignmentPanel
-							open={true}
-							faceId={assigningFaceId}
-							{persons}
-							{personsLoading}
-							submitting={assignmentSubmitting}
-							error={assignmentError}
-							recentPersonIds={getRecentPersonIds()}
-							onCancel={() => {
-								assigningFaceId = null;
-							}}
-							onAssignToExisting={handleAssignToExisting}
-							onCreateAndAssign={handleCreateAndAssign}
-						/>
-					{/if}
-
-					<!-- Prototype Pinning Panel (for pinning face as prototype) -->
-					{#if pinningFaceId && showPinOptions}
-						{@const pinningFace = allFaces.find((f) => f.id === pinningFaceId)}
-						{#if pinningFace?.personId}
-							<PrototypePinningPanel
-								open={true}
-								faceId={pinningFaceId}
-								personId={pinningFace.personId}
-								personName={pinningFace.personName ?? 'Unknown'}
-								submitting={pinningInProgress}
-								onCancel={() => {
-									pinningFaceId = null;
-									showPinOptions = false;
-								}}
-								onConfirm={handlePinConfirm}
-							/>
-						{/if}
-					{/if}
-
 					<!-- Primary suggestion details -->
 					<div class="primary-details">
 						<h4>Primary Suggestion</h4>
@@ -858,6 +821,43 @@
 					</div>
 				</aside>
 			</div>
+
+			<!-- Person Assignment Panel (shown when a face is being assigned) -->
+			{#if assigningFaceId}
+				<PersonAssignmentPanel
+					open={true}
+					faceId={assigningFaceId}
+					{persons}
+					{personsLoading}
+					submitting={assignmentSubmitting}
+					error={assignmentError}
+					recentPersonIds={getRecentPersonIds()}
+					onCancel={() => {
+						assigningFaceId = null;
+					}}
+					onAssignToExisting={handleAssignToExisting}
+					onCreateAndAssign={handleCreateAndAssign}
+				/>
+			{/if}
+
+			<!-- Prototype Pinning Panel (shown when pinning a face) -->
+			{#if pinningFaceId && showPinOptions}
+				{@const pinningFace = allFaces.find((f) => f.id === pinningFaceId)}
+				{#if pinningFace?.personId}
+					<PrototypePinningPanel
+						open={true}
+						faceId={pinningFaceId}
+						personId={pinningFace.personId}
+						personName={pinningFace.personName ?? 'Unknown'}
+						submitting={pinningInProgress}
+						onCancel={() => {
+							pinningFaceId = null;
+							showPinOptions = false;
+						}}
+						onConfirm={handlePinConfirm}
+					/>
+				{/if}
+			{/if}
 
 			{#if suggestion.status === 'pending'}
 				<Dialog.Footer class="px-6 py-4 border-t flex-shrink-0 justify-end gap-3">
