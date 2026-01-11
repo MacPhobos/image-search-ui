@@ -44,7 +44,7 @@ describe('vitePluginComponentTracking', () => {
 
 			expect(result).toBeDefined();
 			if (result && typeof result === 'object') {
-				expect(result.code).toContain('registerComponent');
+				expect(result.code).toContain('getComponentStack');
 				expect(result.code).toContain('onMount');
 				expect(result.code).toContain('import.meta.env.DEV');
 			}
@@ -59,7 +59,7 @@ describe('vitePluginComponentTracking', () => {
 			expect(result).toBeDefined();
 			if (result && typeof result === 'object') {
 				expect(result.code).toContain('<script>');
-				expect(result.code).toContain('registerComponent');
+				expect(result.code).toContain('getComponentStack');
 			}
 		});
 
@@ -129,7 +129,7 @@ describe('vitePluginComponentTracking', () => {
 
 		it('should not double-inject if tracking code already exists', () => {
 			const input = `<script>
-import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+import { getComponentStack } from '$lib/dev/componentRegistry.svelte';
 </script>
 
 <button>Click</button>`;
@@ -139,8 +139,8 @@ import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
 			// Should return null or original code (not inject again)
 			if (result && typeof result === 'object') {
-				// Count occurrences of registerComponent import
-				const matches = (result.code.match(/registerComponent/g) || []).length;
+				// Count occurrences of getComponentStack import
+				const matches = (result.code.match(/getComponentStack/g) || []).length;
 				expect(matches).toBe(1); // Only one occurrence
 			}
 		});

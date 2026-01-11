@@ -69,12 +69,37 @@ function getTrackingCode(componentName: string, filePath: string): string {
 	const safeName = componentName.replace(/'/g, "\\'");
 	const safePath = filePath.replace(/'/g, "\\'");
 
+	// IMPORTANT: getContext must be called synchronously during component initialization,
+	// NOT inside onMount. So we get the stack first, then register in onMount.
 	return `// Auto-generated component tracking (dev only)
 import { onMount } from 'svelte';
-import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+import { getComponentStack, type ComponentStack } from '$lib/dev/componentRegistry.svelte';
 
 if (import.meta.env.DEV) {
-	onMount(() => registerComponent('${safeName}', { filePath: '${safePath}' }));
+	// Get context synchronously during component init
+	const __devStack = getComponentStack();
+	if (__devStack) {
+		const __devId = '${safeName}-' + Date.now();
+		const __devComponent = {
+			name: '${safeName}',
+			id: __devId,
+			mountedAt: Date.now(),
+			filePath: '${safePath}'
+		};
+		__devStack.components.push(__devComponent);
+		__devStack.lastUpdate = Date.now();
+
+		onMount(() => {
+			// Cleanup on unmount
+			return () => {
+				const idx = __devStack.components.findIndex(c => c.id === __devId);
+				if (idx !== -1) {
+					__devStack.components.splice(idx, 1);
+					__devStack.lastUpdate = Date.now();
+				}
+			};
+		});
+	}
 }`;
 }
 
@@ -90,7 +115,7 @@ function injectTrackingCode(
 	const trackingCode = getTrackingCode(componentName, filePath);
 
 	// Check if already has tracking code (avoid double injection)
-	if (code.includes('registerComponent')) {
+	if (code.includes('getComponentStack')) {
 		return;
 	}
 
