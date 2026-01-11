@@ -108,3 +108,4 @@ wheels/
 yarn-debug.log*
 yarn-error.log*
 /mcp-browser-extensions/
+test-results.json
