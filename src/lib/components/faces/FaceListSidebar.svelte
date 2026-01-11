@@ -1,7 +1,12 @@
 <script lang="ts">
-	import type { FaceInstance, FaceSuggestionItem } from '$lib/api/faces';
+	import type { FaceInstance as BaseFaceInstance, FaceSuggestionItem } from '$lib/api/faces';
 	import { getFaceColorByIndex } from './face-colors';
 	import { Button } from '$lib/components/ui/button';
+
+	// Extended FaceInstance with optional personAgeAtPhoto (used by PhotoPreviewModal)
+	interface FaceInstance extends BaseFaceInstance {
+		personAgeAtPhoto?: number | null;
+	}
 
 	interface FaceSuggestionsState {
 		suggestions: FaceSuggestionItem[];
@@ -13,6 +18,7 @@
 		faces: FaceInstance[];
 		highlightedFaceId?: string | null;
 		primaryFaceId?: string | null;
+		primaryFacePersonName?: string | null;
 		currentPersonId?: string | null;
 		faceSuggestions?: Map<string, FaceSuggestionsState>;
 		showUnassignButton?: boolean;
@@ -29,6 +35,7 @@
 		faces,
 		highlightedFaceId = null,
 		primaryFaceId = null,
+		primaryFacePersonName = null,
 		currentPersonId = null,
 		faceSuggestions = new Map(),
 		showUnassignButton = true,
@@ -46,8 +53,13 @@
 
 	/**
 	 * Get face label (person name or "Unknown")
+	 * For suggestions, the primary face may not have personName yet, but we can use primaryFacePersonName
 	 */
 	function getFaceLabel(face: FaceInstance): string {
+		// Check if this is the primary face with a provided person name
+		if (primaryFaceId && face.id === primaryFaceId && primaryFacePersonName) {
+			return primaryFacePersonName;
+		}
 		if (face.personName) return face.personName;
 		return 'Unknown';
 	}

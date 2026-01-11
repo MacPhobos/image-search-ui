@@ -511,4 +511,75 @@ describe('FaceListSidebar', () => {
 			expect(indicator).toHaveStyle({ backgroundColor: expect.any(String) });
 		});
 	});
+
+	it('shows primaryFacePersonName for primary face when provided', () => {
+		// Bug fix: In SuggestionDetailModal, the primary face should show the suggestion's
+		// personName even when the face itself doesn't have personName yet
+		const faces = [
+			createFaceInstance({
+				id: 'primary-face-id',
+				personName: null // Face not yet assigned
+			}),
+			createFaceInstance({
+				id: 'other-face-id',
+				personName: null
+			})
+		];
+
+		render(FaceListSidebar, {
+			props: {
+				faces,
+				primaryFaceId: 'primary-face-id',
+				primaryFacePersonName: 'John Doe', // Provided from suggestion
+				onFaceClick: mockOnFaceClick
+			}
+		});
+
+		// Primary face should show "John Doe" instead of "Unknown"
+		expect(screen.getByText('John Doe')).toBeInTheDocument();
+		// Other face should still show "Unknown"
+		expect(screen.getByText('Unknown')).toBeInTheDocument();
+	});
+
+	it('falls back to face.personName when primaryFacePersonName not provided', () => {
+		const faces = [
+			createFaceInstance({
+				id: 'primary-face-id',
+				personName: 'Alice Smith'
+			})
+		];
+
+		render(FaceListSidebar, {
+			props: {
+				faces,
+				primaryFaceId: 'primary-face-id',
+				// primaryFacePersonName NOT provided
+				onFaceClick: mockOnFaceClick
+			}
+		});
+
+		// Should use face.personName
+		expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+	});
+
+	it('shows "Unknown" when primaryFacePersonName not provided and face has no personName', () => {
+		const faces = [
+			createFaceInstance({
+				id: 'primary-face-id',
+				personName: null
+			})
+		];
+
+		render(FaceListSidebar, {
+			props: {
+				faces,
+				primaryFaceId: 'primary-face-id',
+				// primaryFacePersonName NOT provided
+				onFaceClick: mockOnFaceClick
+			}
+		});
+
+		// Should show "Unknown" as fallback
+		expect(screen.getByText('Unknown')).toBeInTheDocument();
+	});
 });

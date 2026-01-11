@@ -21,17 +21,17 @@
 	import { toast } from 'svelte-sonner';
 
 	// Extended interface for FaceListSidebar that includes personAgeAtPhoto
+	// Must match FaceInstance from FaceListSidebar (which extends BaseFaceInstance from API)
 	interface FaceInstanceWithAge {
 		id: string;
 		assetId: number;
-		bboxX: number;
-		bboxY: number;
-		bboxW: number;
-		bboxH: number;
+		bbox: { x: number; y: number; width: number; height: number };
 		detectionConfidence: number;
 		qualityScore: number | null;
+		clusterId: string | null;
 		personId: string | null;
 		personName: string | null;
+		createdAt: string;
 		personAgeAtPhoto?: number | null;
 	}
 
@@ -102,14 +102,18 @@
 		photo.faces.map((face) => ({
 			id: face.faceInstanceId,
 			assetId: photo.photoId,
-			bboxX: face.bboxX,
-			bboxY: face.bboxY,
-			bboxW: face.bboxW,
-			bboxH: face.bboxH,
+			bbox: {
+				x: face.bboxX,
+				y: face.bboxY,
+				width: face.bboxW,
+				height: face.bboxH
+			},
 			detectionConfidence: face.detectionConfidence,
 			qualityScore: face.qualityScore,
+			clusterId: null, // PersonPhotoGroup doesn't provide clusterId
 			personId: face.personId,
 			personName: face.personName,
+			createdAt: '', // PersonPhotoGroup doesn't provide createdAt
 			personAgeAtPhoto: face.personAgeAtPhoto
 		}))
 	);

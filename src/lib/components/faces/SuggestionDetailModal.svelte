@@ -738,6 +738,7 @@
 							faces={allFaces}
 							{highlightedFaceId}
 							primaryFaceId={suggestion.faceInstanceId}
+							primaryFacePersonName={suggestion.personName}
 							{faceSuggestions}
 							showUnassignButton={true}
 							showPinButton={true}
