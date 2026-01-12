@@ -72,15 +72,14 @@ export function createComponentStack(): ComponentStack | null {
  * @param options Additional component metadata
  * @returns Cleanup function to call on unmount
  */
-export function registerComponent(
-	name: string,
-	options: RegisterOptions = {}
-): () => void {
+export function registerComponent(name: string, options: RegisterOptions = {}): () => void {
 	if (!import.meta.env.DEV) return () => {};
 
 	const stack = getContext<ComponentStack>(CONTEXT_KEY);
 	if (!stack) {
-		console.warn('[ComponentRegistry] No component stack found. Did you call createComponentStack() in root layout?');
+		console.warn(
+			'[ComponentRegistry] No component stack found. Did you call createComponentStack() in root layout?'
+		);
 		return () => {};
 	}
 
@@ -100,7 +99,11 @@ export function registerComponent(
 	return () => {
 		if (!import.meta.env.DEV) return;
 
-		const index = stack.components.findIndex((c) => c.id === component.id);
+		// Defensive: Check if stack and components still exist
+		// (handles race conditions during component teardown)
+		if (!stack || !stack.components) return;
+
+		const index = stack.components.findIndex((c) => c && c.id === component.id);
 		if (index !== -1) {
 			stack.components.splice(index, 1);
 			stack.lastUpdate = Date.now();

@@ -15,9 +15,14 @@
 	import * as Tabs from '$lib/components/ui/tabs';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
-	// Component tracking (DEV only)
+	// Component tracking (DEV only) - cleanup on unmount
 	const cleanup = registerComponent('routes/training/+page', {
 		filePath: 'src/routes/training/+page.svelte'
+	});
+
+	// Cleanup component tracking on unmount only
+	$effect(() => {
+		return cleanup;
 	});
 
 	interface Props {
@@ -139,13 +144,11 @@
 		}
 	}
 
-	// Component tracking and load face detection sessions only when on that tab
+	// Load face detection sessions only when on that tab
 	$effect(() => {
 		if (activeTab === 'face-detection') {
 			loadFaceSessions();
 		}
-		// Return cleanup function for component tracking
-		return cleanup;
 	});
 </script>
 
