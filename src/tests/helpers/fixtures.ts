@@ -483,3 +483,88 @@ export function createMultipleUnidentifiedPersons(count: number): UnifiedPersonR
 		});
 	});
 }
+
+// Training Job Fixtures
+
+import type { TrainingJob } from '$lib/types';
+
+/**
+ * Create a test TrainingJob with sensible defaults
+ */
+export function createTrainingJob(
+	overrides?: Partial<TrainingJob & { imagePath?: string | null; skipReason?: string | null }>
+): TrainingJob & { imagePath?: string | null; skipReason?: string | null } {
+	const id = overrides?.id ?? 1;
+	const assetId = overrides?.assetId ?? 100;
+	const sessionId = overrides?.sessionId ?? 1;
+
+	const defaults = {
+		id,
+		sessionId,
+		assetId,
+		status: 'completed',
+		rqJobId: `job-${id}`,
+		progress: 100,
+		errorMessage: null,
+		processingTimeMs: 1500,
+		createdAt: '2024-12-19T10:00:00Z',
+		startedAt: '2024-12-19T10:00:01Z',
+		completedAt: '2024-12-19T10:00:03Z',
+		imagePath: null,
+		skipReason: null
+	};
+
+	return { ...defaults, ...overrides } as TrainingJob & {
+		imagePath?: string | null;
+		skipReason?: string | null;
+	};
+}
+
+/**
+ * Create a skipped training job
+ */
+export function createSkippedJob(
+	overrides?: Partial<TrainingJob & { imagePath?: string | null; skipReason?: string | null }>
+): TrainingJob & { imagePath?: string | null; skipReason?: string | null } {
+	return createTrainingJob({
+		status: 'skipped',
+		progress: 0,
+		imagePath: '/photos/beach-sunset.jpg',
+		skipReason: 'Duplicate detected (hash match)',
+		processingTimeMs: null,
+		startedAt: null,
+		completedAt: null,
+		...overrides
+	});
+}
+
+/**
+ * Create a running training job
+ */
+export function createRunningJob(
+	overrides?: Partial<TrainingJob & { imagePath?: string | null; skipReason?: string | null }>
+): TrainingJob & { imagePath?: string | null; skipReason?: string | null } {
+	return createTrainingJob({
+		status: 'running',
+		progress: 45,
+		imagePath: '/photos/mountain-view.jpg',
+		completedAt: null,
+		...overrides
+	});
+}
+
+/**
+ * Create a failed training job
+ */
+export function createFailedJob(
+	overrides?: Partial<TrainingJob & { imagePath?: string | null; skipReason?: string | null }>
+): TrainingJob & { imagePath?: string | null; skipReason?: string | null } {
+	return createTrainingJob({
+		status: 'failed',
+		progress: 30,
+		errorMessage: 'Failed to process image: Invalid format',
+		imagePath: '/photos/corrupted.jpg',
+		processingTimeMs: 500,
+		...overrides
+	});
+}

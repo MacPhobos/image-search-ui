@@ -42,6 +42,7 @@
 					<Table.Row>
 						<Table.Head>Job ID</Table.Head>
 						<Table.Head>Asset ID</Table.Head>
+						<Table.Head>Image Path</Table.Head>
 						<Table.Head>Status</Table.Head>
 						<Table.Head>Progress</Table.Head>
 						<Table.Head>Duration</Table.Head>
@@ -54,21 +55,32 @@
 						<Table.Row>
 							<Table.Cell>{job.id}</Table.Cell>
 							<Table.Cell>{job.assetId}</Table.Cell>
+							<Table.Cell class="max-w-[300px] truncate" title={job.imagePath || ''}>
+								{job.imagePath || 'N/A'}
+							</Table.Cell>
 							<Table.Cell>
 								<StatusBadge status={job.status} size="sm" />
 							</Table.Cell>
 							<Table.Cell>
-								<div class="space-y-1 min-w-[120px]">
-									<div class="flex justify-between text-xs text-gray-600">
-										<span>{job.progress}%</span>
+								{#if job.status === 'skipped'}
+									<span class="text-gray-400">-</span>
+								{:else}
+									<div class="space-y-1 min-w-[120px]">
+										<div class="flex justify-between text-xs text-gray-600">
+											<span>{job.progress}%</span>
+										</div>
+										<Progress value={job.progress} max={100} class="h-1.5" />
 									</div>
-									<Progress value={job.progress} max={100} class="h-1.5" />
-								</div>
+								{/if}
 							</Table.Cell>
 							<Table.Cell>{formatDuration(job.processingTimeMs)}</Table.Cell>
 							<Table.Cell>{formatTimestamp(job.completedAt)}</Table.Cell>
 							<Table.Cell class="max-w-[200px]">
-								{#if job.errorMessage}
+								{#if job.skipReason}
+									<span class="text-amber-600 text-sm" title={job.skipReason}>
+										{job.skipReason}
+									</span>
+								{:else if job.errorMessage}
 									<span class="error-text" title={job.errorMessage}>
 										{job.errorMessage.length > 50
 											? job.errorMessage.substring(0, 50) + '...'

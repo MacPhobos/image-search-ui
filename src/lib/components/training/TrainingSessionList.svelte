@@ -104,16 +104,23 @@
 					{#if session.status === 'running'}
 						{@const processed = session.processedImages || 0}
 						{@const total = session.totalImages || 0}
-						{@const percentage = total > 0 ? Math.round((processed / total) * 100) : 0}
+						{@const skipped = session.skippedImages || 0}
+						{@const unique = total - skipped}
+						{@const percentage = unique > 0 ? Math.round((processed / unique) * 100) : 0}
 						<div class="progress-section">
 							<div class="space-y-1">
 								<div class="flex justify-between text-sm text-gray-600">
 									<span>Processing</span>
 									<span
-										>{percentage}% ({processed.toLocaleString()} / {total.toLocaleString()})</span
+										>{percentage}% ({processed.toLocaleString()} / {unique.toLocaleString()})</span
 									>
 								</div>
 								<Progress value={percentage} max={100} class="h-2" />
+								{#if skipped > 0}
+									<div class="text-xs text-amber-600 mt-1">
+										{skipped.toLocaleString()} duplicate{skipped !== 1 ? 's' : ''} skipped
+									</div>
+								{/if}
 							</div>
 						</div>
 					{/if}

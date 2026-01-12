@@ -16,7 +16,8 @@
 		paused: 'outline',
 		completed: 'default',
 		cancelled: 'outline',
-		failed: 'destructive'
+		failed: 'destructive',
+		skipped: 'secondary'
 	};
 
 	const statusLabels: Record<string, string> = {
@@ -25,7 +26,8 @@
 		paused: 'Paused',
 		completed: 'Completed',
 		cancelled: 'Cancelled',
-		failed: 'Failed'
+		failed: 'Failed',
+		skipped: 'Skipped'
 	};
 
 	const variant = $derived(statusToVariant[status] || 'outline');
