@@ -85,7 +85,13 @@
 	function startPolling() {
 		stopPolling(); // Clear any existing interval first
 		pollingInterval = setInterval(() => {
-			untrack(() => fetchProgress());
+			untrack(() => {
+				fetchProgress();
+				// Also poll face session if training is complete
+				if (session?.status === 'completed') {
+					fetchFaceSession();
+				}
+			});
 		}, 2000);
 	}
 
@@ -129,9 +135,18 @@
 	// Start/stop polling based on session status
 	$effect(() => {
 		const status = session?.status;
+		const faceStatus = faceSession?.status;
 
 		untrack(() => {
-			if (status === 'running' && session?.id) {
+			// Keep polling if:
+			// 1. Training is running, OR
+			// 2. Face session exists and is processing/pending
+			const shouldPoll =
+				status === 'running' ||
+				faceStatus === 'processing' ||
+				(faceStatus === 'pending' && status === 'completed');
+
+			if (shouldPoll && session?.id) {
 				startPolling();
 			} else {
 				stopPolling();
@@ -187,16 +202,38 @@
 			<h2>Progress</h2>
 			<div class="space-y-1 mb-4">
 				<div class="flex justify-between text-sm text-gray-600">
-					<span>Processing Images</span>
+					<span>
+						{#if session.status === 'completed' && faceSession?.status === 'processing'}
+							🔄 Face Detection Running...
+						{:else if session.status === 'completed' && faceSession?.status === 'pending'}
+							⏳ Training Complete - Face Detection Starting...
+						{:else if session.status === 'completed' && !faceSession}
+							✓ Training Complete - Face Detection Pending
+						{:else if session.status === 'running'}
+							🎨 Processing Training Images
+						{:else}
+							Processing Images
+						{/if}
+					</span>
 					<span>{percentage}% ({current.toLocaleString()} / {total.toLocaleString()})</span>
 				</div>
 				<Progress value={percentage} max={100} class="h-2" />
 			</div>
-			{#if progress.progress.etaSeconds}
+
+			{#if progress.progress.etaSeconds && session.status === 'running'}
 				<ETADisplay
 					eta={new Date(Date.now() + progress.progress.etaSeconds * 1000).toISOString()}
 				/>
 			{/if}
+
+			<!-- Show informational message when training complete but faces pending -->
+			{#if session.status === 'completed' && (faceSession?.status === 'processing' || faceSession?.status === 'pending')}
+				<div class="text-sm text-blue-600 bg-blue-50 p-2 rounded mt-2">
+					ℹ️ Face detection is running in the background. This may take several minutes depending on
+					the number of images.
+				</div>
+			{/if}
+
 			<TrainingStats stats={progress.progress} />
 		</section>
 	{/if}
