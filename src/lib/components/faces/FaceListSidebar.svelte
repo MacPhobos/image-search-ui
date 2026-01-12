@@ -1,15 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { FaceInstance as BaseFaceInstance, FaceSuggestionItem } from '$lib/api/faces';
 	import { getFaceColorByIndex } from './face-colors';
 	import { Button } from '$lib/components/ui/button';
-
-	// Component tracking (DEV only)
-	const cleanup = registerComponent('faces/FaceListSidebar', {
-		filePath: 'src/lib/components/faces/FaceListSidebar.svelte'
-	});
-	onMount(() => cleanup);
 
 	// Extended FaceInstance with optional personAgeAtPhoto (used by PhotoPreviewModal)
 	interface FaceInstance extends BaseFaceInstance {
@@ -23,6 +16,8 @@
 	}
 
 	interface Props {
+		/** Controls visibility (used for component tracking in modals) */
+		open?: boolean;
 		faces: FaceInstance[];
 		highlightedFaceId?: string | null;
 		primaryFaceId?: string | null;
@@ -40,6 +35,7 @@
 	}
 
 	let {
+		open = true,
 		faces,
 		highlightedFaceId = null,
 		primaryFaceId = null,
@@ -55,6 +51,18 @@
 		onPinClick,
 		onSuggestionAccept
 	}: Props = $props();
+
+	// Component tracking for modals (visibility-based, not mount-based)
+	// Modals use CSS visibility, so component never unmounts - track when visible instead
+	$effect(() => {
+		if (open) {
+			const cleanup = registerComponent('faces/FaceListSidebar', {
+				filePath: 'src/lib/components/faces/FaceListSidebar.svelte'
+			});
+			return cleanup;
+		}
+		return undefined;
+	});
 
 	// Track face list item elements for scroll-into-view functionality
 	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());

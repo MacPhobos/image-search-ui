@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import type { PersonPhotoGroup, FaceInPhoto, FaceSuggestionItem } from '$lib/api/faces';
+	import type { PersonPhotoGroup, FaceSuggestionItem } from '$lib/api/faces';
 	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import {
 		assignFaceToPerson,
@@ -101,7 +101,6 @@
 	let showAssignmentModal = $state(false);
 
 	// Face unassignment state
-	let unassigningFaceId = $state<string | null>(null);
 	let unassignmentError = $state<string | null>(null);
 
 	// Pin prototype state
@@ -300,7 +299,6 @@
 			return;
 		}
 
-		unassigningFaceId = faceId;
 		unassignmentError = null;
 
 		try {
@@ -320,8 +318,6 @@
 		} catch (err) {
 			console.error('Failed to unassign face:', err);
 			unassignmentError = err instanceof Error ? err.message : 'Failed to unassign face.';
-		} finally {
-			unassigningFaceId = null;
 		}
 	}
 
@@ -407,7 +403,10 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
-	<Dialog.Content class="!max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-0 gap-0 flex flex-col" showCloseButton={false}>
+	<Dialog.Content
+		class="!max-w-[98vw] max-h-[98vh] w-[98vw] h-[98vh] p-0 gap-0 flex flex-col"
+		showCloseButton={false}
+	>
 		<Dialog.Header class="border-b px-6 py-4 flex-row justify-between items-center flex-shrink-0">
 			<div class="flex flex-col gap-1 flex-1">
 				<Dialog.Title class="text-lg font-semibold">
@@ -468,13 +467,7 @@
 				{/if}
 			</div>
 			<Dialog.Close class="relative opacity-70 hover:opacity-100 ml-4">
-				<svg
-					class="h-5 w-5"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
+				<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="18" y1="6" x2="6" y2="18" />
 					<line x1="6" y1="6" x2="18" y2="18" />
 				</svg>
@@ -538,6 +531,7 @@
 			<aside class="face-sidebar-container" aria-label="Detected faces">
 				<FaceListSidebar
 					bind:this={sidebarRef}
+					{open}
 					faces={faceInstances}
 					{highlightedFaceId}
 					{currentPersonId}
@@ -564,7 +558,10 @@
 					personId={face.personId}
 					personName={face.personName}
 					submitting={pinningInProgress}
-					onCancel={() => { pinningFaceId = null; showPinOptions = false; }}
+					onCancel={() => {
+						pinningFaceId = null;
+						showPinOptions = false;
+					}}
 					onConfirm={handlePinConfirm}
 				/>
 			{/if}
@@ -577,7 +574,10 @@
 	bind:open={showAssignmentModal}
 	faceId={assigningFaceId ?? ''}
 	onSuccess={handleAssignmentSuccess}
-	onCancel={() => { assigningFaceId = null; showAssignmentModal = false; }}
+	onCancel={() => {
+		assigningFaceId = null;
+		showAssignmentModal = false;
+	}}
 />
 
 <style>

@@ -9,16 +9,16 @@
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
-  // Register component (MUST be synchronous - not inside onMount)
-  const cleanup = registerComponent('MyComponent', {
-    filePath: 'src/lib/components/MyComponent.svelte'
-  });
+	// Register component (MUST be synchronous - not inside onMount)
+	const cleanup = registerComponent('MyComponent', {
+		filePath: 'src/lib/components/MyComponent.svelte'
+	});
 
-  // Cleanup on unmount
-  onMount(() => cleanup);
+	// Cleanup on unmount
+	onMount(() => cleanup);
 </script>
 ```
 
@@ -28,27 +28,27 @@
 
 ### Must Track (High Priority)
 
-| Component Type | Examples | Pattern | Why Track |
-|---------------|----------|---------|-----------|
-| **Pages** | `+page.svelte` in routes | Mount-based | Show current route in DevOverlay |
-| **Layouts** | `+layout.svelte` | Mount-based | Show layout hierarchy |
-| **Modals/Dialogs** | `*Modal.svelte`, `*Dialog.svelte` | **Visibility-based** | Track overlay visibility |
-| **Complex State Components** | `PersonManager.svelte` | Mount-based | Debug state flow |
+| Component Type               | Examples                          | Pattern              | Why Track                        |
+| ---------------------------- | --------------------------------- | -------------------- | -------------------------------- |
+| **Pages**                    | `+page.svelte` in routes          | Mount-based          | Show current route in DevOverlay |
+| **Layouts**                  | `+layout.svelte`                  | Mount-based          | Show layout hierarchy            |
+| **Modals/Dialogs**           | `*Modal.svelte`, `*Dialog.svelte` | **Visibility-based** | Track overlay visibility         |
+| **Complex State Components** | `PersonManager.svelte`            | Mount-based          | Debug state flow                 |
 
 ### Should Track (Medium Priority)
 
-| Component Type | Examples | Why Track |
-|---------------|----------|-----------|
-| **Feature Components** | `FaceGrid.svelte`, `SearchFilters.svelte` | Identify active features |
-| **Data-Bound Components** | `PersonCard.svelte`, `AssetThumbnail.svelte` | Debug data flow |
+| Component Type            | Examples                                     | Why Track                |
+| ------------------------- | -------------------------------------------- | ------------------------ |
+| **Feature Components**    | `FaceGrid.svelte`, `SearchFilters.svelte`    | Identify active features |
+| **Data-Bound Components** | `PersonCard.svelte`, `AssetThumbnail.svelte` | Debug data flow          |
 
 ### Skip Tracking (Low Value)
 
-| Component Type | Examples | Why Skip |
-|---------------|----------|----------|
+| Component Type    | Examples                        | Why Skip                 |
+| ----------------- | ------------------------------- | ------------------------ |
 | **UI Primitives** | `Button.svelte`, `Input.svelte` | Too granular, adds noise |
-| **Pure Display** | `Badge.svelte`, `Icon.svelte` | No meaningful state |
-| **Third-Party** | `shadcn-svelte` components | Not our code |
+| **Pure Display**  | `Badge.svelte`, `Icon.svelte`   | No meaningful state      |
+| **Third-Party**   | `shadcn-svelte` components      | Not our code             |
 
 ---
 
@@ -58,17 +58,17 @@
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
-  // 1. Call registerComponent synchronously during component initialization
-  //    This is required because it uses Svelte's getContext() internally
-  const cleanup = registerComponent('ComponentName', {
-    filePath: 'src/path/to/Component.svelte'
-  });
+	// 1. Call registerComponent synchronously during component initialization
+	//    This is required because it uses Svelte's getContext() internally
+	const cleanup = registerComponent('ComponentName', {
+		filePath: 'src/path/to/Component.svelte'
+	});
 
-  // 2. Return cleanup function from onMount to unregister on destroy
-  onMount(() => cleanup);
+	// 2. Return cleanup function from onMount to unregister on destroy
+	onMount(() => cleanup);
 </script>
 ```
 
@@ -76,22 +76,22 @@
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
-  interface Props {
-    personId: string;
-    mode: 'view' | 'edit';
-  }
-  let { personId, mode }: Props = $props();
+	interface Props {
+		personId: string;
+		mode: 'view' | 'edit';
+	}
+	let { personId, mode }: Props = $props();
 
-  // Track props for debugging (useful for complex components)
-  const cleanup = registerComponent('PersonEditor', {
-    filePath: 'src/lib/components/PersonEditor.svelte',
-    props: { personId, mode }  // Shows in DevOverlay
-  });
+	// Track props for debugging (useful for complex components)
+	const cleanup = registerComponent('PersonEditor', {
+		filePath: 'src/lib/components/PersonEditor.svelte',
+		props: { personId, mode } // Shows in DevOverlay
+	});
 
-  onMount(() => cleanup);
+	onMount(() => cleanup);
 </script>
 ```
 
@@ -101,46 +101,47 @@ Modals and dialogs are typically always mounted in the DOM but conditionally vis
 
 ```svelte
 <script lang="ts">
-  import { untrack } from 'svelte';
-  import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 
-  interface Props {
-    open: boolean;
-    // ... other props
-  }
-  let { open }: Props = $props();
+	interface Props {
+		open: boolean;
+		// ... other props
+	}
+	let { open }: Props = $props();
 
-  // Get stack reference synchronously (required for context)
-  const componentStack = getComponentStack();
-  let trackingCleanup: (() => void) | null = null;
+	// Get stack reference synchronously (required for context)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
 
-  // Track based on visibility, not mount
-  $effect(() => {
-    if (open && componentStack) {
-      // Modal opened - register
-      trackingCleanup = untrack(() =>
-        registerComponent('MyModal', {
-          filePath: 'src/lib/components/MyModal.svelte'
-        })
-      );
-    } else if (trackingCleanup) {
-      // Modal closed - unregister
-      trackingCleanup();
-      trackingCleanup = null;
-    }
+	// Track based on visibility, not mount
+	$effect(() => {
+		if (open && componentStack) {
+			// Modal opened - register
+			trackingCleanup = untrack(() =>
+				registerComponent('MyModal', {
+					filePath: 'src/lib/components/MyModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			// Modal closed - unregister
+			trackingCleanup();
+			trackingCleanup = null;
+		}
 
-    // Cleanup on unmount or effect re-run
-    return () => {
-      if (trackingCleanup) {
-        trackingCleanup();
-        trackingCleanup = null;
-      }
-    };
-  });
+		// Cleanup on unmount or effect re-run
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 </script>
 ```
 
 **When to use visibility-based tracking:**
+
 - Modals/dialogs that are always in the DOM
 - Components with `open` or `visible` props
 - Overlay panels that show/hide without unmounting
@@ -151,15 +152,15 @@ The `registerComponent` function already has DEV guards internally, but you can 
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
-  // Simpler approach - import is tree-shaken, function is no-op in prod
-  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
-  const cleanup = registerComponent('MyComponent', {
-    filePath: 'src/lib/components/MyComponent.svelte'
-  });
+	// Simpler approach - import is tree-shaken, function is no-op in prod
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	const cleanup = registerComponent('MyComponent', {
+		filePath: 'src/lib/components/MyComponent.svelte'
+	});
 
-  onMount(() => cleanup);
+	onMount(() => cleanup);
 </script>
 ```
 
@@ -171,12 +172,12 @@ The `registerComponent` function already has DEV guards internally, but you can 
 
 Use consistent naming that reflects the component's location and purpose:
 
-| Component Location | Name Format | Example |
-|-------------------|-------------|---------|
-| `src/routes/*/+page.svelte` | `routes/{path}/+page` | `routes/people/+page` |
-| `src/routes/*/+layout.svelte` | `routes/{path}/+layout` | `routes/faces/+layout` |
-| `src/lib/components/*.svelte` | `{ComponentName}` | `SuggestionDetailModal` |
-| `src/lib/components/{domain}/*.svelte` | `{domain}/{ComponentName}` | `faces/PersonCard` |
+| Component Location                     | Name Format                | Example                 |
+| -------------------------------------- | -------------------------- | ----------------------- |
+| `src/routes/*/+page.svelte`            | `routes/{path}/+page`      | `routes/people/+page`   |
+| `src/routes/*/+layout.svelte`          | `routes/{path}/+layout`    | `routes/faces/+layout`  |
+| `src/lib/components/*.svelte`          | `{ComponentName}`          | `SuggestionDetailModal` |
+| `src/lib/components/{domain}/*.svelte` | `{domain}/{ComponentName}` | `faces/PersonCard`      |
 
 ### File Path Format
 
@@ -184,12 +185,12 @@ Always use the full path from `src/`:
 
 ```typescript
 // Good
-filePath: 'src/lib/components/faces/SuggestionDetailModal.svelte'
-filePath: 'src/routes/people/+page.svelte'
+filePath: 'src/lib/components/faces/SuggestionDetailModal.svelte';
+filePath: 'src/routes/people/+page.svelte';
 
 // Bad - relative paths are confusing
-filePath: './SuggestionDetailModal.svelte'
-filePath: 'SuggestionDetailModal.svelte'
+filePath: './SuggestionDetailModal.svelte';
+filePath: 'SuggestionDetailModal.svelte';
 ```
 
 ---
@@ -212,6 +213,7 @@ When components are tracked, the DevOverlay shows:
 ```
 
 **Color Coding**:
+
 - 🔵 Blue: Route pages (`+page.svelte`)
 - 🟣 Purple: Layouts (`+layout.svelte`)
 - 🟡 Yellow: Regular components
@@ -338,7 +340,83 @@ When your component already has `onMount` with other code, return cleanup from i
 </script>
 ```
 
-### 3. Wrong File Path
+### 5. Using Mount-Based Tracking Inside Modals (Ghost Entries)
+
+When a component is inside a modal that uses CSS visibility (`display: none`), mount-based tracking creates **ghost entries** because the component never unmounts:
+
+```svelte
+<!-- ❌ WRONG - Component stays in registry after modal closes -->
+<script>
+  import { onMount } from 'svelte';
+  import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+  // This component is inside a modal that hides via CSS
+  const cleanup = registerComponent('FaceListSidebar', {...});
+  onMount(() => cleanup);  // ❌ Never unmounts, cleanup never runs!
+</script>
+```
+
+**Why this fails:**
+
+- Modal uses CSS visibility (`display: none`) instead of conditional rendering (`{#if open}`)
+- Component remains mounted when modal is hidden
+- `onMount` cleanup only runs on actual DOM unmount
+- Result: Component stays in DevOverlay even when modal is closed
+
+**✅ CORRECT - Use visibility-based tracking:**
+
+```svelte
+<script>
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	interface Props {
+		open?: boolean;
+		// ... other props
+	}
+	let { open = true }: Props = $props();
+
+	// Track based on visibility, not mount lifecycle
+	$effect(() => {
+		if (open) {
+			const cleanup = registerComponent('FaceListSidebar', {
+				filePath: 'src/lib/components/faces/FaceListSidebar.svelte'
+			});
+			return cleanup; // ✅ Cleanup runs when `open` becomes false
+		}
+	});
+</script>
+```
+
+**Parent component must pass `open` prop:**
+
+```svelte
+<!-- Parent modal that uses FaceListSidebar -->
+<script>
+  let { open = $bindable(true) } = $props();
+</script>
+
+<Dialog.Root {open}>
+  <Dialog.Content>
+    <!-- ✅ Pass open state to child -->
+    <FaceListSidebar {open} faces={...} />
+  </Dialog.Content>
+</Dialog.Root>
+```
+
+**When to use visibility-based tracking:**
+
+- Component is inside a modal/dialog that uses CSS visibility
+- Component is inside a tab panel that shows/hides without unmounting
+- Component is inside any container that toggles visibility via CSS
+- Parent has an `open`, `visible`, or `show` prop
+
+**When mount-based tracking is fine:**
+
+- Component is conditionally rendered (`{#if show}<Component />{/if}`)
+- Component is in a page route that unmounts on navigation
+- Component has no parent that controls its visibility via CSS
+
+### 6. Wrong File Path
 
 ```svelte
 <!-- ❌ WRONG - Relative or incorrect path -->
@@ -361,6 +439,7 @@ const cleanup = registerComponent('PersonCard', {
 Registers a component with the tracking system.
 
 **Parameters**:
+
 - `name: string` - Display name for the component
 - `options?: RegisterOptions` - Optional metadata
   - `filePath?: string` - Source file path (for "copy path" feature)
@@ -370,10 +449,11 @@ Registers a component with the tracking system.
 **Returns**: `() => void` - Cleanup function to call on component destroy
 
 **Example**:
+
 ```typescript
 const cleanup = registerComponent('SuggestionDetailModal', {
-  filePath: 'src/lib/components/faces/SuggestionDetailModal.svelte',
-  props: { suggestionId, personName }
+	filePath: 'src/lib/components/faces/SuggestionDetailModal.svelte',
+	props: { suggestionId, personName }
 });
 ```
 
@@ -394,6 +474,7 @@ Formats the component stack as a breadcrumb string.
 ## Production Safety
 
 All component tracking code is:
+
 1. **Guarded by `import.meta.env.DEV`** - Functions become no-ops in production
 2. **Tree-shaken** - Dead code eliminated during build
 3. **Zero runtime cost** - No performance impact in production
@@ -440,4 +521,4 @@ You don't need to wrap your tracking code in DEV checks, but you can for clarity
 
 ---
 
-**Last Updated**: 2026-01-11
+**Last Updated**: 2026-01-12

@@ -348,9 +348,7 @@
 		// Get thumbnail URL for callback
 		const thumbnailUrl = `/api/v1/faces/faces/${faceId}/thumbnail`;
 		const photoFilename =
-			suggestion?.path?.split('/').pop() ||
-			suggestion?.fullImageUrl?.split('/').pop() ||
-			'Unknown';
+			suggestion?.path?.split('/').pop() || suggestion?.fullImageUrl?.split('/').pop() || 'Unknown';
 
 		// Notify parent component
 		onFaceAssigned?.({ faceId, personId, personName, thumbnailUrl, photoFilename });
@@ -608,6 +606,7 @@
 						<div class="sidebar-error">{facesError}</div>
 					{:else}
 						<FaceListSidebar
+							{open}
 							faces={allFaces}
 							{highlightedFaceId}
 							primaryFaceId={suggestion.faceInstanceId}
@@ -696,7 +695,6 @@
 					</div>
 				</aside>
 			</div>
-
 
 			<!-- Prototype Pinning Panel (shown when pinning a face) -->
 			{#if pinningFaceId && showPinOptions}
