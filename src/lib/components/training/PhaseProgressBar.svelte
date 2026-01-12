@@ -7,7 +7,7 @@
 	type PhaseProgress = components['schemas']['PhaseProgress'];
 
 	interface Props {
-		phase: PhaseProgress;
+		phase: PhaseProgress | undefined;
 		label: string;
 		icon: string;
 	}
@@ -21,6 +21,8 @@
 	let { phase, label, icon }: Props = $props();
 
 	const statusClass = $derived(() => {
+		if (!phase) return 'text-gray-400';
+
 		switch (phase.status) {
 			case 'completed':
 				return 'text-green-600';
@@ -35,18 +37,24 @@
 	});
 
 	const statusText = $derived(() => {
+		if (!phase) return 'Pending';
+
 		switch (phase.status) {
 			case 'completed':
 				return '✓ Complete';
 			case 'running':
 			case 'processing':
-				return `${phase.progress.percentage.toFixed(0)}%`;
+				return `${phase.progress?.percentage?.toFixed(0) ?? 0}%`;
 			case 'failed':
 				return '✗ Failed';
 			default:
 				return 'Pending';
 		}
 	});
+
+	const showProgressBar = $derived(phase?.status === 'running' || phase?.status === 'processing');
+
+	const percentage = $derived(phase?.progress?.percentage ?? 0);
 </script>
 
 <div class="flex items-center gap-3 p-2 bg-gray-50 rounded">
@@ -54,15 +62,12 @@
 	<div class="flex-1">
 		<div class="flex justify-between items-center mb-1">
 			<span class="text-xs font-medium">{label}</span>
-			<span
-				class="text-xs {statusClass()}"
-				class:font-bold={phase.status === 'running' || phase.status === 'processing'}
-			>
+			<span class="text-xs {statusClass()}" class:font-bold={showProgressBar}>
 				{statusText()}
 			</span>
 		</div>
-		{#if phase.status === 'running' || phase.status === 'processing'}
-			<Progress value={phase.progress.percentage} max={100} class="h-1" />
+		{#if showProgressBar}
+			<Progress value={percentage} max={100} class="h-1" />
 		{/if}
 	</div>
 </div>
