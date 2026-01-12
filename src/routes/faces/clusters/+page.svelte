@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { listClusters } from '$lib/api/faces';
 	import { getUnknownClusteringConfig } from '$lib/api/admin';
 	import type { UnknownFaceClusteringConfig } from '$lib/api/admin';
@@ -9,6 +10,12 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Storage keys for persistence
+	const STORAGE_KEYS = {
+		SORT_BY: 'clusters.sortBy',
+		MIN_CONFIDENCE: 'clusters.minConfidence'
+	} as const;
 
 	// Component tracking (DEV only)
 	const componentCleanup = registerComponent('routes/faces/clusters/+page', {
@@ -32,6 +39,14 @@
 	type SortOption = 'faceCount' | 'avgQuality';
 	let sortBy = $state<SortOption>('faceCount');
 
+	// Confidence threshold state
+	let minConfidence = $state<number>(0.6);
+	let isCustomConfidence = $state<boolean>(false);
+	let customConfidenceInput = $state<string>('0.60');
+
+	// Preset confidence options
+	const CONFIDENCE_PRESETS = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+
 	// Sorted clusters (derived from clusters and sortBy)
 	let sortedClusters = $derived(() => {
 		if (clusters.length === 0) return [];
@@ -53,6 +68,12 @@
 
 	// Load configuration and clusters on mount
 	onMount(async () => {
+		// Load persisted settings
+		sortBy = localSettings.get<SortOption>(STORAGE_KEYS.SORT_BY, 'faceCount');
+		minConfidence = localSettings.get<number>(STORAGE_KEYS.MIN_CONFIDENCE, 0.6);
+		isCustomConfidence = !CONFIDENCE_PRESETS.includes(minConfidence);
+		customConfidenceInput = minConfidence.toFixed(2);
+
 		try {
 			config = await getUnknownClusteringConfig();
 		} catch (err) {
@@ -80,7 +101,7 @@
 				currentPage,
 				PAGE_SIZE,
 				includeLabeled,
-				config?.minConfidence,
+				minConfidence,
 				config?.minClusterSize
 			);
 
@@ -118,6 +139,37 @@
 	function handleSortChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
 		sortBy = target.value as SortOption;
+		localSettings.set(STORAGE_KEYS.SORT_BY, sortBy);
+	}
+
+	function handleConfidenceChange(event: Event) {
+		const target = event.target as HTMLSelectElement;
+		const value = target.value;
+
+		if (value === 'custom') {
+			isCustomConfidence = true;
+		} else {
+			isCustomConfidence = false;
+			minConfidence = parseFloat(value);
+			customConfidenceInput = value;
+			localSettings.set(STORAGE_KEYS.MIN_CONFIDENCE, minConfidence);
+			reloadWithNewConfidence();
+		}
+	}
+
+	function handleCustomConfidenceSubmit() {
+		const parsed = parseFloat(customConfidenceInput);
+		if (!isNaN(parsed) && parsed >= 0.01 && parsed <= 1.0) {
+			minConfidence = parsed;
+			localSettings.set(STORAGE_KEYS.MIN_CONFIDENCE, minConfidence);
+			reloadWithNewConfidence();
+		}
+	}
+
+	function reloadWithNewConfidence() {
+		currentPage = 1;
+		clusters = [];
+		loadClusters(true);
 	}
 
 	function handleRetry() {
@@ -134,9 +186,7 @@
 		<h1>Unknown Faces</h1>
 		<p class="subtitle">
 			Review and label face clusters to identify people in your photos. Showing clusters with at
-			least {config?.minClusterSize ?? 2} faces and {((config?.minConfidence ?? 0.7) * 100).toFixed(
-				0
-			)}% similarity.
+			least {config?.minClusterSize ?? 2} faces and {(minConfidence * 100).toFixed(0)}% similarity.
 		</p>
 	</header>
 
@@ -194,12 +244,50 @@
 				<span class="results-count">
 					Showing {clusters.length} of {totalClusters} clusters
 				</span>
-				<div class="sort-controls">
-					<label for="sort-select" class="sort-label">Sort by:</label>
-					<select id="sort-select" class="sort-select" value={sortBy} onchange={handleSortChange}>
-						<option value="faceCount">Number of Faces</option>
-						<option value="avgQuality">Average Quality</option>
-					</select>
+				<div class="controls-group">
+					<div class="sort-controls">
+						<label for="sort-select" class="sort-label">Sort by:</label>
+						<select id="sort-select" class="sort-select" value={sortBy} onchange={handleSortChange}>
+							<option value="faceCount">Number of Faces</option>
+							<option value="avgQuality">Average Quality</option>
+						</select>
+					</div>
+					<div class="confidence-controls">
+						<label for="confidence-select" class="confidence-label">Min Confidence:</label>
+						<select
+							id="confidence-select"
+							class="confidence-select"
+							value={isCustomConfidence ? 'custom' : minConfidence.toString()}
+							onchange={handleConfidenceChange}
+						>
+							{#each CONFIDENCE_PRESETS as preset}
+								<option value={preset.toString()}>{(preset * 100).toFixed(0)}%</option>
+							{/each}
+							<option value="custom">Custom...</option>
+						</select>
+
+						{#if isCustomConfidence}
+							<input
+								type="number"
+								class="custom-confidence-input"
+								bind:value={customConfidenceInput}
+								min="0.01"
+								max="1.0"
+								step="0.01"
+								placeholder="0.60"
+								onkeydown={(e) => e.key === 'Enter' && handleCustomConfidenceSubmit()}
+							/>
+							<button
+								class="apply-btn"
+								onclick={handleCustomConfidenceSubmit}
+								disabled={isNaN(parseFloat(customConfidenceInput)) ||
+									parseFloat(customConfidenceInput) < 0.01 ||
+									parseFloat(customConfidenceInput) > 1.0}
+							>
+								Apply
+							</button>
+						{/if}
+					</div>
 				</div>
 			</div>
 
@@ -362,6 +450,13 @@
 		color: #666;
 	}
 
+	.controls-group {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
 	.sort-controls {
 		display: flex;
 		align-items: center;
@@ -392,6 +487,73 @@
 		outline: none;
 		border-color: #4a90e2;
 		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+	}
+
+	.confidence-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.confidence-label {
+		font-size: 0.875rem;
+		color: #666;
+	}
+
+	.confidence-select {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.875rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		background-color: white;
+		color: #333;
+		cursor: pointer;
+		transition: border-color 0.2s;
+	}
+
+	.confidence-select:hover {
+		border-color: #9ca3af;
+	}
+
+	.confidence-select:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+	}
+
+	.custom-confidence-input {
+		width: 5rem;
+		padding: 0.375rem 0.5rem;
+		font-size: 0.875rem;
+		border: 1px solid #d1d5db;
+		border-radius: 6px;
+		background-color: white;
+	}
+
+	.custom-confidence-input:focus {
+		outline: none;
+		border-color: #4a90e2;
+		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+	}
+
+	.apply-btn {
+		padding: 0.375rem 0.75rem;
+		background-color: #4a90e2;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: background-color 0.2s;
+	}
+
+	.apply-btn:hover:not(:disabled) {
+		background-color: #3a7bc8;
+	}
+
+	.apply-btn:disabled {
+		background-color: #9ca3af;
+		cursor: not-allowed;
 	}
 
 	.clusters-grid {

@@ -1,4 +1,4 @@
-import type { Asset, SearchResult, SearchResponse } from '$lib/types';
+import type { Asset, SearchResult, SearchResponse, ClusterSummary } from '$lib/types';
 import type { Category, PaginatedCategoryResponse } from '$lib/api/categories';
 
 /**
@@ -567,4 +567,23 @@ export function createFailedJob(
 		processingTimeMs: 500,
 		...overrides
 	});
+}
+
+/**
+ * Create a test ClusterSummary with sensible defaults
+ */
+export function createFaceCluster(overrides?: Partial<ClusterSummary>): ClusterSummary {
+	const clusterId = overrides?.clusterId ?? 'cluster_1';
+	const faceCount = overrides?.faceCount ?? 10;
+
+	return {
+		clusterId,
+		faceCount,
+		sampleFaceIds: ['face_1', 'face_2', 'face_3'],
+		avgQuality: 0.75,
+		clusterConfidence: 0.85,
+		representativeFaceId: 'face_1',
+		personId: null,
+		...overrides
+	};
 }
