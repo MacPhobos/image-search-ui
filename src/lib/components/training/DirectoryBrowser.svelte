@@ -351,7 +351,7 @@
 	}
 
 	.subdirs-list {
-		max-height: 400px;
+		max-height: calc(90vh - 300px);
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;

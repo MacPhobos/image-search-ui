@@ -58,7 +58,7 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let showCategoryModal = $state(false);
-	let categorySelectorRef: any; // Component reference for refresh
+	let categorySelectorRef: { refresh: () => Promise<void> } | null = $state(null); // Component reference for refresh
 
 	// Load last-used values from localSettings on mount
 	onMount(() => {
@@ -144,7 +144,10 @@
 </script>
 
 <Dialog.Root bind:open onOpenChange={(isOpen) => !isOpen && handleClose()}>
-	<Dialog.Content data-testid="modal__create-session">
+	<Dialog.Content
+		data-testid="modal__create-session"
+		class={step === 'subdirs' ? 'sm:max-w-[70vw] max-h-[90vh]' : ''}
+	>
 		<Dialog.Header data-testid="modal__create-session__header">
 			<Dialog.Title>Create Training Session</Dialog.Title>
 			<Dialog.Description>
