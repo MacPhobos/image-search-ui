@@ -33,6 +33,13 @@
 		onUnassignClick?: (faceId: string) => void;
 		onPinClick?: (faceId: string) => void;
 		onSuggestionAccept?: (faceId: string, personId: string, personName: string) => void;
+		onBulkSuggestionAccept?: (
+			acceptedFaces: Array<{
+				faceId: string;
+				personId: string;
+				personName: string;
+			}>
+		) => void;
 	}
 
 	let {
@@ -50,7 +57,8 @@
 		onAssignClick,
 		onUnassignClick,
 		onPinClick,
-		onSuggestionAccept
+		onSuggestionAccept,
+		onBulkSuggestionAccept
 	}: Props = $props();
 
 	// Component tracking for modals (visibility-based, not mount-based)
@@ -71,6 +79,9 @@
 	// Track face list item elements for scroll-into-view functionality
 	let faceListItems = $state<Map<string, HTMLLIElement>>(new Map());
 
+	// State for bulk accept loading
+	let bulkAccepting = $state(false);
+
 	// Sort faces with primary face first
 	let sortedFaces = $derived.by(() => {
 		if (!primaryFaceId) return faces;
@@ -79,6 +90,16 @@
 			if (b.id === primaryFaceId) return 1;
 			return 0;
 		});
+	});
+
+	// Count faces with suggestions (excluding already assigned faces)
+	let suggestionsCount = $derived.by(() => {
+		if (!showSuggestions || !faceSuggestions) return 0;
+		return faces.filter((face) => {
+			if (face.personName) return false; // Already assigned
+			const suggestions = faceSuggestions?.get(face.id);
+			return (suggestions?.suggestions?.length ?? 0) > 0;
+		}).length;
 	});
 
 	/**
@@ -118,6 +139,37 @@
 	}
 
 	/**
+	 * Handle bulk accept of all suggestions
+	 */
+	function handleBulkAccept() {
+		if (!onBulkSuggestionAccept || bulkAccepting) return;
+		bulkAccepting = true;
+
+		try {
+			const facesToAccept: Array<{ faceId: string; personId: string; personName: string }> = [];
+
+			for (const face of faces) {
+				if (face.personName) continue; // Skip assigned faces
+				const suggestions = faceSuggestions?.get(face.id);
+				const topSuggestion = suggestions?.suggestions?.[0];
+				if (topSuggestion) {
+					facesToAccept.push({
+						faceId: face.id,
+						personId: topSuggestion.personId,
+						personName: topSuggestion.personName
+					});
+				}
+			}
+
+			if (facesToAccept.length > 0) {
+				onBulkSuggestionAccept(facesToAccept);
+			}
+		} finally {
+			bulkAccepting = false;
+		}
+	}
+
+	/**
 	 * Svelte action to register face list item element for scroll-into-view
 	 */
 	function registerFaceListItem(node: HTMLLIElement, faceId: string) {
@@ -148,7 +200,23 @@
 </script>
 
 <aside class="face-sidebar" aria-label="Detected faces">
-	<h3>Faces ({faces.length})</h3>
+	<div class="sidebar-header">
+		<h3>Faces ({faces.length})</h3>
+		{#if suggestionsCount > 0 && onBulkSuggestionAccept}
+			<Button
+				size="sm"
+				class="bg-green-600 hover:bg-green-700 text-white"
+				onclick={handleBulkAccept}
+				disabled={bulkAccepting}
+			>
+				{#if bulkAccepting}
+					Accepting...
+				{:else}
+					Accept {suggestionsCount} Suggestion{suggestionsCount !== 1 ? 's' : ''}
+				{/if}
+			</Button>
+		{/if}
+	</div>
 	<ul class="face-list">
 		{#each sortedFaces as face (face.id)}
 			{@const isPrimary = primaryFaceId && face.id === primaryFaceId}
@@ -280,12 +348,20 @@
 		overflow: hidden;
 	}
 
+	.sidebar-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+		flex-shrink: 0;
+	}
+
 	.face-sidebar h3 {
-		margin: 0 0 0.75rem 0;
+		margin: 0;
 		font-size: 1rem;
 		font-weight: 600;
 		color: #333;
-		flex-shrink: 0;
 	}
 
 	.face-list {

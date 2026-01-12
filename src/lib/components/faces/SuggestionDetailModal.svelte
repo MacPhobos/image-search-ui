@@ -526,6 +526,35 @@
 			// Error handling could be improved here
 		}
 	}
+
+	// Bulk accept handler for FaceListSidebar
+	async function handleBulkSuggestionAccept(
+		acceptedFaces: Array<{ faceId: string; personId: string; personName: string }>
+	) {
+		for (const { faceId, personId, personName } of acceptedFaces) {
+			try {
+				await assignFaceToPerson(faceId, personId);
+
+				// Update local face state
+				const faceIndex = allFaces.findIndex((f) => f.id === faceId);
+				if (faceIndex >= 0) {
+					allFaces[faceIndex] = { ...allFaces[faceIndex], personId, personName };
+				}
+
+				// Clear suggestions for this face
+				const newMap = new Map(faceSuggestions);
+				newMap.delete(faceId);
+				faceSuggestions = newMap;
+
+				// Notify parent for undo tracking (adds to RecentlyAssignedPanel)
+				const thumbnailUrl = `/api/v1/faces/faces/${faceId}/thumbnail`;
+				const photoFilename = suggestion?.path?.split('/').pop() || 'Unknown';
+				onFaceAssigned?.({ faceId, personId, personName, thumbnailUrl, photoFilename });
+			} catch (error) {
+				console.error(`Failed to assign face ${faceId}:`, error);
+			}
+		}
+	}
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
@@ -629,6 +658,7 @@
 								}
 							}}
 							onSuggestionAccept={handleSuggestionAccept}
+							onBulkSuggestionAccept={handleBulkSuggestionAccept}
 						/>
 					{/if}
 
