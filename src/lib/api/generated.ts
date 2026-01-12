@@ -899,6 +899,26 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/api/v1/training/sessions/{session_id}/progress-unified': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get unified progress across all training phases
+		 * @description Returns combined progress information for training (CLIP embeddings), face detection (InsightFace), and clustering (HDBSCAN) phases. Progress is weighted: 30% training, 65% face detection, 5% clustering.
+		 */
+		get: operations['get_unified_progress_api_v1_training_sessions__session_id__progress_unified_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/api/v1/training/sessions/{session_id}/start': {
 		parameters: {
 			query?: never;
@@ -4512,6 +4532,18 @@ export interface components {
 			/** Message */
 			message: string;
 		};
+		/**
+		 * OverallProgress
+		 * @description Overall progress across all phases.
+		 */
+		OverallProgress: {
+			/** Percentage */
+			percentage: number;
+			/** Etaseconds */
+			etaSeconds?: number | null;
+			/** Currentphase */
+			currentPhase: string;
+		};
 		/** PaginatedResponse[Asset] */
 		PaginatedResponse_Asset_: {
 			/** Items */
@@ -4791,6 +4823,21 @@ export interface components {
 		 * @enum {string}
 		 */
 		PersonType: 'identified' | 'unidentified' | 'noise';
+		/**
+		 * PhaseProgress
+		 * @description Progress information for a single training phase.
+		 */
+		PhaseProgress: {
+			/** Name */
+			name: string;
+			/** Status */
+			status: string;
+			progress: components['schemas']['ProgressStats'];
+			/** Startedat */
+			startedAt?: string | null;
+			/** Completedat */
+			completedAt?: string | null;
+		};
 		/**
 		 * PinPrototypeRequest
 		 * @description Request to pin a face as prototype.
@@ -5624,6 +5671,21 @@ export interface components {
 			thumbnailUrl?: string | null;
 			/** Confidence */
 			confidence?: number | null;
+		};
+		/**
+		 * UnifiedProgressResponse
+		 * @description Unified progress response combining all training phases.
+		 */
+		UnifiedProgressResponse: {
+			/** Sessionid */
+			sessionId: number;
+			/** Overallstatus */
+			overallStatus: string;
+			overallProgress: components['schemas']['OverallProgress'];
+			/** Phases */
+			phases: {
+				[key: string]: components['schemas']['PhaseProgress'];
+			};
 		};
 		/**
 		 * UnknownFaceClusteringConfigResponse
@@ -6908,6 +6970,37 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['TrainingProgressResponse'];
+				};
+			};
+			/** @description Validation Error */
+			422: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['HTTPValidationError'];
+				};
+			};
+		};
+	};
+	get_unified_progress_api_v1_training_sessions__session_id__progress_unified_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				session_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UnifiedProgressResponse'];
 				};
 			};
 			/** @description Validation Error */

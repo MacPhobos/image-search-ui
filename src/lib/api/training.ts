@@ -12,6 +12,7 @@ import type {
 	PaginatedTrainingSessionResponse,
 	PaginatedTrainingJobResponse
 } from '$lib/types';
+import type { components } from './generated';
 import { env } from '$env/dynamic/public';
 import { ApiError } from './client';
 
@@ -259,6 +260,17 @@ export async function listJobs(
  */
 export async function getJob(jobId: number): Promise<TrainingJob> {
 	return apiRequest<TrainingJob>(`/api/v1/training/jobs/${jobId}`);
+}
+
+/**
+ * Get unified progress across all training phases.
+ */
+export async function getUnifiedProgress(
+	sessionId: number
+): Promise<components['schemas']['UnifiedProgressResponse']> {
+	return apiRequest<components['schemas']['UnifiedProgressResponse']>(
+		`/api/v1/training/sessions/${sessionId}/progress-unified`
+	);
 }
 
 // Images

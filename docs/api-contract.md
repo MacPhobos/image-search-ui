@@ -444,9 +444,9 @@ Fetch multiple thumbnails in a single request, returning base64-encoded data URI
 }
 ```
 
-| Field      | Type      | Required | Description                      |
-| ---------- | --------- | -------- | -------------------------------- |
-| `assetIds` | integer[] | Yes      | Array of asset IDs (max: 100)    |
+| Field      | Type      | Required | Description                   |
+| ---------- | --------- | -------- | ----------------------------- |
+| `assetIds` | integer[] | Yes      | Array of asset IDs (max: 100) |
 
 **Response** `200 OK`
 
@@ -462,11 +462,11 @@ Fetch multiple thumbnails in a single request, returning base64-encoded data URI
 }
 ```
 
-| Field        | Type      | Description                                                   |
-| ------------ | --------- | ------------------------------------------------------------- |
+| Field        | Type      | Description                                                      |
+| ------------ | --------- | ---------------------------------------------------------------- |
 | `thumbnails` | object    | Map of asset ID (string) to base64 data URI or null if not found |
-| `found`      | integer   | Count of successfully retrieved thumbnails                    |
-| `notFound`   | integer[] | Array of asset IDs that were not found or failed             |
+| `found`      | integer   | Count of successfully retrieved thumbnails                       |
+| `notFound`   | integer[] | Array of asset IDs that were not found or failed                 |
 
 **Response** `422 Unprocessable Entity` - Validation error
 
@@ -606,9 +606,9 @@ Create a new person entity.
 }
 ```
 
-| Field  | Type   | Required | Description                    |
-| ------ | ------ | -------- | ------------------------------ |
-| `name` | string | Yes      | Person name (unique)           |
+| Field  | Type   | Required | Description          |
+| ------ | ------ | -------- | -------------------- |
+| `name` | string | Yes      | Person name (unique) |
 
 **Response** `201 Created`
 
@@ -655,17 +655,17 @@ Get a single person by ID with detailed information including face count, photo 
 }
 ```
 
-| Field         | Type         | Description                                    |
-| ------------- | ------------ | ---------------------------------------------- |
-| `id`          | string       | Person UUID                                    |
-| `name`        | string       | Person name                                    |
-| `birthDate`   | string\|null | ISO 8601 date (YYYY-MM-DD)                     |
-| `status`      | string       | Status: `active`, `merged`, `hidden`           |
-| `faceCount`   | integer      | Total number of face instances                 |
-| `photoCount`  | integer      | Total number of distinct photos (assets)       |
-| `thumbnailUrl`| string\|null | Thumbnail URL from highest quality face        |
-| `createdAt`   | string       | ISO 8601 timestamp                             |
-| `updatedAt`   | string       | ISO 8601 timestamp                             |
+| Field          | Type         | Description                              |
+| -------------- | ------------ | ---------------------------------------- |
+| `id`           | string       | Person UUID                              |
+| `name`         | string       | Person name                              |
+| `birthDate`    | string\|null | ISO 8601 date (YYYY-MM-DD)               |
+| `status`       | string       | Status: `active`, `merged`, `hidden`     |
+| `faceCount`    | integer      | Total number of face instances           |
+| `photoCount`   | integer      | Total number of distinct photos (assets) |
+| `thumbnailUrl` | string\|null | Thumbnail URL from highest quality face  |
+| `createdAt`    | string       | ISO 8601 timestamp                       |
+| `updatedAt`    | string       | ISO 8601 timestamp                       |
 
 **Response** `404 Not Found` - Person not found
 
@@ -694,10 +694,10 @@ Update person's name and/or birth date.
 }
 ```
 
-| Field       | Type         | Required | Description                                    |
-| ----------- | ------------ | -------- | ---------------------------------------------- |
-| `name`      | string       | No       | Person name (unique)                           |
-| `birthDate` | string\|null | No       | ISO 8601 date (YYYY-MM-DD), null to clear      |
+| Field       | Type         | Required | Description                               |
+| ----------- | ------------ | -------- | ----------------------------------------- |
+| `name`      | string       | No       | Person name (unique)                      |
+| `birthDate` | string\|null | No       | ISO 8601 date (YYYY-MM-DD), null to clear |
 
 All fields are optional. Only provided fields are updated.
 
@@ -772,9 +772,9 @@ Update person name and/or birth date.
 }
 ```
 
-| Field       | Type         | Required | Description                        |
-| ----------- | ------------ | -------- | ---------------------------------- |
-| `name`      | string       | No       | Person name (unique)               |
+| Field       | Type         | Required | Description                               |
+| ----------- | ------------ | -------- | ----------------------------------------- |
+| `name`      | string       | No       | Person name (unique)                      |
 | `birthDate` | string\|null | No       | ISO 8601 date (YYYY-MM-DD), null to clear |
 
 All fields are optional. Only provided fields are updated.
@@ -825,8 +825,8 @@ Assign a face instance to a person.
 
 **Path Parameters**
 
-| Parameter | Type   | Required | Description      |
-| --------- | ------ | -------- | ---------------- |
+| Parameter | Type   | Required | Description             |
+| --------- | ------ | -------- | ----------------------- |
 | `faceId`  | string | Yes      | Face instance ID (UUID) |
 
 **Request Body**
@@ -837,9 +837,9 @@ Assign a face instance to a person.
 }
 ```
 
-| Field      | Type   | Required | Description        |
-| ---------- | ------ | -------- | ------------------ |
-| `personId` | string | Yes      | Person ID (UUID)   |
+| Field      | Type   | Required | Description      |
+| ---------- | ------ | -------- | ---------------- |
+| `personId` | string | Yes      | Person ID (UUID) |
 
 **Response** `200 OK`
 
@@ -994,12 +994,12 @@ List face suggestions with pagination and filtering.
 
 **Query Parameters**
 
-| Parameter  | Type    | Default | Description                                  |
-| ---------- | ------- | ------- | -------------------------------------------- |
-| `page`     | integer | 1       | Page number (1-indexed)                      |
-| `pageSize` | integer | 20      | Items per page (max: 100)                    |
+| Parameter  | Type    | Default | Description                                            |
+| ---------- | ------- | ------- | ------------------------------------------------------ |
+| `page`     | integer | 1       | Page number (1-indexed)                                |
+| `pageSize` | integer | 20      | Items per page (max: 100)                              |
 | `status`   | string  | -       | Filter by status: pending, accepted, rejected, expired |
-| `personId` | string  | -       | Filter by suggested person ID (UUID)         |
+| `personId` | string  | -       | Filter by suggested person ID (UUID)                   |
 
 **Response** `200 OK`
 
@@ -1071,9 +1071,9 @@ Get a single face suggestion by ID.
 
 **Path Parameters**
 
-| Parameter | Type    | Required | Description       |
-| --------- | ------- | -------- | ----------------- |
-| `id`      | integer | Yes      | Suggestion ID     |
+| Parameter | Type    | Required | Description   |
+| --------- | ------- | -------- | ------------- |
+| `id`      | integer | Yes      | Suggestion ID |
 
 **Response** `200 OK` - FaceSuggestion object
 
@@ -1094,9 +1094,9 @@ Accept a face suggestion and assign the face to the suggested person.
 
 **Path Parameters**
 
-| Parameter | Type    | Required | Description       |
-| --------- | ------- | -------- | ----------------- |
-| `id`      | integer | Yes      | Suggestion ID     |
+| Parameter | Type    | Required | Description   |
+| --------- | ------- | -------- | ------------- |
+| `id`      | integer | Yes      | Suggestion ID |
 
 **Response** `200 OK`
 
@@ -1141,9 +1141,9 @@ Reject a face suggestion without assigning the face.
 
 **Path Parameters**
 
-| Parameter | Type    | Required | Description       |
-| --------- | ------- | -------- | ----------------- |
-| `id`      | integer | Yes      | Suggestion ID     |
+| Parameter | Type    | Required | Description   |
+| --------- | ------- | -------- | ------------- |
+| `id`      | integer | Yes      | Suggestion ID |
 
 **Response** `200 OK`
 
@@ -1204,15 +1204,15 @@ Start a background job to find additional face suggestions using dynamic prototy
 }
 ```
 
-| Field              | Type    | Description                                    |
-| ------------------ | ------- | ---------------------------------------------- |
-| `jobId`            | string  | Background job UUID                            |
-| `personId`         | string  | Person UUID                                    |
-| `personName`       | string  | Person display name                            |
-| `prototypeCount`   | integer | Actual number of prototypes to be used         |
-| `labeledFaceCount` | integer | Total labeled faces available for sampling     |
-| `status`           | string  | Job status (always "queued" on creation)       |
-| `progressKey`      | string  | Redis key for tracking job progress via SSE    |
+| Field              | Type    | Description                                 |
+| ------------------ | ------- | ------------------------------------------- |
+| `jobId`            | string  | Background job UUID                         |
+| `personId`         | string  | Person UUID                                 |
+| `personName`       | string  | Person display name                         |
+| `prototypeCount`   | integer | Actual number of prototypes to be used      |
+| `labeledFaceCount` | integer | Total labeled faces available for sampling  |
+| `status`           | string  | Job status (always "queued" on creation)    |
+| `progressKey`      | string  | Redis key for tracking job progress via SSE |
 
 **Response** `404 Not Found` - Person not found
 
@@ -1231,6 +1231,7 @@ Start a background job to find additional face suggestions using dynamic prototy
 ```
 
 **Notes:**
+
 - Does NOT modify the person's configured prototypes
 - Uses the same similarity threshold as normal suggestion generation
 - Automatically adjusts `prototypeCount` if it exceeds available labeled faces
@@ -1251,12 +1252,12 @@ Accept or reject multiple suggestions in a single request.
 }
 ```
 
-| Field                     | Type      | Required | Default | Description                                                    |
-| ------------------------- | --------- | -------- | ------- | -------------------------------------------------------------- |
-| `suggestionIds`           | integer[] | Yes      | -       | Array of suggestion IDs                                        |
-| `action`                  | string    | Yes      | -       | Action: "accept" or "reject"                                   |
-| `autoFindMore`            | boolean   | No       | false   | Auto-trigger find-more job after accepting suggestions         |
-| `findMorePrototypeCount`  | integer   | No       | 50      | Prototype count for auto-triggered find-more jobs (10-1000)    |
+| Field                    | Type      | Required | Default | Description                                                 |
+| ------------------------ | --------- | -------- | ------- | ----------------------------------------------------------- |
+| `suggestionIds`          | integer[] | Yes      | -       | Array of suggestion IDs                                     |
+| `action`                 | string    | Yes      | -       | Action: "accept" or "reject"                                |
+| `autoFindMore`           | boolean   | No       | false   | Auto-trigger find-more job after accepting suggestions      |
+| `findMorePrototypeCount` | integer   | No       | 50      | Prototype count for auto-triggered find-more jobs (10-1000) |
 
 **Response** `200 OK`
 
@@ -1280,20 +1281,20 @@ Accept or reject multiple suggestions in a single request.
 }
 ```
 
-| Field           | Type      | Description                                           |
-| --------------- | --------- | ----------------------------------------------------- |
-| `successCount`  | integer   | Number of successfully processed suggestions          |
-| `failedCount`   | integer   | Number of failed suggestions                          |
-| `errors`        | array     | Array of error objects with `suggestionId` and `reason` |
-| `findMoreJobs`  | array     | Array of auto-triggered find-more jobs (optional, only present when `autoFindMore: true`) |
+| Field          | Type    | Description                                                                               |
+| -------------- | ------- | ----------------------------------------------------------------------------------------- |
+| `successCount` | integer | Number of successfully processed suggestions                                              |
+| `failedCount`  | integer | Number of failed suggestions                                                              |
+| `errors`       | array   | Array of error objects with `suggestionId` and `reason`                                   |
+| `findMoreJobs` | array   | Array of auto-triggered find-more jobs (optional, only present when `autoFindMore: true`) |
 
 **FindMoreJob Object:**
 
-| Field         | Type   | Description                            |
-| ------------- | ------ | -------------------------------------- |
-| `personId`    | string | Person UUID                            |
-| `jobId`       | string | Background job UUID                    |
-| `progressKey` | string | Redis key for tracking job progress    |
+| Field         | Type   | Description                         |
+| ------------- | ------ | ----------------------------------- |
+| `personId`    | string | Person UUID                         |
+| `jobId`       | string | Background job UUID                 |
+| `progressKey` | string | Redis key for tracking job progress |
 
 **Response** `400 Bad Request` - Invalid request
 
@@ -1345,13 +1346,13 @@ List face clusters with optional filtering.
 
 **Query Parameters**
 
-| Parameter         | Type    | Default | Description                                      |
-| ----------------- | ------- | ------- | ------------------------------------------------ |
-| `page`            | integer | 1       | Page number (1-indexed)                          |
-| `page_size`       | integer | 20      | Items per page (max: 100)                        |
-| `include_labeled` | boolean | false   | Include labeled clusters (default: false)        |
-| `min_confidence`  | number  | -       | Minimum intra-cluster confidence (0.0-1.0)       |
-| `min_cluster_size`| integer | -       | Minimum faces per cluster (≥1)                   |
+| Parameter          | Type    | Default | Description                                |
+| ------------------ | ------- | ------- | ------------------------------------------ |
+| `page`             | integer | 1       | Page number (1-indexed)                    |
+| `page_size`        | integer | 20      | Items per page (max: 100)                  |
+| `include_labeled`  | boolean | false   | Include labeled clusters (default: false)  |
+| `min_confidence`   | number  | -       | Minimum intra-cluster confidence (0.0-1.0) |
+| `min_cluster_size` | integer | -       | Minimum faces per cluster (≥1)             |
 
 **Response** `200 OK`
 
@@ -1387,6 +1388,7 @@ List face clusters with optional filtering.
 ```
 
 **Response Fields**:
+
 - `clusterConfidence` (number, optional): Average pairwise cosine similarity score between all faces in cluster (0.0-1.0). Higher values indicate more cohesive clusters.
 - `representativeFaceId` (string UUID, optional): ID of the highest quality face in the cluster, useful for displaying a primary thumbnail.
 - `sampleFaceIds` (array): Face IDs sorted by quality score descending, up to 5 faces.
@@ -1427,6 +1429,7 @@ Manage person prototypes with temporal diversity. Prototypes are exemplar faces 
 #### Prototype Concepts
 
 **Age Era Buckets**: Photos are categorized into 6 age eras based on estimated age:
+
 - `infant`: 0-3 years
 - `child`: 4-12 years
 - `teen`: 13-19 years
@@ -1435,12 +1438,14 @@ Manage person prototypes with temporal diversity. Prototypes are exemplar faces 
 - `senior`: 56+ years
 
 **Prototype Roles**: Four role types determine prototype selection:
+
 - `primary`: User-pinned definitive photo (max 3 per person)
 - `temporal`: Age-era based exemplar (max 1 per era, auto or pinned)
 - `exemplar`: High-quality auto-selected (fills remaining slots)
 - `fallback`: Lower quality, fills era gaps when needed
 
 **Pin Quotas**:
+
 - Max 3 PRIMARY pins per person
 - Max 1 TEMPORAL pin per era bucket (6 possible eras)
 - Total prototype limit: 12 per person
@@ -1486,8 +1491,8 @@ Pin a face as a prototype with optional era assignment.
 
 **Path Parameters**
 
-| Parameter  | Type   | Required | Description |
-| ---------- | ------ | -------- | ----------- |
+| Parameter  | Type   | Required | Description      |
+| ---------- | ------ | -------- | ---------------- |
 | `personId` | string | Yes      | Person ID (UUID) |
 
 **Request Body**
@@ -1501,12 +1506,12 @@ Pin a face as a prototype with optional era assignment.
 }
 ```
 
-| Field            | Type   | Required | Description                                    |
-| ---------------- | ------ | -------- | ---------------------------------------------- |
-| `faceInstanceId` | string | Yes      | Face instance ID (UUID)                        |
+| Field            | Type   | Required | Description                                              |
+| ---------------- | ------ | -------- | -------------------------------------------------------- |
+| `faceInstanceId` | string | Yes      | Face instance ID (UUID)                                  |
 | `ageEraBucket`   | string | No       | Age era: infant\|child\|teen\|young_adult\|adult\|senior |
-| `role`           | string | Yes      | Prototype role: "primary" or "temporal"        |
-| `note`           | string | No       | Optional note about this prototype             |
+| `role`           | string | Yes      | Prototype role: "primary" or "temporal"                  |
+| `note`           | string | No       | Optional note about this prototype                       |
 
 **Response** `200 OK`
 
@@ -1570,10 +1575,10 @@ Unpin a prototype. The slot may be filled automatically by the system.
 
 **Path Parameters**
 
-| Parameter     | Type   | Required | Description        |
-| ------------- | ------ | -------- | ------------------ |
-| `personId`    | string | Yes      | Person ID (UUID)   |
-| `prototypeId` | string | Yes      | Prototype ID (UUID)|
+| Parameter     | Type   | Required | Description         |
+| ------------- | ------ | -------- | ------------------- |
+| `personId`    | string | Yes      | Person ID (UUID)    |
+| `prototypeId` | string | Yes      | Prototype ID (UUID) |
 
 **Response** `200 OK`
 
@@ -1700,8 +1705,8 @@ Trigger temporal re-diversification of prototypes. This recomputes automatic pro
 }
 ```
 
-| Field          | Type    | Required | Description                                   |
-| -------------- | ------- | -------- | --------------------------------------------- |
+| Field          | Type    | Required | Description                                                 |
+| -------------- | ------- | -------- | ----------------------------------------------------------- |
 | `preservePins` | boolean | No       | Keep pinned prototypes during recomputation (default: true) |
 
 **Response** `200 OK`
@@ -1759,10 +1764,12 @@ Get current configuration for unknown face clustering filtering.
 ```
 
 **Response Fields**:
+
 - `minConfidence` (number): Minimum intra-cluster confidence threshold (0.0-1.0). Only clusters with average pairwise similarity above this value are displayed in the Unknown Faces view.
 - `minClusterSize` (number): Minimum number of faces required per cluster (1-100). Clusters with fewer faces are filtered out.
 
 **Default Values**:
+
 - `minConfidence`: 0.85 (85% similarity)
 - `minClusterSize`: 5 faces
 
@@ -1774,12 +1781,13 @@ Update configuration for unknown face clustering filtering.
 
 ```json
 {
-	"minConfidence": 0.90,
+	"minConfidence": 0.9,
 	"minClusterSize": 10
 }
 ```
 
 **Request Fields**:
+
 - `minConfidence` (number, required): Minimum confidence threshold (0.0-1.0)
 - `minClusterSize` (number, required): Minimum cluster size (1-100)
 
@@ -1789,7 +1797,7 @@ Returns updated configuration (same schema as GET).
 
 ```json
 {
-	"minConfidence": 0.90,
+	"minConfidence": 0.9,
 	"minClusterSize": 10
 }
 ```
@@ -1933,9 +1941,9 @@ Stream real-time progress updates for a background job via Server-Sent Events (S
 
 **Query Parameters**
 
-| Parameter      | Type   | Required | Description                                |
-| -------------- | ------ | -------- | ------------------------------------------ |
-| `progress_key` | string | Yes      | Progress key from job creation response    |
+| Parameter      | Type   | Required | Description                             |
+| -------------- | ------ | -------- | --------------------------------------- |
+| `progress_key` | string | Yes      | Progress key from job creation response |
 
 **Response** - Server-Sent Events stream
 
@@ -1952,11 +1960,11 @@ data: {"phase":"completed","current":50,"total":50,"message":"Found 42 new sugge
 
 **Event Types:**
 
-| Event      | Description                                                |
-| ---------- | ---------------------------------------------------------- |
-| `progress` | Periodic progress updates during job execution             |
-| `complete` | Final result when job finishes successfully                |
-| `error`    | Error message if job fails                                 |
+| Event      | Description                                    |
+| ---------- | ---------------------------------------------- |
+| `progress` | Periodic progress updates during job execution |
+| `complete` | Final result when job finishes successfully    |
+| `error`    | Error message if job fails                     |
 
 **Response Headers:**
 
@@ -1976,6 +1984,7 @@ X-Accel-Buffering: no
 ```
 
 **Notes:**
+
 - Connection automatically closes when job completes or fails
 - Progress updates sent approximately every 1 second
 - Connection timeout: 10 minutes (600 seconds)
@@ -1987,9 +1996,9 @@ Get current status of a background job without streaming (polling alternative to
 
 **Query Parameters**
 
-| Parameter      | Type   | Required | Description                                |
-| -------------- | ------ | -------- | ------------------------------------------ |
-| `progress_key` | string | Yes      | Progress key from job creation response    |
+| Parameter      | Type   | Required | Description                             |
+| -------------- | ------ | -------- | --------------------------------------- |
+| `progress_key` | string | Yes      | Progress key from job creation response |
 
 **Response** `200 OK`
 
@@ -2041,10 +2050,97 @@ When job fails:
 ```
 
 **Notes:**
+
 - Use SSE endpoint (`/events`) for real-time updates when possible
 - Use this endpoint for polling when SSE connection limit is reached (browsers limit ~6 SSE connections per domain)
 - Recommended polling interval: 2 seconds
 - Job data expires from Redis after 1 hour
+
+---
+
+### Training Sessions
+
+Training session management for CLIP embedding generation and face detection workflows.
+
+#### Get Unified Training Progress
+
+Get combined progress across all training phases (training, face detection, clustering).
+
+**Endpoint**: `GET /api/v1/training/sessions/{sessionId}/progress-unified`
+
+**Path Parameters**:
+
+- `sessionId` (integer): Training session ID
+
+**Response** (200 OK):
+
+```json
+{
+	"sessionId": 123,
+	"overallStatus": "running",
+	"overallProgress": {
+		"percentage": 62.5,
+		"etaSeconds": 180,
+		"currentPhase": "face_detection"
+	},
+	"phases": {
+		"training": {
+			"name": "training",
+			"status": "completed",
+			"progress": {
+				"current": 1000,
+				"total": 1000,
+				"percentage": 100.0
+			},
+			"startedAt": "2026-01-12T10:00:00Z",
+			"completedAt": "2026-01-12T10:00:30Z"
+		},
+		"faceDetection": {
+			"name": "face_detection",
+			"status": "processing",
+			"progress": {
+				"current": 500,
+				"total": 1000,
+				"percentage": 50.0
+			},
+			"startedAt": "2026-01-12T10:00:35Z",
+			"completedAt": null
+		},
+		"clustering": {
+			"name": "clustering",
+			"status": "pending",
+			"progress": {
+				"current": 0,
+				"total": 1,
+				"percentage": 0.0
+			}
+		}
+	}
+}
+```
+
+**Progress Weights**:
+
+- Training (CLIP embeddings): 30%
+- Face Detection (InsightFace): 65%
+- Clustering (HDBSCAN): 5%
+
+**Overall Status Values**:
+
+- `pending`: No phases started
+- `running`: At least one phase is running
+- `completed`: All phases completed successfully
+- `failed`: At least one phase failed
+- `paused`: Training was paused
+
+**Current Phase Values**:
+
+- `training`: Phase 1 (CLIP embedding generation) in progress
+- `face_detection`: Phase 2 (face detection) in progress or pending
+- `clustering`: Phase 3 (clustering) in progress
+- `completed`: All phases finished
+
+**Response** (404 Not Found): Session not found
 
 ---
 
@@ -2138,6 +2234,7 @@ Get overview of all queues with job counts and worker status.
 ```
 
 **Notes:**
+
 - Returns `redisConnected: false` with empty data if Redis is unavailable
 - Queue names: `training-high`, `training-normal`, `training-low`, `default`
 
@@ -2147,8 +2244,8 @@ Get detailed information for a specific queue with paginated job list.
 
 **Path Parameters**
 
-| Parameter    | Type   | Description                                              |
-| ------------ | ------ | -------------------------------------------------------- |
+| Parameter    | Type   | Description                                                        |
+| ------------ | ------ | ------------------------------------------------------------------ |
 | `queue_name` | string | Queue name (training-high, training-normal, training-low, default) |
 
 **Query Parameters**
@@ -2282,6 +2379,7 @@ Get information about all RQ workers.
 ```
 
 **Worker States:**
+
 - `idle` - Worker is waiting for jobs
 - `busy` - Worker is processing a job
 - `suspended` - Worker is paused
@@ -2340,30 +2438,30 @@ All errors return JSON with consistent structure.
 
 ### Error Codes
 
-| Code                         | HTTP Status | Description                          |
-| ---------------------------- | ----------- | ------------------------------------ |
-| `VALIDATION_ERROR`           | 400         | Invalid request parameters           |
-| `ASSET_NOT_FOUND`            | 404         | Asset ID does not exist              |
-| `CATEGORY_NOT_FOUND`         | 404         | Category ID does not exist           |
-| `PERSON_NOT_FOUND`           | 404         | Person ID does not exist             |
-| `FACE_NOT_FOUND`             | 404         | Face ID does not exist               |
-| `FACE_NOT_ASSIGNED`          | 400         | Face is not assigned to any person   |
-| `JOB_NOT_FOUND`              | 404         | Job ID does not exist                |
-| `QUEUE_NOT_FOUND`            | 404         | Queue name does not exist            |
-| `SUGGESTION_NOT_FOUND`       | 404         | Suggestion ID does not exist         |
-| `PROTOTYPE_NOT_FOUND`        | 404         | Prototype ID does not exist          |
-| `CATEGORY_NAME_EXISTS`       | 409         | Category name already exists         |
-| `PERSON_NAME_EXISTS`         | 409         | Person name already exists           |
-| `CATEGORY_HAS_SESSIONS`      | 409         | Category has training sessions       |
-| `CATEGORY_IS_DEFAULT`        | 400         | Cannot delete default category       |
-| `JOB_NOT_CANCELLABLE`        | 409         | Job already completed                |
-| `MERGE_CONFLICT`             | 409         | Cannot merge (e.g., same person)     |
-| `SUGGESTION_ALREADY_REVIEWED`| 409         | Suggestion already accepted/rejected |
-| `PROTOTYPE_QUOTA_EXCEEDED`   | 400         | Maximum PRIMARY prototypes exceeded  |
-| `TEMPORAL_QUOTA_EXCEEDED`    | 400         | Era already has TEMPORAL prototype   |
-| `FACE_PERSON_MISMATCH`       | 400         | Face does not belong to person       |
-| `RATE_LIMITED`               | 429         | Too many requests                    |
-| `INTERNAL_ERROR`             | 500         | Server error                         |
+| Code                          | HTTP Status | Description                          |
+| ----------------------------- | ----------- | ------------------------------------ |
+| `VALIDATION_ERROR`            | 400         | Invalid request parameters           |
+| `ASSET_NOT_FOUND`             | 404         | Asset ID does not exist              |
+| `CATEGORY_NOT_FOUND`          | 404         | Category ID does not exist           |
+| `PERSON_NOT_FOUND`            | 404         | Person ID does not exist             |
+| `FACE_NOT_FOUND`              | 404         | Face ID does not exist               |
+| `FACE_NOT_ASSIGNED`           | 400         | Face is not assigned to any person   |
+| `JOB_NOT_FOUND`               | 404         | Job ID does not exist                |
+| `QUEUE_NOT_FOUND`             | 404         | Queue name does not exist            |
+| `SUGGESTION_NOT_FOUND`        | 404         | Suggestion ID does not exist         |
+| `PROTOTYPE_NOT_FOUND`         | 404         | Prototype ID does not exist          |
+| `CATEGORY_NAME_EXISTS`        | 409         | Category name already exists         |
+| `PERSON_NAME_EXISTS`          | 409         | Person name already exists           |
+| `CATEGORY_HAS_SESSIONS`       | 409         | Category has training sessions       |
+| `CATEGORY_IS_DEFAULT`         | 400         | Cannot delete default category       |
+| `JOB_NOT_CANCELLABLE`         | 409         | Job already completed                |
+| `MERGE_CONFLICT`              | 409         | Cannot merge (e.g., same person)     |
+| `SUGGESTION_ALREADY_REVIEWED` | 409         | Suggestion already accepted/rejected |
+| `PROTOTYPE_QUOTA_EXCEEDED`    | 400         | Maximum PRIMARY prototypes exceeded  |
+| `TEMPORAL_QUOTA_EXCEEDED`     | 400         | Era already has TEMPORAL prototype   |
+| `FACE_PERSON_MISMATCH`        | 400         | Face does not belong to person       |
+| `RATE_LIMITED`                | 429         | Too many requests                    |
+| `INTERNAL_ERROR`              | 500         | Server error                         |
 
 ---
 
@@ -2453,24 +2551,24 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date       | Changes                                                                                      |
-| ------- | ---------- | -------------------------------------------------------------------------------------------- |
-| 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking. |
-| 1.14.0  | 2026-01-09 | Added `path` field to FaceSuggestion schema exposing the original filesystem path of the image asset. |
-| 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset. |
-| 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field. |
-| 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data. |
-| 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields. |
-| 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses. |
-| 1.8.0   | 2025-12-30 | Added Face Clusters section with GET /api/v1/faces/clusters endpoint supporting optional filtering by min_confidence and min_cluster_size query parameters. Enhanced ClusterSummary schema with clusterConfidence (average pairwise similarity) and representativeFaceId (highest quality face) fields. Added Configuration section with GET /api/v1/config/face-clustering-unknown and PUT /api/v1/config/face-clustering-unknown endpoints for managing unknown face clustering display settings. |
-| 1.7.0   | 2025-12-30 | Added Queue Monitoring section with 3 new endpoints: GET /api/v1/queues (overview), GET /api/v1/queues/{queue_name} (queue details), GET /api/v1/jobs/{job_id} (job details), GET /api/v1/workers (worker information). Added QUEUE_NOT_FOUND error code. Read-only endpoints for monitoring RQ queue status, jobs, and worker health. |
+| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking.                     |
+| 1.14.0  | 2026-01-09 | Added `path` field to FaceSuggestion schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field.                                                                                                                                                                                                                                                                                                                                        |
+| 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data.                                                                                                                                                                                                                                                                                                                                                                                |
+| 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 1.8.0   | 2025-12-30 | Added Face Clusters section with GET /api/v1/faces/clusters endpoint supporting optional filtering by min_confidence and min_cluster_size query parameters. Enhanced ClusterSummary schema with clusterConfidence (average pairwise similarity) and representativeFaceId (highest quality face) fields. Added Configuration section with GET /api/v1/config/face-clustering-unknown and PUT /api/v1/config/face-clustering-unknown endpoints for managing unknown face clustering display settings.                                                                                                                                                                                                                                                       |
+| 1.7.0   | 2025-12-30 | Added Queue Monitoring section with 3 new endpoints: GET /api/v1/queues (overview), GET /api/v1/queues/{queue_name} (queue details), GET /api/v1/jobs/{job_id} (job details), GET /api/v1/workers (worker information). Added QUEUE_NOT_FOUND error code. Read-only endpoints for monitoring RQ queue status, jobs, and worker health.                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 1.6.0   | 2025-12-29 | Added Temporal Prototypes section with 5 new endpoints: POST /api/v1/faces/persons/{personId}/prototypes/pin (pin prototype), DELETE /api/v1/faces/persons/{personId}/prototypes/{prototypeId}/pin (unpin), GET /api/v1/faces/persons/{personId}/prototypes (list), GET /api/v1/faces/persons/{personId}/temporal-coverage (coverage report), POST /api/v1/faces/persons/{personId}/prototypes/recompute (recompute). Added Prototype, TemporalCoverage, and PrototypeListResponse schemas. Added PROTOTYPE_NOT_FOUND, PROTOTYPE_QUOTA_EXCEEDED, TEMPORAL_QUOTA_EXCEEDED, and FACE_PERSON_MISMATCH error codes. Documented age era buckets (infant, child, teen, young_adult, adult, senior) and prototype roles (primary, temporal, exemplar, fallback). |
-| 1.5.0   | 2025-12-28 | Enhanced FaceSuggestion schema with bounding box data: added fullImageUrl, bboxX, bboxY, bboxW, bboxH, detectionConfidence, qualityScore fields for face overlay display support. |
-| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code. |
-| 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes. |
-| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema |
-| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions |
-| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                      |
+| 1.5.0   | 2025-12-28 | Enhanced FaceSuggestion schema with bounding box data: added fullImageUrl, bboxX, bboxY, bboxW, bboxH, detectionConfidence, qualityScore fields for face overlay display support.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes.                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ---
 

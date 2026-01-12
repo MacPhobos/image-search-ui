@@ -1,17 +1,18 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
-	import type { TrainingSession, TrainingProgress, TrainingJob } from '$lib/types';
-	import { getProgress, listJobs } from '$lib/api/training';
-	import type { FaceDetectionSession } from '$lib/api/faces';
-	import { listFaceDetectionSessions } from '$lib/api/faces';
-	import FaceDetectionSessionCard from '../faces/FaceDetectionSessionCard.svelte';
+	import type { TrainingSession, TrainingJob } from '$lib/types';
+	import { getUnifiedProgress, listJobs } from '$lib/api/training';
+	import type { components } from '$lib/api/generated';
 	import StatusBadge from './StatusBadge.svelte';
 	import { Progress } from '$lib/components/ui/progress';
 	import ETADisplay from './ETADisplay.svelte';
 	import TrainingStats from './TrainingStats.svelte';
 	import TrainingControlPanel from './TrainingControlPanel.svelte';
 	import JobsTable from './JobsTable.svelte';
+	import PhaseProgressBar from './PhaseProgressBar.svelte';
+
+	type UnifiedProgressResponse = components['schemas']['UnifiedProgressResponse'];
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('training/SessionDetailView', {
@@ -26,7 +27,7 @@
 
 	let { session, onSessionUpdate }: Props = $props();
 
-	let progress = $state<TrainingProgress | null>(null);
+	let unifiedProgress = $state<UnifiedProgressResponse | null>(null);
 	let jobs = $state<TrainingJob[]>([]);
 	let jobsPage = $state(1);
 	let jobsTotal = $state(0);
@@ -35,18 +36,16 @@
 	let loadingJobs = $state(false);
 	let pollingInterval: ReturnType<typeof setInterval> | null = null;
 	let initialLoadDone = $state(false);
-	let faceSession = $state<FaceDetectionSession | null>(null);
-	let loadingFaceSession = $state(false);
 
 	const jobsTotalPages = $derived(Math.ceil(jobsTotal / jobsPageSize));
 
-	async function fetchProgress() {
+	async function fetchUnifiedProgress() {
 		if (loadingProgress || !session?.id) return; // Guard against concurrent calls and undefined session
 		loadingProgress = true;
 		try {
-			progress = await getProgress(session.id);
+			unifiedProgress = await getUnifiedProgress(session.id);
 		} catch (err) {
-			console.error('Failed to fetch progress:', err);
+			console.error('Failed to fetch unified progress:', err);
 		} finally {
 			loadingProgress = false;
 		}
@@ -67,30 +66,11 @@
 		}
 	}
 
-	async function fetchFaceSession() {
-		if (loadingFaceSession || !session?.id) return;
-		loadingFaceSession = true;
-		try {
-			const response = await listFaceDetectionSessions(1, 10);
-			// Find session linked to this training session
-			faceSession = response.items.find((s) => s.trainingSessionId === session.id) ?? null;
-		} catch (err) {
-			console.error('Failed to fetch face detection session:', err);
-			faceSession = null;
-		} finally {
-			loadingFaceSession = false;
-		}
-	}
-
 	function startPolling() {
 		stopPolling(); // Clear any existing interval first
 		pollingInterval = setInterval(() => {
 			untrack(() => {
-				fetchProgress();
-				// Also poll face session if training is complete
-				if (session?.status === 'completed') {
-					fetchFaceSession();
-				}
+				fetchUnifiedProgress();
 			});
 		}, 2000);
 	}
@@ -109,7 +89,7 @@
 
 	async function handleStatusChange() {
 		await onSessionUpdate();
-		await fetchProgress();
+		await fetchUnifiedProgress();
 		await fetchJobs(); // Also refresh jobs after status change
 	}
 
@@ -118,35 +98,19 @@
 		if (!initialLoadDone && session?.id) {
 			initialLoadDone = true;
 			untrack(() => {
-				fetchProgress();
+				fetchUnifiedProgress();
 				fetchJobs();
-				fetchFaceSession();
 			});
 		}
 	});
 
-	// Load face session when training completes
+	// Start/stop polling based on overall status
 	$effect(() => {
-		if (session?.status === 'completed') {
-			untrack(() => fetchFaceSession());
-		}
-	});
-
-	// Start/stop polling based on session status
-	$effect(() => {
-		const status = session?.status;
-		const faceStatus = faceSession?.status;
+		const overallStatus = unifiedProgress?.overallStatus;
 
 		untrack(() => {
-			// Keep polling if:
-			// 1. Training is running, OR
-			// 2. Face session exists and is processing/pending
-			const shouldPoll =
-				status === 'running' ||
-				faceStatus === 'processing' ||
-				(faceStatus === 'pending' && status === 'completed');
-
-			if (shouldPoll && session?.id) {
+			// Keep polling while any phase is running
+			if (overallStatus === 'running' && session?.id) {
 				startPolling();
 			} else {
 				stopPolling();
@@ -194,47 +158,55 @@
 		onStatusChange={handleStatusChange}
 	/>
 
-	{#if progress}
-		{@const current = progress.progress.current}
-		{@const total = progress.progress.total}
-		{@const percentage = total > 0 ? Math.round((current / total) * 100) : 0}
+	{#if unifiedProgress}
+		{@const overall = unifiedProgress.overallProgress}
+		{@const trainingPhase = unifiedProgress.phases.training}
+		{@const facePhase = unifiedProgress.phases.face_detection}
+		{@const clusterPhase = unifiedProgress.phases.clustering}
+
 		<section class="progress-section">
-			<h2>Progress</h2>
+			<h2>Overall Progress</h2>
 			<div class="space-y-1 mb-4">
 				<div class="flex justify-between text-sm text-gray-600">
 					<span>
-						{#if session.status === 'completed' && faceSession?.status === 'processing'}
-							🔄 Face Detection Running...
-						{:else if session.status === 'completed' && faceSession?.status === 'pending'}
-							⏳ Training Complete - Face Detection Starting...
-						{:else if session.status === 'completed' && !faceSession}
-							✓ Training Complete - Face Detection Pending
-						{:else if session.status === 'running'}
-							🎨 Processing Training Images
+						{#if overall.currentPhase === 'training'}
+							🎨 Training - Generating CLIP Embeddings
+						{:else if overall.currentPhase === 'face_detection'}
+							😊 Face Detection - Analyzing Faces
+						{:else if overall.currentPhase === 'clustering'}
+							🔗 Clustering - Grouping Similar Faces
+						{:else if overall.currentPhase === 'completed'}
+							✓ All Phases Complete
 						{:else}
-							Processing Images
+							Processing
 						{/if}
 					</span>
-					<span>{percentage}% ({current.toLocaleString()} / {total.toLocaleString()})</span>
+					<span class="font-semibold">{overall.percentage.toFixed(1)}%</span>
 				</div>
-				<Progress value={percentage} max={100} class="h-2" />
+				<Progress value={overall.percentage} max={100} class="h-2" />
 			</div>
 
-			{#if progress.progress.etaSeconds && session.status === 'running'}
-				<ETADisplay
-					eta={new Date(Date.now() + progress.progress.etaSeconds * 1000).toISOString()}
-				/>
+			{#if overall.etaSeconds}
+				<ETADisplay eta={new Date(Date.now() + overall.etaSeconds * 1000).toISOString()} />
 			{/if}
 
-			<!-- Show informational message when training complete but faces pending -->
-			{#if session.status === 'completed' && (faceSession?.status === 'processing' || faceSession?.status === 'pending')}
-				<div class="text-sm text-blue-600 bg-blue-50 p-2 rounded mt-2">
-					ℹ️ Face detection is running in the background. This may take several minutes depending on
-					the number of images.
+			<!-- Phase breakdown (collapsible details) -->
+			<details class="mt-4">
+				<summary class="text-sm text-gray-600 cursor-pointer hover:text-gray-800">
+					View Phase Details
+				</summary>
+				<div class="mt-2 space-y-2 text-sm">
+					<PhaseProgressBar phase={trainingPhase} label="Training (CLIP)" icon="🎨" />
+					<PhaseProgressBar phase={facePhase} label="Face Detection" icon="😊" />
+					<PhaseProgressBar phase={clusterPhase} label="Clustering" icon="🔗" />
+				</div>
+			</details>
+
+			{#if trainingPhase.progress}
+				<div class="mt-4">
+					<TrainingStats stats={trainingPhase.progress} />
 				</div>
 			{/if}
-
-			<TrainingStats stats={progress.progress} />
 		</section>
 	{/if}
 
@@ -248,13 +220,6 @@
 			loading={loadingJobs}
 		/>
 	</section>
-
-	{#if faceSession}
-		<section class="face-detection-section">
-			<h2>Face Detection</h2>
-			<FaceDetectionSessionCard session={faceSession} onUpdate={fetchFaceSession} />
-		</section>
-	{/if}
 
 	<div class="actions-footer">
 		<a href="/training" class="btn-back">← Back to Sessions</a>
@@ -311,8 +276,7 @@
 	}
 
 	.progress-section,
-	.jobs-section,
-	.face-detection-section {
+	.jobs-section {
 		background-color: white;
 		border-radius: 8px;
 		padding: 1.5rem;
@@ -321,8 +285,7 @@
 	}
 
 	.progress-section h2,
-	.jobs-section h2,
-	.face-detection-section h2 {
+	.jobs-section h2 {
 		margin-top: 0;
 		margin-bottom: 1rem;
 		font-size: 1.25rem;
