@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { untrack } from 'svelte';
 	import type { FaceInstance as BaseFaceInstance, FaceSuggestionItem } from '$lib/api/faces';
 	import { getFaceColorByIndex } from './face-colors';
 	import { Button } from '$lib/components/ui/button';
@@ -54,11 +55,14 @@
 
 	// Component tracking for modals (visibility-based, not mount-based)
 	// Modals use CSS visibility, so component never unmounts - track when visible instead
+	// Use untrack() to prevent infinite loop from registerComponent modifying reactive array
 	$effect(() => {
 		if (open) {
-			const cleanup = registerComponent('faces/FaceListSidebar', {
-				filePath: 'src/lib/components/faces/FaceListSidebar.svelte'
-			});
+			const cleanup = untrack(() =>
+				registerComponent('faces/FaceListSidebar', {
+					filePath: 'src/lib/components/faces/FaceListSidebar.svelte'
+				})
+			);
 			return cleanup;
 		}
 		return undefined;
