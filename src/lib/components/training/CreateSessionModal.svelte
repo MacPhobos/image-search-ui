@@ -146,20 +146,16 @@
 <Dialog.Root bind:open onOpenChange={(isOpen) => !isOpen && handleClose()}>
 	<Dialog.Content
 		data-testid="modal__create-session"
-		class={step === 'subdirs' ? 'sm:max-w-[70vw] max-h-[90vh]' : ''}
+		class={step === 'subdirs' ? 'sm:max-w-[70vw] max-h-[90vh] flex flex-col overflow-hidden' : ''}
 	>
-		<Dialog.Header data-testid="modal__create-session__header">
-			<Dialog.Title>Create Training Session</Dialog.Title>
-			<Dialog.Description>
-				{#if step === 'info'}
-					Configure the training session by providing a name, root directory path, and category.
-				{:else}
-					Select which subdirectories to include in training. Leave none selected to include all.
-				{/if}
-			</Dialog.Description>
-		</Dialog.Header>
-
 		{#if step === 'info'}
+			<Dialog.Header data-testid="modal__create-session__header">
+				<Dialog.Title>Create Training Session</Dialog.Title>
+				<Dialog.Description>
+					Configure the training session by providing a name, root directory path, and category.
+				</Dialog.Description>
+			</Dialog.Header>
+
 			<div
 				style="display: grid; gap: 1rem; padding: 0.5rem 0;"
 				data-testid="modal__create-session__body"
@@ -228,10 +224,15 @@
 				</Button>
 			</Dialog.Footer>
 		{:else if step === 'subdirs'}
-			<div
-				style="display: grid; gap: 1rem; padding: 0.5rem 0;"
-				data-testid="modal__create-session__body"
-			>
+			<Dialog.Header data-testid="modal__create-session__header">
+				<Dialog.Title>Create Training Session</Dialog.Title>
+				<Dialog.Description>
+					Select which subdirectories to include in training. Leave none selected to include all.
+				</Dialog.Description>
+			</Dialog.Header>
+
+			<!-- Scrollable content area -->
+			<div class="flex-1 overflow-y-auto min-h-0" data-testid="modal__create-session__body">
 				<DirectoryBrowser
 					{rootPath}
 					bind:selectedSubdirs
@@ -245,7 +246,7 @@
 				{/if}
 			</div>
 
-			<Dialog.Footer data-testid="modal__create-session__footer">
+			<Dialog.Footer class="flex-shrink-0" data-testid="modal__create-session__footer">
 				<Button
 					variant="outline"
 					onclick={handleBack}
