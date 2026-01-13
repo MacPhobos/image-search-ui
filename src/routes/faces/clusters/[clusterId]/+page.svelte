@@ -8,7 +8,7 @@
 		transformFaceInstancesToFaceInPhoto
 	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
-	import FaceThumbnail from '$lib/components/faces/FaceThumbnail.svelte';
+	import ClusterFaceCard from '$lib/components/faces/ClusterFaceCard.svelte';
 	import LabelClusterModal from '$lib/components/faces/LabelClusterModal.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import type { ClusterDetailResponse, FaceInstance } from '$lib/types';
@@ -46,6 +46,9 @@
 	let visibleFaceCount = $state(24);
 	const FACES_PER_PAGE = 24;
 
+	// Face counts per asset (for displaying total faces in each image)
+	let faceCountsByAsset = $state<Map<number, number>>(new Map());
+
 	// Derived
 	let visibleFaces = $derived<FaceInstance[]>(cluster?.faces.slice(0, visibleFaceCount) ?? []);
 	let hasMoreFaces = $derived(cluster ? visibleFaceCount < cluster.faces.length : false);
@@ -73,6 +76,8 @@
 
 		try {
 			cluster = await getCluster(clusterId);
+			// After loading cluster, fetch face counts for all unique assets
+			await loadFaceCountsForCluster();
 		} catch (err) {
 			console.error('Failed to load cluster:', err);
 			if (err instanceof ApiError) {
@@ -86,6 +91,39 @@
 			}
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function loadFaceCountsForCluster() {
+		if (!cluster) return;
+
+		try {
+			// Get unique asset IDs from cluster faces
+			const uniqueAssetIds = [...new Set(cluster.faces.map((f) => f.assetId))];
+
+			// Fetch face counts for each asset in parallel
+			const countPromises = uniqueAssetIds.map(async (assetId) => {
+				try {
+					const facesData = await getFacesForAsset(assetId);
+					return { assetId, count: facesData.total };
+				} catch (err) {
+					console.error(`Failed to load face count for asset ${assetId}:`, err);
+					// Return 1 as fallback if fetch fails
+					return { assetId, count: 1 };
+				}
+			});
+
+			const counts = await Promise.all(countPromises);
+
+			// Store in Map
+			const countsMap = new Map<number, number>();
+			for (const { assetId, count } of counts) {
+				countsMap.set(assetId, count);
+			}
+			faceCountsByAsset = countsMap;
+		} catch (err) {
+			console.error('Failed to load face counts:', err);
+			// Graceful degradation: leave map empty, cards will default to 1
 		}
 	}
 
@@ -213,6 +251,7 @@
 				takenAt: null, // Not available in face instance
 				thumbnailUrl: `${API_BASE_URL}/api/v1/images/${face.assetId}/thumbnail`,
 				fullUrl: `${API_BASE_URL}/api/v1/images/${face.assetId}/full`,
+				path: '', // Not available in face instance
 				faces: facesInPhoto,
 				faceCount,
 				hasNonPersonFaces
@@ -237,10 +276,17 @@
 
 		// Find and update the face in the cluster's faces array
 		const faceIndex = cluster.faces.findIndex((f) => f.id === faceId);
-		if (faceIndex !== -1) {
+		if (faceIndex !== -1 && cluster.faces[faceIndex]) {
+			const existingFace = cluster.faces[faceIndex];
 			// Update the face with new assignment
 			cluster.faces[faceIndex] = {
-				...cluster.faces[faceIndex],
+				id: existingFace.id,
+				assetId: existingFace.assetId,
+				bbox: existingFace.bbox,
+				detectionConfidence: existingFace.detectionConfidence,
+				qualityScore: existingFace.qualityScore,
+				clusterId: existingFace.clusterId,
+				createdAt: existingFace.createdAt,
 				personId,
 				personName
 			};
@@ -374,25 +420,14 @@
 		<!-- Faces Grid -->
 		<section class="faces-section">
 			<h2>Faces in Cluster</h2>
-			<div class="faces-grid">
+			<div class="cluster-cards-grid">
 				{#each visibleFaces as face (face.id)}
-					<button
-						type="button"
-						class="face-item"
-						title="Quality: {((face.qualityScore ?? 0) * 100).toFixed(0)}% - Click to view photo"
-						onclick={() => handleFaceClick(face)}
-						disabled={loadingPhoto}
-					>
-						<FaceThumbnail
-							thumbnailUrl={`/api/v1/images/${face.assetId}/thumbnail`}
-							bbox={face.bbox}
-							size={140}
-							alt="Face from asset {face.assetId}"
-						/>
-						<div class="face-quality">
-							{((face.qualityScore ?? 0) * 100).toFixed(0)}%
-						</div>
-					</button>
+					{@const totalFaces = faceCountsByAsset.get(face.assetId) ?? 1}
+					<ClusterFaceCard
+						{face}
+						totalFacesInImage={totalFaces}
+						onClick={() => handleFaceClick(face)}
+					/>
 				{/each}
 			</div>
 
@@ -684,44 +719,11 @@
 		margin: 0 0 1rem 0;
 	}
 
-	.faces-grid {
+	.cluster-cards-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 		gap: 1rem;
-	}
-
-	.face-item {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
-		border: none;
-		background: none;
-		padding: 0.5rem;
-		cursor: pointer;
-		border-radius: 8px;
-		transition:
-			background-color 0.2s,
-			transform 0.1s;
-	}
-
-	.face-item:hover:not(:disabled) {
-		background-color: #f5f5f5;
-		transform: scale(1.02);
-	}
-
-	.face-item:active:not(:disabled) {
-		transform: scale(0.98);
-	}
-
-	.face-item:disabled {
-		cursor: not-allowed;
-		opacity: 0.6;
-	}
-
-	.face-quality {
-		font-size: 0.75rem;
-		color: #666;
+		padding: 1rem 0;
 	}
 
 	.load-more {
@@ -749,6 +751,18 @@
 		color: white;
 	}
 
+	@media (min-width: 768px) {
+		.cluster-cards-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.cluster-cards-grid {
+			grid-template-columns: repeat(4, 1fr);
+		}
+	}
+
 	@media (max-width: 640px) {
 		.cluster-header {
 			flex-direction: column;
@@ -761,6 +775,10 @@
 
 		.stats-grid {
 			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.cluster-cards-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>
