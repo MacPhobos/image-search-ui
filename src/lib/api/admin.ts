@@ -209,7 +209,111 @@ export interface UnknownFaceClusteringConfig {
 	minClusterSize: number;
 }
 
+export interface PostTrainingSuggestionsConfig {
+	mode: 'all' | 'top_n';
+	top_n_count: number;
+}
+
+export interface FaceMatchingConfig {
+	autoAssignThreshold: number;
+	suggestionThreshold: number;
+	maxSuggestions: number;
+	suggestionExpiryDays: number;
+	prototypeMinQuality: number;
+	prototypeMaxExemplars: number;
+	postTrainingSuggestionsMode: 'all' | 'top_n';
+	postTrainingSuggestionsTopNCount: number;
+}
+
+export interface FaceMatchingConfigUpdate {
+	autoAssignThreshold?: number;
+	suggestionThreshold?: number;
+	maxSuggestions?: number;
+	suggestionExpiryDays?: number;
+	prototypeMinQuality?: number;
+	prototypeMaxExemplars?: number;
+	postTrainingSuggestionsMode?: 'all' | 'top_n';
+	postTrainingSuggestionsTopNCount?: number;
+}
+
 // Configuration API Functions
+
+interface FaceMatchingConfigResponse {
+	auto_assign_threshold: number;
+	suggestion_threshold: number;
+	max_suggestions: number;
+	suggestion_expiry_days: number;
+	prototype_min_quality: number;
+	prototype_max_exemplars: number;
+	post_training_suggestions_mode: 'all' | 'top_n';
+	post_training_suggestions_top_n_count: number;
+}
+
+/**
+ * Get face matching configuration.
+ * Returns all face matching and post-training suggestion settings.
+ *
+ * @returns Current configuration settings
+ */
+export async function getFaceMatchingConfig(): Promise<FaceMatchingConfig> {
+	const response = await apiRequest<FaceMatchingConfigResponse>('/api/v1/config/face-matching');
+	return {
+		autoAssignThreshold: response.auto_assign_threshold,
+		suggestionThreshold: response.suggestion_threshold,
+		maxSuggestions: response.max_suggestions,
+		suggestionExpiryDays: response.suggestion_expiry_days,
+		prototypeMinQuality: response.prototype_min_quality,
+		prototypeMaxExemplars: response.prototype_max_exemplars,
+		postTrainingSuggestionsMode: response.post_training_suggestions_mode,
+		postTrainingSuggestionsTopNCount: response.post_training_suggestions_top_n_count
+	};
+}
+
+interface FaceMatchingConfigUpdateRequest {
+	auto_assign_threshold?: number;
+	suggestion_threshold?: number;
+	max_suggestions?: number;
+	suggestion_expiry_days?: number;
+	prototype_min_quality?: number;
+	prototype_max_exemplars?: number;
+	post_training_suggestions_mode?: 'all' | 'top_n';
+	post_training_suggestions_top_n_count?: number;
+}
+
+/**
+ * Update face matching configuration.
+ * Updates face matching and post-training suggestion settings.
+ *
+ * @param config - Configuration values to update
+ * @returns Updated configuration settings
+ */
+export async function updateFaceMatchingConfig(
+	config: FaceMatchingConfigUpdate
+): Promise<FaceMatchingConfig> {
+	const request: FaceMatchingConfigUpdateRequest = {};
+	if (config.autoAssignThreshold !== undefined)
+		request.auto_assign_threshold = config.autoAssignThreshold;
+	if (config.suggestionThreshold !== undefined)
+		request.suggestion_threshold = config.suggestionThreshold;
+	if (config.maxSuggestions !== undefined) request.max_suggestions = config.maxSuggestions;
+	if (config.suggestionExpiryDays !== undefined)
+		request.suggestion_expiry_days = config.suggestionExpiryDays;
+	if (config.prototypeMinQuality !== undefined)
+		request.prototype_min_quality = config.prototypeMinQuality;
+	if (config.prototypeMaxExemplars !== undefined)
+		request.prototype_max_exemplars = config.prototypeMaxExemplars;
+	if (config.postTrainingSuggestionsMode !== undefined)
+		request.post_training_suggestions_mode = config.postTrainingSuggestionsMode;
+	if (config.postTrainingSuggestionsTopNCount !== undefined)
+		request.post_training_suggestions_top_n_count = config.postTrainingSuggestionsTopNCount;
+
+	await apiRequest('/api/v1/config/face-matching', {
+		method: 'PUT',
+		body: JSON.stringify(request)
+	});
+
+	return await getFaceMatchingConfig(); // Re-fetch to get updated values
+}
 
 /**
  * Get unknown face clustering configuration.

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { env } from '$env/dynamic/public';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import {
 		getFaceSuggestionSettings,
@@ -8,8 +7,12 @@
 		type FaceSuggestionSettings
 	} from '$lib/api/faces';
 	import {
+		getFaceMatchingConfig,
+		updateFaceMatchingConfig,
 		getUnknownClusteringConfig,
 		updateUnknownClusteringConfig,
+		type FaceMatchingConfig,
+		type FaceMatchingConfigUpdate,
 		type UnknownFaceClusteringConfig
 	} from '$lib/api/admin';
 
@@ -19,24 +22,15 @@
 	});
 	onMount(() => cleanup);
 
-	interface FaceMatchingConfig {
-		autoAssignThreshold: number;
-		suggestionThreshold: number;
-		maxSuggestions: number;
-		suggestionExpiryDays: number;
-		prototypeMinQuality: number;
-		prototypeMaxExemplars: number;
-	}
-
-	const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
-
 	let config = $state<FaceMatchingConfig>({
 		autoAssignThreshold: 0.85,
 		suggestionThreshold: 0.7,
 		maxSuggestions: 50,
 		suggestionExpiryDays: 30,
 		prototypeMinQuality: 0.5,
-		prototypeMaxExemplars: 5
+		prototypeMaxExemplars: 5,
+		postTrainingSuggestionsMode: 'all',
+		postTrainingSuggestionsTopNCount: 10
 	});
 
 	let paginationSettings = $state<FaceSuggestionSettings>({
@@ -55,13 +49,22 @@
 	let successMessage = $state<string | null>(null);
 	let validationError = $state<string | null>(null);
 
+	// Post-training suggestions validation
+	let postTrainingTopNCountError = $derived(
+		config.postTrainingSuggestionsMode === 'top_n' &&
+			(config.postTrainingSuggestionsTopNCount < 1 || config.postTrainingSuggestionsTopNCount > 100)
+			? 'Must be between 1 and 100'
+			: null
+	);
+
 	// Derived validation
 	let isValid = $derived(
 		config.suggestionThreshold < config.autoAssignThreshold &&
 			paginationSettings.groupsPerPage >= 1 &&
 			paginationSettings.groupsPerPage <= 50 &&
 			paginationSettings.itemsPerGroup >= 1 &&
-			paginationSettings.itemsPerGroup <= 50
+			paginationSettings.itemsPerGroup <= 50 &&
+			postTrainingTopNCountError === null
 	);
 
 	onMount(async () => {
@@ -73,19 +76,8 @@
 		error = null;
 
 		try {
-			// Load face matching config
-			const matchingResponse = await fetch(`${API_BASE_URL}/api/v1/config/face-matching`);
-			if (!matchingResponse.ok) throw new Error('Failed to load face matching configuration');
-
-			const matchingData = await matchingResponse.json();
-			config = {
-				autoAssignThreshold: matchingData.auto_assign_threshold,
-				suggestionThreshold: matchingData.suggestion_threshold,
-				maxSuggestions: matchingData.max_suggestions,
-				suggestionExpiryDays: matchingData.suggestion_expiry_days,
-				prototypeMinQuality: matchingData.prototype_min_quality,
-				prototypeMaxExemplars: matchingData.prototype_max_exemplars
-			};
+			// Load face matching config (includes post-training suggestions)
+			config = await getFaceMatchingConfig();
 
 			// Load pagination settings
 			paginationSettings = await getFaceSuggestionSettings();
@@ -110,24 +102,18 @@
 		validationError = null;
 
 		try {
-			// Save face matching config
-			const matchingResponse = await fetch(`${API_BASE_URL}/api/v1/config/face-matching`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					auto_assign_threshold: config.autoAssignThreshold,
-					suggestion_threshold: config.suggestionThreshold,
-					max_suggestions: config.maxSuggestions,
-					suggestion_expiry_days: config.suggestionExpiryDays,
-					prototype_min_quality: config.prototypeMinQuality,
-					prototype_max_exemplars: config.prototypeMaxExemplars
-				})
-			});
-
-			if (!matchingResponse.ok) {
-				const data = await matchingResponse.json();
-				throw new Error(data.detail || 'Failed to save face matching configuration');
-			}
+			// Save face matching config (includes post-training suggestions)
+			const updates: FaceMatchingConfigUpdate = {
+				autoAssignThreshold: config.autoAssignThreshold,
+				suggestionThreshold: config.suggestionThreshold,
+				maxSuggestions: config.maxSuggestions,
+				suggestionExpiryDays: config.suggestionExpiryDays,
+				prototypeMinQuality: config.prototypeMinQuality,
+				prototypeMaxExemplars: config.prototypeMaxExemplars,
+				postTrainingSuggestionsMode: config.postTrainingSuggestionsMode,
+				postTrainingSuggestionsTopNCount: config.postTrainingSuggestionsTopNCount
+			};
+			await updateFaceMatchingConfig(updates);
 
 			// Save pagination settings
 			await updateFaceSuggestionSettings(paginationSettings);
@@ -427,6 +413,89 @@
 							bind:value={clusteringConfig.minClusterSize}
 						/>
 					</div>
+				</div>
+			</div>
+
+			<!-- Post-Training Suggestions -->
+			<div class="other-settings">
+				<h3>Post-Training Suggestions</h3>
+				<p class="section-description">
+					Configure automatic suggestion generation after training sessions complete. This helps
+					discover similar faces for persons with many labeled faces.
+				</p>
+
+				<div class="form-field">
+					<div class="config-label">Suggestion Generation Mode</div>
+
+					<div class="radio-group">
+						<label class="radio-label">
+							<input
+								type="radio"
+								value="all"
+								bind:group={config.postTrainingSuggestionsMode}
+								disabled={saving}
+							/>
+							<span class="radio-text">
+								<strong>All Persons</strong>
+								<span class="radio-description">
+									Generate suggestions for all persons with labeled faces (recommended for
+									comprehensive matching)
+								</span>
+							</span>
+						</label>
+
+						<label class="radio-label">
+							<input
+								type="radio"
+								value="top_n"
+								bind:group={config.postTrainingSuggestionsMode}
+								disabled={saving}
+							/>
+							<span class="radio-text">
+								<strong>Top N Persons</strong>
+								<span class="radio-description">
+									Generate suggestions only for top N persons by face count (faster for large
+									databases)
+								</span>
+							</span>
+						</label>
+					</div>
+
+					{#if config.postTrainingSuggestionsMode === 'top_n'}
+						<div class="conditional-input">
+							<label for="post-training-top-n-count" class="config-label">
+								Number of Top Persons
+								<span class="field-hint">
+									How many persons to generate suggestions for (sorted by face count)
+								</span>
+							</label>
+
+							<input
+								id="post-training-top-n-count"
+								type="number"
+								min="1"
+								max="100"
+								bind:value={config.postTrainingSuggestionsTopNCount}
+								disabled={saving}
+								class:error={postTrainingTopNCountError}
+							/>
+
+							{#if postTrainingTopNCountError}
+								<span class="error-message">{postTrainingTopNCountError}</span>
+							{/if}
+
+							<div class="config-info">
+								<strong>Example:</strong> Setting this to 10 will generate suggestions for the 10 persons
+								with the most labeled faces after each training session completes.
+							</div>
+						</div>
+					{/if}
+				</div>
+
+				<div class="config-info">
+					<strong>Note:</strong> Suggestion generation runs as background jobs and may take several minutes
+					depending on database size and number of persons. Check the queue status in the Admin Panel
+					to monitor progress.
 				</div>
 			</div>
 
@@ -756,5 +825,76 @@
 			opacity: 1;
 			transform: translateY(0);
 		}
+	}
+
+	/* Post-Training Suggestions Styles */
+	.radio-group {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-top: 0.5rem;
+	}
+
+	.radio-label {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.75rem;
+		padding: 1rem;
+		border: 1px solid var(--border-color, #e5e7eb);
+		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.radio-label:hover {
+		background-color: var(--bg-tertiary, #f3f4f6);
+		border-color: var(--primary, #3b82f6);
+	}
+
+	.radio-label input[type='radio'] {
+		margin-top: 0.25rem;
+	}
+
+	.radio-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.radio-description {
+		font-size: 0.875rem;
+		color: var(--text-muted, #6b7280);
+	}
+
+	.conditional-input {
+		margin-top: 1rem;
+		padding-left: 2rem;
+		border-left: 3px solid var(--primary, #3b82f6);
+	}
+
+	.config-label {
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--text-primary, #1f2937);
+	}
+
+	.config-info {
+		margin-top: 0.5rem;
+		padding: 0.75rem;
+		background-color: var(--bg-tertiary, #f3f4f6);
+		border-radius: 6px;
+		font-size: 0.875rem;
+		color: var(--text-muted, #6b7280);
+	}
+
+	.error-message {
+		display: block;
+		margin-top: 0.25rem;
+		font-size: 0.875rem;
+		color: #dc2626;
+	}
+
+	input.error {
+		border-color: #dc2626;
 	}
 </style>
