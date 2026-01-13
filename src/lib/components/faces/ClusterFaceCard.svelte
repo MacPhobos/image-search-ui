@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FaceThumbnail from './FaceThumbnail.svelte';
 	import type { FaceInstance } from '$lib/api/faces';
+	import { API_BASE_URL } from '$lib/api/client';
 
 	interface Props {
 		face: FaceInstance;
@@ -18,7 +19,7 @@
 	<!-- Full image thumbnail (top section) -->
 	<div class="full-image-section">
 		<img
-			src="/api/v1/images/{face.assetId}/thumbnail"
+			src="{API_BASE_URL}/api/v1/images/{face.assetId}/thumbnail"
 			alt="Photo {face.assetId}"
 			class="full-image-thumbnail"
 			loading="lazy"
@@ -30,7 +31,7 @@
 		<!-- Zoomed face using FaceThumbnail component -->
 		<div class="face-zoom">
 			<FaceThumbnail
-				thumbnailUrl="/api/v1/images/{face.assetId}/thumbnail"
+				thumbnailUrl="{API_BASE_URL}/api/v1/images/{face.assetId}/thumbnail"
 				bbox={face.bbox}
 				size={80}
 				alt="Face from photo {face.assetId}"
