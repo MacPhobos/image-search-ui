@@ -220,16 +220,88 @@ export async function cancelTraining(sessionId: number): Promise<ControlResponse
 }
 
 /**
- * Restart training for a session.
+ * Response from restart operations with cleanup statistics.
+ */
+export interface RestartResponse {
+	session_id: number;
+	status: string;
+	message: string;
+	cleanup_stats: {
+		operation: string;
+		items_deleted: number;
+		items_reset: number;
+		items_preserved: number;
+		duration_ms: number;
+		[key: string]: unknown;
+	};
+}
+
+/**
+ * Restart training (Phase 1: CLIP embeddings)
+ * @param sessionId - Training session ID
+ * @param failedOnly - true = retry only failed jobs, false = full restart
  */
 export async function restartTraining(
 	sessionId: number,
-	failedOnly: boolean = false
-): Promise<ControlResponse> {
-	const params = failedOnly ? '?failed_only=true' : '';
-	return apiRequest<ControlResponse>(`/api/v1/training/sessions/${sessionId}/restart${params}`, {
-		method: 'POST'
-	});
+	failedOnly: boolean = true
+): Promise<RestartResponse> {
+	const params = new URLSearchParams();
+	params.set('failed_only', String(failedOnly));
+
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/training/sessions/${sessionId}/restart-training?${params}`,
+		{ method: 'POST' }
+	);
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new ApiError(error.detail || 'Restart failed', response.status, error);
+	}
+
+	return response.json();
+}
+
+/**
+ * Restart face detection (Phase 2: InsightFace)
+ * @param sessionId - Training session ID
+ * @param deletePersons - true = delete orphaned Person records
+ */
+export async function restartFaceDetection(
+	sessionId: number,
+	deletePersons: boolean = false
+): Promise<RestartResponse> {
+	const params = new URLSearchParams();
+	if (deletePersons) params.set('delete_persons', 'true');
+
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/training/sessions/${sessionId}/restart-faces?${params}`,
+		{ method: 'POST' }
+	);
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new ApiError(error.detail || 'Restart failed', response.status, error);
+	}
+
+	return response.json();
+}
+
+/**
+ * Restart clustering (Phase 3: HDBSCAN)
+ * @param sessionId - Training session ID
+ */
+export async function restartClustering(sessionId: number): Promise<RestartResponse> {
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/training/sessions/${sessionId}/restart-clustering`,
+		{ method: 'POST' }
+	);
+
+	if (!response.ok) {
+		const error = await response.json();
+		throw new ApiError(error.detail || 'Restart failed', response.status, error);
+	}
+
+	return response.json();
 }
 
 // Jobs

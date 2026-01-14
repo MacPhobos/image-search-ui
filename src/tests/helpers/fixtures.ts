@@ -484,9 +484,72 @@ export function createMultipleUnidentifiedPersons(count: number): UnifiedPersonR
 	});
 }
 
-// Training Job Fixtures
+// Training Session Fixtures
 
-import type { TrainingJob } from '$lib/types';
+import type { TrainingSession, TrainingJob } from '$lib/types';
+
+/**
+ * Create a test TrainingSession with sensible defaults
+ */
+export function createTrainingSession(overrides?: Partial<TrainingSession>): TrainingSession {
+	const id = overrides?.id ?? 1;
+
+	return {
+		id,
+		name: 'Test Training Session',
+		rootPath: '/photos',
+		status: 'completed',
+		createdAt: '2024-12-19T10:00:00Z',
+		startedAt: '2024-12-19T10:00:00Z',
+		completedAt: '2024-12-19T10:30:00Z',
+		totalImages: 100,
+		processedImages: 100,
+		failedImages: 0,
+		skippedImages: 0,
+		categoryId: null,
+		...overrides
+	} as TrainingSession;
+}
+
+/**
+ * Create a running training session
+ */
+export function createRunningSession(overrides?: Partial<TrainingSession>): TrainingSession {
+	return createTrainingSession({
+		status: 'running',
+		processedImages: 50,
+		completedAt: null,
+		...overrides
+	});
+}
+
+/**
+ * Create a failed training session
+ */
+export function createFailedSession(overrides?: Partial<TrainingSession>): TrainingSession {
+	return createTrainingSession({
+		status: 'failed',
+		processedImages: 50,
+		failedImages: 50,
+		completedAt: null,
+		...overrides
+	});
+}
+
+/**
+ * Create a pending training session
+ */
+export function createPendingSession(overrides?: Partial<TrainingSession>): TrainingSession {
+	return createTrainingSession({
+		status: 'pending',
+		processedImages: 0,
+		startedAt: null,
+		completedAt: null,
+		...overrides
+	});
+}
+
+// Training Job Fixtures
 
 /**
  * Create a test TrainingJob with sensible defaults

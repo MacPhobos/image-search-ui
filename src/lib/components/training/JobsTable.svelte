@@ -33,7 +33,7 @@
 <div class="jobs-table-container">
 	{#if loading}
 		<div class="loading">Loading jobs...</div>
-	{:else if jobs.length === 0}
+	{:else if !jobs || jobs.length === 0}
 		<div class="empty-state">No jobs found.</div>
 	{:else}
 		<div class="table-wrapper">

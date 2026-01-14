@@ -2,7 +2,14 @@
 	import { onMount, untrack } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { TrainingSession, TrainingJob } from '$lib/types';
-	import { getUnifiedProgress, listJobs } from '$lib/api/training';
+	import {
+		getUnifiedProgress,
+		listJobs,
+		restartTraining,
+		restartFaceDetection,
+		restartClustering,
+		type RestartResponse
+	} from '$lib/api/training';
 	import type { components } from '$lib/api/generated';
 	import StatusBadge from './StatusBadge.svelte';
 	import { Progress } from '$lib/components/ui/progress';
@@ -11,8 +18,10 @@
 	import TrainingControlPanel from './TrainingControlPanel.svelte';
 	import JobsTable from './JobsTable.svelte';
 	import PhaseProgressBar from './PhaseProgressBar.svelte';
+	import RestartConfirmationModal from './RestartConfirmationModal.svelte';
 
 	type UnifiedProgressResponse = components['schemas']['UnifiedProgressResponse'];
+	type RestartOperation = 'training' | 'faces' | 'clustering';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('training/SessionDetailView', {
@@ -37,7 +46,17 @@
 	let pollingInterval: ReturnType<typeof setInterval> | null = null;
 	let initialLoadDone = $state(false);
 
+	// Restart state
+	let showRestartModal = $state(false);
+	let currentRestartOperation = $state<RestartOperation | null>(null);
+	let restartProcessing = $state(false);
+	let restartMessage = $state<string | null>(null);
+	let restartError = $state<string | null>(null);
+
 	const jobsTotalPages = $derived(Math.ceil(jobsTotal / jobsPageSize));
+
+	// Show restart buttons only when session is completed or failed
+	const canRestart = $derived(session.status === 'completed' || session.status === 'failed');
 
 	async function fetchUnifiedProgress() {
 		if (loadingProgress || !session?.id) return; // Guard against concurrent calls and undefined session
@@ -91,6 +110,60 @@
 		await onSessionUpdate();
 		await fetchUnifiedProgress();
 		await fetchJobs(); // Also refresh jobs after status change
+	}
+
+	// Restart handlers
+	function openRestartModal(operation: RestartOperation) {
+		currentRestartOperation = operation;
+		showRestartModal = true;
+		restartMessage = null;
+		restartError = null;
+	}
+
+	function closeRestartModal() {
+		showRestartModal = false;
+		currentRestartOperation = null;
+	}
+
+	async function handleRestartConfirm() {
+		if (!currentRestartOperation || restartProcessing) return;
+
+		restartProcessing = true;
+		restartMessage = null;
+		restartError = null;
+
+		try {
+			let response: RestartResponse;
+
+			switch (currentRestartOperation) {
+				case 'training':
+					response = await restartTraining(session.id, true); // Default: failedOnly=true
+					break;
+				case 'faces':
+					response = await restartFaceDetection(session.id, false); // Default: deletePersons=false
+					break;
+				case 'clustering':
+					response = await restartClustering(session.id);
+					break;
+				default:
+					throw new Error(`Unknown operation: ${currentRestartOperation}`);
+			}
+
+			// Show success message
+			restartMessage = `${response.message} - Deleted: ${response.cleanup_stats.items_deleted}, Reset: ${response.cleanup_stats.items_reset}, Preserved: ${response.cleanup_stats.items_preserved}`;
+
+			// Close modal
+			closeRestartModal();
+
+			// Reload session data
+			await onSessionUpdate();
+			await fetchUnifiedProgress();
+			await fetchJobs();
+		} catch (err) {
+			restartError = err instanceof Error ? err.message : 'Restart failed';
+		} finally {
+			restartProcessing = false;
+		}
 	}
 
 	// Load initial data only once when session.id is available
@@ -221,10 +294,64 @@
 		/>
 	</section>
 
+	{#if canRestart}
+		<section class="restart-section">
+			<h2>Restart Operations</h2>
+			<p class="restart-description">
+				Restart specific phases of the training pipeline. Use these when you need to re-run
+				training, face detection, or clustering.
+			</p>
+
+			{#if restartMessage}
+				<div class="message success" role="status">
+					✓ {restartMessage}
+				</div>
+			{/if}
+
+			{#if restartError}
+				<div class="message error" role="alert">
+					✗ {restartError}
+				</div>
+			{/if}
+
+			<div class="restart-buttons">
+				<button
+					class="btn-restart"
+					onclick={() => openRestartModal('training')}
+					disabled={restartProcessing}
+				>
+					🎨 Restart Training
+				</button>
+				<button
+					class="btn-restart"
+					onclick={() => openRestartModal('faces')}
+					disabled={restartProcessing}
+				>
+					😊 Restart Face Detection
+				</button>
+				<button
+					class="btn-restart"
+					onclick={() => openRestartModal('clustering')}
+					disabled={restartProcessing}
+				>
+					🔗 Restart Clustering
+				</button>
+			</div>
+		</section>
+	{/if}
+
 	<div class="actions-footer">
 		<a href="/training" class="btn-back">← Back to Sessions</a>
 	</div>
 </div>
+
+{#if showRestartModal && currentRestartOperation}
+	<RestartConfirmationModal
+		operation={currentRestartOperation}
+		onConfirm={handleRestartConfirm}
+		onCancel={closeRestartModal}
+	/>
+{/if}
 
 <style>
 	.session-detail {
@@ -276,7 +403,8 @@
 	}
 
 	.progress-section,
-	.jobs-section {
+	.jobs-section,
+	.restart-section {
 		background-color: white;
 		border-radius: 8px;
 		padding: 1.5rem;
@@ -285,11 +413,68 @@
 	}
 
 	.progress-section h2,
-	.jobs-section h2 {
+	.jobs-section h2,
+	.restart-section h2 {
 		margin-top: 0;
 		margin-bottom: 1rem;
 		font-size: 1.25rem;
 		color: #1f2937;
+	}
+
+	.restart-description {
+		font-size: 0.875rem;
+		color: #6b7280;
+		margin-bottom: 1rem;
+	}
+
+	.restart-buttons {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.btn-restart {
+		padding: 0.625rem 1.25rem;
+		background-color: #2563eb;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.2s;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.btn-restart:hover:not(:disabled) {
+		background-color: #1d4ed8;
+	}
+
+	.btn-restart:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.message {
+		padding: 0.75rem 1rem;
+		border-radius: 6px;
+		margin-bottom: 1rem;
+		font-size: 0.875rem;
+		line-height: 1.5;
+	}
+
+	.message.success {
+		background-color: #d1fae5;
+		color: #065f46;
+		border: 1px solid #6ee7b7;
+	}
+
+	.message.error {
+		background-color: #fee2e2;
+		color: #991b1b;
+		border: 1px solid #fca5a5;
 	}
 
 	.actions-footer {
