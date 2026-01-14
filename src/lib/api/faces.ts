@@ -1421,6 +1421,7 @@ export async function getPersonAssignmentHistory(
 export interface FindMoreSuggestionsOptions {
 	prototypeCount?: number;
 	maxSuggestions?: number;
+	minConfidence?: number; // NEW: 0.3-1.0, uses system default if not provided
 }
 
 /** Response when starting a find-more suggestions job. */
@@ -1451,6 +1452,9 @@ export async function startFindMoreSuggestions(
 	}
 	if (options?.maxSuggestions !== undefined) {
 		body.maxSuggestions = options.maxSuggestions;
+	}
+	if (options?.minConfidence !== undefined) {
+		body.minConfidence = options.minConfidence;
 	}
 
 	return apiRequest<FindMoreJobResponse>(

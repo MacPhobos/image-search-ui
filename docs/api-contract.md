@@ -1181,14 +1181,16 @@ Start a background job to find additional face suggestions using dynamic prototy
 ```json
 {
 	"prototypeCount": 50,
-	"maxSuggestions": 100
+	"maxSuggestions": 100,
+	"minConfidence": 0.65
 }
 ```
 
-| Field            | Type    | Required | Default | Description                                               |
-| ---------------- | ------- | -------- | ------- | --------------------------------------------------------- |
-| `prototypeCount` | integer | No       | 50      | Number of labeled faces to sample as prototypes (10-1000) |
-| `maxSuggestions` | integer | No       | 100     | Maximum number of new suggestions to create (1-500)       |
+| Field            | Type    | Required | Default | Description                                                                         |
+| ---------------- | ------- | -------- | ------- | ----------------------------------------------------------------------------------- |
+| `prototypeCount` | integer | No       | 50      | Number of labeled faces to sample as prototypes (10-1000)                           |
+| `maxSuggestions` | integer | No       | 100     | Maximum number of new suggestions to create (1-500)                                 |
+| `minConfidence`  | float   | No       | null    | Minimum similarity threshold (0.3-1.0). Uses system default (0.70) if not provided. |
 
 **Response** `201 Created`
 
@@ -2553,6 +2555,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.16.0  | 2026-01-14 | Added optional `minConfidence` field to POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint. Allows customizing similarity threshold (0.3-1.0) for finding suggestions. Uses system default (0.70) when not provided.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking.                     |
 | 1.14.0  | 2026-01-09 | Added `path` field to FaceSuggestion schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
