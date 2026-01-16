@@ -1466,6 +1466,34 @@ export async function startFindMoreSuggestions(
 	);
 }
 
+/**
+ * Start a job to find more suggestions using centroid-based search (faster).
+ * Uses computed centroid embedding for consistent, fast face matching.
+ * @param personId - The person ID (UUID)
+ * @param options - Configuration for similarity threshold and max results
+ * @returns Promise with job information including progressKey for tracking
+ */
+export async function startFindMoreCentroidSuggestions(
+	personId: string,
+	options: {
+		minSimilarity?: number;
+		maxResults?: number;
+		unassignedOnly?: boolean;
+	} = {}
+): Promise<FindMoreJobResponse> {
+	return apiRequest<FindMoreJobResponse>(
+		`/api/v1/faces/suggestions/persons/${encodeURIComponent(personId)}/find-more-centroid`,
+		{
+			method: 'POST',
+			body: JSON.stringify({
+				minSimilarity: options.minSimilarity ?? 0.65,
+				maxResults: options.maxResults ?? 200,
+				unassignedOnly: options.unassignedOnly ?? true
+			})
+		}
+	);
+}
+
 // ============ Person Centroid API ============
 
 /** Centroid info for a person. */

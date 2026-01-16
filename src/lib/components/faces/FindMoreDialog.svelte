@@ -7,7 +7,11 @@
 	import { Progress } from '$lib/components/ui/progress';
 	import { Label } from '$lib/components/ui/label';
 	import { toast } from 'svelte-sonner';
-	import { startFindMoreSuggestions } from '$lib/api/faces';
+	import {
+		startFindMoreSuggestions,
+		startFindMoreCentroidSuggestions,
+		type FindMoreJobResponse
+	} from '$lib/api/faces';
 	import { getFaceMatchingConfig } from '$lib/api/admin';
 	import { jobProgressStore, type JobProgress } from '$lib/stores/jobProgressStore.svelte';
 	import FindMoreResultsDialog from './FindMoreResultsDialog.svelte';
@@ -45,6 +49,9 @@
 			}
 		};
 	});
+
+	// Search method selection (centroid is default/recommended)
+	let searchMethod = $state<'centroid' | 'dynamic'>('centroid');
 
 	// Prototype count options with descriptions (derived to capture reactive labeledFaceCount)
 	const PROTOTYPE_OPTIONS = $derived([
@@ -125,11 +132,23 @@
 		jobResults = null;
 
 		try {
-			const actualCount = selectedCount === -1 ? labeledFaceCount : selectedCount;
-			const response = await startFindMoreSuggestions(personId, {
-				prototypeCount: actualCount,
-				minConfidence: parseFloat(selectedThresholdStr)
-			});
+			let response: FindMoreJobResponse;
+
+			if (searchMethod === 'centroid') {
+				// Centroid-based search (faster, uses computed centroid)
+				response = await startFindMoreCentroidSuggestions(personId, {
+					minSimilarity: parseFloat(selectedThresholdStr),
+					maxResults: 200,
+					unassignedOnly: true
+				});
+			} else {
+				// Dynamic prototype search (samples random labeled faces)
+				const actualCount = selectedCount === -1 ? labeledFaceCount : selectedCount;
+				response = await startFindMoreSuggestions(personId, {
+					prototypeCount: actualCount,
+					minConfidence: parseFloat(selectedThresholdStr)
+				});
+			}
 
 			// Start tracking progress using progressKey from response
 			cleanupFn = jobProgressStore.trackJob(
@@ -220,25 +239,62 @@
 					{personName} has <strong>{labeledFaceCount}</strong> labeled faces available for sampling.
 				</div>
 
+				<!-- Search Method Selector -->
 				<div class="space-y-2">
-					<Label for="prototype-count">Number of faces to sample:</Label>
-					<Select.Root type="single" bind:value={selectedCountStr}>
-						<Select.Trigger id="prototype-count" class="w-full">
-							{selectedLabel}
+					<Label for="search-method">Search Method</Label>
+					<Select.Root type="single" bind:value={searchMethod}>
+						<Select.Trigger id="search-method" class="w-full">
+							{searchMethod === 'centroid'
+								? 'Centroid (Faster, Recommended)'
+								: 'Dynamic Prototypes (Original)'}
 						</Select.Trigger>
 						<Select.Content>
-							{#each availableOptions as option (option.value)}
-								<Select.Item value={option.value} label={option.label}>
-									{option.label} - {option.description}
-								</Select.Item>
-							{/each}
+							<Select.Item value="centroid">
+								{#snippet children()}
+									<div class="flex flex-col">
+										<span class="font-medium">Centroid (Faster, Recommended)</span>
+										<span class="text-xs text-muted-foreground"
+											>Uses computed centroid embedding for faster, more consistent results.</span
+										>
+									</div>
+								{/snippet}
+							</Select.Item>
+							<Select.Item value="dynamic">
+								{#snippet children()}
+									<div class="flex flex-col">
+										<span class="font-medium">Dynamic Prototypes (Original)</span>
+										<span class="text-xs text-muted-foreground"
+											>Samples random labeled faces. Better for diverse appearances.</span
+										>
+									</div>
+								{/snippet}
+							</Select.Item>
 						</Select.Content>
 					</Select.Root>
 				</div>
 
-				<div class="text-xs text-muted-foreground">
-					Higher counts provide better coverage but take longer to process.
-				</div>
+				<!-- Prototype count selector (only for dynamic mode) -->
+				{#if searchMethod === 'dynamic'}
+					<div class="space-y-2">
+						<Label for="prototype-count">Number of faces to sample:</Label>
+						<Select.Root type="single" bind:value={selectedCountStr}>
+							<Select.Trigger id="prototype-count" class="w-full">
+								{selectedLabel}
+							</Select.Trigger>
+							<Select.Content>
+								{#each availableOptions as option (option.value)}
+									<Select.Item value={option.value} label={option.label}>
+										{option.label} - {option.description}
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
+
+					<div class="text-xs text-muted-foreground">
+						Higher counts provide better coverage but take longer to process.
+					</div>
+				{/if}
 
 				<!-- Threshold selector -->
 				<div class="space-y-2 mt-4">

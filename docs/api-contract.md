@@ -1240,6 +1240,74 @@ Start a background job to find additional face suggestions using dynamic prototy
 - Automatically adjusts `prototypeCount` if it exceeds available labeled faces
 - Job progress can be monitored via `/api/v1/job-progress/events` endpoint
 
+#### `POST /api/v1/faces/suggestions/persons/{person_id}/find-more-centroid`
+
+Start a background job to find additional face suggestions using person centroid. Uses the person's pre-computed centroid embedding for faster and more consistent matching than dynamic prototype sampling.
+
+**Path Parameters**
+
+| Parameter   | Type   | Required | Description      |
+| ----------- | ------ | -------- | ---------------- |
+| `person_id` | string | Yes      | Person ID (UUID) |
+
+**Request Body**
+
+```json
+{
+	"minSimilarity": 0.65,
+	"maxResults": 200,
+	"unassignedOnly": true
+}
+```
+
+| Field            | Type    | Required | Default | Description                                     |
+| ---------------- | ------- | -------- | ------- | ----------------------------------------------- |
+| `minSimilarity`  | float   | No       | 0.65    | Minimum cosine similarity threshold (0.5-0.95)  |
+| `maxResults`     | integer | No       | 200     | Maximum number of suggestions to create (1-500) |
+| `unassignedOnly` | boolean | No       | true    | Only search unassigned faces                    |
+
+**Response** `201 Created`
+
+```json
+{
+	"jobId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+	"progressKey": "job:a1b2c3d4-e5f6-7890-abcd-ef1234567890:progress",
+	"status": "queued",
+	"prototypeCount": 1
+}
+```
+
+| Field            | Type    | Description                                 |
+| ---------------- | ------- | ------------------------------------------- |
+| `jobId`          | string  | Background job UUID                         |
+| `progressKey`    | string  | Redis key for tracking job progress via SSE |
+| `status`         | string  | Job status (always "queued" on creation)    |
+| `prototypeCount` | integer | Always 1 for centroid-based search          |
+
+**Response** `404 Not Found` - Person not found
+
+```json
+{
+	"detail": "Person not found"
+}
+```
+
+**Response** `422 Unprocessable Entity` - Person has no centroid
+
+```json
+{
+	"detail": "Person has no centroid. Compute centroid first using POST /api/v1/faces/centroids/persons/{person_id}/compute"
+}
+```
+
+**Notes:**
+
+- Requires person to have a pre-computed centroid (see Face Centroids section)
+- Faster than dynamic prototype sampling since centroid is pre-computed
+- More consistent results since centroid is stable (doesn't change with sampling)
+- Uses single centroid as "prototype" for similarity search
+- Job progress can be monitored via `/api/v1/job-progress/events` endpoint
+
 #### `POST /api/v1/faces/suggestions/bulk-action`
 
 Accept or reject multiple suggestions in a single request.
@@ -2885,6 +2953,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.18.0  | 2026-01-16 | Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more-centroid endpoint for centroid-based Find More job submission. Uses person's pre-computed centroid for faster and more consistent face matching than dynamic prototype sampling. Request body includes minSimilarity (0.5-0.95, default 0.65), maxResults (1-500, default 200), and unassignedOnly (boolean, default true) fields. Response follows same FindMoreJobResponse schema as prototype-based find-more. Returns 422 error if person has no centroid computed.                                                                                                                                                                                                                                                                                             |
 | 1.17.0  | 2026-01-16 | Added Face Centroids section with 4 new endpoints: POST /api/v1/faces/centroids/persons/{person_id}/compute (compute/recompute centroids with optional clustering), GET /api/v1/faces/centroids/persons/{person_id} (retrieve existing centroids), POST /api/v1/faces/centroids/persons/{person_id}/suggestions (get face suggestions using centroid similarity), DELETE /api/v1/faces/centroids/persons/{person_id} (delete all centroids for person). Added Centroid, PersonCentroidsResponse, CentroidSuggestion, and CentroidSuggestionsResponse schemas. Added INSUFFICIENT_FACES and CENTROIDS_NOT_AVAILABLE error codes (HTTP 422). Centroids provide efficient face suggestion generation by computing average embeddings of labeled faces, supporting both global (all faces) and cluster-based (subdivided) representations. |
 | 1.16.0  | 2026-01-14 | Added optional `minConfidence` field to POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint. Allows customizing similarity threshold (0.3-1.0) for finding suggestions. Uses system default (0.70) when not provided.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking.                                                                                                  |
