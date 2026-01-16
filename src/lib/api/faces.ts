@@ -1465,3 +1465,159 @@ export async function startFindMoreSuggestions(
 		}
 	);
 }
+
+// ============ Person Centroid API ============
+
+/** Centroid info for a person. */
+export interface CentroidInfo {
+	centroidId: string;
+	centroidType: 'global' | 'cluster';
+	clusterLabel: string;
+	nFaces: number;
+	modelVersion: string;
+	centroidVersion: number;
+	createdAt: string;
+	isStale: boolean;
+}
+
+/** Options for computing centroids. */
+export interface ComputeCentroidsOptions {
+	forceRebuild?: boolean;
+	enableClustering?: boolean;
+	minFaces?: number;
+}
+
+/** Response from compute centroids endpoint. */
+export interface ComputeCentroidsResponse {
+	personId: string;
+	centroids: CentroidInfo[];
+	rebuilt: boolean;
+	staleReason: string | null;
+}
+
+/** Options for centroid suggestions. */
+export interface CentroidSuggestionOptions {
+	minSimilarity?: number;
+	maxResults?: number;
+	unassignedOnly?: boolean;
+	excludePrototypes?: boolean;
+	autoRebuild?: boolean;
+}
+
+/** A single centroid suggestion. */
+export interface CentroidSuggestion {
+	faceInstanceId: string;
+	assetId: string;
+	score: number;
+	matchedCentroid: string;
+	thumbnailUrl: string | null;
+}
+
+/** Response from centroid suggestions endpoint. */
+export interface CentroidSuggestionResponse {
+	personId: string;
+	centroidsUsed: string[];
+	suggestions: CentroidSuggestion[];
+	totalFound: number;
+	rebuiltCentroids: boolean;
+}
+
+/**
+ * Compute centroids for a person.
+ * @param personId - The person ID (UUID)
+ * @param options - Configuration options
+ * @returns Promise with centroid computation results
+ */
+export async function computeCentroids(
+	personId: string,
+	options: ComputeCentroidsOptions = {}
+): Promise<ComputeCentroidsResponse> {
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/faces/centroids/persons/${encodeURIComponent(personId)}/compute`,
+		{
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				force_rebuild: options.forceRebuild ?? false,
+				enable_clustering: options.enableClustering ?? false,
+				min_faces: options.minFaces ?? 2
+			})
+		}
+	);
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+		throw new Error(error.detail || `HTTP ${response.status}`);
+	}
+	return response.json();
+}
+
+/**
+ * Get centroids for a person.
+ * @param personId - The person ID (UUID)
+ * @param includeStale - Whether to include stale centroids
+ * @returns Promise with person centroids
+ */
+export async function getCentroids(
+	personId: string,
+	includeStale: boolean = false
+): Promise<{
+	personId: string;
+	centroids: CentroidInfo[];
+	isStale: boolean;
+	staleReason: string | null;
+}> {
+	const url = new URL(
+		`${API_BASE_URL}/api/v1/faces/centroids/persons/${encodeURIComponent(personId)}`
+	);
+	if (includeStale) url.searchParams.set('include_stale', 'true');
+	const response = await fetch(url.toString());
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+	return response.json();
+}
+
+/**
+ * Get centroid-based suggestions for a person.
+ * @param personId - The person ID (UUID)
+ * @param options - Configuration options
+ * @returns Promise with suggestions
+ */
+export async function getCentroidSuggestions(
+	personId: string,
+	options: CentroidSuggestionOptions = {}
+): Promise<CentroidSuggestionResponse> {
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/faces/centroids/persons/${encodeURIComponent(personId)}/suggestions`,
+		{
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				min_similarity: options.minSimilarity ?? 0.65,
+				max_results: options.maxResults ?? 200,
+				unassigned_only: options.unassignedOnly ?? true,
+				exclude_prototypes: options.excludePrototypes ?? true,
+				auto_rebuild: options.autoRebuild ?? true
+			})
+		}
+	);
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+		throw new Error(error.detail || `HTTP ${response.status}`);
+	}
+	return response.json();
+}
+
+/**
+ * Delete centroids for a person.
+ * @param personId - The person ID (UUID)
+ * @returns Promise with deletion count
+ */
+export async function deleteCentroids(personId: string): Promise<{ deletedCount: number }> {
+	const response = await fetch(
+		`${API_BASE_URL}/api/v1/faces/centroids/persons/${encodeURIComponent(personId)}`,
+		{
+			method: 'DELETE'
+		}
+	);
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+	return response.json();
+}

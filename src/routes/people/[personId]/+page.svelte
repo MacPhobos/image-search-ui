@@ -21,6 +21,7 @@
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
 	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
 	import FindMoreDialog from '$lib/components/faces/FindMoreDialog.svelte';
+	import ComputeCentroidsDialog from '$lib/components/faces/ComputeCentroidsDialog.svelte';
 	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
@@ -83,6 +84,9 @@
 
 	// Find More dialog state
 	let showFindMoreDialog = $state(false);
+
+	// Compute Centroids dialog state
+	let showCentroidsDialog = $state(false);
 
 	// Lightbox state
 	let showLightbox = $state(false);
@@ -639,6 +643,30 @@
 						Find More Suggestions
 					</button>
 				{/if}
+				{#if person.faceCount >= 2}
+					<button
+						type="button"
+						class="secondary-button"
+						onclick={() => (showCentroidsDialog = true)}
+						title="Compute centroids for optimized face matching"
+					>
+						<svg
+							class="action-icon"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<circle cx="12" cy="12" r="3" />
+							<line x1="12" y1="2" x2="12" y2="9" />
+							<line x1="12" y1="15" x2="12" y2="22" />
+							<line x1="2" y1="12" x2="9" y2="12" />
+							<line x1="15" y1="12" x2="22" y2="12" />
+						</svg>
+						Compute Centroids
+					</button>
+				{/if}
 				<a href="/faces/persons/{person.id}/history" class="secondary-button">
 					View Assignment History
 				</a>
@@ -874,6 +902,22 @@
 		labeledFaceCount={person.faceCount}
 		onClose={() => (showFindMoreDialog = false)}
 		onComplete={handleFindMoreComplete}
+	/>
+{/if}
+
+<!-- Compute Centroids Dialog -->
+{#if showCentroidsDialog && person}
+	<ComputeCentroidsDialog
+		open={showCentroidsDialog}
+		personId={person.id}
+		personName={person.name}
+		labeledFaceCount={person.faceCount}
+		onClose={() => (showCentroidsDialog = false)}
+		onSuggestionsReady={(suggestions) => {
+			console.log('Got centroid suggestions:', suggestions);
+			toast.success(`Found ${suggestions.length} centroid-based suggestions!`);
+			showCentroidsDialog = false;
+		}}
 	/>
 {/if}
 
