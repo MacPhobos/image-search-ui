@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { FaceSuggestion } from '$lib/api/faces';
+	import type { FaceSuggestion, CentroidSuggestion } from '$lib/api/faces';
 	import SuggestionThumbnail from './SuggestionThumbnail.svelte';
-	import FindMoreDialog from './FindMoreDialog.svelte';
+	import ComputeCentroidsDialog from './ComputeCentroidsDialog.svelte';
+	import CentroidResultsDialog from './CentroidResultsDialog.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Button } from '$lib/components/ui/button';
 
@@ -37,7 +38,9 @@
 
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
-	let showFindMoreDialog = $state(false);
+	let showComputeCentroidsDialog = $state(false);
+	let showCentroidResultsDialog = $state(false);
+	let centroidSuggestions = $state<CentroidSuggestion[]>([]);
 
 	// Sort suggestions to prioritize multi-prototype matches
 	const sortedSuggestions = $derived.by(() => {
@@ -106,8 +109,16 @@
 		}
 	}
 
-	function handleFindMoreComplete() {
-		showFindMoreDialog = false;
+	function handleCentroidSuggestionsReady(suggestions: CentroidSuggestion[]) {
+		centroidSuggestions = suggestions;
+		showComputeCentroidsDialog = false;
+		if (suggestions.length > 0) {
+			showCentroidResultsDialog = true;
+		}
+	}
+
+	function handleCentroidResultsComplete() {
+		showCentroidResultsDialog = false;
 		// Notify parent to refresh suggestions
 		onFindMoreComplete?.();
 	}
@@ -137,22 +148,20 @@
 		</div>
 
 		<div class="header-actions">
-			{#if group.labeledFaceCount && group.labeledFaceCount >= 10}
+			{#if group.labeledFaceCount && group.labeledFaceCount >= 2}
 				<Button
 					variant="outline"
 					size="sm"
-					onclick={() => (showFindMoreDialog = true)}
-					title="Find more suggestions using additional prototypes"
+					onclick={() => (showComputeCentroidsDialog = true)}
+					title="Compute centroids for optimized face matching"
 				>
-					<svg
-						class="icon"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<circle cx="11" cy="11" r="8" />
-						<path d="M21 21l-4.35-4.35" />
+					<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10" />
+						<circle cx="12" cy="12" r="3" />
+						<line x1="12" y1="2" x2="12" y2="9" />
+						<line x1="12" y1="15" x2="12" y2="22" />
+						<line x1="2" y1="12" x2="9" y2="12" />
+						<line x1="15" y1="12" x2="22" y2="12" />
 					</svg>
 					Find More
 				</Button>
@@ -201,15 +210,27 @@
 	</div>
 </article>
 
-<!-- Find More Dialog -->
-{#if showFindMoreDialog && group.labeledFaceCount}
-	<FindMoreDialog
-		open={showFindMoreDialog}
+<!-- Compute Centroids Dialog -->
+{#if group.labeledFaceCount}
+	<ComputeCentroidsDialog
+		bind:open={showComputeCentroidsDialog}
 		personId={group.personId}
 		personName={group.personName || 'Unknown'}
 		labeledFaceCount={group.labeledFaceCount}
-		onClose={() => (showFindMoreDialog = false)}
-		onComplete={handleFindMoreComplete}
+		onClose={() => (showComputeCentroidsDialog = false)}
+		onSuggestionsReady={handleCentroidSuggestionsReady}
+	/>
+{/if}
+
+<!-- Centroid Results Dialog -->
+{#if group.labeledFaceCount}
+	<CentroidResultsDialog
+		bind:open={showCentroidResultsDialog}
+		suggestions={centroidSuggestions}
+		personId={group.personId}
+		personName={group.personName || 'Unknown'}
+		onClose={() => (showCentroidResultsDialog = false)}
+		onComplete={handleCentroidResultsComplete}
 	/>
 {/if}
 

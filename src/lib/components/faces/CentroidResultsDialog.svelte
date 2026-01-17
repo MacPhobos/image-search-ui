@@ -14,7 +14,7 @@
 	import SuggestionDetailModal from './SuggestionDetailModal.svelte';
 
 	interface Props {
-		open: boolean;
+		open?: boolean;
 		personId: string;
 		personName: string;
 		suggestions: CentroidSuggestion[];
@@ -22,7 +22,14 @@
 		onComplete?: () => void; // Called when suggestions are accepted to refresh person data
 	}
 
-	let { open, personId, personName, suggestions, onClose, onComplete }: Props = $props();
+	let {
+		open = $bindable(false),
+		personId,
+		personName,
+		suggestions,
+		onClose,
+		onComplete
+	}: Props = $props();
 
 	// Component tracking for modals (visibility-based)
 	const componentStack = getComponentStack();

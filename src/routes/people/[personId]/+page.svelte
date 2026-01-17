@@ -21,7 +21,6 @@
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
 	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
-	import FindMoreDialog from '$lib/components/faces/FindMoreDialog.svelte';
 	import ComputeCentroidsDialog from '$lib/components/faces/ComputeCentroidsDialog.svelte';
 	import CentroidResultsDialog from '$lib/components/faces/CentroidResultsDialog.svelte';
 	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
@@ -83,9 +82,6 @@
 	let selectedMergeTarget = $state<Person | null>(null);
 	let merging = $state(false);
 	let mergeError = $state<string | null>(null);
-
-	// Find More dialog state
-	let showFindMoreDialog = $state(false);
 
 	// Compute Centroids dialog state
 	let showCentroidsDialog = $state(false);
@@ -497,16 +493,6 @@
 			console.warn('Photo not found for prototype face:', proto.faceInstanceId);
 		}
 	}
-
-	/**
-	 * Handle completion of "Find More" job.
-	 * Shows toast notification with result.
-	 */
-	function handleFindMoreComplete() {
-		showFindMoreDialog = false;
-		// Success toast already shown by FindMoreDialog
-		// Could optionally refresh data or navigate to suggestions page
-	}
 </script>
 
 <svelte:head>
@@ -627,26 +613,6 @@
 			</div>
 
 			<div class="person-actions">
-				{#if person.faceCount >= 10}
-					<button
-						type="button"
-						class="secondary-button"
-						onclick={() => (showFindMoreDialog = true)}
-						title="Find more face suggestions using additional prototypes"
-					>
-						<svg
-							class="action-icon"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-						>
-							<circle cx="11" cy="11" r="8" />
-							<path d="M21 21l-4.35-4.35" />
-						</svg>
-						Find More Suggestions
-					</button>
-				{/if}
 				{#if person.faceCount >= 2}
 					<button
 						type="button"
@@ -897,22 +863,10 @@
 	/>
 {/if}
 
-<!-- Find More Dialog -->
-{#if showFindMoreDialog && person}
-	<FindMoreDialog
-		open={showFindMoreDialog}
-		personId={person.id}
-		personName={person.name}
-		labeledFaceCount={person.faceCount}
-		onClose={() => (showFindMoreDialog = false)}
-		onComplete={handleFindMoreComplete}
-	/>
-{/if}
-
 <!-- Compute Centroids Dialog -->
-{#if showCentroidsDialog && person}
+{#if person}
 	<ComputeCentroidsDialog
-		open={showCentroidsDialog}
+		bind:open={showCentroidsDialog}
 		personId={person.id}
 		personName={person.name}
 		labeledFaceCount={person.faceCount}
@@ -930,9 +884,9 @@
 {/if}
 
 <!-- Centroid Results Dialog -->
-{#if showCentroidResultsDialog && person}
+{#if person}
 	<CentroidResultsDialog
-		open={showCentroidResultsDialog}
+		bind:open={showCentroidResultsDialog}
 		personId={person.id}
 		personName={person.name}
 		suggestions={centroidSuggestions}

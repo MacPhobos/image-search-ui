@@ -11,7 +11,7 @@
 	} from '$lib/api/faces';
 
 	interface Props {
-		open: boolean;
+		open?: boolean;
 		personId: string;
 		personName: string;
 		labeledFaceCount: number;
@@ -20,7 +20,7 @@
 	}
 
 	let {
-		open = $bindable(),
+		open = $bindable(false),
 		personId,
 		personName,
 		labeledFaceCount,
