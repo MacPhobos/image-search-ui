@@ -28,7 +28,7 @@ describe('ClusterFaceCard', () => {
 
 		const fullImage = screen.getByAltText('Photo 456');
 		expect(fullImage).toBeInTheDocument();
-		expect(fullImage).toHaveAttribute('src', '/api/v1/images/456/thumbnail');
+		expect(fullImage).toHaveAttribute('src', 'http://localhost:8000/api/v1/images/456/thumbnail');
 	});
 
 	it('renders zoomed face using FaceThumbnail component', () => {
