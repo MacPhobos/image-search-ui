@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
@@ -27,6 +29,29 @@
 		onClose,
 		onSuggestionsReady
 	}: Props = $props();
+
+	// Component tracking for modals (visibility-based)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('ComputeCentroidsDialog', {
+					filePath: 'src/lib/components/faces/ComputeCentroidsDialog.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// Options
 	let enableClustering = $state(false);
@@ -88,7 +113,7 @@
 	}
 </script>
 
-<Dialog.Root bind:open onOpenChange={(o) => !o && handleClose()}>
+<Dialog.Root bind:open onOpenChange={(o) => !o && handleClose()} closeOnOutsideClick={false}>
 	<Dialog.Portal>
 		<Dialog.Overlay class="fixed inset-0 z-50 bg-black/50" />
 		<Dialog.Content
