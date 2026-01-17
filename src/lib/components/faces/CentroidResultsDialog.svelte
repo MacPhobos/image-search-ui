@@ -164,7 +164,7 @@
 		if (!isOpen) onClose();
 	}}
 >
-	<Dialog.Content class="w-[90vw] h-[90vh] max-w-none overflow-hidden flex flex-col">
+	<Dialog.Content class="!w-[90vw] !max-w-[90vw] h-[90vh] overflow-hidden flex flex-col">
 		<Dialog.Header>
 			<Dialog.Title>Centroid Suggestions for {personName}</Dialog.Title>
 			<Dialog.Description>
