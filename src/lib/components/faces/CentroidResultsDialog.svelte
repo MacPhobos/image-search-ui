@@ -164,7 +164,7 @@
 		if (!isOpen) onClose();
 	}}
 >
-	<Dialog.Content class="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+	<Dialog.Content class="w-[90vw] h-[90vh] max-w-none overflow-hidden flex flex-col">
 		<Dialog.Header>
 			<Dialog.Title>Centroid Suggestions for {personName}</Dialog.Title>
 			<Dialog.Description>
@@ -220,7 +220,9 @@
 				</div>
 
 				<!-- Suggestion Grid -->
-				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+				<div
+					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
+				>
 					{#each sortedSuggestions as suggestion (suggestion.faceInstanceId)}
 						{@const isSelected = selectedIds.has(suggestion.faceInstanceId)}
 						{@const isProcessing = processingIds.has(suggestion.faceInstanceId)}
@@ -239,7 +241,7 @@
 							<!-- Thumbnail -->
 							<button
 								type="button"
-								class="relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all {isSelected
+								class="relative w-full aspect-square min-h-[160px] rounded-lg overflow-hidden border-2 transition-all {isSelected
 									? 'border-blue-500 shadow-lg'
 									: 'border-transparent hover:border-blue-300'} {isProcessing ? 'opacity-50' : ''}"
 								onclick={() => handleSelect(suggestion.faceInstanceId, !isSelected)}
@@ -261,7 +263,7 @@
 
 								<!-- Score Badge -->
 								<div
-									class="absolute bottom-2 right-2 px-2 py-1 bg-black/70 text-white text-xs rounded-md font-medium"
+									class="absolute bottom-2 right-2 px-2.5 py-1 bg-black/70 text-white text-sm rounded-md font-medium"
 								>
 									{formatScore(suggestion.score)}
 								</div>
