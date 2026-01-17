@@ -113,11 +113,12 @@
 	}
 </script>
 
-<Dialog.Root bind:open onOpenChange={(o) => !o && handleClose()} closeOnOutsideClick={false}>
+<Dialog.Root bind:open onOpenChange={(o) => !o && handleClose()}>
 	<Dialog.Portal>
 		<Dialog.Overlay class="fixed inset-0 z-50 bg-black/50" />
 		<Dialog.Content
 			class="fixed left-1/2 top-1/2 z-50 w-[500px] max-h-[80vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
+			onInteractOutside={(e) => e.preventDefault()}
 		>
 			<Dialog.Header>
 				<Dialog.Title class="mb-4 text-lg font-semibold">
