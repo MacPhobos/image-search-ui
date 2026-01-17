@@ -380,21 +380,15 @@
 	onAccept={handleDetailAccept}
 	onReject={handleDetailReject}
 	onFaceAssigned={() => {
-		// Refresh suggestions after a face is assigned from detail modal
-		if (onComplete) {
-			onComplete();
-		}
+		// Face was assigned - the detail modal handles closing itself
+		// Don't call onComplete() here as it would close the parent CentroidResultsDialog
 	}}
 	onPrototypePinned={() => {
-		// Refresh suggestions after a prototype is pinned
-		if (onComplete) {
-			onComplete();
-		}
+		// Prototype was pinned - the detail modal handles closing itself
+		// Don't call onComplete() here as it would close the parent CentroidResultsDialog
 	}}
 	onFaceUnassigned={() => {
-		// Face was unassigned - refresh suggestions
-		if (onComplete) {
-			onComplete();
-		}
+		// Face was unassigned - the detail modal handles closing itself
+		// Don't call onComplete() here as it would close the parent CentroidResultsDialog
 	}}
 />
