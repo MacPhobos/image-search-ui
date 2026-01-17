@@ -5,7 +5,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { toast } from 'svelte-sonner';
-	import { toAbsoluteUrl, assignFaceToPerson, type CentroidSuggestion } from '$lib/api/faces';
+	import {
+		toAbsoluteUrl,
+		assignFaceToPerson,
+		type CentroidSuggestion,
+		type FaceSuggestion
+	} from '$lib/api/faces';
+	import SuggestionDetailModal from './SuggestionDetailModal.svelte';
 
 	interface Props {
 		open: boolean;
@@ -44,6 +50,9 @@
 	let selectedIds = $state<Set<string>>(new Set());
 	let processingIds = $state<Set<string>>(new Set());
 	let error = $state<string | null>(null);
+
+	// Detail modal state
+	let selectedSuggestionForDetail = $state<FaceSuggestion | null>(null);
 
 	// Sort suggestions by score (highest first)
 	const sortedSuggestions = $derived.by(() => {
@@ -156,6 +165,65 @@
 	function formatScore(score: number): string {
 		return (score * 100).toFixed(1) + '%';
 	}
+
+	/**
+	 * Convert CentroidSuggestion to FaceSuggestion for the detail modal.
+	 * Creates a synthetic FaceSuggestion with the necessary fields.
+	 */
+	function adaptCentroidToFaceSuggestion(centroid: CentroidSuggestion): FaceSuggestion {
+		return {
+			id: 0, // Not relevant for display-only modal
+			faceInstanceId: centroid.faceInstanceId,
+			suggestedPersonId: personId,
+			confidence: centroid.score,
+			sourceFaceId: centroid.faceInstanceId,
+			status: 'pending',
+			createdAt: new Date().toISOString(),
+			reviewedAt: null,
+			faceThumbnailUrl: centroid.thumbnailUrl,
+			personName: personName,
+			fullImageUrl: `/api/v1/images/${centroid.assetId}/full`,
+			path: '', // Not available in CentroidSuggestion
+			bboxX: null,
+			bboxY: null,
+			bboxW: null,
+			bboxH: null,
+			detectionConfidence: null,
+			qualityScore: null
+		};
+	}
+
+	/**
+	 * Open the detail modal for a centroid suggestion.
+	 */
+	function handleThumbnailClick(centroid: CentroidSuggestion) {
+		selectedSuggestionForDetail = adaptCentroidToFaceSuggestion(centroid);
+	}
+
+	/**
+	 * Handle accepting the primary suggestion from the detail modal.
+	 */
+	async function handleDetailAccept(suggestion: FaceSuggestion) {
+		// Accept the suggestion via assignment
+		await acceptSuggestions([suggestion.faceInstanceId]);
+	}
+
+	/**
+	 * Handle rejecting the primary suggestion from the detail modal.
+	 */
+	async function handleDetailReject() {
+		// For centroid suggestions, "reject" means just removing from the list
+		// We don't have a reject endpoint for centroid suggestions
+		toast.info('Suggestion removed from list');
+		selectedSuggestionForDetail = null;
+	}
+
+	/**
+	 * Close the detail modal.
+	 */
+	function handleDetailClose() {
+		selectedSuggestionForDetail = null;
+	}
 </script>
 
 <Dialog.Root
@@ -238,14 +306,15 @@
 								/>
 							</div>
 
-							<!-- Thumbnail -->
+							<!-- Thumbnail - Click to open detail modal -->
 							<button
 								type="button"
 								class="relative w-full aspect-square min-h-[160px] rounded-lg overflow-hidden border-2 transition-all {isSelected
 									? 'border-blue-500 shadow-lg'
 									: 'border-transparent hover:border-blue-300'} {isProcessing ? 'opacity-50' : ''}"
-								onclick={() => handleSelect(suggestion.faceInstanceId, !isSelected)}
+								onclick={() => handleThumbnailClick(suggestion)}
 								disabled={isProcessing}
+								aria-label="View face details"
 							>
 								{#if suggestion.thumbnailUrl}
 									<img
@@ -293,3 +362,29 @@
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
+
+<!-- Detail Modal (stacked on top of centroid dialog) -->
+<SuggestionDetailModal
+	suggestion={selectedSuggestionForDetail}
+	onClose={handleDetailClose}
+	onAccept={handleDetailAccept}
+	onReject={handleDetailReject}
+	onFaceAssigned={() => {
+		// Refresh suggestions after a face is assigned from detail modal
+		if (onComplete) {
+			onComplete();
+		}
+	}}
+	onPrototypePinned={() => {
+		// Refresh suggestions after a prototype is pinned
+		if (onComplete) {
+			onComplete();
+		}
+	}}
+	onFaceUnassigned={() => {
+		// Face was unassigned - refresh suggestions
+		if (onComplete) {
+			onComplete();
+		}
+	}}
+/>
