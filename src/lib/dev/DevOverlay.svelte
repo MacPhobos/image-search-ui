@@ -19,7 +19,7 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { viewIdBreadcrumb } from './viewId';
-	import { getComponentStack, formatComponentPath, type ComponentInfo } from './componentRegistry.svelte';
+	import { getComponentStack } from './componentRegistry.svelte';
 	import ComponentTree from './ComponentTree.svelte';
 	import { tid } from '$lib/testing/testid';
 
@@ -44,7 +44,8 @@
 	let hasParams = $derived(Object.keys(params).length > 0);
 
 	// Component tracking - derive from the reactive stack
-	let componentStack = $derived(stack?.components ?? []);
+	// Filter out undefined components that can appear during cleanup
+	let componentStack = $derived((stack?.components ?? []).filter(Boolean));
 	let componentPath = $derived(
 		componentStack.length > 0 ? componentStack.map((c) => c.name).join(' → ') : ''
 	);
@@ -187,7 +188,8 @@
 								: 'Show component details'}
 							data-testid={tid('dev-overlay', 'btn-components-toggle')}
 						>
-							{showComponentDetails ? '▼' : '▶'} {componentStack.length}
+							{showComponentDetails ? '▼' : '▶'}
+							{componentStack.length}
 						</button>
 					</div>
 
