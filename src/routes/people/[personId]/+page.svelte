@@ -13,7 +13,8 @@
 		deletePrototype,
 		regenerateSuggestions,
 		updatePerson,
-		toAbsoluteUrl
+		toAbsoluteUrl,
+		type CentroidSuggestion
 	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
@@ -22,6 +23,7 @@
 	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
 	import FindMoreDialog from '$lib/components/faces/FindMoreDialog.svelte';
 	import ComputeCentroidsDialog from '$lib/components/faces/ComputeCentroidsDialog.svelte';
+	import CentroidResultsDialog from '$lib/components/faces/CentroidResultsDialog.svelte';
 	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
@@ -87,6 +89,8 @@
 
 	// Compute Centroids dialog state
 	let showCentroidsDialog = $state(false);
+	let centroidSuggestions = $state<CentroidSuggestion[]>([]);
+	let showCentroidResultsDialog = $state(false);
 
 	// Lightbox state
 	let showLightbox = $state(false);
@@ -914,9 +918,28 @@
 		labeledFaceCount={person.faceCount}
 		onClose={() => (showCentroidsDialog = false)}
 		onSuggestionsReady={(suggestions) => {
-			console.log('Got centroid suggestions:', suggestions);
-			toast.success(`Found ${suggestions.length} centroid-based suggestions!`);
+			centroidSuggestions = suggestions;
 			showCentroidsDialog = false;
+			if (suggestions.length > 0) {
+				showCentroidResultsDialog = true;
+			} else {
+				toast.info('No centroid suggestions found');
+			}
+		}}
+	/>
+{/if}
+
+<!-- Centroid Results Dialog -->
+{#if showCentroidResultsDialog && person}
+	<CentroidResultsDialog
+		open={showCentroidResultsDialog}
+		personId={person.id}
+		personName={person.name}
+		suggestions={centroidSuggestions}
+		onClose={() => (showCentroidResultsDialog = false)}
+		onComplete={() => {
+			// Reload person data to update face count
+			loadPerson();
 		}}
 	/>
 {/if}
