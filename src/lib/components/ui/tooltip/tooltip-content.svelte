@@ -1,4 +1,5 @@
 <script lang="ts">
+	/* eslint-disable svelte/valid-compile */
 	import { Tooltip as TooltipPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils.js';
 	import TooltipPortal from './tooltip-portal.svelte';

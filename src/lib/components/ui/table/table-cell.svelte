@@ -1,4 +1,5 @@
 <script lang="ts">
+	/* eslint-disable svelte/valid-compile */
 	import { cn, type WithElementRef } from '$lib/utils.js';
 	import type { HTMLTdAttributes } from 'svelte/elements';
 

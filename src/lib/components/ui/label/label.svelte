@@ -1,4 +1,5 @@
 <script lang="ts">
+	/* eslint-disable svelte/valid-compile */
 	import { Label as LabelPrimitive } from 'bits-ui';
 	import { cn } from '$lib/utils.js';
 

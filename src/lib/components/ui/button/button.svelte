@@ -42,6 +42,7 @@
 </script>
 
 <script lang="ts">
+	/* eslint-disable svelte/valid-compile */
 	let {
 		class: className,
 		variant = 'default',

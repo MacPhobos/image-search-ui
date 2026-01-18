@@ -26,6 +26,7 @@
 </script>
 
 <script lang="ts">
+	/* eslint-disable svelte/valid-compile */
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
 	import { cn, type WithElementRef } from '$lib/utils.js';
 
