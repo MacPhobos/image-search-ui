@@ -2,6 +2,7 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
+	import { ModeWatcher } from 'mode-watcher';
 	import { checkHealth } from '$lib/api/client';
 	import { tid } from '$lib/testing/testid';
 	import { setViewId } from '$lib/dev/viewId';
@@ -47,6 +48,7 @@
 	}
 </script>
 
+<ModeWatcher />
 <Tooltip.Provider>
 	<div class="app" data-testid={tid('layout', 'root')}>
 		<header data-testid={tid('layout', 'header')}>
