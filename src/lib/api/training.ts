@@ -53,6 +53,21 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 	}
 }
 
+// Directory Preview Types
+
+export interface DirectoryImageInfo {
+	filename: string;
+	full_path: string;
+	size_bytes: number;
+	modified_at: string;
+}
+
+export interface DirectoryPreviewResponse {
+	directory: string;
+	image_count: number;
+	images: DirectoryImageInfo[];
+}
+
 // Session CRUD
 
 /**
@@ -150,6 +165,25 @@ export async function listDirectories(
 	});
 	// API returns array directly, not wrapped in an object
 	return apiRequest<SubdirectoryInfo[]>(`/api/v1/training/directories?${params.toString()}`);
+}
+
+/**
+ * Preview images in a directory before ingestion.
+ * Does NOT create database records.
+ *
+ * @param directoryPath - Directory path to preview
+ * @returns List of images with preview thumbnail URLs
+ */
+export async function previewDirectoryImages(
+	directoryPath: string
+): Promise<DirectoryPreviewResponse> {
+	const params = new URLSearchParams({
+		path: directoryPath.trim()
+	});
+
+	return apiRequest<DirectoryPreviewResponse>(
+		`/api/v1/training/directories/preview?${params.toString()}`
+	);
 }
 
 // Session subdirectories

@@ -6,6 +6,7 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label';
+	import DirectoryImagePreviewModal from './DirectoryImagePreviewModal.svelte';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('training/DirectoryBrowser', {
@@ -36,6 +37,10 @@
 	let error = $state<string | null>(null);
 	let filterText = $state('');
 	let hideTrainedDirs = $state(false);
+
+	// Image preview modal state
+	let previewOpen = $state(false);
+	let previewPath = $state('');
 
 	// Filtered subdirectories based on filter text and training status
 	let filteredSubdirs = $derived.by(() => {
@@ -115,6 +120,11 @@
 
 		return date.toLocaleDateString();
 	}
+
+	function showPreview(path: string) {
+		previewPath = path;
+		previewOpen = true;
+	}
 </script>
 
 <div class="directory-browser">
@@ -192,6 +202,18 @@
 						<div class="subdir-header">
 							<span class="subdir-path">{subdir.path}</span>
 
+							<div class="subdir-actions">
+								<button
+									type="button"
+									class="btn-preview"
+									onclick={() => showPreview(subdir.path)}
+									title="Show images in this directory"
+									aria-label="Show images in {subdir.path}"
+								>
+									🖼️ Show Images
+								</button>
+							</div>
+
 							{#if subdir.trainingStatus === 'in_progress'}
 								<span class="training-badge in-progress" aria-label="Training in progress">
 									<svg class="spinner-icon" viewBox="0 0 24 24" fill="none">
@@ -248,6 +270,12 @@
 		</div>
 	{/if}
 </div>
+
+<DirectoryImagePreviewModal
+	bind:open={previewOpen}
+	directoryPath={previewPath}
+	onClose={() => (previewOpen = false)}
+/>
 
 <style>
 	.directory-browser {
@@ -403,6 +431,34 @@
 		align-items: center;
 		gap: 8px;
 		justify-content: space-between;
+		flex-wrap: wrap;
+	}
+
+	.subdir-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.btn-preview {
+		padding: 0.25rem 0.5rem;
+		background-color: #f3f4f6;
+		color: #374151;
+		border: 1px solid #d1d5db;
+		border-radius: 4px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.btn-preview:hover {
+		background-color: #e5e7eb;
+		border-color: #9ca3af;
+	}
+
+	.btn-preview:active {
+		transform: scale(0.98);
 	}
 
 	.subdir-path {
