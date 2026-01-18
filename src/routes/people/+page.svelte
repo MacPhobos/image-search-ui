@@ -12,6 +12,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Input } from '$lib/components/ui/input';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
 	// Component tracking (DEV only)
@@ -29,6 +30,10 @@
 	let showUnidentified = $state(false);
 	let showNoise = $state(false);
 
+	// Search state
+	let searchQuery = $state('');
+	let normalizedQuery = $derived(searchQuery.trim().toLowerCase());
+
 	// Select component values (bits-ui v2 uses simple strings with bind:value)
 	let sortBySelection = $state<string>('faceCount');
 	let sortOrderSelection = $state<string>('desc');
@@ -42,13 +47,38 @@
 		sortBySelection === 'faceCount' ? 'Face Count' : sortBySelection === 'name' ? 'Name' : 'Sort by'
 	);
 	let sortOrderLabel = $derived(
-		sortOrderSelection === 'desc' ? 'Descending' : sortOrderSelection === 'asc' ? 'Ascending' : 'Sort order'
+		sortOrderSelection === 'desc'
+			? 'Descending'
+			: sortOrderSelection === 'asc'
+				? 'Ascending'
+				: 'Sort order'
 	);
 
-	// Derived - filter people by type
-	let identifiedPeople = $derived(data?.people.filter((p) => p.type === 'identified') ?? []);
-	let unidentifiedPeople = $derived(data?.people.filter((p) => p.type === 'unidentified') ?? []);
-	let noisePeople = $derived(data?.people.filter((p) => p.type === 'noise') ?? []);
+	/**
+	 * Check if a person matches the current search query.
+	 */
+	function matchesSearch(person: UnifiedPersonResponse): boolean {
+		if (!normalizedQuery) return true;
+		return person.name.toLowerCase().includes(normalizedQuery);
+	}
+
+	// Derived - filter people by type AND search query
+	let identifiedPeople = $derived(
+		data?.people.filter((p) => p.type === 'identified' && matchesSearch(p)) ?? []
+	);
+	let unidentifiedPeople = $derived(
+		data?.people.filter((p) => p.type === 'unidentified' && matchesSearch(p)) ?? []
+	);
+	let noisePeople = $derived(
+		data?.people.filter((p) => p.type === 'noise' && matchesSearch(p)) ?? []
+	);
+
+	// Check if any results match the search
+	let hasSearchResults = $derived(
+		normalizedQuery
+			? identifiedPeople.length > 0 || unidentifiedPeople.length > 0 || noisePeople.length > 0
+			: true
+	);
 
 	async function loadPeople() {
 		loading = true;
@@ -180,6 +210,45 @@
 
 	<!-- Filters -->
 	<section class="filters-bar">
+		<!-- Search Input -->
+		<div class="search-container">
+			<Label for="search-people" class="sr-only">Search by name</Label>
+			<div class="search-input-wrapper">
+				<Input
+					id="search-people"
+					type="text"
+					placeholder="Search by name..."
+					bind:value={searchQuery}
+					class="w-full pr-8"
+				/>
+				{#if searchQuery}
+					<button
+						type="button"
+						class="search-clear-btn"
+						onclick={() => (searchQuery = '')}
+						aria-label="Clear search"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<line x1="18" y1="6" x2="6" y2="18" />
+							<line x1="6" y1="6" x2="18" y2="18" />
+						</svg>
+					</button>
+				{/if}
+			</div>
+		</div>
+
+		<Separator orientation="vertical" class="h-8" />
+
 		<div class="filter-group">
 			<div class="flex items-center space-x-2">
 				<Checkbox id="show-identified" bind:checked={showIdentified} />
@@ -264,6 +333,25 @@
 				<h2>No people found</h2>
 				<p>Upload images with faces to get started.</p>
 				<a href="/faces/sessions" class="action-link">Start Face Detection</a>
+			</div>
+		{:else if !hasSearchResults}
+			<!-- Empty search results state -->
+			<div class="empty-state">
+				<svg
+					class="empty-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<circle cx="11" cy="11" r="8" />
+					<path d="m21 21-4.35-4.35" />
+				</svg>
+				<h2>No people found matching "{searchQuery}"</h2>
+				<p>Try a different search term or clear the search to see all people.</p>
+				<button type="button" class="retry-button" onclick={() => (searchQuery = '')}>
+					Clear Search
+				</button>
 			</div>
 		{:else}
 			<!-- Identified People Section -->
@@ -416,31 +504,47 @@
 		align-items: center;
 	}
 
+	.search-container {
+		flex: 1;
+		min-width: 200px;
+		max-width: 400px;
+	}
+
+	.search-input-wrapper {
+		position: relative;
+	}
+
+	.search-clear-btn {
+		position: absolute;
+		right: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+		padding: 4px;
+		background: transparent;
+		border: none;
+		color: #999;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 4px;
+		transition: all 0.2s;
+	}
+
+	.search-clear-btn:hover {
+		color: #333;
+		background: #f5f5f5;
+	}
+
+	.search-clear-btn:focus-visible {
+		outline: 2px solid #4a90e2;
+		outline-offset: 2px;
+	}
+
 	.filter-group {
 		display: flex;
 		gap: 1rem;
 		flex-wrap: wrap;
-	}
-
-	.checkbox-label {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		cursor: pointer;
-		font-size: 0.95rem;
-		color: #333;
-	}
-
-	.checkbox-label input[type='checkbox'] {
-		cursor: pointer;
-		width: 16px;
-		height: 16px;
-	}
-
-	.divider {
-		width: 1px;
-		height: 24px;
-		background-color: #e0e0e0;
 	}
 
 	.sort-controls {
@@ -449,49 +553,9 @@
 		align-items: center;
 	}
 
-	.sort-label {
-		font-size: 0.875rem;
-		color: #666;
-	}
-
-	.sort-select {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #ddd;
-		border-radius: 6px;
-		font-size: 0.95rem;
-		background-color: white;
-		cursor: pointer;
-	}
-
 	/* Content */
 	.content {
 		min-height: 400px;
-	}
-
-	/* Loading state */
-	.loading-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 4rem 2rem;
-		color: #666;
-	}
-
-	.spinner {
-		width: 40px;
-		height: 40px;
-		border: 3px solid #f0f0f0;
-		border-top-color: #4a90e2;
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin-bottom: 1rem;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	/* Error state */
@@ -623,10 +687,6 @@
 		.filters-bar {
 			flex-direction: column;
 			align-items: stretch;
-		}
-
-		.divider {
-			display: none;
 		}
 
 		.people-grid {
