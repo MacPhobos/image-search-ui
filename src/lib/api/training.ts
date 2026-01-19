@@ -408,3 +408,59 @@ export function getThumbnailUrl(assetId: number): string {
 export function getFullImageUrl(assetId: number): string {
 	return `${API_BASE_URL}/api/v1/images/${assetId}/full`;
 }
+
+// Ignored Directory Types
+
+export interface IgnoreDirectoryRequest {
+	path: string;
+	reason?: string;
+}
+
+export interface IgnoreDirectoryResponse {
+	status: string;
+	path: string;
+	ignoredAt?: string;
+}
+
+export interface IgnoredDirectoryInfo {
+	path: string;
+	reason?: string;
+	ignoredAt: string;
+	ignoredBy?: string;
+}
+
+export interface IgnoredDirectoriesResponse {
+	directories: IgnoredDirectoryInfo[];
+}
+
+// Ignored Directory API Functions
+
+/**
+ * Mark a directory as ignored for training.
+ */
+export async function ignoreDirectory(
+	path: string,
+	reason?: string
+): Promise<IgnoreDirectoryResponse> {
+	return apiRequest<IgnoreDirectoryResponse>('/api/v1/training/directories/ignore', {
+		method: 'POST',
+		body: JSON.stringify({ path: path.trim(), reason })
+	});
+}
+
+/**
+ * Remove ignored status from a directory.
+ */
+export async function unignoreDirectory(path: string): Promise<IgnoreDirectoryResponse> {
+	return apiRequest<IgnoreDirectoryResponse>('/api/v1/training/directories/ignore', {
+		method: 'DELETE',
+		body: JSON.stringify({ path: path.trim() })
+	});
+}
+
+/**
+ * Get list of all ignored directories.
+ */
+export async function getIgnoredDirectories(): Promise<IgnoredDirectoriesResponse> {
+	return apiRequest<IgnoredDirectoriesResponse>('/api/v1/training/directories/ignored');
+}

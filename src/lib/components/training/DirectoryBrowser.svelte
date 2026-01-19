@@ -2,7 +2,12 @@
 	import { onMount } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import type { SubdirectoryInfo } from '$lib/types';
-	import { listDirectories } from '$lib/api/training';
+	import {
+		listDirectories,
+		getIgnoredDirectories,
+		ignoreDirectory,
+		unignoreDirectory
+	} from '$lib/api/training';
 	import { Switch } from '$lib/components/ui/switch';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Label } from '$lib/components/ui/label';
@@ -42,7 +47,12 @@
 	let previewOpen = $state(false);
 	let previewPath = $state('');
 
-	// Filtered subdirectories based on filter text and training status
+	// Ignored directories state
+	let showIgnored = $state(false);
+	let ignoredPaths = $state<Set<string>>(new Set());
+	let loadingIgnore = $state<string | null>(null);
+
+	// Filtered subdirectories based on filter text, training status, and ignored status
 	let filteredSubdirs = $derived.by(() => {
 		let results = subdirs;
 
@@ -54,6 +64,11 @@
 		// Training status filter (hide FULLY trained only, show partial and in_progress)
 		if (hideTrainedDirs) {
 			results = results.filter((d) => d.trainingStatus !== 'complete');
+		}
+
+		// Ignored status filter
+		if (!showIgnored) {
+			results = results.filter((d) => !ignoredPaths.has(d.path));
 		}
 
 		return results;
@@ -125,6 +140,44 @@
 		previewPath = path;
 		previewOpen = true;
 	}
+
+	async function loadIgnoredDirectories() {
+		try {
+			const response = await getIgnoredDirectories();
+			ignoredPaths = new Set(response.directories.map((d) => d.path));
+		} catch (err) {
+			console.error('Failed to load ignored directories:', err);
+		}
+	}
+
+	async function toggleIgnore(path: string) {
+		loadingIgnore = path;
+		try {
+			if (ignoredPaths.has(path)) {
+				await unignoreDirectory(path);
+				ignoredPaths.delete(path);
+				ignoredPaths = new Set(ignoredPaths); // Trigger reactivity
+			} else {
+				await ignoreDirectory(path);
+				ignoredPaths.add(path);
+				ignoredPaths = new Set(ignoredPaths); // Trigger reactivity
+			}
+		} catch (err) {
+			console.error('Failed to toggle ignore:', err);
+			error = err instanceof Error ? err.message : 'Failed to update ignore status';
+		} finally {
+			loadingIgnore = null;
+		}
+	}
+
+	function isIgnored(path: string): boolean {
+		return ignoredPaths.has(path);
+	}
+
+	// Load ignored directories on mount
+	onMount(() => {
+		loadIgnoredDirectories();
+	});
 </script>
 
 <div class="directory-browser">
@@ -164,11 +217,20 @@
 				<Label for="hide-trained">Hide fully trained directories</Label>
 			</div>
 
-			{#if filterText || hideTrainedDirs}
+			<!-- Show ignored switch -->
+			<div class="switch-filter">
+				<Switch bind:checked={showIgnored} id="show-ignored" />
+				<Label for="show-ignored">Show ignored directories ({ignoredPaths.size})</Label>
+			</div>
+
+			{#if filterText || hideTrainedDirs || !showIgnored}
 				<div class="filter-count">
 					Showing {filteredSubdirs.length} of {subdirs.length} directories
 					{#if hideTrainedDirs && fullyTrainedCount > 0}
-						({fullyTrainedCount} hidden)
+						({fullyTrainedCount} fully trained hidden)
+					{/if}
+					{#if !showIgnored && ignoredPaths.size > 0}
+						({ignoredPaths.size} ignored hidden)
 					{/if}
 				</div>
 			{/if}
@@ -193,6 +255,7 @@
 					class:fully-trained={subdir.trainingStatus === 'complete'}
 					class:partially-trained={subdir.trainingStatus === 'partial'}
 					class:in-progress={subdir.trainingStatus === 'in_progress'}
+					class:ignored={isIgnored(subdir.path)}
 				>
 					<Checkbox
 						checked={safeSelectedSubdirs.includes(subdir.path)}
@@ -211,6 +274,29 @@
 									aria-label="Show images in {subdir.path}"
 								>
 									🖼️ Show Images
+								</button>
+
+								<button
+									type="button"
+									class="btn-ignore"
+									class:ignored={isIgnored(subdir.path)}
+									onclick={(e) => {
+										e.preventDefault();
+										toggleIgnore(subdir.path);
+									}}
+									disabled={loadingIgnore === subdir.path}
+									title={isIgnored(subdir.path) ? 'Restore directory' : 'Ignore directory'}
+									aria-label={isIgnored(subdir.path)
+										? `Restore ${subdir.path}`
+										: `Ignore ${subdir.path}`}
+								>
+									{#if loadingIgnore === subdir.path}
+										⏳
+									{:else if isIgnored(subdir.path)}
+										✓ Restore
+									{:else}
+										🚫 Ignore
+									{/if}
 								</button>
 							</div>
 
@@ -550,5 +636,54 @@
 		font-size: 0.875rem;
 		text-align: center;
 		font-weight: 500;
+	}
+
+	/* Ignore functionality styles */
+	.btn-ignore {
+		padding: 0.25rem 0.5rem;
+		background-color: #fef2f2;
+		color: #991b1b;
+		border: 1px solid #fecaca;
+		border-radius: 4px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.btn-ignore:hover:not(:disabled) {
+		background-color: #fee2e2;
+		border-color: #fca5a5;
+	}
+
+	.btn-ignore.ignored {
+		background-color: #f0fdf4;
+		color: #166534;
+		border-color: #bbf7d0;
+	}
+
+	.btn-ignore.ignored:hover:not(:disabled) {
+		background-color: #dcfce7;
+		border-color: #86efac;
+	}
+
+	.btn-ignore:disabled {
+		opacity: 0.5;
+		cursor: wait;
+	}
+
+	.btn-ignore:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	.subdir-item.ignored {
+		opacity: 0.5;
+		background-color: #f9fafb;
+	}
+
+	.subdir-item.ignored .subdir-path {
+		color: #9ca3af;
+		text-decoration: line-through;
 	}
 </style>
