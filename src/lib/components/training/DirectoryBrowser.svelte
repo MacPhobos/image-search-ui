@@ -36,7 +36,7 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let filterText = $state('');
-	let hideTrainedDirs = $state(false);
+	let hideTrainedDirs = $state(true);
 
 	// Image preview modal state
 	let previewOpen = $state(false);
