@@ -53,18 +53,18 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 	}
 }
 
-// Directory Preview Types
+// Directory Preview Types (camelCase matches API JSON response)
 
 export interface DirectoryImageInfo {
 	filename: string;
-	full_path: string;
-	size_bytes: number;
-	modified_at: string;
+	fullPath: string;
+	sizeBytes: number;
+	modifiedAt: string;
 }
 
 export interface DirectoryPreviewResponse {
 	directory: string;
-	image_count: number;
+	imageCount: number;
 	images: DirectoryImageInfo[];
 }
 

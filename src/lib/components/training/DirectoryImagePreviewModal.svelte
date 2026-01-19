@@ -88,7 +88,7 @@
 			const data = await previewDirectoryImages(directoryPath);
 			images = data.images;
 			directoryName = data.directory.split('/').pop() || data.directory;
-			imageCount = data.image_count;
+			imageCount = data.imageCount;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load images';
 			images = [];
@@ -164,7 +164,7 @@
 								{#each item.images as image (image.filename)}
 									<div class="thumbnail-card" style="width: {THUMBNAIL_SIZE}px;">
 										<img
-											src={getPreviewThumbnailUrl(image.full_path)}
+											src={getPreviewThumbnailUrl(image.fullPath)}
 											alt={image.filename}
 											loading="lazy"
 											class="thumbnail-image"
