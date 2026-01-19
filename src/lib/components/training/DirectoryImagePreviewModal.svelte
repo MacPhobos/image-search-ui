@@ -3,19 +3,11 @@
 	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import VirtualList from '$lib/components/ui/VirtualList.svelte';
-
-	interface DirectoryImageInfo {
-		filename: string;
-		full_path: string;
-		size_bytes: number;
-		modified_at: string;
-	}
-
-	interface DirectoryPreviewResponse {
-		directory: string;
-		image_count: number;
-		images: DirectoryImageInfo[];
-	}
+	import {
+		previewDirectoryImages,
+		getPreviewThumbnailUrl,
+		type DirectoryImageInfo
+	} from '$lib/api/training';
 
 	interface Props {
 		open?: boolean;
@@ -93,18 +85,7 @@
 		error = null;
 
 		try {
-			const params = new URLSearchParams({
-				path: directoryPath.trim()
-			});
-
-			const response = await fetch(`/api/v1/training/directories/preview?${params.toString()}`);
-
-			if (!response.ok) {
-				const errorData = await response.json().catch(() => null);
-				throw new Error(errorData?.detail || `HTTP ${response.status}: ${response.statusText}`);
-			}
-
-			const data: DirectoryPreviewResponse = await response.json();
+			const data = await previewDirectoryImages(directoryPath);
 			images = data.images;
 			directoryName = data.directory.split('/').pop() || data.directory;
 			imageCount = data.image_count;
@@ -120,10 +101,6 @@
 		if (!newOpen) {
 			onClose();
 		}
-	}
-
-	function getThumbnailUrl(imagePath: string): string {
-		return `/api/v1/training/directories/preview/thumbnail?path=${encodeURIComponent(imagePath)}`;
 	}
 
 	// Update container width on resize
@@ -187,7 +164,7 @@
 								{#each item.images as image (image.filename)}
 									<div class="thumbnail-card" style="width: {THUMBNAIL_SIZE}px;">
 										<img
-											src={getThumbnailUrl(image.full_path)}
+											src={getPreviewThumbnailUrl(image.full_path)}
 											alt={image.filename}
 											loading="lazy"
 											class="thumbnail-image"

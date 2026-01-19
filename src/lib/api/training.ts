@@ -186,6 +186,20 @@ export async function previewDirectoryImages(
 	);
 }
 
+/**
+ * Get the thumbnail URL for a non-ingested image preview.
+ * Uses the API base URL to construct the full URL.
+ *
+ * @param imagePath - Full path to the image file
+ * @returns Full URL to the thumbnail endpoint
+ */
+export function getPreviewThumbnailUrl(imagePath: string): string {
+	const params = new URLSearchParams({
+		path: imagePath
+	});
+	return `${API_BASE_URL}/api/v1/training/directories/preview/thumbnail?${params.toString()}`;
+}
+
 // Session subdirectories
 
 /**
