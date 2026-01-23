@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/svelte';
+
 import { describe, it, expect } from 'vitest';
 import CoverageIndicatorTestWrapper from './CoverageIndicatorTestWrapper.svelte';
 import type { TemporalCoverage, AgeEraBucket } from '$lib/types';

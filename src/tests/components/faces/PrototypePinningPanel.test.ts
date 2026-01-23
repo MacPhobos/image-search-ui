@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import PrototypePinningPanel from '$lib/components/faces/PrototypePinningPanel.svelte';
-import type { AgeEraBucket } from '$lib/api/faces';
+// AgeEraBucket type imported from API but not directly used in these tests
 
 describe('PrototypePinningPanel', () => {
 	const mockOnCancel = vi.fn();
@@ -84,9 +85,7 @@ describe('PrototypePinningPanel', () => {
 		expect(screen.getByRole('option', { name: /infant \(0-2\)/i })).toBeInTheDocument();
 		expect(screen.getByRole('option', { name: /child \(3-12\)/i })).toBeInTheDocument();
 		expect(screen.getByRole('option', { name: /teen \(13-19\)/i })).toBeInTheDocument();
-		expect(
-			screen.getByRole('option', { name: /young adult \(20-35\)/i })
-		).toBeInTheDocument();
+		expect(screen.getByRole('option', { name: /young adult \(20-35\)/i })).toBeInTheDocument();
 		expect(screen.getByRole('option', { name: /adult \(36-55\)/i })).toBeInTheDocument();
 		expect(screen.getByRole('option', { name: /senior \(56\+\)/i })).toBeInTheDocument();
 	});
@@ -196,7 +195,9 @@ describe('PrototypePinningPanel', () => {
 		const buttons = screen.getAllByRole('button');
 		const cancelButton = buttons.find((btn) => btn.textContent === 'Cancel');
 		expect(cancelButton).toBeDefined();
-		await fireEvent.click(cancelButton!);
+		if (cancelButton) {
+			await fireEvent.click(cancelButton);
+		}
 
 		expect(mockOnCancel).toHaveBeenCalledTimes(1);
 	});
@@ -216,7 +217,9 @@ describe('PrototypePinningPanel', () => {
 
 		const closeButton = container.querySelector('.close-button');
 		expect(closeButton).toBeInTheDocument();
-		await fireEvent.click(closeButton!);
+		if (closeButton) {
+			await fireEvent.click(closeButton);
+		}
 
 		expect(mockOnCancel).toHaveBeenCalledTimes(1);
 	});

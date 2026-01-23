@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import DirectoryStatsTable from '$lib/components/vectors/DirectoryStatsTable.svelte';
 import { createMultipleDirectories, createDirectoryStats } from '../../helpers/fixtures';

@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/svelte';
+
 import { describe, it, expect, vi } from 'vitest';
 import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
 import type { Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';

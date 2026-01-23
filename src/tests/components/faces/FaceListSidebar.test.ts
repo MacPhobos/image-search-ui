@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import FaceListSidebar from '$lib/components/faces/FaceListSidebar.svelte';
 import type { FaceInstance, FaceSuggestionItem } from '$lib/api/faces';
@@ -26,9 +27,7 @@ function createFaceInstance(overrides?: Partial<FaceInstance>): FaceInstance {
 /**
  * Test helper: Create a face suggestion item
  */
-function createFaceSuggestion(
-	overrides?: Partial<FaceSuggestionItem>
-): FaceSuggestionItem {
+function createFaceSuggestion(overrides?: Partial<FaceSuggestionItem>): FaceSuggestionItem {
 	return {
 		personId: 'person-uuid-1',
 		personName: 'John Doe',
@@ -328,13 +327,11 @@ describe('FaceListSidebar', () => {
 
 		const acceptButton = container.querySelector('button[title="Accept suggestion"]');
 		expect(acceptButton).toBeInTheDocument();
-		await fireEvent.click(acceptButton!);
+		if (acceptButton) {
+			await fireEvent.click(acceptButton);
+		}
 
-		expect(mockOnSuggestionAccept).toHaveBeenCalledWith(
-			'face-1',
-			'person-123',
-			'Suggested Person'
-		);
+		expect(mockOnSuggestionAccept).toHaveBeenCalledWith('face-1', 'person-123', 'Suggested Person');
 		expect(mockOnSuggestionAccept).toHaveBeenCalledTimes(1);
 	});
 
@@ -390,7 +387,9 @@ describe('FaceListSidebar', () => {
 			}
 		});
 
-		const pinButton = container.querySelector('button[title="Pin this face as a prototype for the person"]');
+		const pinButton = container.querySelector(
+			'button[title="Pin this face as a prototype for the person"]'
+		);
 		expect(pinButton).toBeInTheDocument();
 		expect(pinButton?.textContent).toContain('Pin as Prototype');
 	});
@@ -413,9 +412,13 @@ describe('FaceListSidebar', () => {
 			}
 		});
 
-		const pinButton = container.querySelector('button[title="Pin this face as a prototype for the person"]');
+		const pinButton = container.querySelector(
+			'button[title="Pin this face as a prototype for the person"]'
+		);
 		expect(pinButton).toBeInTheDocument();
-		await fireEvent.click(pinButton!);
+		if (pinButton) {
+			await fireEvent.click(pinButton);
+		}
 
 		expect(mockOnPinClick).toHaveBeenCalledWith('face-999');
 		expect(mockOnPinClick).toHaveBeenCalledTimes(1);

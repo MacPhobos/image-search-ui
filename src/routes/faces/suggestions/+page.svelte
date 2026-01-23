@@ -398,7 +398,7 @@
 			for (const suggestion of group.suggestions) {
 				if (suggestion.faceThumbnailUrl) {
 					const match = suggestion.faceThumbnailUrl.match(/\/images\/(\d+)\/thumbnail/);
-					if (match) {
+					if (match && match[1]) {
 						assetIds.push(parseInt(match[1], 10));
 					}
 				}

@@ -265,7 +265,11 @@
 										Continue import even if some images are not found in the database
 									</p>
 								</div>
-								<Switch id="skip-missing-images" bind:checked={skipMissingImages} disabled={loading} />
+								<Switch
+									id="skip-missing-images"
+									bind:checked={skipMissingImages}
+									disabled={loading}
+								/>
 							</div>
 
 							<div class="setting-item">
@@ -278,7 +282,11 @@
 										database. This enables seamless seed data restoration.
 									</p>
 								</div>
-								<Switch id="auto-ingest-images" bind:checked={autoIngestImages} disabled={loading} />
+								<Switch
+									id="auto-ingest-images"
+									bind:checked={autoIngestImages}
+									disabled={loading}
+								/>
 							</div>
 						</div>
 
@@ -423,6 +431,7 @@
 	</div>
 {/if}
 
+<!-- svelte-ignore css_unused_selector -->
 <style>
 	.modal-overlay {
 		position: fixed;
@@ -649,6 +658,7 @@
 		flex: 1;
 	}
 
+	/* svelte-ignore css_unused_selector */
 	.setting-label {
 		display: block;
 		font-size: 0.875rem;

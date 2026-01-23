@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import SuggestionDetailModal from '$lib/components/faces/SuggestionDetailModal.svelte';
 import type { FaceSuggestion, FaceInstance, Person } from '$lib/api/faces';

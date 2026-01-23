@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 import type { PersonPhotoGroup } from '$lib/api/faces';
@@ -160,8 +161,11 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		// Verify no suggestions endpoint was called
-		const fetchCalls = (globalThis.fetch as any).mock?.calls || [];
-		const suggestionCalls = fetchCalls.filter((call: any[]) => call[0].includes('/suggestions'));
+		const fetchCalls = (globalThis.fetch as { mock?: { calls?: unknown[] } }).mock?.calls || [];
+		const suggestionCalls = fetchCalls.filter(
+			(call: unknown) =>
+				Array.isArray(call) && typeof call[0] === 'string' && call[0].includes('/suggestions')
+		);
 		expect(suggestionCalls).toHaveLength(0);
 	});
 
@@ -403,11 +407,14 @@ describe('PhotoPreviewModal - Face Suggestions', () => {
 
 		// Verify fetch was called with abort signal
 		await waitFor(() => {
-			const fetchCalls = (globalThis.fetch as any).mock?.calls || [];
-			const suggestionCalls = fetchCalls.filter((call: any[]) => call[0].includes('/suggestions'));
+			const fetchCalls = (globalThis.fetch as { mock?: { calls?: unknown[] } }).mock?.calls || [];
+			const suggestionCalls = fetchCalls.filter(
+				(call: unknown) =>
+					Array.isArray(call) && typeof call[0] === 'string' && call[0].includes('/suggestions')
+			);
 			if (suggestionCalls.length > 0) {
 				// Check that the request options include a signal
-				const options = suggestionCalls[0][1];
+				const options = Array.isArray(suggestionCalls[0]) ? suggestionCalls[0][1] : undefined;
 				expect(options).toHaveProperty('signal');
 			}
 		});

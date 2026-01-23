@@ -39,11 +39,7 @@ function defaultNameExtractor(filePath: string): string {
 /**
  * Check if file should be excluded from tracking
  */
-function shouldExclude(
-	filePath: string,
-	include: string[],
-	exclude: string[]
-): boolean {
+function shouldExclude(filePath: string, include: string[], exclude: string[]): boolean {
 	// Normalize path for matching (convert backslashes on Windows)
 	const normalizedPath = filePath.replace(/\\/g, '/');
 
@@ -146,14 +142,26 @@ function injectTrackingCode(code: string, componentName: string, filePath: strin
 
 				if (secondScriptMatch && secondScriptMatch.index !== undefined) {
 					// Found instance script after module script
-					const insertPos = moduleMatch.index + moduleMatch[0].length + secondScriptMatch.index + secondScriptMatch[0].length;
+					const insertPos =
+						moduleMatch.index +
+						moduleMatch[0].length +
+						secondScriptMatch.index +
+						secondScriptMatch[0].length;
 					return code.substring(0, insertPos) + trackingCode + code.substring(insertPos);
 				} else {
 					// Only module script, need to add instance script
 					const moduleEndMatch = afterModule.match(/<\/script>/);
 					if (moduleEndMatch && moduleEndMatch.index !== undefined) {
-						const insertPos = moduleMatch.index + moduleMatch[0].length + moduleEndMatch.index + moduleEndMatch[0].length;
-						return code.substring(0, insertPos) + `\n\n<script>${trackingCode}</script>` + code.substring(insertPos);
+						const insertPos =
+							moduleMatch.index +
+							moduleMatch[0].length +
+							moduleEndMatch.index +
+							moduleEndMatch[0].length;
+						return (
+							code.substring(0, insertPos) +
+							`\n\n<script>${trackingCode}</script>` +
+							code.substring(insertPos)
+						);
 					}
 				}
 				return null;
@@ -161,15 +169,20 @@ function injectTrackingCode(code: string, componentName: string, filePath: strin
 		}
 
 		// Normal case: instance script found
-		const insertPos = instanceMatch.index! + instanceMatch[0].length;
+		const insertPos = (instanceMatch.index ?? 0) + instanceMatch[0].length;
 		return code.substring(0, insertPos) + trackingCode + code.substring(insertPos);
-	} else if (moduleMatch) {
+	} else if (moduleMatch && moduleMatch.index !== undefined) {
 		// Only module script exists - add instance script after it
-		const afterModule = code.substring(moduleMatch.index! + moduleMatch[0].length);
+		const afterModule = code.substring(moduleMatch.index + moduleMatch[0].length);
 		const moduleEndMatch = afterModule.match(/<\/script>/);
 		if (moduleEndMatch && moduleEndMatch.index !== undefined) {
-			const insertPos = moduleMatch.index! + moduleMatch[0].length + moduleEndMatch.index + moduleEndMatch[0].length;
-			return code.substring(0, insertPos) + `\n\n<script>${trackingCode}</script>` + code.substring(insertPos);
+			const insertPos =
+				moduleMatch.index + moduleMatch[0].length + moduleEndMatch.index + moduleEndMatch[0].length;
+			return (
+				code.substring(0, insertPos) +
+				`\n\n<script>${trackingCode}</script>` +
+				code.substring(insertPos)
+			);
 		}
 	} else {
 		// No script block - create one at the beginning
@@ -185,9 +198,7 @@ function injectTrackingCode(code: string, componentName: string, filePath: strin
  * Usage in vite.config.ts:
  * Import and add to plugins array with exclude patterns
  */
-export function vitePluginComponentTracking(
-	options: ComponentTrackingOptions = {}
-): Plugin {
+export function vitePluginComponentTracking(options: ComponentTrackingOptions = {}): Plugin {
 	const {
 		include = ['src/**/*.svelte'],
 		exclude = [

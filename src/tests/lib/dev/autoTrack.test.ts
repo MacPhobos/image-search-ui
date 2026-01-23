@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+
 import { vitePluginComponentTracking } from '$lib/dev/autoTrack';
 
 // Save original NODE_ENV
@@ -25,7 +26,7 @@ describe('vitePluginComponentTracking', () => {
 		it('should accept custom options', () => {
 			const plugin = vitePluginComponentTracking({
 				exclude: ['**/custom.svelte'],
-				nameExtractor: (path) => 'custom-name'
+				nameExtractor: () => 'custom-name'
 			});
 			expect(plugin).toBeDefined();
 		});

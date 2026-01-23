@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import { describe, it, expect, vi } from 'vitest';
 import ImageWithFaceBoundingBoxes from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
 import type { FaceBox } from '$lib/components/faces/ImageWithFaceBoundingBoxes.svelte';
 

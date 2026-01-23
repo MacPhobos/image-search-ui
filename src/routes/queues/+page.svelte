@@ -11,7 +11,6 @@
 	import ConnectionIndicator from '$lib/components/queues/ConnectionIndicator.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
-	import { onMount, onDestroy } from 'svelte';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/queues/+page', {
@@ -285,11 +284,6 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 		gap: 1rem;
-	}
-	.loading {
-		padding: 3rem;
-		text-align: center;
-		color: #6b7280;
 	}
 	@media (max-width: 640px) {
 		.stats-bar {

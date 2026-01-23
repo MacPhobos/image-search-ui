@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import CategoryCreateModal from '$lib/components/CategoryCreateModal.svelte';
 import { createCategory } from '../helpers/fixtures';

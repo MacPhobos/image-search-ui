@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
+
 import { render, screen } from '@testing-library/svelte';
 import ResultsGrid from '$lib/components/ResultsGrid.svelte';
-import { createAsset, createBeachResult, createMountainResult, createSearchResult } from '../helpers/fixtures';
+import {
+	createAsset,
+	createBeachResult,
+	createMountainResult,
+	createSearchResult
+} from '../helpers/fixtures';
 
 describe('ResultsGrid', () => {
 	it('shows initial empty state when no search performed', () => {

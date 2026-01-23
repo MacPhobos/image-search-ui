@@ -26,6 +26,7 @@
 		if (import.meta.env.DEV) {
 			return setViewId('layout:/');
 		}
+		return undefined;
 	});
 
 	type HealthStatus = 'checking' | 'healthy' | 'unhealthy';

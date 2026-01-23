@@ -24,5 +24,5 @@ export type FaceColor = (typeof FACE_COLORS)[number];
  * Colors cycle through the palette for images with more than 10 faces.
  */
 export function getFaceColorByIndex(index: number): FaceColor {
-	return FACE_COLORS[index % FACE_COLORS.length];
+	return FACE_COLORS[index % FACE_COLORS.length] as FaceColor;
 }

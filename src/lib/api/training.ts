@@ -16,7 +16,7 @@ import type { components } from './generated';
 import { env } from '$env/dynamic/public';
 import { ApiError } from './client';
 
-const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const url = `${API_BASE_URL}${endpoint}`;

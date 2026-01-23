@@ -7,7 +7,7 @@ import { env } from '$env/dynamic/public';
 import { ApiError } from './client';
 import type { components } from './generated';
 
-const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 /**
  * Prefixes a relative URL with the API base URL.

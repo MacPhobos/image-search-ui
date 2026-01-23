@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import RetrainModal from '$lib/components/vectors/RetrainModal.svelte';
 import { mockResponse } from '../../helpers/mockFetch';
@@ -252,7 +253,9 @@ describe('RetrainModal', () => {
 		expect(retrainButton).toBeDisabled();
 		expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
 
-		resolveConfirm!();
+		if (resolveConfirm) {
+			resolveConfirm();
+		}
 	});
 
 	it('displays error message when onConfirm rejects', async () => {
@@ -331,6 +334,8 @@ describe('RetrainModal', () => {
 		// Category selector should be disabled during loading
 		expect(select).toBeDisabled();
 
-		resolveConfirm!();
+		if (resolveConfirm) {
+			resolveConfirm();
+		}
 	});
 });

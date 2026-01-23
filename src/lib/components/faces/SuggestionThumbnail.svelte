@@ -2,10 +2,9 @@
 	import type { FaceSuggestion } from '$lib/api/faces';
 	import FaceThumbnail from './FaceThumbnail.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import type { ComponentProps } from 'svelte';
 
 	interface Props {
 		suggestion: FaceSuggestion;
@@ -25,14 +24,14 @@
 	);
 
 	// Map confidence to badge variant
-	function getConfidenceVariant(confidence: number): ComponentProps<Badge>['variant'] {
+	function getConfidenceVariant(confidence: number): BadgeVariant {
 		if (confidence >= 0.7) return 'success';
 		if (confidence >= 0.5) return 'warning';
 		return 'destructive';
 	}
 
 	// Map status to badge variant
-	function getStatusVariant(status: FaceSuggestion['status']): ComponentProps<Badge>['variant'] {
+	function getStatusVariant(status: FaceSuggestion['status']): BadgeVariant {
 		switch (status) {
 			case 'accepted':
 				return 'success';
@@ -79,7 +78,7 @@
 	const assetId = $derived.by(() => {
 		if (!suggestion.faceThumbnailUrl) return null;
 		const match = suggestion.faceThumbnailUrl.match(/\/images\/(\d+)\/thumbnail/);
-		return match ? parseInt(match[1], 10) : null;
+		return match && match[1] ? parseInt(match[1], 10) : null;
 	});
 
 	// Get cached thumbnail data URI
@@ -142,7 +141,10 @@
 	<div class="confidence-badge">
 		<Tooltip.Root>
 			<Tooltip.Trigger>
-				<Badge variant={confidenceVariant} class="text-[0.625rem] font-bold px-1 py-0 h-auto cursor-help">
+				<Badge
+					variant={confidenceVariant}
+					class="text-[0.625rem] font-bold px-1 py-0 h-auto cursor-help"
+				>
 					{displayConfidence}%
 					{#if suggestion.isMultiPrototypeMatch}
 						<span class="multi-proto-indicator" title="Multi-prototype match">⚡</span>

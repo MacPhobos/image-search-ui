@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { render, screen } from '@testing-library/svelte';
 import DeletionLogsTable from '$lib/components/vectors/DeletionLogsTable.svelte';
 import { createMultipleDeletionLogs, createDeletionLog } from '../../helpers/fixtures';

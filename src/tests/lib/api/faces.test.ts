@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { listUnifiedPeople } from '$lib/api/faces';
 import { mockResponse, mockError, getFetchMock } from '../../helpers/mockFetch';
 import {

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import Page from '../../routes/+page.svelte';
 import type { Mock } from 'vitest';

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+	/* eslint-disable @typescript-eslint/no-non-null-assertion */
 	getDirectoryStats,
 	deleteVectorsByDirectory,
 	retrainDirectory,
@@ -39,7 +40,7 @@ describe('Vectors API Client', () => {
 
 			expect(result.directories).toHaveLength(3);
 			expect(result.totalVectors).toBe(300); // 50 + 100 + 150
-			expect(result.directories[0].pathPrefix).toBe('/photos/dir-1');
+			expect(result.directories[0]!.pathPrefix).toBe('/photos/dir-1');
 		});
 
 		it('handles empty directory list', async () => {
@@ -118,7 +119,7 @@ describe('Vectors API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody.deletionReason).toBeUndefined();
 		});
 
@@ -193,7 +194,7 @@ describe('Vectors API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody.categoryId).toBe(1);
 			expect(callBody.deletionReason).toBeUndefined();
 		});

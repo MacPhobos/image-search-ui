@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/svelte';
+
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import PersonHistoryPage from '../../routes/faces/persons/[id]/history/+page.svelte';
 import { mockResponse, mockError } from '../helpers/mockFetch';
 import type { AssignmentHistoryResponse, Person } from '$lib/api/faces';
-import { page } from '$app/stores';
 
 // Mock $app/stores
 vi.mock('$app/stores', () => ({

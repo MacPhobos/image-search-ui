@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import PersonSearchBar from '$lib/components/faces/PersonSearchBar.svelte';
 import { createPerson, createMultiplePersons } from '../helpers/fixtures';
@@ -212,7 +213,9 @@ describe('PersonSearchBar', () => {
 			const persons = [createPerson({ id: 'person-1', name: 'Alice Smith' })];
 			render(PersonSearchBar, { props: { ...defaultProps, persons } });
 
-			const input = screen.getByRole('combobox', { name: /search for person/i }) as HTMLInputElement;
+			const input = screen.getByRole('combobox', {
+				name: /search for person/i
+			}) as HTMLInputElement;
 			await fireEvent.input(input, { target: { value: 'Alice' } });
 			expect(input.value).toBe('Alice');
 
@@ -400,7 +403,11 @@ describe('PersonSearchBar', () => {
 			const input = screen.getByRole('combobox', { name: /search for person/i });
 			await fireEvent.focus(input);
 
-			const event = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+			const event = new KeyboardEvent('keydown', {
+				key: 'ArrowDown',
+				bubbles: true,
+				cancelable: true
+			});
 			const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
 			input.dispatchEvent(event);
@@ -415,7 +422,11 @@ describe('PersonSearchBar', () => {
 			await fireEvent.focus(input);
 			await fireEvent.keyDown(input, { key: 'ArrowDown' }); // Need something highlighted first
 
-			const event = new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true });
+			const event = new KeyboardEvent('keydown', {
+				key: 'ArrowUp',
+				bubbles: true,
+				cancelable: true
+			});
 			const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
 			input.dispatchEvent(event);

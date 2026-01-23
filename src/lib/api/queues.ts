@@ -1,7 +1,7 @@
 import { env } from '$env/dynamic/public';
 import { ApiError } from './client';
 
-const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 // Type definitions for queue monitoring
 export type JobStatus =

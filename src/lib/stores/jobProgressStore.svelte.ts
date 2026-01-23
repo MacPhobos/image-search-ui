@@ -5,7 +5,7 @@
 
 import { env } from '$env/dynamic/public';
 
-const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 export interface JobProgress {
 	jobId: string;
@@ -161,9 +161,7 @@ class JobProgressStore {
 	 * Get all running jobs.
 	 */
 	get runningJobs(): JobProgress[] {
-		return [...this.jobs.values()].filter(
-			(j) => j.status === 'queued' || j.status === 'running'
-		);
+		return [...this.jobs.values()].filter((j) => j.status === 'queued' || j.status === 'running');
 	}
 
 	/**

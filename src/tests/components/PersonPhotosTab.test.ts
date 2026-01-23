@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 import { mockResponse, mockError } from '../helpers/mockFetch';

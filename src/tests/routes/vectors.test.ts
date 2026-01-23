@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import VectorsPage from '../../routes/vectors/+page.svelte';
 import type { Mock } from 'vitest';
@@ -26,14 +27,7 @@ vi.mock('$lib/api/categories', () => ({
 	getCategories: vi.fn()
 }));
 
-import {
-	getDirectoryStats,
-	getDeletionLogs,
-	deleteVectorsByDirectory,
-	retrainDirectory,
-	cleanupOrphanVectors,
-	resetCollection
-} from '$lib/api/vectors';
+import { getDirectoryStats, getDeletionLogs, deleteVectorsByDirectory } from '$lib/api/vectors';
 
 import { getCategories } from '$lib/api/categories';
 

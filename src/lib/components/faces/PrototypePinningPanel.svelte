@@ -16,8 +16,8 @@
 
 	let {
 		open,
-		faceId,
-		personId,
+		faceId: _faceId, // eslint-disable-line @typescript-eslint/no-unused-vars
+		personId: _personId, // eslint-disable-line @typescript-eslint/no-unused-vars
 		personName,
 		submitting,
 		error = null,
@@ -69,9 +69,7 @@
 			<p class="person-name">for {personName}</p>
 
 			<div class="form-group">
-				<label for="age-era-select">
-					Age Era (optional):
-				</label>
+				<label for="age-era-select"> Age Era (optional): </label>
 				<select
 					id="age-era-select"
 					bind:value={selectedEra}
@@ -97,20 +95,15 @@
 		</div>
 
 		<div class="pin-panel-footer">
-			<Button variant="outline" onclick={onCancel} disabled={submitting}>
-				Cancel
-			</Button>
-			<Button
-				class="bg-green-600 hover:bg-green-700"
-				onclick={handleConfirm}
-				disabled={submitting}
-			>
+			<Button variant="outline" onclick={onCancel} disabled={submitting}>Cancel</Button>
+			<Button class="bg-green-600 hover:bg-green-700" onclick={handleConfirm} disabled={submitting}>
 				{submitting ? 'Pinning...' : 'Pin Prototype'}
 			</Button>
 		</div>
 	</div>
 {/if}
 
+<!-- svelte-ignore css-unused-selector -->
 <style>
 	.pin-panel {
 		background-color: #f8f9fa;
@@ -212,6 +205,7 @@
 		line-height: 1.4;
 	}
 
+	/* svelte-ignore css-unused-selector */
 	.error-alert {
 		margin: 0;
 	}

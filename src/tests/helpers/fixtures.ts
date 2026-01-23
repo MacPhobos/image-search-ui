@@ -278,7 +278,7 @@ export function createMultipleDirectories(count: number): DirectoryStats[] {
  * Create multiple deletion logs for testing
  */
 export function createMultipleDeletionLogs(count: number): DeletionLogEntry[] {
-	const types = ['DIRECTORY', 'SESSION', 'CATEGORY', 'ASSET', 'ORPHAN'];
+	const types = ['DIRECTORY', 'SESSION', 'CATEGORY', 'ASSET', 'ORPHAN'] as const;
 	return Array.from({ length: count }, (_, i) => {
 		const type = types[i % types.length];
 		return createDeletionLog({
@@ -647,6 +647,7 @@ export function createFaceCluster(overrides?: Partial<ClusterSummary>): ClusterS
 		clusterConfidence: 0.85,
 		representativeFaceId: 'face_1',
 		personId: null,
+		personName: null,
 		...overrides
 	};
 }

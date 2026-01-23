@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, waitFor } from '@testing-library/svelte';
 import SessionDetailView from '$lib/components/training/SessionDetailView.svelte';
 import { mockResponse } from '../../helpers/mockFetch';

@@ -7,7 +7,7 @@ import type {
 } from '$lib/types';
 import { env } from '$env/dynamic/public';
 
-const API_BASE_URL = env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 export class ApiError extends Error {
 	constructor(

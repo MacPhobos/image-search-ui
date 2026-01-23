@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import DirectoryBrowser from '$lib/components/training/DirectoryBrowser.svelte';
-import { mockResponse, mockError } from '../../helpers/mockFetch';
+import { mockResponse } from '../../helpers/mockFetch';
 import type { SubdirectoryInfo } from '$lib/types';
 
 const mockSubdirs: SubdirectoryInfo[] = [

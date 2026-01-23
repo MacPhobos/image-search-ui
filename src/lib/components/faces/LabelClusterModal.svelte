@@ -104,7 +104,7 @@
 				return;
 			}
 
-			const name = createNewMode ? newPersonName.trim() : selectedPerson.name;
+			const name = createNewMode ? newPersonName.trim() : (selectedPerson?.name ?? '');
 			const response = await labelCluster(clusterId, name);
 			onSuccess(response.personName, response.personId);
 		} catch (err) {

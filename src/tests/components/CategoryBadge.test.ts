@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { render, screen } from '@testing-library/svelte';
 import CategoryBadge from '$lib/components/CategoryBadge.svelte';
 import { createCategory, createDefaultCategory } from '../helpers/fixtures';

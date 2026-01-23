@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import PersonAssignmentPanel from '$lib/components/faces/PersonAssignmentPanel.svelte';
 import type { Person } from '$lib/api/faces';
@@ -47,9 +48,7 @@ describe('PersonAssignmentPanel', () => {
 		});
 
 		expect(screen.getByText('Assign to Person')).toBeInTheDocument();
-		expect(
-			screen.getByPlaceholderText('Search or create person...')
-		).toBeInTheDocument();
+		expect(screen.getByPlaceholderText('Search or create person...')).toBeInTheDocument();
 	});
 
 	it('does not render when open is false', () => {
@@ -285,7 +284,9 @@ describe('PersonAssignmentPanel', () => {
 		const buttons = screen.getAllByRole('button', { name: /cancel/i });
 		const cancelButton = buttons.find((btn) => btn.textContent === 'Cancel');
 		expect(cancelButton).toBeDefined();
-		await fireEvent.click(cancelButton!);
+		if (cancelButton) {
+			await fireEvent.click(cancelButton);
+		}
 
 		expect(mockOnCancel).toHaveBeenCalledTimes(1);
 	});
@@ -307,7 +308,9 @@ describe('PersonAssignmentPanel', () => {
 
 		const closeButton = container.querySelector('.close-btn');
 		expect(closeButton).toBeInTheDocument();
-		await fireEvent.click(closeButton!);
+		if (closeButton) {
+			await fireEvent.click(closeButton);
+		}
 
 		expect(mockOnCancel).toHaveBeenCalledTimes(1);
 	});
@@ -357,7 +360,7 @@ describe('PersonAssignmentPanel', () => {
 	it('shows "No persons found" when filtered list is empty', async () => {
 		const persons = [createPerson({ id: 'person-1', name: 'Alice Smith' })];
 
-		const { container } = render(PersonAssignmentPanel, {
+		render(PersonAssignmentPanel, {
 			props: {
 				open: true,
 				faceId: 'face-1',

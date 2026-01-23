@@ -46,8 +46,8 @@
 	}
 
 	// Public method to refresh categories (called after creating new category)
-	export function refresh() {
-		loadCategories();
+	export async function refresh(): Promise<void> {
+		await loadCategories();
 	}
 
 	onMount(() => {

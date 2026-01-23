@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 import type { PersonPhotoGroup } from '$lib/api/faces';

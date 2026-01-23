@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { render, screen } from '@testing-library/svelte';
 import JobsTable from '$lib/components/training/JobsTable.svelte';
 import {

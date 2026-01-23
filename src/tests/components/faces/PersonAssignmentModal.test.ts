@@ -1,7 +1,8 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { mockResponse, mockError, resetMocks } from '../../helpers/mockFetch';
-import { createPerson, createMultiplePersons } from '../../helpers/fixtures';
+import { createPerson } from '../../helpers/fixtures';
 import PersonAssignmentModal from '$lib/components/faces/PersonAssignmentModal.svelte';
 import type { Person } from '$lib/api/faces';
 
@@ -280,11 +281,7 @@ describe('PersonAssignmentModal', () => {
 			);
 
 			// Mock assign endpoint
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -310,11 +307,7 @@ describe('PersonAssignmentModal', () => {
 
 	describe('Assignment', () => {
 		it('calls assignFaceToPerson API when selecting existing person', async () => {
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -329,11 +322,7 @@ describe('PersonAssignmentModal', () => {
 		});
 
 		it('calls onSuccess with correct result after successful assignment', async () => {
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -352,11 +341,7 @@ describe('PersonAssignmentModal', () => {
 		});
 
 		it('closes modal after successful assignment', async () => {
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			const { container } = render(PersonAssignmentModal, { props: defaultProps });
 
@@ -395,11 +380,7 @@ describe('PersonAssignmentModal', () => {
 
 		it('prevents double-submit while assignment is in progress', async () => {
 			// Mock a slow response
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -417,11 +398,7 @@ describe('PersonAssignmentModal', () => {
 		});
 
 		it('disables all person buttons while assignment is in progress', async () => {
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -442,11 +419,7 @@ describe('PersonAssignmentModal', () => {
 		});
 
 		it('disables cancel button while assignment is in progress', async () => {
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -473,13 +446,13 @@ describe('PersonAssignmentModal', () => {
 				JSON.stringify(['person-3', 'person-1'])
 			);
 
-			const { container } = render(PersonAssignmentModal, { props: defaultProps });
+			render(PersonAssignmentModal, { props: defaultProps });
 
 			await waitFor(() => screen.getByText('Alice Smith'));
 
 			// Get all person buttons in order (they have specific text content with "Assign to")
-			const personButtons = screen.getAllByRole('button').filter(btn =>
-				btn.textContent?.includes('faces') // Person buttons have face count
+			const personButtons = screen.getAllByRole('button').filter(
+				(btn) => btn.textContent?.includes('faces') // Person buttons have face count
 			);
 			const personNames = personButtons.map((btn) => {
 				const nameEl = btn.querySelector('.font-medium');
@@ -493,11 +466,7 @@ describe('PersonAssignmentModal', () => {
 		});
 
 		it('MRU order is updated after successful assignment', async () => {
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -525,7 +494,7 @@ describe('PersonAssignmentModal', () => {
 				JSON.stringify(['person-2'])
 			);
 
-			const { container } = render(PersonAssignmentModal, { props: defaultProps });
+			render(PersonAssignmentModal, { props: defaultProps });
 
 			await waitFor(() => screen.getByText('Alice Smith'));
 
@@ -630,11 +599,7 @@ describe('PersonAssignmentModal', () => {
 				page: 1,
 				page_size: 100
 			});
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			// Retry
 			const retryButton = screen.getByRole('button', { name: /alice smith/i });
@@ -833,11 +798,7 @@ describe('PersonAssignmentModal', () => {
 				201
 			);
 
-			mockResponse(
-				'/api/v1/faces/faces/face-123/assign',
-				{ success: true },
-				200
-			);
+			mockResponse('/api/v1/faces/faces/face-123/assign', { success: true }, 200);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 

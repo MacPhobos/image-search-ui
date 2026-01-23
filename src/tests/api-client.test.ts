@@ -4,6 +4,8 @@ import { regenerateSuggestions, recomputePrototypes } from '$lib/api/faces';
 import { mockResponse, mockError, getFetchMock } from './helpers/mockFetch';
 import { createSearchResponse, createBeachResult } from './helpers/fixtures';
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 describe('API Client', () => {
 	describe('searchImages', () => {
 		it('makes correct POST API call with query', async () => {
@@ -31,7 +33,7 @@ describe('API Client', () => {
 
 			expect(result).toEqual(mockData);
 			expect(result.results).toHaveLength(1);
-			expect(result.results[0].asset.path).toBe('/photos/beach-sunset.jpg');
+			expect(result.results[0]!.asset.path).toBe('/photos/beach-sunset.jpg');
 		});
 
 		it('includes filters in request body when provided', async () => {
@@ -49,7 +51,7 @@ describe('API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody.query).toBe('test');
 			expect(callBody.limit).toBe(20);
 			expect(callBody.offset).toBe(10);
@@ -71,7 +73,7 @@ describe('API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody.filters).toEqual({
 				categoryId: '42'
 			});
@@ -92,7 +94,7 @@ describe('API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody.filters).toEqual({
 				dateFrom: '2024-01-01',
 				dateTo: '2024-12-31',
@@ -311,7 +313,7 @@ describe('API Client', () => {
 			const result = await recomputePrototypes('person-123', { triggerRescan: true });
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody).toEqual({
 				preserve_pins: true,
 				trigger_rescan: true,
@@ -342,7 +344,7 @@ describe('API Client', () => {
 			const result = await recomputePrototypes('person-123', { triggerRescan: false });
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody).toEqual({
 				preserve_pins: true,
 				trigger_rescan: false,
@@ -372,7 +374,7 @@ describe('API Client', () => {
 			const result = await recomputePrototypes('person-123', { preservePins: false });
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody).toEqual({
 				preserve_pins: false,
 				preserve_existing_suggestions: true
@@ -406,7 +408,7 @@ describe('API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody).toEqual({
 				preserve_pins: false,
 				trigger_rescan: true,
@@ -441,7 +443,7 @@ describe('API Client', () => {
 			});
 
 			const fetchMock = getFetchMock();
-			const callBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+			const callBody = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
 			expect(callBody).toEqual({
 				preserve_pins: true,
 				preserve_existing_suggestions: false
@@ -477,13 +479,9 @@ describe('API Client', () => {
 		});
 
 		it('throws ApiError on failure', async () => {
-			mockError(
-				'http://localhost:8000/api/v1/faces/persons/invalid-id/prototypes/recompute',
-				404,
-				{
-					detail: 'Person not found'
-				}
-			);
+			mockError('http://localhost:8000/api/v1/faces/persons/invalid-id/prototypes/recompute', 404, {
+				detail: 'Person not found'
+			});
 
 			try {
 				await recomputePrototypes('invalid-id');

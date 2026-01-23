@@ -63,8 +63,4 @@
 		font-weight: 700;
 		color: #1f2937;
 	}
-
-	.stat-failed {
-		color: #dc2626;
-	}
 </style>

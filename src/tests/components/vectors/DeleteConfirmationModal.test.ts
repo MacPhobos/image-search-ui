@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import DeleteConfirmationModal from '$lib/components/vectors/DeleteConfirmationModal.svelte';
 
@@ -221,7 +222,9 @@ describe('DeleteConfirmationModal', () => {
 		expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
 
 		// Resolve the promise
-		resolveConfirm!();
+		if (resolveConfirm) {
+			resolveConfirm();
+		}
 	});
 
 	it('displays error message when onConfirm rejects', async () => {
@@ -314,6 +317,8 @@ describe('DeleteConfirmationModal', () => {
 		expect(input).toBeDisabled();
 		expect(screen.getByLabelText(/reason.*optional/i)).toBeDisabled();
 
-		resolveConfirm!();
+		if (resolveConfirm) {
+			resolveConfirm();
+		}
 	});
 });

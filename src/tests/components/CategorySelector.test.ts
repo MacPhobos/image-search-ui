@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import CategorySelector from '$lib/components/CategorySelector.svelte';
 import { mockResponse } from '../helpers/mockFetch';

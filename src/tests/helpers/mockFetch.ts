@@ -18,7 +18,7 @@ let fetchMock: Mock | null = null;
  * Install global fetch mock with vi.fn()
  */
 export function installMockFetch(): void {
-	fetchMock = vi.fn(async (url: string) => {
+	fetchMock = vi.fn(async (url: string | Request) => {
 		const urlString = typeof url === 'string' ? url : url.toString();
 
 		// Find matching mock response

@@ -21,11 +21,13 @@
 	let cleanup: (() => void) | null = null;
 
 	// Local state for real-time updates (prevents infinite loop)
-	let liveSession = $state(session);
+	// Initialize as raw to avoid capturing prop value
+	let liveSession = $state<typeof session>({} as typeof session);
 
 	// Sync local state when prop changes (but not during processing to preserve SSE updates)
+	// This is intentional: we want to react to prop changes
 	$effect(() => {
-		if (session.status !== 'processing') {
+		if (!liveSession.id || session.status !== 'processing') {
 			liveSession = session;
 		}
 	});

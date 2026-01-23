@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { render, screen, waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import SessionDetailView from '$lib/components/training/SessionDetailView.svelte';
@@ -107,11 +108,11 @@ function mockCompletedSessionResponses(sessionId: number = 40) {
 }
 
 describe('Training Session Restart UI', () => {
-	let onSessionUpdate: ReturnType<typeof vi.fn>;
+	let onSessionUpdate: () => void;
 	let user: ReturnType<typeof userEvent.setup>;
 
 	beforeEach(() => {
-		onSessionUpdate = vi.fn();
+		onSessionUpdate = vi.fn() as () => void;
 		user = userEvent.setup();
 		vi.useFakeTimers();
 		resetMocks();
@@ -269,7 +270,7 @@ describe('Training Session Restart UI', () => {
 			const restartButton = screen.getAllByRole('button', { name: /restart/i })[0];
 
 			// Click restart button
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Button should be disabled during processing
 			await waitFor(() => {
@@ -288,7 +289,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getAllByRole('button', { name: /restart/i })[0];
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Check for confirmation modal
 			await waitFor(() => {
@@ -309,7 +310,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getAllByRole('button', { name: /restart/i })[0];
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Wait for modal to appear
 			await waitFor(() => {
@@ -468,7 +469,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getByRole('button', { name: /restart.*training/i });
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Confirm
 			await waitFor(async () => {
@@ -508,7 +509,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getByRole('button', { name: /restart.*face/i });
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Confirm
 			await waitFor(async () => {
@@ -541,7 +542,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getByRole('button', { name: /restart.*training/i });
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Confirm
 			await waitFor(async () => {
@@ -575,7 +576,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getByRole('button', { name: /restart.*cluster/i });
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Confirm
 			await waitFor(async () => {
@@ -625,7 +626,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getByRole('button', { name: /restart.*face/i });
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Confirm
 			await waitFor(async () => {
@@ -663,7 +664,7 @@ describe('Training Session Restart UI', () => {
 			});
 
 			const restartButton = screen.getByRole('button', { name: /restart.*training/i });
-			await user.click(restartButton);
+			await user.click(restartButton!);
 
 			// Confirm
 			await waitFor(async () => {
@@ -699,8 +700,8 @@ describe('Training Session Restart UI', () => {
 			const restartButton = screen.getByRole('button', { name: /restart.*training/i });
 
 			// Click multiple times rapidly
-			await user.click(restartButton);
-			await user.click(restartButton);
+			await user.click(restartButton!);
+			await user.click(restartButton!);
 
 			// Button should be disabled to prevent double-clicking
 			await waitFor(() => {
