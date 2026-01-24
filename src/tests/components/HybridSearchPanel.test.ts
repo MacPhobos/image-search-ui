@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import HybridSearchPanel from '$lib/components/HybridSearchPanel.svelte';
 import { tid } from '$lib/testing/testid';
@@ -47,12 +47,10 @@ describe('HybridSearchPanel', () => {
 	});
 
 	it('updates weight indicators when slider changes', async () => {
-		const user = userEvent.setup();
 		render(HybridSearchPanel, { props: { onSearch: mockOnSearch, testId } });
 
-		const slider = screen.getByTestId(tid(testId, 'slider-weight'));
-		await user.clear(slider);
-		await user.type(slider, '75');
+		const slider = screen.getByTestId(tid(testId, 'slider-weight')) as HTMLInputElement;
+		await fireEvent.input(slider, { target: { value: '75' } });
 
 		expect(screen.getByTestId(tid(testId, 'text-weight'))).toHaveTextContent('Text: 75%');
 		expect(screen.getByTestId(tid(testId, 'image-weight'))).toHaveTextContent('Image: 25%');
@@ -83,9 +81,8 @@ describe('HybridSearchPanel', () => {
 		const textInput = screen.getByTestId(tid(testId, 'input-text'));
 		await user.type(textInput, 'mountain landscape');
 
-		const slider = screen.getByTestId(tid(testId, 'slider-weight'));
-		await user.clear(slider);
-		await user.type(slider, '70');
+		const slider = screen.getByTestId(tid(testId, 'slider-weight')) as HTMLInputElement;
+		await fireEvent.input(slider, { target: { value: '70' } });
 
 		const searchButton = screen.getByTestId(tid(testId, 'btn-search'));
 		await user.click(searchButton);

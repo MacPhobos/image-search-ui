@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import ComposedSearchPanel from '$lib/components/ComposedSearchPanel.svelte';
 import { tid } from '$lib/testing/testid';
@@ -55,12 +55,10 @@ describe('ComposedSearchPanel', () => {
 	});
 
 	it('updates strength indicators when slider changes', async () => {
-		const user = userEvent.setup();
 		render(ComposedSearchPanel, { props: { onSearch: mockOnSearch, testId } });
 
-		const slider = screen.getByTestId(tid(testId, 'slider-alpha'));
-		await user.clear(slider);
-		await user.type(slider, '60');
+		const slider = screen.getByTestId(tid(testId, 'slider-alpha')) as HTMLInputElement;
+		await fireEvent.input(slider, { target: { value: '60' } });
 
 		expect(screen.getByTestId(tid(testId, 'reference-strength'))).toHaveTextContent(
 			'Reference: 40%'
@@ -175,9 +173,8 @@ describe('ComposedSearchPanel', () => {
 			props: { onSearch: mockOnSearch, referenceImage: mockFile, testId }
 		});
 
-		const slider = screen.getByTestId(tid(testId, 'slider-alpha'));
-		await user.clear(slider);
-		await user.type(slider, '80');
+		const slider = screen.getByTestId(tid(testId, 'slider-alpha')) as HTMLInputElement;
+		await fireEvent.input(slider, { target: { value: '80' } });
 
 		const modifierInput = screen.getByTestId(tid(testId, 'input-modifier'));
 		await user.type(modifierInput, 'at sunset');
