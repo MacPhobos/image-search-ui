@@ -9,7 +9,7 @@
 	});
 	onMount(() => cleanup);
 
-	export type SearchMode = 'text' | 'image';
+	export type SearchMode = 'text' | 'image' | 'hybrid' | 'composed';
 
 	interface Props {
 		mode: SearchMode;
@@ -43,7 +43,7 @@
 				d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
 			/>
 		</svg>
-		<span>Text Search</span>
+		<span>Text</span>
 	</button>
 
 	<button
@@ -63,7 +63,47 @@
 				d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
 			/>
 		</svg>
-		<span>Image Search</span>
+		<span>Image</span>
+	</button>
+
+	<button
+		type="button"
+		class="mode-button"
+		class:active={mode === 'hybrid'}
+		onclick={() => onModeChange('hybrid')}
+		aria-label="Hybrid search mode"
+		aria-pressed={mode === 'hybrid'}
+		data-testid={t('btn-hybrid')}
+	>
+		<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+			/>
+		</svg>
+		<span>Hybrid</span>
+	</button>
+
+	<button
+		type="button"
+		class="mode-button"
+		class:active={mode === 'composed'}
+		onclick={() => onModeChange('composed')}
+		aria-label="Composed search mode"
+		aria-pressed={mode === 'composed'}
+		data-testid={t('btn-composed')}
+	>
+		<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+			/>
+		</svg>
+		<span>Composed</span>
 	</button>
 </div>
 

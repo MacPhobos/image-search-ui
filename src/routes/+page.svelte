@@ -4,10 +4,20 @@
 	import SearchModeToggle from '$lib/components/SearchModeToggle.svelte';
 	import type { SearchMode } from '$lib/components/SearchModeToggle.svelte';
 	import ImageUploadZone from '$lib/components/ImageUploadZone.svelte';
+	import HybridSearchPanel from '$lib/components/HybridSearchPanel.svelte';
+	import ComposedSearchPanel from '$lib/components/ComposedSearchPanel.svelte';
 	import FiltersPanel from '$lib/components/FiltersPanel.svelte';
 	import ResultsGrid from '$lib/components/ResultsGrid.svelte';
-	import { searchImages, searchByImage, searchSimilar, ApiError } from '$lib/api/client';
+	import {
+		searchImages,
+		searchByImage,
+		searchSimilar,
+		searchHybrid,
+		searchComposed,
+		ApiError
+	} from '$lib/api/client';
 	import type { SearchResult, SearchFilters } from '$lib/types';
+	import { searchHistory } from '$lib/stores/searchHistory.svelte';
 	import { tid } from '$lib/testing/testid';
 	import { setViewId } from '$lib/dev/viewId';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
@@ -50,6 +60,7 @@
 				filters
 			});
 			results = response.results;
+			searchHistory.addTextSearch(searchQuery);
 		} catch (err) {
 			if (err instanceof ApiError) {
 				error = err.data?.message || err.message;
@@ -75,6 +86,7 @@
 				filters
 			});
 			results = response.results;
+			searchHistory.addImageSearch(selectedImage.name);
 		} catch (err) {
 			if (err instanceof ApiError) {
 				error = err.data?.message || err.message;
@@ -108,9 +120,77 @@
 		}
 	}
 
+	async function handleHybridSearch(params: {
+		textQuery: string | null;
+		imageFile: File | null;
+		textWeight: number;
+	}) {
+		loading = true;
+		error = null;
+		hasSearched = true;
+
+		try {
+			const response = await searchHybrid(
+				params.textQuery,
+				params.imageFile,
+				params.textWeight,
+				50
+			);
+			results = response.results;
+			searchHistory.addHybridSearch(
+				params.textQuery,
+				params.imageFile?.name || null,
+				params.textWeight
+			);
+		} catch (err) {
+			if (err instanceof ApiError) {
+				error = err.data?.message || err.message;
+			} else {
+				error = err instanceof Error ? err.message : 'An unexpected error occurred';
+			}
+			results = [];
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleComposedSearch(params: {
+		referenceImage: File;
+		modifierText: string;
+		alpha: number;
+	}) {
+		loading = true;
+		error = null;
+		hasSearched = true;
+
+		try {
+			const response = await searchComposed(
+				params.referenceImage,
+				params.modifierText,
+				params.alpha,
+				50
+			);
+			results = response.results;
+			searchHistory.addComposedSearch(
+				params.referenceImage.name,
+				params.modifierText,
+				params.alpha
+			);
+		} catch (err) {
+			if (err instanceof ApiError) {
+				error = err.data?.message || err.message;
+			} else {
+				error = err instanceof Error ? err.message : 'An unexpected error occurred';
+			}
+			results = [];
+		} finally {
+			loading = false;
+		}
+	}
+
 	function handleModeChange(mode: SearchMode) {
 		searchMode = mode;
-		// Clear opposite input when switching
+		// Clear inputs when switching modes
 		if (mode === 'text') {
 			selectedImage = null;
 		} else if (mode === 'image') {
@@ -159,6 +239,10 @@
 							{loading ? 'Searching...' : 'Search by Image'}
 						</button>
 					</div>
+				{:else if searchMode === 'hybrid'}
+					<HybridSearchPanel onSearch={handleHybridSearch} disabled={loading} />
+				{:else if searchMode === 'composed'}
+					<ComposedSearchPanel onSearch={handleComposedSearch} disabled={loading} />
 				{/if}
 			</div>
 		</div>

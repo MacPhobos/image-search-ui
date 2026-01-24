@@ -162,6 +162,106 @@ export async function searchSimilar(assetId: number, limit = 50): Promise<Search
 }
 
 /**
+ * Search result with combined scores for hybrid search
+ */
+export interface HybridSearchResult extends SearchResponse {
+	results: (SearchResponse['results'][0] & {
+		textScore?: number;
+		imageScore?: number;
+		combinedScore: number;
+	})[];
+}
+
+/**
+ * Hybrid search combining text query and image similarity.
+ * Uses POST /api/v1/search/hybrid endpoint.
+ */
+export async function searchHybrid(
+	textQuery: string | null,
+	imageFile: File | null,
+	textWeight: number = 0.5,
+	limit: number = 20
+): Promise<HybridSearchResult> {
+	const formData = new FormData();
+
+	if (textQuery) {
+		formData.append('text_query', textQuery);
+	}
+	if (imageFile) {
+		formData.append('image', imageFile);
+	}
+	formData.append('text_weight', String(textWeight));
+	formData.append('limit', String(limit));
+
+	const url = `${API_BASE_URL}/api/v1/search/hybrid`;
+
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			body: formData
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => null);
+			throw new ApiError(
+				errorData?.message || `HTTP ${response.status}: ${response.statusText}`,
+				response.status,
+				errorData
+			);
+		}
+
+		return await response.json();
+	} catch (error) {
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		throw new ApiError('Network request failed', 0, undefined);
+	}
+}
+
+/**
+ * Composed search: modify a reference image with text description.
+ * Uses POST /api/v1/search/composed endpoint.
+ */
+export async function searchComposed(
+	referenceImage: File,
+	modifierText: string,
+	alpha: number = 0.3,
+	limit: number = 20
+): Promise<SearchResponse> {
+	const formData = new FormData();
+	formData.append('reference_image', referenceImage);
+	formData.append('modifier_text', modifierText);
+	formData.append('alpha', String(alpha));
+	formData.append('limit', String(limit));
+
+	const url = `${API_BASE_URL}/api/v1/search/composed`;
+
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			body: formData
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => null);
+			throw new ApiError(
+				errorData?.message || `HTTP ${response.status}: ${response.statusText}`,
+				response.status,
+				errorData
+			);
+		}
+
+		return await response.json();
+	} catch (error) {
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		throw new ApiError('Network request failed', 0, undefined);
+	}
+}
+
+/**
  * Check backend health status.
  * Uses GET /health endpoint (no /api/v1 prefix).
  */
