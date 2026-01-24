@@ -29,9 +29,7 @@
 	}: Props = $props();
 
 	// Derived scoped test ID generator
-	const t = $derived((...segments: string[]) =>
-		segments.length === 0 ? testId : tid(testId, ...segments)
-	);
+	const t = (...segments: string[]) => (segments.length === 0 ? testId : tid(testId, ...segments));
 
 	let localReferenceImage = $state<File | null>(null);
 	let localModifierText = $state('');
@@ -118,7 +116,7 @@
 				id="modifier-text-input"
 				type="text"
 				class="text-input"
-				placeholder="e.g., "but at sunset", "with more people", "in winter""
+				placeholder="e.g., &quot;but at sunset&quot;, &quot;with more people&quot;, &quot;in winter&quot;"
 				bind:value={localModifierText}
 				onkeypress={handleKeyPress}
 				{disabled}
