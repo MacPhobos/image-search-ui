@@ -18,10 +18,17 @@
 		results: SearchResult[];
 		loading?: boolean;
 		hasSearched?: boolean;
+		onFindSimilar?: (assetId: number) => void;
 		testId?: string;
 	}
 
-	let { results, loading = false, hasSearched = false, testId = 'results-grid' }: Props = $props();
+	let {
+		results,
+		loading = false,
+		hasSearched = false,
+		onFindSimilar,
+		testId = 'results-grid'
+	}: Props = $props();
 
 	// Derived scoped test ID generator (reactive to testId changes)
 	const t = $derived((...segments: string[]) =>
@@ -30,6 +37,9 @@
 
 	// Track image load errors per asset ID
 	let imageErrors = $state<Set<number>>(new Set());
+
+	// Track hover state per card (using asset ID)
+	let hoveredCardId = $state<number | null>(null);
 
 	// Lightbox state
 	let showLightbox = $state(false);
@@ -127,49 +137,77 @@
 		</div>
 		<div class="results-grid" data-testid={t('grid')}>
 			{#each results as result, index (result.asset.id)}
-				<article class="result-card" data-testid={t('card')}>
-					<button
-						type="button"
-						class="result-card-button"
-						onclick={() => handleCardClick(result, index)}
-						aria-label="View full image: {result.asset.filename}"
-					>
-						<div class="result-image-container">
-							{#if hasImageError(result.asset.id)}
-								<div class="result-image-placeholder">
-									<span class="filename">{result.asset.filename}</span>
-								</div>
-							{:else}
-								<img
-									src={getImageUrl(result.asset.thumbnailUrl)}
-									alt={result.asset.filename}
-									class="result-image"
-									loading="lazy"
-									onerror={() => handleImageError(result.asset.id)}
-								/>
-							{/if}
-						</div>
-						<div class="result-info">
-							<div class="result-path" title={result.asset.path}>
-								{result.asset.path}
+				<article
+					class="result-card"
+					data-testid={t('card')}
+					onmouseenter={() => (hoveredCardId = result.asset.id)}
+					onmouseleave={() => (hoveredCardId = null)}
+				>
+					<div class="card-content">
+						<button
+							type="button"
+							class="result-card-button"
+							onclick={() => handleCardClick(result, index)}
+							aria-label="View full image: {result.asset.filename}"
+						>
+							<div class="result-image-container">
+								{#if hasImageError(result.asset.id)}
+									<div class="result-image-placeholder">
+										<span class="filename">{result.asset.filename}</span>
+									</div>
+								{:else}
+									<img
+										src={getImageUrl(result.asset.thumbnailUrl)}
+										alt={result.asset.filename}
+										class="result-image"
+										loading="lazy"
+										onerror={() => handleImageError(result.asset.id)}
+									/>
+								{/if}
 							</div>
-							<div class="result-meta">
-								<span class="score" title="Similarity score">
-									Cosine Score: {formatScore(result.score)}
-								</span>
-								<span class="date" title="Created">
-									{formatDate(result.asset.createdAt)}
-								</span>
-							</div>
-							{#if result.highlights && result.highlights.length > 0}
-								<div class="highlights">
-									{#each result.highlights as highlight}
-										<span class="highlight-tag">{highlight}</span>
-									{/each}
+							<div class="result-info">
+								<div class="result-path" title={result.asset.path}>
+									{result.asset.path}
 								</div>
-							{/if}
-						</div>
-					</button>
+								<div class="result-meta">
+									<span class="score" title="Similarity score">
+										Cosine Score: {formatScore(result.score)}
+									</span>
+									<span class="date" title="Created">
+										{formatDate(result.asset.createdAt)}
+									</span>
+								</div>
+								{#if result.highlights && result.highlights.length > 0}
+									<div class="highlights">
+										{#each result.highlights as highlight}
+											<span class="highlight-tag">{highlight}</span>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						</button>
+
+						<!-- Find Similar Button (shows on hover, outside the card button) -->
+						{#if onFindSimilar && hoveredCardId === result.asset.id}
+							<button
+								type="button"
+								class="find-similar-btn"
+								onclick={() => onFindSimilar(result.asset.id)}
+								title="Find similar images"
+								aria-label="Find similar images to {result.asset.filename}"
+								data-testid={t('btn-find-similar')}
+							>
+								<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+									/>
+								</svg>
+							</button>
+						{/if}
+					</div>
 				</article>
 			{/each}
 		</div>
@@ -252,6 +290,10 @@
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 	}
 
+	.card-content {
+		position: relative;
+	}
+
 	.result-card-button {
 		display: block;
 		width: 100%;
@@ -274,6 +316,7 @@
 	}
 
 	.result-image-container {
+		position: relative;
 		width: 100%;
 		min-height: 120px;
 		max-height: 280px;
@@ -281,6 +324,41 @@
 		align-items: center;
 		justify-content: center;
 		background: #f0f0f0;
+	}
+
+	.find-similar-btn {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		padding: 0.5rem;
+		background-color: rgba(255, 255, 255, 0.95);
+		border: none;
+		border-radius: 9999px;
+		cursor: pointer;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+		transition: all 0.2s;
+		z-index: 10;
+	}
+
+	.find-similar-btn:hover {
+		background-color: white;
+		transform: scale(1.1);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	}
+
+	.find-similar-btn:active {
+		transform: scale(0.95);
+	}
+
+	.find-similar-btn:focus {
+		outline: 2px solid #2563eb;
+		outline-offset: 2px;
+	}
+
+	.find-similar-btn .icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		color: #1f2937;
 	}
 
 	.result-image {

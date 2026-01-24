@@ -90,6 +90,78 @@ export async function searchImages(params: SearchParams): Promise<SearchResponse
 }
 
 /**
+ * Search for images using an uploaded image file.
+ * Uses POST /api/v1/search/image endpoint.
+ */
+export async function searchByImage(params: {
+	file: File;
+	filters?: SearchParams['filters'];
+	limit?: number;
+	offset?: number;
+}): Promise<SearchResponse> {
+	const formData = new FormData();
+	formData.append('file', params.file);
+
+	// Build query parameters
+	const queryParams = new URLSearchParams();
+	queryParams.set('limit', String(params.limit ?? 50));
+	queryParams.set('offset', String(params.offset ?? 0));
+
+	if (params.filters) {
+		if (params.filters.dateFrom) {
+			queryParams.set('start_date', params.filters.dateFrom);
+		}
+		if (params.filters.dateTo) {
+			queryParams.set('end_date', params.filters.dateTo);
+		}
+		if (params.filters.categoryId) {
+			queryParams.set('category_id', String(params.filters.categoryId));
+		}
+		if (params.filters.personId) {
+			queryParams.set('person_id', params.filters.personId);
+		}
+	}
+
+	const url = `${API_BASE_URL}/api/v1/search/image?${queryParams}`;
+
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			body: formData
+			// Note: Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => null);
+			throw new ApiError(
+				errorData?.message || `HTTP ${response.status}: ${response.statusText}`,
+				response.status,
+				errorData
+			);
+		}
+
+		return await response.json();
+	} catch (error) {
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		throw new ApiError('Network request failed', 0, undefined);
+	}
+}
+
+/**
+ * Find images similar to an existing asset by ID.
+ * Uses GET /api/v1/search/similar/{asset_id} endpoint.
+ */
+export async function searchSimilar(assetId: number, limit = 50): Promise<SearchResponse> {
+	const queryParams = new URLSearchParams();
+	queryParams.set('limit', String(limit));
+	queryParams.set('exclude_self', 'true');
+
+	return apiRequest<SearchResponse>(`/api/v1/search/similar/${assetId}?${queryParams}`);
+}
+
+/**
  * Check backend health status.
  * Uses GET /health endpoint (no /api/v1 prefix).
  */
