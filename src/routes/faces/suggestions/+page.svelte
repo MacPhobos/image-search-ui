@@ -297,8 +297,11 @@
 			assignedAt: new Date()
 		};
 
-		// Add to front, keep max 10
-		recentAssignments = [recentAssignment, ...recentAssignments].slice(0, 10);
+		// Add to front (dedup by faceId to prevent duplicate keys), keep max 10
+		recentAssignments = [
+			recentAssignment,
+			...recentAssignments.filter((a) => a.faceId !== recentAssignment.faceId)
+		].slice(0, 10);
 	}
 
 	/**
@@ -317,8 +320,11 @@
 			assignedAt: new Date()
 		};
 
-		// Add to front, keep max 10
-		recentAssignments = [assignment, ...recentAssignments].slice(0, 10);
+		// Add to front (dedup by faceId to prevent duplicate keys), keep max 10
+		recentAssignments = [
+			assignment,
+			...recentAssignments.filter((a) => a.faceId !== assignment.faceId)
+		].slice(0, 10);
 	}
 
 	/**
