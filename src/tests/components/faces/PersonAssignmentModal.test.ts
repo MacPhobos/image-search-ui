@@ -5,6 +5,7 @@ import { mockResponse, mockError, resetMocks } from '../../helpers/mockFetch';
 import { createPerson } from '../../helpers/fixtures';
 import PersonAssignmentModal from '$lib/components/faces/PersonAssignmentModal.svelte';
 import type { Person } from '$lib/api/faces';
+import { localSettings } from '$lib/stores/localSettings.svelte';
 
 describe('PersonAssignmentModal', () => {
 	const mockPersons: Person[] = [
@@ -23,10 +24,12 @@ describe('PersonAssignmentModal', () => {
 	beforeEach(() => {
 		resetMocks();
 		vi.clearAllMocks();
-		// Clear localStorage between tests
+		// Clear localStorage and in-memory settings cache between tests
 		localStorage.clear();
-		// Setup default mocks
-		mockResponse('/api/v1/faces/persons', {
+		localSettings.clearAll();
+		// Setup default mocks - use regex pattern to match URL with query params
+		// This avoids collision with POST mocks for the same base path
+		mockResponse('/api/v1/faces/persons\\?', {
 			items: mockPersons,
 			total: 3,
 			page: 1,
@@ -440,11 +443,8 @@ describe('PersonAssignmentModal', () => {
 
 	describe('MRU (Most Recently Used)', () => {
 		it('recent persons appear first when search is empty', async () => {
-			// Set up MRU in localStorage
-			localStorage.setItem(
-				'image-search.suggestions.recentPersonIds',
-				JSON.stringify(['person-3', 'person-1'])
-			);
+			// Set up MRU via localSettings (sets in-memory cache directly)
+			localSettings.set('suggestions.recentPersonIds', ['person-3', 'person-1']);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -480,19 +480,14 @@ describe('PersonAssignmentModal', () => {
 				expect(defaultProps.onSuccess).toHaveBeenCalled();
 			});
 
-			// Check that MRU was updated in localStorage
-			const mru = JSON.parse(
-				localStorage.getItem('image-search.suggestions.recentPersonIds') || '[]'
-			);
+			// Check that MRU was updated
+			const mru = localSettings.get<string[]>('suggestions.recentPersonIds', []);
 			expect(mru[0]).toBe('person-2');
 		});
 
 		it('MRU order does NOT affect filtered results', async () => {
 			// Set up MRU with Bob first
-			localStorage.setItem(
-				'image-search.suggestions.recentPersonIds',
-				JSON.stringify(['person-2'])
-			);
+			localSettings.set('suggestions.recentPersonIds', ['person-2']);
 
 			render(PersonAssignmentModal, { props: defaultProps });
 
@@ -541,7 +536,7 @@ describe('PersonAssignmentModal', () => {
 
 		it('displays singular "face" for count of 1', async () => {
 			const singleFacePerson = createPerson({ id: 'person-4', name: 'Single Face', faceCount: 1 });
-			mockResponse('/api/v1/faces/persons', {
+			mockResponse('/api/v1/faces/persons\\?', {
 				items: [singleFacePerson],
 				total: 1,
 				page: 1,
@@ -593,7 +588,7 @@ describe('PersonAssignmentModal', () => {
 
 			// Now mock success for retry
 			resetMocks();
-			mockResponse('/api/v1/faces/persons', {
+			mockResponse('/api/v1/faces/persons\\?', {
 				items: mockPersons,
 				total: 3,
 				page: 1,
@@ -647,7 +642,7 @@ describe('PersonAssignmentModal', () => {
 
 			// Reopen modal
 			resetMocks();
-			mockResponse('/api/v1/faces/persons', {
+			mockResponse('/api/v1/faces/persons\\?', {
 				items: mockPersons,
 				total: 3,
 				page: 1,
@@ -729,7 +724,7 @@ describe('PersonAssignmentModal', () => {
 
 	describe('Edge Cases', () => {
 		it('handles empty person list', async () => {
-			mockResponse('/api/v1/faces/persons', {
+			mockResponse('/api/v1/faces/persons\\?', {
 				items: [],
 				total: 0,
 				page: 1,
@@ -749,7 +744,7 @@ describe('PersonAssignmentModal', () => {
 				name: 'No Count',
 				faceCount: 0
 			});
-			mockResponse('/api/v1/faces/persons', {
+			mockResponse('/api/v1/faces/persons\\?', {
 				items: [noCountPerson],
 				total: 1,
 				page: 1,
@@ -822,16 +817,15 @@ describe('PersonAssignmentModal', () => {
 		it('displays person avatar with first letter', async () => {
 			render(PersonAssignmentModal, { props: defaultProps });
 
-			await waitFor(() => screen.getByText('Alice Smith'));
-
-			const { container } = render(PersonAssignmentModal, { props: defaultProps });
-
 			await waitFor(() => {
-				const avatars = container.querySelectorAll('[aria-hidden="true"]');
-				// Find the avatar for Alice (should have 'A')
-				const aliceAvatar = Array.from(avatars).find((el) => el.textContent === 'A');
-				expect(aliceAvatar).toBeInTheDocument();
+				expect(screen.getByText('Alice Smith')).toBeInTheDocument();
 			});
+
+			// Dialog is portaled to document.body, so query from there
+			const avatars = document.body.querySelectorAll('[aria-hidden="true"]');
+			// Find the avatar for Alice (should have 'A')
+			const aliceAvatar = Array.from(avatars).find((el) => el.textContent?.trim() === 'A');
+			expect(aliceAvatar).toBeDefined();
 		});
 
 		it('handles very long person names', async () => {
@@ -840,7 +834,7 @@ describe('PersonAssignmentModal', () => {
 				name: 'This is a very long person name that should be truncated in the UI',
 				faceCount: 5
 			});
-			mockResponse('/api/v1/faces/persons', {
+			mockResponse('/api/v1/faces/persons\\?', {
 				items: [longNamePerson],
 				total: 1,
 				page: 1,

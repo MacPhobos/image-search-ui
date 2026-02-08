@@ -29,7 +29,7 @@
 
 	// Load persons when modal opens
 	$effect(() => {
-		if (open && assignment.persons.length === 0 && !assignment.personsLoading) {
+		if (open && !assignment.personsLoaded && !assignment.personsLoading) {
 			assignment.loadPersons();
 		}
 	});
@@ -114,10 +114,12 @@
 				</Alert.Root>
 			{/if}
 
+			<!-- svelte-ignore a11y_autofocus -->
 			<input
 				type="text"
 				placeholder="Search or create person..."
 				bind:value={searchQuery}
+				autofocus
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 				aria-label="Search persons or enter new name"
 			/>
@@ -171,9 +173,10 @@
 									<div class="font-medium text-sm text-gray-900 truncate">
 										{person.name}
 									</div>
-									{#if person.faceCount}
+									{#if person.faceCount != null}
 										<div class="text-xs text-gray-500">
-											{person.faceCount} {person.faceCount === 1 ? 'face' : 'faces'}
+											{person.faceCount}
+											{person.faceCount === 1 ? 'face' : 'faces'}
 										</div>
 									{/if}
 								</div>

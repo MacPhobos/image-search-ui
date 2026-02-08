@@ -75,6 +75,7 @@ export function useFaceAssignment() {
 	// Reactive state
 	let persons = $state<Person[]>([]);
 	let personsLoading = $state(false);
+	let personsLoaded = $state(false);
 	let submitting = $state(false);
 	let error = $state<string | null>(null);
 
@@ -93,6 +94,7 @@ export function useFaceAssignment() {
 			error = err instanceof Error ? err.message : 'Failed to load persons';
 		} finally {
 			personsLoading = false;
+			personsLoaded = true;
 		}
 	}
 
@@ -202,6 +204,7 @@ export function useFaceAssignment() {
 	 */
 	function reset(): void {
 		error = null;
+		personsLoaded = false;
 	}
 
 	// Return object with getters for reactivity
@@ -212,6 +215,9 @@ export function useFaceAssignment() {
 		},
 		get personsLoading() {
 			return personsLoading;
+		},
+		get personsLoaded() {
+			return personsLoaded;
 		},
 		get submitting() {
 			return submitting;

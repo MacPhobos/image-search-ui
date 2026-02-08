@@ -389,6 +389,13 @@ export async function fetchAllPersons(status: 'active' | 'all' = 'active'): Prom
 	while (true) {
 		const statusFilter = status === 'all' ? undefined : status;
 		const response = await listPersons(page, pageSize, statusFilter);
+
+		// Defensive: validate response has expected shape
+		if (!response || !Array.isArray(response.items)) {
+			console.error('Invalid response from listPersons:', response);
+			break;
+		}
+
 		allPersons.push(...response.items);
 
 		// Stop if we've fetched all items or got a partial page
