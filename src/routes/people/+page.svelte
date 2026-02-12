@@ -14,6 +14,7 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Input } from '$lib/components/ui/input';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/people/+page', {
@@ -145,8 +146,16 @@
 		return [...new Set(ids)]; // Remove duplicates
 	}
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadPeople();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/people');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 

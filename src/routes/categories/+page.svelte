@@ -9,6 +9,7 @@
 	import { onMount } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/categories/+page', {
@@ -38,8 +39,16 @@
 		}
 	}
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadCategories();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/categories');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 

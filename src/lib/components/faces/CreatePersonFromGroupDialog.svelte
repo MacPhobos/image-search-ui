@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -21,6 +23,30 @@
 	}
 
 	let { open = $bindable(), group, excludedFaceIds, onOpenChange, onAccepted }: Props = $props();
+
+	// Component tracking (visibility-based, per dev-component-tracking.md)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('faces/CreatePersonFromGroupDialog', {
+					filePath: 'src/lib/components/faces/CreatePersonFromGroupDialog.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	let name = $state('');
 	let isSubmitting = $state(false);

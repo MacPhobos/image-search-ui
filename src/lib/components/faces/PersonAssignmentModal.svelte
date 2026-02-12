@@ -1,16 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import { useFaceAssignment, type AssignmentResult } from '$lib/hooks/useFaceAssignment.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
-
-	// Component tracking (DEV only)
-	const cleanup = registerComponent('faces/PersonAssignmentModal', {
-		filePath: 'src/lib/components/faces/PersonAssignmentModal.svelte'
-	});
-	onMount(() => cleanup);
 
 	interface Props {
 		open?: boolean;
@@ -20,6 +14,30 @@
 	}
 
 	let { open = $bindable(false), faceId, onSuccess, onCancel }: Props = $props();
+
+	// Component tracking (visibility-based, per dev-component-tracking.md)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('faces/PersonAssignmentModal', {
+					filePath: 'src/lib/components/faces/PersonAssignmentModal.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	// Use the hook for all assignment logic
 	const assignment = useFaceAssignment();

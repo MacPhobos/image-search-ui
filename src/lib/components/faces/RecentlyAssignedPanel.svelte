@@ -3,6 +3,14 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { toAbsoluteUrl } from '$lib/api/faces';
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const trackingCleanup = registerComponent('faces/RecentlyAssignedPanel', {
+		filePath: 'src/lib/components/faces/RecentlyAssignedPanel.svelte'
+	});
+	onMount(() => trackingCleanup);
 
 	export interface RecentAssignment {
 		faceId: string;
@@ -20,12 +28,7 @@
 		collapsible?: boolean;
 	}
 
-	let {
-		assignments = [],
-		onUndo,
-		maxItems = 10,
-		collapsible = true
-	}: Props = $props();
+	let { assignments = [], onUndo, maxItems = 10, collapsible = true }: Props = $props();
 
 	// Collapsible state
 	let isExpanded = $state(true);

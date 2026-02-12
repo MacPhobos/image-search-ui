@@ -7,6 +7,7 @@
 	} from '$lib/api/faces';
 	import FaceDetectionSessionCard from '$lib/components/faces/FaceDetectionSessionCard.svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/faces/sessions/+page', {
@@ -48,8 +49,16 @@
 		}
 	}
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadSessions();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/faces/sessions');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 

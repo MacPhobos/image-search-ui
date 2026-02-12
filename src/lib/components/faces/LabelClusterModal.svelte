@@ -23,10 +23,8 @@
 	// Component tracking for modals (visibility-based)
 	const componentStack = getComponentStack();
 	let trackingCleanup: (() => void) | null = null;
-	const open = true; // This modal is always open when rendered
-
 	$effect(() => {
-		if (open && componentStack) {
+		if (componentStack) {
 			trackingCleanup = untrack(() =>
 				registerComponent('LabelClusterModal', {
 					filePath: 'src/lib/components/faces/LabelClusterModal.svelte'

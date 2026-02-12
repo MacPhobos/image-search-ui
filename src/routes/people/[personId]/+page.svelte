@@ -28,6 +28,7 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/people/[personId]/+page', {
@@ -94,8 +95,16 @@
 	let lightboxPhotos = $state<PersonPhotoGroup[]>([]);
 	let lightboxIndex = $state(0);
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadPerson();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/people/[personId]');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 

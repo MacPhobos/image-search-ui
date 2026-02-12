@@ -5,6 +5,14 @@
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
 	import { tid } from '$lib/testing/testid';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const trackingCleanup = registerComponent('FiltersPanel', {
+		filePath: 'src/lib/components/FiltersPanel.svelte'
+	});
+	// Sync onMount for cleanup (separate from async data-loading onMount)
+	onMount(() => trackingCleanup);
 
 	interface Props {
 		onFilterChange: (filters: SearchFilters) => void;

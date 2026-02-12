@@ -4,13 +4,25 @@
 	import SessionDetailView from '$lib/components/training/SessionDetailView.svelte';
 	import type { PageData } from './$types';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 	import { onMount } from 'svelte';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/training/[sessionId]/+page', {
 		filePath: 'src/routes/training/[sessionId]/+page.svelte'
 	});
-	onMount(() => cleanup);
+
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/training/[sessionId]');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
+		return cleanup;
+	});
 
 	interface Props {
 		data: PageData;

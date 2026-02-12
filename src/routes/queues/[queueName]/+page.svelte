@@ -3,11 +3,25 @@
 	import { getQueueDetail, type QueueDetailResponse } from '$lib/api/queues';
 	import QueueJobsTable from '$lib/components/queues/QueueJobsTable.svelte';
 	import JobStatusBadge from '$lib/components/queues/JobStatusBadge.svelte';
+	import { onMount } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/queues/[queueName]/+page', {
 		filePath: 'src/routes/queues/[queueName]/+page.svelte'
+	});
+
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/queues/[queueName]');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
+		return cleanup;
 	});
 
 	interface Props {
@@ -48,7 +62,7 @@
 	}
 
 	$effect(() => {
-		// Initial fetch
+		// Initial fetch (reactive: re-runs when currentPage changes)
 		fetchQueueDetail();
 
 		// Start polling
@@ -56,12 +70,11 @@
 			fetchQueueDetail();
 		}, POLL_INTERVAL_MS);
 
-		// Cleanup on destroy (clear interval and component tracking)
+		// Cleanup on page change or destroy (clear interval)
 		return () => {
 			if (pollingInterval) {
 				clearInterval(pollingInterval);
 			}
-			cleanup();
 		};
 	});
 </script>

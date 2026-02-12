@@ -13,15 +13,24 @@
 	} from '$lib/api/faces';
 	import FaceDetectionSessionCard from '$lib/components/faces/FaceDetectionSessionCard.svelte';
 	import * as Tabs from '$lib/components/ui/tabs';
+	import { onMount } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
-	// Component tracking (DEV only) - cleanup on unmount
+	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/training/+page', {
 		filePath: 'src/routes/training/+page.svelte'
 	});
 
-	// Cleanup component tracking on unmount only
-	$effect(() => {
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/training');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 

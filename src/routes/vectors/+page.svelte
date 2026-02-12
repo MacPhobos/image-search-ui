@@ -18,6 +18,7 @@
 		type DeletionLogEntry
 	} from '$lib/api/vectors';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/vectors/+page', {
@@ -136,9 +137,17 @@
 		await loadLogs();
 	}
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadDirectoryStats();
 		loadLogs();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/vectors');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 </script>

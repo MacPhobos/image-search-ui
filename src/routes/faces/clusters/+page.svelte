@@ -12,6 +12,7 @@
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Storage keys for persistence
 	const STORAGE_KEYS = {
@@ -23,7 +24,18 @@
 	const componentCleanup = registerComponent('routes/faces/clusters/+page', {
 		filePath: 'src/routes/faces/clusters/+page.svelte'
 	});
-	onDestroy(() => componentCleanup());
+
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/faces/clusters');
+			return () => {
+				componentCleanup();
+				clearViewId?.();
+			};
+		}
+		return componentCleanup;
+	});
 
 	// State
 	let clusters = $state<ClusterSummary[]>([]);
@@ -71,7 +83,7 @@
 
 	const PAGE_SIZE = 100;
 
-	// Load configuration and clusters on mount
+	// Async onMount for data loading (cannot return cleanup -- see CRITICAL-3)
 	onMount(async () => {
 		// Load persisted settings
 		sortBy = localSettings.get<SortOption>(STORAGE_KEYS.SORT_BY, 'faceCount');

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
+	import { registerComponent, getComponentStack } from '$lib/dev/componentRegistry.svelte';
 	import type { UnknownPersonCandidateGroup } from '$lib/api/faces';
 	import { mergeUnknownPersonCandidates } from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
@@ -18,6 +20,30 @@
 	}
 
 	let { open, groupA, groupB, similarity, onOpenChange, onMerged }: Props = $props();
+
+	// Component tracking (visibility-based, per dev-component-tracking.md)
+	const componentStack = getComponentStack();
+	let trackingCleanup: (() => void) | null = null;
+
+	$effect(() => {
+		if (open && componentStack) {
+			trackingCleanup = untrack(() =>
+				registerComponent('faces/MergeGroupsDialog', {
+					filePath: 'src/lib/components/faces/MergeGroupsDialog.svelte'
+				})
+			);
+		} else if (trackingCleanup) {
+			trackingCleanup();
+			trackingCleanup = null;
+		}
+
+		return () => {
+			if (trackingCleanup) {
+				trackingCleanup();
+				trackingCleanup = null;
+			}
+		};
+	});
 
 	let loading = $state(false);
 	let error = $state<string | null>(null);

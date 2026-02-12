@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy, untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import type { FaceSuggestion, Person } from '$lib/api/faces';
 	import {
 		listGroupedSuggestions,
@@ -24,12 +24,29 @@
 	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { unassignFace } from '$lib/api/faces';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import UnlabeledGroupsView from '$lib/components/faces/UnlabeledGroupsView.svelte';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/faces/suggestions/+page', {
 		filePath: 'src/routes/faces/suggestions/+page.svelte'
+	});
+
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/faces/suggestions');
+			return () => {
+				thumbnailCache.clear();
+				cleanup();
+				clearViewId?.();
+			};
+		}
+		return () => {
+			thumbnailCache.clear();
+			cleanup();
+		};
 	});
 
 	// Tab state with localStorage persistence
@@ -426,6 +443,7 @@
 		return [...new Set(assetIds)]; // Remove duplicates
 	}
 
+	// Async onMount for data loading (cannot return cleanup -- see CRITICAL-3)
 	onMount(async () => {
 		try {
 			settings = await getFaceSuggestionSettings();
@@ -435,13 +453,6 @@
 		}
 		await loadPersons();
 		await loadSuggestions();
-	});
-
-	onDestroy(() => {
-		// Clear cache when page unmounts
-		thumbnailCache.clear();
-		// Component tracking cleanup
-		cleanup();
 	});
 
 	$effect(() => {

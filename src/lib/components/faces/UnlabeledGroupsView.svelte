@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy, untrack } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
@@ -22,6 +23,11 @@
 	// --- localStorage keys ---
 	const THRESHOLD_KEY = 'unlabeledGroups.threshold';
 	const PAGE_KEY = 'unlabeledGroups.page';
+
+	// Component tracking (DEV only)
+	const trackingCleanup = registerComponent('faces/UnlabeledGroupsView', {
+		filePath: 'src/lib/components/faces/UnlabeledGroupsView.svelte'
+	});
 
 	// --- State ---
 	let threshold = $state(localSettings.get<number>(THRESHOLD_KEY, 0.7));
@@ -216,6 +222,7 @@
 	onDestroy(() => {
 		if (pollIntervalId) clearInterval(pollIntervalId);
 		if (fetchTimeout) clearTimeout(fetchTimeout);
+		trackingCleanup();
 	});
 
 	function handleCreatePerson(group: UnknownPersonCandidateGroup, excluded: string[]) {

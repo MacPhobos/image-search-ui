@@ -12,6 +12,7 @@
 	import { API_BASE_URL } from '$lib/api/client';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/faces/persons/[id]/history/+page', {
@@ -181,8 +182,16 @@
 		previewPhoto = null;
 	}
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadHistory();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/faces/persons/[id]/history');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 </script>

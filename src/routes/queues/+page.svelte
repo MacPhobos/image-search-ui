@@ -10,7 +10,9 @@
 	import WorkersPanel from '$lib/components/queues/WorkersPanel.svelte';
 	import ConnectionIndicator from '$lib/components/queues/ConnectionIndicator.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { onMount } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/queues/+page', {
@@ -56,7 +58,8 @@
 		return `${seconds}s ago`;
 	}
 
-	$effect(() => {
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
 		// Initial fetch
 		fetchData();
 
@@ -66,6 +69,16 @@
 		}, POLL_INTERVAL_MS);
 
 		// Cleanup on destroy (clear interval and component tracking)
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/queues');
+			return () => {
+				if (pollingInterval) {
+					clearInterval(pollingInterval);
+				}
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return () => {
 			if (pollingInterval) {
 				clearInterval(pollingInterval);

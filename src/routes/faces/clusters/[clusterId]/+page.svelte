@@ -16,6 +16,7 @@
 	import { onMount } from 'svelte';
 	import { env } from '$env/dynamic/public';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import { setViewId } from '$lib/dev/viewId';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/faces/clusters/[clusterId]/+page', {
@@ -54,8 +55,16 @@
 	let hasMoreFaces = $derived(cluster ? visibleFaceCount < cluster.faces.length : false);
 	let qualityStats = $derived(calculateQualityStats(cluster?.faces ?? []));
 
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadCluster();
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/faces/clusters/[clusterId]');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
 		return cleanup;
 	});
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { setViewId } from '$lib/dev/viewId';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import AdminDataManagement from '$lib/components/admin/AdminDataManagement.svelte';
 	import FaceMatchingSettings from '$lib/components/admin/FaceMatchingSettings.svelte';
@@ -9,7 +10,18 @@
 	const cleanup = registerComponent('routes/admin/+page', {
 		filePath: 'src/routes/admin/+page.svelte'
 	});
-	onMount(() => cleanup);
+
+	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
+	onMount(() => {
+		if (import.meta.env.DEV) {
+			const clearViewId = setViewId('page:/admin');
+			return () => {
+				cleanup();
+				clearViewId?.();
+			};
+		}
+		return cleanup;
+	});
 </script>
 
 <svelte:head>

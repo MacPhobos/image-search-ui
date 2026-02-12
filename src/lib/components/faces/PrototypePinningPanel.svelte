@@ -2,6 +2,14 @@
 	import type { AgeEraBucket } from '$lib/api/faces';
 	import { Button } from '$lib/components/ui/button';
 	import * as Alert from '$lib/components/ui/alert';
+	import { onMount } from 'svelte';
+	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+
+	// Component tracking (DEV only)
+	const trackingCleanup = registerComponent('faces/PrototypePinningPanel', {
+		filePath: 'src/lib/components/faces/PrototypePinningPanel.svelte'
+	});
+	onMount(() => trackingCleanup);
 
 	interface Props {
 		open: boolean;
