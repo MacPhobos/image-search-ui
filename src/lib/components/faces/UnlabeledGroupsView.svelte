@@ -2,17 +2,21 @@
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
 	import SimilarityThresholdControl from './SimilarityThresholdControl.svelte';
 	import UnlabeledGroupCard from './UnlabeledGroupCard.svelte';
 	import CreatePersonFromGroupDialog from './CreatePersonFromGroupDialog.svelte';
+	import MergeGroupsDialog from './MergeGroupsDialog.svelte';
 	import {
 		listUnknownPersonCandidates,
 		triggerDiscovery,
 		getDiscoveryStats,
+		getMergeSuggestions,
 		toAbsoluteUrl,
 		type UnknownPersonCandidatesResponse,
 		type UnknownPersonCandidateGroup,
-		type UnknownPersonsStats
+		type UnknownPersonsStats,
+		type MergeSuggestion
 	} from '$lib/api/faces';
 
 	// --- localStorage keys ---
@@ -40,8 +44,17 @@
 	let selectedGroup = $state<UnknownPersonCandidateGroup | null>(null);
 	let excludedFaceIds = $state<string[]>([]);
 
+	// Merge dialog state
+	let mergeDialogOpen = $state(false);
+	let mergeGroupA = $state<UnknownPersonCandidateGroup | null>(null);
+	let mergeGroupB = $state<UnknownPersonCandidateGroup | null>(null);
+	let mergeSimilarity = $state(0);
+
 	// Stats
 	let stats = $state.raw<UnknownPersonsStats | null>(null);
+
+	// Merge suggestions
+	let mergeSuggestions = $state.raw<MergeSuggestion[]>([]);
 
 	// --- Derived ---
 	let groups = $derived(response?.groups ?? []);
@@ -148,10 +161,42 @@
 
 	onMount(() => {
 		fetchCandidates();
+		fetchMergeSuggestions();
 		getDiscoveryStats()
 			.then((s) => (stats = s))
 			.catch(() => {});
 	});
+
+	async function fetchMergeSuggestions() {
+		try {
+			const result = await getMergeSuggestions();
+			mergeSuggestions = result.suggestions;
+		} catch (e) {
+			console.error('Failed to load merge suggestions:', e);
+			mergeSuggestions = [];
+		}
+	}
+
+	function openMergeDialog(suggestion: MergeSuggestion) {
+		const groupA = groups.find((g) => g.groupId === suggestion.groupAId);
+		const groupB = groups.find((g) => g.groupId === suggestion.groupBId);
+
+		if (groupA && groupB) {
+			mergeGroupA = groupA;
+			mergeGroupB = groupB;
+			mergeSimilarity = suggestion.similarity;
+			mergeDialogOpen = true;
+		}
+	}
+
+	async function handleMergeComplete() {
+		mergeDialogOpen = false;
+		mergeGroupA = null;
+		mergeGroupB = null;
+		mergeSimilarity = 0;
+		await fetchCandidates();
+		await fetchMergeSuggestions();
+	}
 
 	onDestroy(() => {
 		if (pollIntervalId) clearInterval(pollIntervalId);
@@ -220,6 +265,26 @@
 	<!-- Threshold slider -->
 	<SimilarityThresholdControl bind:value={threshold} min={0.7} max={0.95} step={0.01} />
 
+	<!-- Merge suggestions -->
+	{#if mergeSuggestions && mergeSuggestions.length > 0}
+		<div class="space-y-2">
+			<h3 class="text-sm font-medium text-muted-foreground">Suggested Merges</h3>
+			{#each mergeSuggestions as suggestion (suggestion.groupAId + suggestion.groupBId)}
+				<button
+					class="w-full rounded-md border p-3 text-left hover:bg-muted/50 transition-colors"
+					onclick={() => openMergeDialog(suggestion)}
+				>
+					<div class="flex items-center justify-between">
+						<span class="text-sm">
+							Group ({suggestion.groupAFaceCount} faces) ↔ Group ({suggestion.groupBFaceCount} faces)
+						</span>
+						<Badge variant="outline">{(suggestion.similarity * 100).toFixed(0)}% similar</Badge>
+					</div>
+				</button>
+			{/each}
+		</div>
+	{/if}
+
 	<!-- Error state -->
 	{#if error}
 		<div class="rounded-md border-destructive bg-destructive/10 p-3" role="alert">
@@ -280,3 +345,14 @@
 	onOpenChange={handleCreateDialogOpenChange}
 	onAccepted={handlePersonCreated}
 />
+
+{#if mergeDialogOpen && mergeGroupA && mergeGroupB}
+	<MergeGroupsDialog
+		open={mergeDialogOpen}
+		groupA={mergeGroupA}
+		groupB={mergeGroupB}
+		similarity={mergeSimilarity}
+		onOpenChange={(open) => (mergeDialogOpen = open)}
+		onMerged={handleMergeComplete}
+	/>
+{/if}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ClusterSummary } from '$lib/types';
 	import FaceThumbnail from './FaceThumbnail.svelte';
+	import { Button } from '$lib/components/ui/button';
 
 	interface FaceWithThumbnail {
 		id: string;
@@ -16,12 +17,14 @@
 		onClick?: () => void;
 		/** Whether the card is selected */
 		selected?: boolean;
+		/** Create person callback - if provided, shows "Create Person" button */
+		onCreatePerson?: (clusterId: string) => void;
 	}
 
-	let { cluster, faceThumbnails, onClick, selected = false }: Props = $props();
+	let { cluster, faceThumbnails, onClick, selected = false, onCreatePerson }: Props = $props();
 
 	// Get sample faces with representative face first if available
-	let sampleFaces = $derived<FaceWithThumbnail[]>(() => {
+	let sampleFaces = $derived.by<FaceWithThumbnail[]>(() => {
 		// Start with representative face if available
 		let faceIds = cluster.sampleFaceIds.slice();
 		if (cluster.representativeFaceId && faceIds.includes(cluster.representativeFaceId)) {
@@ -69,6 +72,11 @@
 			onClick?.();
 		}
 	}
+
+	function handleCreatePerson(event: MouseEvent) {
+		event.stopPropagation();
+		onCreatePerson?.(cluster.clusterId);
+	}
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -109,6 +117,9 @@
 		<span class="quality-label">
 			Avg Quality: <strong>{formatQuality(cluster.avgQuality)}</strong>
 		</span>
+		{#if onCreatePerson}
+			<Button variant="outline" size="sm" onclick={handleCreatePerson}>Create Person</Button>
+		{/if}
 	</div>
 </article>
 
@@ -204,8 +215,12 @@
 	}
 
 	.card-footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		border-top: 1px solid #f0f0f0;
 		padding-top: 0.5rem;
+		gap: 0.5rem;
 	}
 
 	.quality-label {

@@ -3,7 +3,9 @@ import { describe, it, expect, vi } from 'vitest';
 import UnlabeledGroupsView from '$lib/components/faces/UnlabeledGroupsView.svelte';
 import {
 	createUnknownPersonCandidatesResponse,
-	createDiscoveryStats
+	createUnknownPersonCandidateGroup,
+	createDiscoveryStats,
+	createMergeSuggestion
 } from '../../helpers/fixtures';
 import { mockResponse, mockError, assertCalled } from '../../helpers/mockFetch';
 
@@ -24,10 +26,15 @@ describe('UnlabeledGroupsView', () => {
 	function setupDefaultMocks() {
 		const candidatesResp = createUnknownPersonCandidatesResponse();
 		const statsResp = createDiscoveryStats();
+		const mergeSuggestionsResp = { suggestions: [], totalGroupsCompared: 0 };
 
 		// Regex pattern matches any URL containing this path (with or without query params)
-		mockResponse('/unknown-persons\\/candidates', candidatesResp);
+		mockResponse('/unknown-persons\\/candidates\\?', candidatesResp);
 		mockResponse('http://localhost:8000/api/v1/faces/unknown-persons/stats', statsResp);
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/unknown-persons/candidates/merge-suggestions',
+			mergeSuggestionsResp
+		);
 
 		return { candidatesResp, statsResp };
 	}
@@ -37,9 +44,14 @@ describe('UnlabeledGroupsView', () => {
 	) {
 		const candidatesResp = createUnknownPersonCandidatesResponse(candidatesOverrides);
 		const statsResp = createDiscoveryStats();
+		const mergeSuggestionsResp = { suggestions: [], totalGroupsCompared: 0 };
 
-		mockResponse('/unknown-persons\\/candidates', candidatesResp);
+		mockResponse('/unknown-persons\\/candidates\\?', candidatesResp);
 		mockResponse('http://localhost:8000/api/v1/faces/unknown-persons/stats', statsResp);
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/unknown-persons/candidates/merge-suggestions',
+			mergeSuggestionsResp
+		);
 
 		return { candidatesResp, statsResp };
 	}
@@ -235,5 +247,77 @@ describe('UnlabeledGroupsView', () => {
 		render(UnlabeledGroupsView);
 
 		expect(screen.getByText('Advanced Mode')).toBeInTheDocument();
+	});
+
+	it('fetches merge suggestions on mount', async () => {
+		setupDefaultMocks();
+		render(UnlabeledGroupsView);
+
+		await waitFor(() => {
+			assertCalled('/api/v1/faces/unknown-persons/candidates/merge-suggestions');
+		});
+	});
+
+	it('renders merge suggestions section when suggestions exist', async () => {
+		const candidatesResp = createUnknownPersonCandidatesResponse();
+		const statsResp = createDiscoveryStats();
+		const mergeSuggestionsResp = {
+			suggestions: [createMergeSuggestion()],
+			totalGroupsCompared: 10
+		};
+
+		mockResponse('/unknown-persons\\/candidates\\?', candidatesResp);
+		mockResponse('http://localhost:8000/api/v1/faces/unknown-persons/stats', statsResp);
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/unknown-persons/candidates/merge-suggestions',
+			mergeSuggestionsResp
+		);
+
+		render(UnlabeledGroupsView);
+
+		await waitFor(() => {
+			expect(screen.getByText('Suggested Merges')).toBeInTheDocument();
+		});
+	});
+
+	it('clicking a merge suggestion opens the dialog', async () => {
+		// Create groups that match the merge suggestion IDs
+		const candidatesResp = createUnknownPersonCandidatesResponse({
+			groups: [
+				createUnknownPersonCandidateGroup({ groupId: 'cluster_a' }),
+				createUnknownPersonCandidateGroup({ groupId: 'cluster_b' }),
+				createUnknownPersonCandidateGroup({ groupId: 'cluster_c' })
+			]
+		});
+		const statsResp = createDiscoveryStats();
+		const mergeSuggestionsResp = {
+			suggestions: [createMergeSuggestion()],
+			totalGroupsCompared: 10
+		};
+
+		mockResponse('/unknown-persons\\/candidates\\?', candidatesResp);
+		mockResponse('http://localhost:8000/api/v1/faces/unknown-persons/stats', statsResp);
+		mockResponse(
+			'http://localhost:8000/api/v1/faces/unknown-persons/candidates/merge-suggestions',
+			mergeSuggestionsResp
+		);
+
+		render(UnlabeledGroupsView);
+
+		await waitFor(() => {
+			expect(screen.getByText('Suggested Merges')).toBeInTheDocument();
+		});
+
+		const suggestionButton = screen.getByText(/82% similar/).closest('button');
+		expect(suggestionButton).toBeInTheDocument();
+
+		if (suggestionButton) {
+			await fireEvent.click(suggestionButton);
+
+			// Dialog should open (check for dialog title)
+			await waitFor(() => {
+				expect(screen.getByText('Merge Face Groups')).toBeInTheDocument();
+			});
+		}
 	});
 });

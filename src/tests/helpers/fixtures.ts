@@ -4,7 +4,8 @@ import type {
 	FaceInGroupResponse,
 	UnknownPersonCandidateGroup,
 	UnknownPersonCandidatesResponse,
-	UnknownPersonsStats
+	UnknownPersonsStats,
+	MergeSuggestion
 } from '$lib/api/faces';
 
 /**
@@ -740,6 +741,20 @@ export function createDiscoveryStats(
 		avgGroupConfidence: 0.82,
 		totalDismissedGroups: 5,
 		lastDiscoveryAt: '2026-02-11T10:30:00Z',
+		...overrides
+	};
+}
+
+/**
+ * Create a test MergeSuggestion with sensible defaults
+ */
+export function createMergeSuggestion(overrides?: Partial<MergeSuggestion>): MergeSuggestion {
+	return {
+		groupAId: 'cluster_a',
+		groupBId: 'cluster_b',
+		similarity: 0.82,
+		groupAFaceCount: 8,
+		groupBFaceCount: 5,
 		...overrides
 	};
 }

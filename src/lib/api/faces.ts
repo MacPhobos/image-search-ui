@@ -1858,3 +1858,66 @@ export async function dismissUnknownPersonCandidate(
 export async function getDiscoveryStats(): Promise<UnknownPersonsStats> {
 	return apiRequest<UnknownPersonsStats>('/api/v1/faces/unknown-persons/stats');
 }
+
+// ============ Unknown Persons Merge Types ============
+
+/** Merge suggestion between two groups. */
+export interface MergeSuggestion {
+	groupAId: string;
+	groupBId: string;
+	similarity: number;
+	groupAFaceCount: number;
+	groupBFaceCount: number;
+}
+
+/** Response from merge suggestions endpoint. */
+export interface MergeSuggestionsResponse {
+	suggestions: MergeSuggestion[];
+	totalGroupsCompared: number;
+}
+
+/** Response from merge groups operation. */
+export interface MergeGroupsResponse {
+	mergedGroupId: string;
+	totalFaces: number;
+	facesMoved: number;
+}
+
+// ============ Unknown Persons Merge API Functions ============
+
+/**
+ * Get merge suggestions for unknown person candidate groups.
+ * @param params - Optional parameters for max suggestions and min similarity
+ * @returns Promise with merge suggestions
+ */
+export async function getMergeSuggestions(params?: {
+	maxSuggestions?: number;
+	minSimilarity?: number;
+}): Promise<MergeSuggestionsResponse> {
+	const searchParams = new URLSearchParams();
+	if (params?.maxSuggestions !== undefined)
+		searchParams.set('max_suggestions', params.maxSuggestions.toString());
+	if (params?.minSimilarity !== undefined)
+		searchParams.set('min_similarity', params.minSimilarity.toString());
+	const query = searchParams.toString();
+	return apiRequest<MergeSuggestionsResponse>(
+		`/api/v1/faces/unknown-persons/candidates/merge-suggestions${query ? `?${query}` : ''}`
+	);
+}
+
+/**
+ * Merge two unknown person candidate groups.
+ * @param groupAId - First group ID
+ * @param groupBId - Second group ID
+ * @returns Promise with merge results
+ */
+export async function mergeUnknownPersonCandidates(
+	groupAId: string,
+	groupBId: string
+): Promise<MergeGroupsResponse> {
+	return apiRequest<MergeGroupsResponse>('/api/v1/faces/unknown-persons/candidates/merge', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ groupAId, groupBId })
+	});
+}

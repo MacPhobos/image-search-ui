@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/svelte';
+import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 
 import { userEvent } from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -7,7 +7,7 @@ import { mockResponse } from '../helpers/mockFetch';
 import { createFaceCluster } from '../helpers/fixtures';
 import type { UnknownFaceClusteringConfig } from '$lib/api/admin';
 
-describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
+describe('Face Clusters Page - LocalStorage & SimilarityThresholdControl', () => {
 	let localStorageMock: Record<string, string>;
 
 	beforeEach(() => {
@@ -118,7 +118,7 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 		});
 	});
 
-	describe('Confidence Dropdown - Preset Values', () => {
+	describe('SimilarityThresholdControl - Preset Values', () => {
 		it('should display all preset confidence options', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
@@ -134,22 +134,17 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
+			// Check the slider exists
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
+			expect(slider).toBeInTheDocument();
 
-			// Check all preset options exist
-			expect(screen.getByRole('option', { name: '90%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '80%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '70%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '60%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '50%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '40%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '30%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '20%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: '10%' })).toBeInTheDocument();
-			expect(screen.getByRole('option', { name: 'Custom...' })).toBeInTheDocument();
+			// Check all preset buttons exist
+			expect(screen.getByRole('button', { name: /Exploratory/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /Standard/i })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: /High Confidence/i })).toBeInTheDocument();
 
-			// Default should be 60%
-			expect(confidenceSelect).toHaveValue('0.6');
+			// Default should be 60% (0.6)
+			expect(slider).toHaveValue('0.6');
 		});
 
 		it('should reload clusters when preset confidence changed', async () => {
@@ -181,14 +176,18 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 				pageSize: 100
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
+			// Click the "Standard" preset button (0.8 confidence)
 			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, '0.8');
+			const standardButton = screen.getByRole('button', { name: /Standard/i });
+			await user.click(standardButton);
 
-			// Should reload and show new count
-			await waitFor(() => {
-				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
-			});
+			// Should reload and show new count (debounced, so wait longer)
+			await waitFor(
+				() => {
+					expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
+				},
+				{ timeout: 1000 }
+			);
 		});
 
 		it('should persist confidence value to localStorage', async () => {
@@ -203,12 +202,12 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 			render(ClustersPage);
 
 			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
+				expect(screen.getByRole('slider', { name: 'Similarity Threshold' })).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, '0.8');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
+			// Use fireEvent for slider input
+			fireEvent.input(slider, { target: { value: '0.8' } });
 
 			expect(localStorage.setItem).toHaveBeenCalledWith(
 				'image-search.clusters.minConfidence',
@@ -234,87 +233,13 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			expect(confidenceSelect).toHaveValue('0.8');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
+			expect(slider).toHaveValue('0.8');
 		});
 	});
 
-	describe('Confidence Dropdown - Custom Value', () => {
-		it('should show custom input when "Custom..." selected', async () => {
-			const clusters = [createFaceCluster()];
-			mockResponse('/api/v1/faces/clusters', {
-				items: clusters,
-				total: 1,
-				page: 1,
-				pageSize: 100
-			});
-
-			render(ClustersPage);
-
-			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
-			});
-
-			// Custom input should not be visible initially
-			expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
-
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, 'custom');
-
-			// Custom input and apply button should appear
-			await waitFor(() => {
-				expect(screen.getByRole('spinbutton')).toBeInTheDocument();
-				expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument();
-			});
-		});
-
-		it('should apply custom confidence value', async () => {
-			const clusters = [createFaceCluster()];
-			mockResponse('/api/v1/faces/clusters', {
-				items: clusters,
-				total: 1,
-				page: 1,
-				pageSize: 100
-			});
-
-			render(ClustersPage);
-
-			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
-			});
-
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, 'custom');
-
-			// Wait for custom input
-			const customInput = await screen.findByRole('spinbutton');
-			await user.clear(customInput);
-			await user.type(customInput, '0.65');
-
-			// Mock new response
-			mockResponse('/api/v1/faces/clusters', {
-				items: clusters,
-				total: 1,
-				page: 1,
-				pageSize: 100
-			});
-
-			const applyBtn = screen.getByRole('button', { name: 'Apply' });
-			await user.click(applyBtn);
-
-			// Should persist custom value
-			expect(localStorage.setItem).toHaveBeenCalledWith(
-				'image-search.clusters.minConfidence',
-				'0.65'
-			);
-		});
-
-		it('should persist custom confidence and restore on mount', async () => {
-			// Set custom persisted value (not in presets)
-			localStorageMock['image-search.clusters.minConfidence'] = '0.65';
-
+	describe('SimilarityThresholdControl - Slider Value', () => {
+		it('should adjust confidence via slider', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
 				items: clusters,
@@ -329,18 +254,79 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			// Should show "Custom..." in dropdown
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			expect(confidenceSelect).toHaveValue('custom');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
 
-			// Custom input should be visible with stored value
-			const customInput = screen.getByRole('spinbutton');
-			expect(customInput).toHaveValue(0.65);
+			// Change slider value
+			fireEvent.input(slider, { target: { value: '0.75' } });
+
+			// Should update value
+			expect(slider).toHaveValue('0.75');
+
+			// Should show Custom badge (not matching any preset)
+			expect(screen.getByText('Custom')).toBeInTheDocument();
+		});
+
+		it('should show preset badge when slider matches preset', async () => {
+			const clusters = [createFaceCluster()];
+			mockResponse('/api/v1/faces/clusters', {
+				items: clusters,
+				total: 1,
+				page: 1,
+				pageSize: 100
+			});
+
+			render(ClustersPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
+			});
+
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
+
+			// Set to Standard preset (0.8)
+			fireEvent.input(slider, { target: { value: '0.8' } });
+
+			// Should show Standard badge (use getAllByText and check that badge exists)
+			await waitFor(() => {
+				const standardElements = screen.getAllByText('Standard');
+				// Should have both button and badge with "Standard"
+				expect(standardElements.length).toBeGreaterThanOrEqual(2);
+			});
+		});
+
+		it('should show Custom badge for non-preset values', async () => {
+			const clusters = [createFaceCluster()];
+			mockResponse('/api/v1/faces/clusters', {
+				items: clusters,
+				total: 1,
+				page: 1,
+				pageSize: 100
+			});
+
+			render(ClustersPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
+			});
+
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
+
+			// Set to a custom value (not matching any preset)
+			fireEvent.input(slider, { target: { value: '0.85' } });
+
+			// Should show Custom badge
+			await waitFor(() => {
+				const customBadges = screen.getAllByText('Custom');
+				expect(customBadges.length).toBeGreaterThanOrEqual(1);
+			});
+
+			// Verify slider has the custom value
+			expect(slider).toHaveValue('0.85');
 		});
 	});
 
-	describe('Validation', () => {
-		it('should disable Apply button for invalid values above 1.0', async () => {
+	describe('Slider Constraints', () => {
+		it('should enforce min constraint (0.6)', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
 				items: clusters,
@@ -352,25 +338,16 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 			render(ClustersPage);
 
 			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, 'custom');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
 
-			const customInput = await screen.findByRole('spinbutton');
-			const applyBtn = screen.getByRole('button', { name: 'Apply' });
-
-			await user.clear(customInput);
-			await user.type(customInput, '1.5');
-
-			await waitFor(() => {
-				expect(applyBtn).toBeDisabled();
-			});
+			// Verify min attribute
+			expect(slider).toHaveAttribute('min', '0.6');
 		});
 
-		it('should disable Apply button for invalid values below 0.01', async () => {
+		it('should enforce max constraint (0.95)', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
 				items: clusters,
@@ -382,25 +359,16 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 			render(ClustersPage);
 
 			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, 'custom');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
 
-			const customInput = await screen.findByRole('spinbutton');
-			const applyBtn = screen.getByRole('button', { name: 'Apply' });
-
-			await user.clear(customInput);
-			await user.type(customInput, '0');
-
-			await waitFor(() => {
-				expect(applyBtn).toBeDisabled();
-			});
+			// Verify max attribute
+			expect(slider).toHaveAttribute('max', '0.95');
 		});
 
-		it('should enable Apply button for valid values', async () => {
+		it('should enforce step constraint (0.01)', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
 				items: clusters,
@@ -412,27 +380,18 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 			render(ClustersPage);
 
 			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, 'custom');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
 
-			const customInput = await screen.findByRole('spinbutton');
-			const applyBtn = screen.getByRole('button', { name: 'Apply' });
-
-			await user.clear(customInput);
-			await user.type(customInput, '0.5');
-
-			await waitFor(() => {
-				expect(applyBtn).not.toBeDisabled();
-			});
+			// Verify step attribute
+			expect(slider).toHaveAttribute('step', '0.01');
 		});
 	});
 
-	describe('Enter Key Support', () => {
-		it('should apply custom value when Enter key pressed', async () => {
+	describe('Debounced Reload', () => {
+		it('should reload clusters after slider change (debounced)', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
 				items: clusters,
@@ -444,40 +403,49 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 			render(ClustersPage);
 
 			await waitFor(() => {
-				expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-			const user = userEvent.setup();
-			await user.selectOptions(confidenceSelect, 'custom');
+			const slider = screen.getByRole('slider', { name: 'Similarity Threshold' });
 
-			const customInput = await screen.findByRole('spinbutton');
-			await user.clear(customInput);
-			await user.type(customInput, '0.45');
-
-			// Mock new response
+			// Mock new response for higher confidence (empty results)
 			mockResponse('/api/v1/faces/clusters', {
-				items: clusters,
-				total: 1,
+				items: [],
+				total: 0,
 				page: 1,
 				pageSize: 100
 			});
 
-			// Press Enter
-			await user.keyboard('{Enter}');
+			// Change slider value
+			fireEvent.input(slider, { target: { value: '0.95' } });
 
-			// Should persist value
-			await waitFor(() => {
-				expect(localStorage.setItem).toHaveBeenCalledWith(
-					'image-search.clusters.minConfidence',
-					'0.45'
-				);
-			});
+			// Should reload after debounce (300ms + some buffer)
+			// Using longer timeout to account for debounce + fetch
+			await waitFor(
+				() => {
+					expect(screen.queryByText('Showing 1 of 1 clusters')).not.toBeInTheDocument();
+				},
+				{ timeout: 1500 }
+			);
+
+			// Should now show empty state or 0 clusters
+			await waitFor(
+				() => {
+					const text = screen.queryByText(/Showing \d+ of \d+ clusters/);
+					if (text) {
+						expect(text.textContent).toContain('Showing 0 of 0 clusters');
+					} else {
+						// Empty state shown instead
+						expect(screen.getByText('No Unknown Face Clusters')).toBeInTheDocument();
+					}
+				},
+				{ timeout: 500 }
+			);
 		});
 	});
 
 	describe('Visual Layout', () => {
-		it('should render both dropdowns in results header', async () => {
+		it('should render both slider control and sort dropdown', async () => {
 			const clusters = [createFaceCluster()];
 			mockResponse('/api/v1/faces/clusters', {
 				items: clusters,
@@ -492,17 +460,42 @@ describe('Face Clusters Page - LocalStorage & Confidence Dropdown', () => {
 				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
 			});
 
-			// Both dropdowns should be present
+			// Sort dropdown should be present
 			expect(screen.getByLabelText('Sort by:')).toBeInTheDocument();
-			expect(screen.getByLabelText('Min Confidence:')).toBeInTheDocument();
 
-			// Check they're in the results header section
+			// Similarity threshold control components should be present
+			expect(screen.getByRole('slider', { name: 'Similarity Threshold' })).toBeInTheDocument();
+			expect(screen.getByText('Exploratory')).toBeInTheDocument();
+			expect(screen.getByText('Standard')).toBeInTheDocument();
+			expect(screen.getByText('High Confidence')).toBeInTheDocument();
+
+			// Sort dropdown should be a select element
 			const sortSelect = screen.getByLabelText('Sort by:');
-			const confidenceSelect = screen.getByLabelText('Min Confidence:');
-
-			// Both should be select elements
 			expect(sortSelect.tagName).toBe('SELECT');
-			expect(confidenceSelect.tagName).toBe('SELECT');
+		});
+
+		it('should include confidence sort option in dropdown', async () => {
+			const clusters = [createFaceCluster()];
+			mockResponse('/api/v1/faces/clusters', {
+				items: clusters,
+				total: 1,
+				page: 1,
+				pageSize: 100
+			});
+
+			render(ClustersPage);
+
+			await waitFor(() => {
+				expect(screen.getByText('Showing 1 of 1 clusters')).toBeInTheDocument();
+			});
+
+			// Check that confidence sort option exists
+			const sortSelect = screen.getByLabelText('Sort by:') as HTMLSelectElement;
+			const options = Array.from(sortSelect.options).map((opt) => opt.value);
+
+			expect(options).toContain('faceCount');
+			expect(options).toContain('avgQuality');
+			expect(options).toContain('confidence');
 		});
 	});
 });

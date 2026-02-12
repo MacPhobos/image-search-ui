@@ -6,8 +6,10 @@
 	import type { UnknownFaceClusteringConfig } from '$lib/api/admin';
 	import { ApiError } from '$lib/api/client';
 	import ClusterCard from '$lib/components/faces/ClusterCard.svelte';
+	import LabelClusterModal from '$lib/components/faces/LabelClusterModal.svelte';
+	import SimilarityThresholdControl from '$lib/components/faces/SimilarityThresholdControl.svelte';
 	import type { ClusterSummary } from '$lib/types';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, untrack } from 'svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 
@@ -35,17 +37,15 @@
 	// Configuration state
 	let config = $state<UnknownFaceClusteringConfig | null>(null);
 
-	// Sort state: 'faceCount' (default) or 'avgQuality'
-	type SortOption = 'faceCount' | 'avgQuality';
+	// Sort state: 'faceCount' (default), 'avgQuality', or 'confidence'
+	type SortOption = 'faceCount' | 'avgQuality' | 'confidence';
 	let sortBy = $state<SortOption>('faceCount');
 
 	// Confidence threshold state
 	let minConfidence = $state<number>(0.6);
-	let isCustomConfidence = $state<boolean>(false);
-	let customConfidenceInput = $state<string>('0.60');
 
-	// Preset confidence options
-	const CONFIDENCE_PRESETS = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+	// Label cluster modal state
+	let labelingClusterId = $state<string | null>(null);
 
 	// Sorted clusters (derived from clusters and sortBy)
 	let sortedClusters = $derived(() => {
@@ -55,11 +55,16 @@
 			if (sortBy === 'faceCount') {
 				// Sort by face count descending (most faces first)
 				return b.faceCount - a.faceCount;
-			} else {
+			} else if (sortBy === 'avgQuality') {
 				// Sort by average quality descending (highest quality first)
 				const qualityA = a.avgQuality ?? 0;
 				const qualityB = b.avgQuality ?? 0;
 				return qualityB - qualityA;
+			} else {
+				// Sort by confidence descending (highest confidence first)
+				const confidenceA = a.clusterConfidence ?? 0;
+				const confidenceB = b.clusterConfidence ?? 0;
+				return confidenceB - confidenceA;
 			}
 		});
 	});
@@ -71,8 +76,6 @@
 		// Load persisted settings
 		sortBy = localSettings.get<SortOption>(STORAGE_KEYS.SORT_BY, 'faceCount');
 		minConfidence = localSettings.get<number>(STORAGE_KEYS.MIN_CONFIDENCE, 0.6);
-		isCustomConfidence = !CONFIDENCE_PRESETS.includes(minConfidence);
-		customConfidenceInput = minConfidence.toFixed(2);
 
 		try {
 			config = await getUnknownClusteringConfig();
@@ -136,40 +139,51 @@
 		goto(`/faces/clusters/${encodeURIComponent(cluster.clusterId)}`);
 	}
 
+	// Persist settings effect
+	let fetchTimeout: ReturnType<typeof setTimeout> | null = null;
+	$effect(() => {
+		const s = sortBy;
+		const c = minConfidence;
+		untrack(() => {
+			localSettings.set(STORAGE_KEYS.SORT_BY, s);
+			localSettings.set(STORAGE_KEYS.MIN_CONFIDENCE, c);
+		});
+	});
+
+	// Debounced reload on minConfidence change
+	$effect(() => {
+		void minConfidence; // Track dependency
+		if (fetchTimeout) clearTimeout(fetchTimeout);
+		fetchTimeout = setTimeout(() => {
+			untrack(() => {
+				currentPage = 1;
+				clusters = [];
+				loadClusters(true);
+			});
+		}, 300);
+	});
+
+	onDestroy(() => {
+		if (fetchTimeout) clearTimeout(fetchTimeout);
+	});
+
 	function handleSortChange(event: Event) {
 		const target = event.target as HTMLSelectElement;
 		sortBy = target.value as SortOption;
-		localSettings.set(STORAGE_KEYS.SORT_BY, sortBy);
 	}
 
-	function handleConfidenceChange(event: Event) {
-		const target = event.target as HTMLSelectElement;
-		const value = target.value;
-
-		if (value === 'custom') {
-			isCustomConfidence = true;
-		} else {
-			isCustomConfidence = false;
-			minConfidence = parseFloat(value);
-			customConfidenceInput = value;
-			localSettings.set(STORAGE_KEYS.MIN_CONFIDENCE, minConfidence);
-			reloadWithNewConfidence();
-		}
+	function handleCreatePerson(clusterId: string) {
+		labelingClusterId = clusterId;
 	}
 
-	function handleCustomConfidenceSubmit() {
-		const parsed = parseFloat(customConfidenceInput);
-		if (!isNaN(parsed) && parsed >= 0.01 && parsed <= 1.0) {
-			minConfidence = parsed;
-			localSettings.set(STORAGE_KEYS.MIN_CONFIDENCE, minConfidence);
-			reloadWithNewConfidence();
-		}
-	}
-
-	function reloadWithNewConfidence() {
-		currentPage = 1;
-		clusters = [];
+	function handleLabelSuccess() {
+		labelingClusterId = null;
+		// Reload clusters to reflect the newly labeled cluster
 		loadClusters(true);
+	}
+
+	function handleLabelClose() {
+		labelingClusterId = null;
 	}
 
 	function handleRetry() {
@@ -240,6 +254,9 @@
 				{/if}
 			</div>
 		{:else}
+			<!-- Threshold slider -->
+			<SimilarityThresholdControl bind:value={minConfidence} min={0.6} max={0.95} step={0.01} />
+
 			<div class="results-header">
 				<span class="results-count">
 					Showing {clusters.length} of {totalClusters} clusters
@@ -250,50 +267,19 @@
 						<select id="sort-select" class="sort-select" value={sortBy} onchange={handleSortChange}>
 							<option value="faceCount">Number of Faces</option>
 							<option value="avgQuality">Average Quality</option>
+							<option value="confidence">Confidence</option>
 						</select>
-					</div>
-					<div class="confidence-controls">
-						<label for="confidence-select" class="confidence-label">Min Confidence:</label>
-						<select
-							id="confidence-select"
-							class="confidence-select"
-							value={isCustomConfidence ? 'custom' : minConfidence.toString()}
-							onchange={handleConfidenceChange}
-						>
-							{#each CONFIDENCE_PRESETS as preset}
-								<option value={preset.toString()}>{(preset * 100).toFixed(0)}%</option>
-							{/each}
-							<option value="custom">Custom...</option>
-						</select>
-
-						{#if isCustomConfidence}
-							<input
-								type="number"
-								class="custom-confidence-input"
-								bind:value={customConfidenceInput}
-								min="0.01"
-								max="1.0"
-								step="0.01"
-								placeholder="0.60"
-								onkeydown={(e) => e.key === 'Enter' && handleCustomConfidenceSubmit()}
-							/>
-							<button
-								class="apply-btn"
-								onclick={handleCustomConfidenceSubmit}
-								disabled={isNaN(parseFloat(customConfidenceInput)) ||
-									parseFloat(customConfidenceInput) < 0.01 ||
-									parseFloat(customConfidenceInput) > 1.0}
-							>
-								Apply
-							</button>
-						{/if}
 					</div>
 				</div>
 			</div>
 
 			<div class="clusters-grid">
 				{#each sortedClusters() as cluster (cluster.clusterId)}
-					<ClusterCard {cluster} onClick={() => handleClusterClick(cluster)} />
+					<ClusterCard
+						{cluster}
+						onClick={() => handleClusterClick(cluster)}
+						onCreatePerson={handleCreatePerson}
+					/>
 				{/each}
 			</div>
 
@@ -317,6 +303,14 @@
 		{/if}
 	</section>
 </main>
+
+{#if labelingClusterId}
+	<LabelClusterModal
+		clusterId={labelingClusterId}
+		onSuccess={handleLabelSuccess}
+		onClose={handleLabelClose}
+	/>
+{/if}
 
 <style>
 	.clusters-page {
@@ -487,73 +481,6 @@
 		outline: none;
 		border-color: #4a90e2;
 		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-	}
-
-	.confidence-controls {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.confidence-label {
-		font-size: 0.875rem;
-		color: #666;
-	}
-
-	.confidence-select {
-		padding: 0.375rem 0.75rem;
-		font-size: 0.875rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		background-color: white;
-		color: #333;
-		cursor: pointer;
-		transition: border-color 0.2s;
-	}
-
-	.confidence-select:hover {
-		border-color: #9ca3af;
-	}
-
-	.confidence-select:focus {
-		outline: none;
-		border-color: #4a90e2;
-		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-	}
-
-	.custom-confidence-input {
-		width: 5rem;
-		padding: 0.375rem 0.5rem;
-		font-size: 0.875rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		background-color: white;
-	}
-
-	.custom-confidence-input:focus {
-		outline: none;
-		border-color: #4a90e2;
-		box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-	}
-
-	.apply-btn {
-		padding: 0.375rem 0.75rem;
-		background-color: #4a90e2;
-		color: white;
-		border: none;
-		border-radius: 6px;
-		font-size: 0.875rem;
-		cursor: pointer;
-		transition: background-color 0.2s;
-	}
-
-	.apply-btn:hover:not(:disabled) {
-		background-color: #3a7bc8;
-	}
-
-	.apply-btn:disabled {
-		background-color: #9ca3af;
-		cursor: not-allowed;
 	}
 
 	.clusters-grid {
