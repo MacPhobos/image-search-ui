@@ -117,7 +117,7 @@
 				minClusterSize: response?.minGroupSizeSetting ?? 5,
 				minClusterConfidence: threshold
 			});
-			pollJobProgress(result.jobId);
+			pollJobProgress(result.progressKey);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to start discovery';
 			isDiscovering = false;
@@ -126,14 +126,29 @@
 
 	let pollIntervalId: ReturnType<typeof setInterval> | null = null;
 
-	function pollJobProgress(jobId: string) {
+	function pollJobProgress(progressKey: string) {
 		pollIntervalId = setInterval(async () => {
 			try {
-				const progressResp = await fetch(toAbsoluteUrl(`/api/v1/jobs/${jobId}/progress`)).then(
-					(r) => r.json()
+				const response = await fetch(
+					toAbsoluteUrl(
+						`/api/v1/job-progress/status?progress_key=${encodeURIComponent(progressKey)}`
+					)
 				);
 
-				if (progressResp.phase === 'complete' || progressResp.status === 'completed') {
+				// Handle HTTP errors gracefully
+				if (!response.ok) {
+					// 404 means job is still queued - just continue polling
+					if (response.status === 404) {
+						return;
+					}
+					// For other errors (500, etc.), log warning but keep polling for resilience
+					console.warn(`Job progress endpoint returned ${response.status}, continuing to poll...`);
+					return;
+				}
+
+				const progressResp = await response.json();
+
+				if (progressResp.phase === 'complete' || progressResp.phase === 'completed') {
 					if (pollIntervalId) clearInterval(pollIntervalId);
 					pollIntervalId = null;
 					isDiscovering = false;
@@ -143,7 +158,7 @@
 					getDiscoveryStats()
 						.then((s) => (stats = s))
 						.catch(() => {});
-				} else if (progressResp.status === 'error' || progressResp.status === 'failed') {
+				} else if (progressResp.phase === 'failed' || progressResp.phase === 'error') {
 					if (pollIntervalId) clearInterval(pollIntervalId);
 					pollIntervalId = null;
 					isDiscovering = false;
