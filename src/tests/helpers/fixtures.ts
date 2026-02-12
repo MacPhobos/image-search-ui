@@ -1,5 +1,11 @@
 import type { Asset, SearchResult, SearchResponse, ClusterSummary } from '$lib/types';
 import type { Category, PaginatedCategoryResponse } from '$lib/api/categories';
+import type {
+	FaceInGroupResponse,
+	UnknownPersonCandidateGroup,
+	UnknownPersonCandidatesResponse,
+	UnknownPersonsStats
+} from '$lib/api/faces';
 
 /**
  * Create a test Asset with sensible defaults
@@ -648,6 +654,92 @@ export function createFaceCluster(overrides?: Partial<ClusterSummary>): ClusterS
 		representativeFaceId: 'face_1',
 		personId: null,
 		personName: null,
+		...overrides
+	};
+}
+
+// Unknown Person Candidates Fixtures
+
+/**
+ * Create a test FaceInGroupResponse with sensible defaults
+ */
+export function createFaceInGroup(overrides?: Partial<FaceInGroupResponse>): FaceInGroupResponse {
+	return {
+		faceInstanceId: crypto.randomUUID(),
+		assetId: crypto.randomUUID(),
+		qualityScore: 0.82,
+		detectionConfidence: 0.95,
+		bboxX: 100,
+		bboxY: 100,
+		bboxW: 80,
+		bboxH: 80,
+		thumbnailUrl: null,
+		...overrides
+	};
+}
+
+/**
+ * Create a test UnknownPersonCandidateGroup with sensible defaults
+ */
+export function createUnknownPersonCandidateGroup(
+	overrides?: Partial<UnknownPersonCandidateGroup>
+): UnknownPersonCandidateGroup {
+	return {
+		groupId: 'cluster_0',
+		membershipHash: 'abc123def456',
+		faceCount: 8,
+		clusterConfidence: 0.85,
+		avgQuality: 0.78,
+		representativeFace: createFaceInGroup(),
+		sampleFaces: Array.from({ length: 6 }, (_, i) =>
+			createFaceInGroup({ faceInstanceId: `face-${i}` })
+		),
+		isDismissed: false,
+		dismissedAt: null,
+		...overrides
+	};
+}
+
+/**
+ * Create a test UnknownPersonCandidatesResponse with sensible defaults
+ */
+export function createUnknownPersonCandidatesResponse(
+	overrides?: Partial<UnknownPersonCandidatesResponse>
+): UnknownPersonCandidatesResponse {
+	return {
+		groups: Array.from({ length: 3 }, (_, i) =>
+			createUnknownPersonCandidateGroup({ groupId: `cluster_${i}` })
+		),
+		totalGroups: 42,
+		totalUnassignedFaces: 50000,
+		totalNoiseFaces: 35000,
+		totalDismissedGroups: 5,
+		page: 1,
+		groupsPerPage: 50,
+		facesPerGroup: 6,
+		lastDiscoveryAt: '2026-02-11T10:30:00Z',
+		minGroupSizeSetting: 5,
+		minConfidenceSetting: 0.7,
+		...overrides
+	};
+}
+
+/**
+ * Create a test UnknownPersonsStats with sensible defaults
+ */
+export function createDiscoveryStats(
+	overrides?: Partial<UnknownPersonsStats>
+): UnknownPersonsStats {
+	return {
+		totalUnassignedFaces: 50000,
+		totalClusteredFaces: 15000,
+		totalNoiseFaces: 35000,
+		totalUnclusteredFaces: 0,
+		candidateGroups: 42,
+		avgGroupSize: 8.5,
+		avgGroupConfidence: 0.82,
+		totalDismissedGroups: 5,
+		lastDiscoveryAt: '2026-02-11T10:30:00Z',
 		...overrides
 	};
 }

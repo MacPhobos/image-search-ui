@@ -1656,3 +1656,205 @@ export async function deleteCentroids(personId: string): Promise<{ deletedCount:
 	if (!response.ok) throw new Error(`HTTP ${response.status}`);
 	return response.json();
 }
+
+// ============ Unknown Persons Types ============
+
+/** Request parameters for triggering unknown person discovery. */
+export interface DiscoverRequest {
+	clusteringMethod?: string;
+	minClusterSize?: number;
+	minQuality?: number;
+	maxFaces?: number;
+	minClusterConfidence?: number;
+}
+
+/** Response from triggering discovery. */
+export interface DiscoverResponse {
+	jobId: string;
+	status: string;
+	progressKey: string;
+	params: Record<string, unknown>;
+}
+
+/** A single face within an unknown person candidate group. */
+export interface FaceInGroupResponse {
+	faceInstanceId: string;
+	assetId: string;
+	qualityScore: number;
+	detectionConfidence: number;
+	bboxX: number;
+	bboxY: number;
+	bboxW: number;
+	bboxH: number;
+	thumbnailUrl: string | null;
+}
+
+/** A candidate group of faces that may represent an unknown person. */
+export interface UnknownPersonCandidateGroup {
+	groupId: string;
+	membershipHash: string;
+	faceCount: number;
+	clusterConfidence: number;
+	avgQuality: number;
+	representativeFace: FaceInGroupResponse;
+	sampleFaces: FaceInGroupResponse[];
+	isDismissed: boolean;
+	dismissedAt: string | null;
+}
+
+/** Paginated response for unknown person candidates. */
+export interface UnknownPersonCandidatesResponse {
+	groups: UnknownPersonCandidateGroup[];
+	totalGroups: number;
+	totalUnassignedFaces: number;
+	totalNoiseFaces: number;
+	totalDismissedGroups: number;
+	page: number;
+	groupsPerPage: number;
+	facesPerGroup: number;
+	lastDiscoveryAt: string | null;
+	minGroupSizeSetting: number;
+	minConfidenceSetting: number;
+}
+
+/** Request to accept a candidate group as a new person. */
+export interface AcceptCandidateRequest {
+	name: string;
+	faceIdsToExclude?: string[];
+	triggerReclustering?: boolean;
+}
+
+/** Response from accepting a candidate group. */
+export interface AcceptCandidateResponse {
+	personId: string;
+	personName: string;
+	facesAssigned: number;
+	facesExcluded: number;
+	prototypesCreated: number;
+	findMoreJobId: string;
+	reclusteringJobId: string | null;
+}
+
+/** Request to dismiss a candidate group. */
+export interface DismissCandidateRequest {
+	reason?: string;
+	markAsNoise?: boolean;
+}
+
+/** Statistics about unknown persons discovery. */
+export interface UnknownPersonsStats {
+	totalUnassignedFaces: number;
+	totalClusteredFaces: number;
+	totalNoiseFaces: number;
+	totalUnclusteredFaces: number;
+	candidateGroups: number;
+	avgGroupSize: number;
+	avgGroupConfidence: number;
+	totalDismissedGroups: number;
+	lastDiscoveryAt: string | null;
+}
+
+// ============ Unknown Persons API Functions ============
+
+/**
+ * Trigger discovery of unknown person groups from unassigned faces.
+ * @param params - Optional clustering configuration
+ * @returns Promise with job info for tracking progress
+ */
+export async function triggerDiscovery(params: DiscoverRequest = {}): Promise<DiscoverResponse> {
+	return apiRequest<DiscoverResponse>('/api/v1/faces/unknown-persons/discover', {
+		method: 'POST',
+		body: JSON.stringify(params)
+	});
+}
+
+/**
+ * List unknown person candidate groups with pagination and filtering.
+ * @param params - Query parameters for filtering and pagination
+ * @returns Promise with paginated candidate groups
+ */
+export async function listUnknownPersonCandidates(params: {
+	page?: number;
+	groupsPerPage?: number;
+	facesPerGroup?: number;
+	minConfidence?: number;
+	minGroupSize?: number;
+	sortBy?: string;
+	sortOrder?: string;
+	includeDismissed?: boolean;
+}): Promise<UnknownPersonCandidatesResponse> {
+	const searchParams = new URLSearchParams();
+	if (params.page) searchParams.set('page', String(params.page));
+	if (params.groupsPerPage) searchParams.set('groups_per_page', String(params.groupsPerPage));
+	if (params.facesPerGroup) searchParams.set('faces_per_group', String(params.facesPerGroup));
+	if (params.minConfidence != null)
+		searchParams.set('min_confidence', String(params.minConfidence));
+	if (params.minGroupSize) searchParams.set('min_group_size', String(params.minGroupSize));
+	if (params.sortBy) searchParams.set('sort_by', params.sortBy);
+	if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
+	if (params.includeDismissed) searchParams.set('include_dismissed', 'true');
+
+	return apiRequest<UnknownPersonCandidatesResponse>(
+		`/api/v1/faces/unknown-persons/candidates?${searchParams.toString()}`
+	);
+}
+
+/**
+ * Get full details for a specific unknown person candidate group.
+ * @param groupId - The candidate group ID
+ * @returns Promise with group details including all faces
+ */
+export async function getUnknownPersonCandidateDetail(
+	groupId: string
+): Promise<UnknownPersonCandidateGroup & { faces: FaceInGroupResponse[] }> {
+	return apiRequest<UnknownPersonCandidateGroup & { faces: FaceInGroupResponse[] }>(
+		`/api/v1/faces/unknown-persons/candidates/${encodeURIComponent(groupId)}`
+	);
+}
+
+/**
+ * Accept a candidate group as a new person.
+ * Creates the person, assigns faces, generates prototypes, and optionally triggers find-more.
+ * @param groupId - The candidate group ID
+ * @param request - Name and optional exclusions
+ * @returns Promise with created person info and job IDs
+ */
+export async function acceptUnknownPersonCandidate(
+	groupId: string,
+	request: AcceptCandidateRequest
+): Promise<AcceptCandidateResponse> {
+	return apiRequest<AcceptCandidateResponse>(
+		`/api/v1/faces/unknown-persons/candidates/${encodeURIComponent(groupId)}/accept`,
+		{
+			method: 'POST',
+			body: JSON.stringify(request)
+		}
+	);
+}
+
+/**
+ * Dismiss a candidate group (optionally marking faces as noise).
+ * @param groupId - The candidate group ID
+ * @param request - Optional reason and noise flag
+ * @returns Promise with dismissal details
+ */
+export async function dismissUnknownPersonCandidate(
+	groupId: string,
+	request: DismissCandidateRequest = {}
+): Promise<{ groupId: string; membershipHash: string; facesAffected: number }> {
+	return apiRequest<{ groupId: string; membershipHash: string; facesAffected: number }>(
+		`/api/v1/faces/unknown-persons/candidates/${encodeURIComponent(groupId)}/dismiss`,
+		{
+			method: 'POST',
+			body: JSON.stringify(request)
+		}
+	);
+}
+
+/**
+ * Get statistics about unknown person discovery.
+ * @returns Promise with discovery statistics
+ */
+export async function getDiscoveryStats(): Promise<UnknownPersonsStats> {
+	return apiRequest<UnknownPersonsStats>('/api/v1/faces/unknown-persons/stats');
+}

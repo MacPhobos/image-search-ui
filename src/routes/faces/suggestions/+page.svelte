@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, untrack } from 'svelte';
 	import type { FaceSuggestion, Person } from '$lib/api/faces';
 	import {
 		listGroupedSuggestions,
@@ -24,10 +24,23 @@
 	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { unassignFace } from '$lib/api/faces';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
+	import * as Tabs from '$lib/components/ui/tabs';
+	import UnlabeledGroupsView from '$lib/components/faces/UnlabeledGroupsView.svelte';
 
 	// Component tracking (DEV only)
 	const cleanup = registerComponent('routes/faces/suggestions/+page', {
 		filePath: 'src/routes/faces/suggestions/+page.svelte'
+	});
+
+	// Tab state with localStorage persistence
+	const TAB_KEY = 'suggestions.activeTab';
+	let activeTab = $state(localSettings.get<string>(TAB_KEY, 'known'));
+
+	$effect(() => {
+		const tab = activeTab;
+		untrack(() => {
+			localSettings.set(TAB_KEY, tab);
+		});
 	});
 
 	// localStorage key for persisting groups per page preference
@@ -483,169 +496,182 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
-	<div class="page-layout">
-		<!-- Main content area -->
-		<div class="main-content">
-			<div class="flex items-center justify-between mb-6">
-				<h1 class="text-2xl font-bold text-gray-900">Face Suggestions</h1>
-				<div class="text-sm text-gray-500">
-					{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions ===
-					1
-						? ''
-						: 's'}
-					{#if groupedResponse}
-						· {groupedResponse.totalGroups} group{groupedResponse.totalGroups === 1 ? '' : 's'}
-					{/if}
-				</div>
-			</div>
-
-			<!-- Filters and Bulk Actions -->
-			<div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-				<div class="flex items-center gap-2">
-					<label for="status" class="text-sm font-medium text-gray-700">Status:</label>
-					<select id="status" bind:value={statusFilter} class="rounded border-gray-300 text-sm">
-						<option value="">All</option>
-						<option value="pending">Pending</option>
-						<option value="accepted">Accepted</option>
-						<option value="rejected">Rejected</option>
-					</select>
-				</div>
-
-				<div class="flex items-center gap-2 flex-1 min-w-0 max-w-xs">
-					<label for="person-filter" class="text-sm font-medium text-gray-700 shrink-0"
-						>Person:</label
-					>
-					<div class="flex-1 min-w-0">
-						<PersonSearchBar
-							{persons}
-							loading={personsLoading}
-							selectedPersonId={personFilter}
-							onSelect={handlePersonSelect}
-							placeholder="Filter by person..."
-							testId="suggestion-person-filter"
-						/>
-					</div>
-				</div>
-
-				<div class="flex items-center gap-2">
-					<label for="groups-per-page" class="text-sm font-medium text-gray-700">Show:</label>
-					<select
-						id="groups-per-page"
-						value={groupsPerPage}
-						onchange={(e) => handleGroupsPerPageChange(parseInt(e.currentTarget.value, 10))}
-						class="rounded border-gray-300 text-sm"
-					>
-						{#each GROUPS_PER_PAGE_OPTIONS as option}
-							<option value={option}>{option} persons</option>
-						{/each}
-					</select>
-				</div>
-
-				{#if totalPendingCount > 0}
-					<div class="flex items-center gap-2 ml-auto">
-						<button onclick={selectAll} class="text-sm text-blue-600 hover:underline">
-							Select All ({displayedPendingCount})
-						</button>
-						<button onclick={selectNone} class="text-sm text-gray-600 hover:underline">
-							Select None
-						</button>
-					</div>
-
-					{#if selectedIds.size > 0}
-						<div class="flex items-center gap-2">
-							<span class="text-sm text-gray-600">{selectedIds.size} selected</span>
-							<button
-								onclick={() => handleBulkAction('accept')}
-								disabled={bulkLoading}
-								class="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
-							>
-								Accept All
-							</button>
-							<button
-								onclick={() => handleBulkAction('reject')}
-								disabled={bulkLoading}
-								class="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
-							>
-								Reject All
-							</button>
-						</div>
-					{/if}
-				{/if}
-			</div>
-
-			{#if error}
-				<div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-					{error}
-				</div>
-			{/if}
-
-			{#if isLoading}
-				<div class="flex justify-center py-12">
-					<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-				</div>
-			{:else if !groupedResponse || groupedResponse.groups.length === 0}
-				<div class="text-center py-12 text-gray-500">No suggestions found</div>
-			{:else}
-				<!-- Grouped suggestions -->
-				<div class="grid gap-4">
-					{#each groupedResponse.groups as group (group.personId)}
-						{@const groupWithPendingCount = {
-							...group,
-							// When filtering by pending, suggestionCount IS the pending count for this person.
-							// Otherwise, count pending in displayed suggestions.
-							pendingCount:
-								statusFilter === 'pending'
-									? group.suggestionCount
-									: group.suggestions.filter((s) => s.status === 'pending').length,
-							// Get labeled face count for this person (from persons list)
-							labeledFaceCount: persons.find((p) => p.id === group.personId)?.faceCount
-						}}
-						<SuggestionGroupCard
-							group={groupWithPendingCount}
-							{selectedIds}
-							onSelect={handleSelect}
-							onSelectAllInGroup={handleSelectAllInGroup}
-							onAcceptAll={handleGroupAcceptAll}
-							onRejectAll={handleGroupRejectAll}
-							onThumbnailClick={handleThumbnailClick}
-							onFindMoreComplete={handleFindMoreComplete}
-						/>
-					{/each}
-				</div>
-
-				<!-- Pagination -->
-				{#if totalPages > 1}
-					<div class="flex justify-center items-center gap-4 mt-8">
-						<button
-							onclick={() => (page = Math.max(1, page - 1))}
-							disabled={page === 1}
-							class="px-4 py-2 border rounded disabled:opacity-50"
-						>
-							Previous
-						</button>
-						<span class="text-sm text-gray-600">
-							Page {page} of {totalPages}
-							{#if groupedResponse}
-								· Showing {groupedResponse.groups.length} of {groupedResponse.totalGroups} groups
-							{/if}
-						</span>
-						<button
-							onclick={() => (page = Math.min(totalPages, page + 1))}
-							disabled={page === totalPages}
-							class="px-4 py-2 border rounded disabled:opacity-50"
-						>
-							Next
-						</button>
-					</div>
-				{/if}
+	<div class="flex items-center justify-between mb-6">
+		<h1 class="text-2xl font-bold text-gray-900">Face Suggestions</h1>
+		<div class="text-sm text-gray-500">
+			{groupedResponse?.totalSuggestions ?? 0} total suggestion{groupedResponse?.totalSuggestions ===
+			1
+				? ''
+				: 's'}
+			{#if groupedResponse}
+				· {groupedResponse.totalGroups} group{groupedResponse.totalGroups === 1 ? '' : 's'}
 			{/if}
 		</div>
-
-		<!-- Sidebar with Recently Assigned Panel -->
-		<aside class="sidebar">
-			<RecentlyAssignedPanel assignments={recentAssignments} onUndo={handleRecentUndo} />
-		</aside>
 	</div>
+
+	<Tabs.Root bind:value={activeTab}>
+		<Tabs.List>
+			<Tabs.Trigger value="known">Known Persons</Tabs.Trigger>
+			<Tabs.Trigger value="unlabeled">Suggested New Persons</Tabs.Trigger>
+		</Tabs.List>
+
+		<Tabs.Content value="known">
+			<div class="page-layout">
+				<!-- Main content area -->
+				<div class="main-content">
+					<!-- Filters and Bulk Actions -->
+					<div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+						<div class="flex items-center gap-2">
+							<label for="status" class="text-sm font-medium text-gray-700">Status:</label>
+							<select id="status" bind:value={statusFilter} class="rounded border-gray-300 text-sm">
+								<option value="">All</option>
+								<option value="pending">Pending</option>
+								<option value="accepted">Accepted</option>
+								<option value="rejected">Rejected</option>
+							</select>
+						</div>
+
+						<div class="flex items-center gap-2 flex-1 min-w-0 max-w-xs">
+							<label for="person-filter" class="text-sm font-medium text-gray-700 shrink-0"
+								>Person:</label
+							>
+							<div class="flex-1 min-w-0">
+								<PersonSearchBar
+									{persons}
+									loading={personsLoading}
+									selectedPersonId={personFilter}
+									onSelect={handlePersonSelect}
+									placeholder="Filter by person..."
+									testId="suggestion-person-filter"
+								/>
+							</div>
+						</div>
+
+						<div class="flex items-center gap-2">
+							<label for="groups-per-page" class="text-sm font-medium text-gray-700">Show:</label>
+							<select
+								id="groups-per-page"
+								value={groupsPerPage}
+								onchange={(e) => handleGroupsPerPageChange(parseInt(e.currentTarget.value, 10))}
+								class="rounded border-gray-300 text-sm"
+							>
+								{#each GROUPS_PER_PAGE_OPTIONS as option}
+									<option value={option}>{option} persons</option>
+								{/each}
+							</select>
+						</div>
+
+						{#if totalPendingCount > 0}
+							<div class="flex items-center gap-2 ml-auto">
+								<button onclick={selectAll} class="text-sm text-blue-600 hover:underline">
+									Select All ({displayedPendingCount})
+								</button>
+								<button onclick={selectNone} class="text-sm text-gray-600 hover:underline">
+									Select None
+								</button>
+							</div>
+
+							{#if selectedIds.size > 0}
+								<div class="flex items-center gap-2">
+									<span class="text-sm text-gray-600">{selectedIds.size} selected</span>
+									<button
+										onclick={() => handleBulkAction('accept')}
+										disabled={bulkLoading}
+										class="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
+									>
+										Accept All
+									</button>
+									<button
+										onclick={() => handleBulkAction('reject')}
+										disabled={bulkLoading}
+										class="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
+									>
+										Reject All
+									</button>
+								</div>
+							{/if}
+						{/if}
+					</div>
+
+					{#if error}
+						<div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+							{error}
+						</div>
+					{/if}
+
+					{#if isLoading}
+						<div class="flex justify-center py-12">
+							<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+						</div>
+					{:else if !groupedResponse || groupedResponse.groups.length === 0}
+						<div class="text-center py-12 text-gray-500">No suggestions found</div>
+					{:else}
+						<!-- Grouped suggestions -->
+						<div class="grid gap-4">
+							{#each groupedResponse.groups as group (group.personId)}
+								{@const groupWithPendingCount = {
+									...group,
+									// When filtering by pending, suggestionCount IS the pending count for this person.
+									// Otherwise, count pending in displayed suggestions.
+									pendingCount:
+										statusFilter === 'pending'
+											? group.suggestionCount
+											: group.suggestions.filter((s) => s.status === 'pending').length,
+									// Get labeled face count for this person (from persons list)
+									labeledFaceCount: persons.find((p) => p.id === group.personId)?.faceCount
+								}}
+								<SuggestionGroupCard
+									group={groupWithPendingCount}
+									{selectedIds}
+									onSelect={handleSelect}
+									onSelectAllInGroup={handleSelectAllInGroup}
+									onAcceptAll={handleGroupAcceptAll}
+									onRejectAll={handleGroupRejectAll}
+									onThumbnailClick={handleThumbnailClick}
+									onFindMoreComplete={handleFindMoreComplete}
+								/>
+							{/each}
+						</div>
+
+						<!-- Pagination -->
+						{#if totalPages > 1}
+							<div class="flex justify-center items-center gap-4 mt-8">
+								<button
+									onclick={() => (page = Math.max(1, page - 1))}
+									disabled={page === 1}
+									class="px-4 py-2 border rounded disabled:opacity-50"
+								>
+									Previous
+								</button>
+								<span class="text-sm text-gray-600">
+									Page {page} of {totalPages}
+									{#if groupedResponse}
+										· Showing {groupedResponse.groups.length} of {groupedResponse.totalGroups} groups
+									{/if}
+								</span>
+								<button
+									onclick={() => (page = Math.min(totalPages, page + 1))}
+									disabled={page === totalPages}
+									class="px-4 py-2 border rounded disabled:opacity-50"
+								>
+									Next
+								</button>
+							</div>
+						{/if}
+					{/if}
+				</div>
+
+				<!-- Sidebar with Recently Assigned Panel -->
+				<aside class="sidebar">
+					<RecentlyAssignedPanel assignments={recentAssignments} onUndo={handleRecentUndo} />
+				</aside>
+			</div>
+		</Tabs.Content>
+
+		<Tabs.Content value="unlabeled">
+			<UnlabeledGroupsView />
+		</Tabs.Content>
+	</Tabs.Root>
 </div>
 
 <!-- Detail Modal -->
