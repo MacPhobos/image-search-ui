@@ -12,9 +12,11 @@
 		group: UnknownPersonCandidateGroup;
 		onCreatePerson: (group: UnknownPersonCandidateGroup, excludedFaceIds: string[]) => void;
 		onDismissed?: () => void;
+		/** Callback when a face thumbnail body is clicked (opens detail modal). */
+		onThumbnailClick?: (face: FaceInGroupResponse) => void;
 	}
 
-	let { group, onCreatePerson, onDismissed }: Props = $props();
+	let { group, onCreatePerson, onDismissed, onThumbnailClick }: Props = $props();
 
 	// Track which faces are selected (all selected by default)
 	let allFaces = $derived<FaceInGroupResponse[]>([
@@ -127,7 +129,8 @@
 				alt="Face in group"
 				selected={selectedFaceIds.has(face.faceInstanceId)}
 				onSelect={() => toggleFace(face.faceInstanceId)}
-				onClick={() => toggleFace(face.faceInstanceId)}
+				onClick={() =>
+					onThumbnailClick ? onThumbnailClick(face) : toggleFace(face.faceInstanceId)}
 			/>
 		{/each}
 	</div>

@@ -181,4 +181,128 @@ describe('UnlabeledGroupCard', () => {
 		const checkboxes = screen.getAllByRole('checkbox', { name: 'Select face' });
 		expect(checkboxes.length).toBeGreaterThan(0);
 	});
+
+	// ============ onThumbnailClick Tests ============
+
+	describe('onThumbnailClick behavior', () => {
+		function renderCardWithThumbnailClick(
+			groupOverrides?: Parameters<typeof createUnknownPersonCandidateGroup>[0],
+			callbacks?: {
+				onCreatePerson?: (...args: unknown[]) => void;
+				onDismissed?: () => void;
+				onThumbnailClick?: (face: unknown) => void;
+			}
+		) {
+			const group = createUnknownPersonCandidateGroup(groupOverrides);
+			const onCreatePerson = callbacks?.onCreatePerson ?? vi.fn();
+			const onDismissed = callbacks?.onDismissed ?? vi.fn();
+			const onThumbnailClick = callbacks?.onThumbnailClick ?? vi.fn();
+
+			return {
+				group,
+				onCreatePerson,
+				onDismissed,
+				onThumbnailClick,
+				...render(UnlabeledGroupCard, {
+					props: { group, onCreatePerson, onDismissed, onThumbnailClick }
+				})
+			};
+		}
+
+		it('calls onThumbnailClick when thumbnail body is clicked', async () => {
+			const onThumbnailClick = vi.fn();
+			renderCardWithThumbnailClick(undefined, { onThumbnailClick });
+
+			// Click the first face thumbnail (role="button" with aria-label "Face in group")
+			const faceButtons = screen.getAllByRole('button', { name: 'Face in group' });
+			expect(faceButtons.length).toBeGreaterThan(0);
+
+			await fireEvent.click(faceButtons[0]);
+
+			expect(onThumbnailClick).toHaveBeenCalledTimes(1);
+			// Should be called with the face object
+			expect(onThumbnailClick).toHaveBeenCalledWith(
+				expect.objectContaining({
+					faceInstanceId: expect.any(String),
+					assetId: expect.any(String)
+				})
+			);
+		});
+
+		it('does not toggle selection when thumbnail body is clicked and onThumbnailClick is provided', async () => {
+			const onThumbnailClick = vi.fn();
+			renderCardWithThumbnailClick(undefined, { onThumbnailClick });
+
+			// All faces should be selected initially
+			const selectionText = screen.getByText(/selected/);
+			const initialText = selectionText.textContent;
+
+			// Click a face thumbnail body
+			const faceButtons = screen.getAllByRole('button', { name: 'Face in group' });
+			await fireEvent.click(faceButtons[0]);
+
+			// Selection count should remain unchanged (thumbnail click should not toggle selection)
+			const updatedText = screen.getByText(/selected/).textContent;
+			expect(updatedText).toBe(initialText);
+		});
+
+		it('checkbox still toggles selection when onThumbnailClick is provided', async () => {
+			const onThumbnailClick = vi.fn();
+			renderCardWithThumbnailClick(undefined, { onThumbnailClick });
+
+			// Parse "N/N selected" text to get counts
+			function getSelectionCount(): { selected: number; total: number } {
+				const text = screen.getByText(/selected/).textContent ?? '';
+				const match = text.match(/(\d+)\/(\d+)/);
+				expect(match).toBeTruthy();
+				return {
+					selected: parseInt(match?.[1] ?? '0', 10),
+					total: parseInt(match?.[2] ?? '0', 10)
+				};
+			}
+
+			const initial = getSelectionCount();
+
+			// All should be selected initially
+			expect(initial.selected).toBe(initial.total);
+
+			// Click a checkbox (not the thumbnail body)
+			const checkboxes = screen.getAllByRole('checkbox', { name: 'Select face' });
+			expect(checkboxes.length).toBeGreaterThan(0);
+			await fireEvent.click(checkboxes[0]);
+
+			// Selection count should decrease by 1
+			await waitFor(() => {
+				const updated = getSelectionCount();
+				expect(updated.selected).toBe(initial.selected - 1);
+			});
+
+			// onThumbnailClick should NOT have been called by the checkbox
+			expect(onThumbnailClick).not.toHaveBeenCalled();
+		});
+
+		it('without onThumbnailClick, clicking thumbnail body toggles selection', async () => {
+			// Render without onThumbnailClick
+			renderCard();
+
+			// Parse "N/N selected" text
+			function getSelectedCount(): number {
+				const text = screen.getByText(/selected/).textContent ?? '';
+				const match = text.match(/(\d+)\/(\d+)/);
+				expect(match).toBeTruthy();
+				return parseInt(match?.[1] ?? '0', 10);
+			}
+
+			const initialCount = getSelectedCount();
+
+			// Click a face thumbnail body
+			const faceButtons = screen.getAllByRole('button', { name: 'Face in group' });
+			await fireEvent.click(faceButtons[0]);
+
+			// Selection count should have changed (decreased by 1 since all were selected)
+			await waitFor(() => {
+				expect(getSelectedCount()).toBe(initialCount - 1);
+			});
+		});
+	});
 });

@@ -8,6 +8,7 @@
 	import UnlabeledGroupCard from './UnlabeledGroupCard.svelte';
 	import CreatePersonFromGroupDialog from './CreatePersonFromGroupDialog.svelte';
 	import MergeGroupsDialog from './MergeGroupsDialog.svelte';
+	import FaceDetailModal from './FaceDetailModal.svelte';
 	import {
 		listUnknownPersonCandidates,
 		triggerDiscovery,
@@ -17,7 +18,8 @@
 		type UnknownPersonCandidatesResponse,
 		type UnknownPersonCandidateGroup,
 		type UnknownPersonsStats,
-		type MergeSuggestion
+		type MergeSuggestion,
+		type FaceInGroupResponse
 	} from '$lib/api/faces';
 
 	// --- localStorage keys ---
@@ -55,6 +57,9 @@
 	let mergeGroupA = $state<UnknownPersonCandidateGroup | null>(null);
 	let mergeGroupB = $state<UnknownPersonCandidateGroup | null>(null);
 	let mergeSimilarity = $state(0);
+
+	// Face detail modal state
+	let detailFace = $state<FaceInGroupResponse | null>(null);
 
 	// Stats
 	let stats = $state.raw<UnknownPersonsStats | null>(null);
@@ -245,6 +250,14 @@
 		trackingCleanup();
 	});
 
+	function handleThumbnailClick(face: FaceInGroupResponse) {
+		detailFace = face;
+	}
+
+	function handleDetailClose() {
+		detailFace = null;
+	}
+
 	function handleCreatePerson(group: UnknownPersonCandidateGroup, excluded: string[]) {
 		selectedGroup = group;
 		excludedFaceIds = excluded;
@@ -363,6 +376,7 @@
 					{group}
 					onCreatePerson={handleCreatePerson}
 					onDismissed={handleGroupDismissed}
+					onThumbnailClick={handleThumbnailClick}
 				/>
 			{/each}
 		</div>
@@ -412,6 +426,8 @@
 		onMerged={handleMergeComplete}
 	/>
 {/if}
+
+<FaceDetailModal face={detailFace} onClose={handleDetailClose} />
 
 <style>
 	.action-btn {
