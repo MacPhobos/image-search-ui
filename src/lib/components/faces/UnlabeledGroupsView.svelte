@@ -2,6 +2,7 @@
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
+	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import SimilarityThresholdControl from './SimilarityThresholdControl.svelte';
 	import UnlabeledGroupCard from './UnlabeledGroupCard.svelte';
@@ -92,6 +93,26 @@
 				fetchCandidates();
 			});
 		}, 300);
+	});
+
+	// Batch-load thumbnails when groups change
+	$effect(() => {
+		if (response && response.groups.length > 0) {
+			const assetIds: number[] = [];
+			for (const group of response.groups) {
+				const faces = [group.representativeFace, ...group.sampleFaces];
+				for (const face of faces) {
+					const id = parseInt(face.assetId, 10);
+					if (!isNaN(id)) {
+						assetIds.push(id);
+					}
+				}
+			}
+			const unique = [...new Set(assetIds)];
+			if (unique.length > 0) {
+				thumbnailCache.fetchBatch(unique);
+			}
+		}
 	});
 
 	// --- Functions ---

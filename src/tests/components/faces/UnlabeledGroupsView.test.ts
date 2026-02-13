@@ -4,6 +4,7 @@ import UnlabeledGroupsView from '$lib/components/faces/UnlabeledGroupsView.svelt
 import {
 	createUnknownPersonCandidatesResponse,
 	createUnknownPersonCandidateGroup,
+	createFaceInGroup,
 	createDiscoveryStats,
 	createMergeSuggestion
 } from '../../helpers/fixtures';
@@ -14,6 +15,22 @@ vi.mock('$lib/stores/localSettings.svelte', () => ({
 	localSettings: {
 		get: (_key: string, defaultValue: unknown) => defaultValue,
 		set: vi.fn()
+	}
+}));
+
+// Mock thumbnailCache to track fetchBatch calls
+// Use vi.hoisted() so the variable is available when vi.mock factory runs (hoisted)
+const { mockFetchBatch } = vi.hoisted(() => ({
+	mockFetchBatch: vi.fn()
+}));
+vi.mock('$lib/stores/thumbnailCache.svelte', () => ({
+	thumbnailCache: {
+		get: vi.fn(() => undefined),
+		isPending: vi.fn(() => false),
+		has: vi.fn(() => false),
+		fetchBatch: mockFetchBatch,
+		clear: vi.fn(),
+		state: { cache: new Map(), pending: new Set(), error: null }
 	}
 }));
 
@@ -319,5 +336,28 @@ describe('UnlabeledGroupsView', () => {
 				expect(screen.getByText('Merge Face Groups')).toBeInTheDocument();
 			});
 		}
+	});
+
+	it('calls thumbnailCache.fetchBatch when groups are loaded', async () => {
+		// Create groups with numeric assetIds so the batch fetch triggers
+		const group = createUnknownPersonCandidateGroup({
+			groupId: 'cluster_cache_test',
+			representativeFace: createFaceInGroup({ assetId: '42' }),
+			sampleFaces: [createFaceInGroup({ assetId: '43' }), createFaceInGroup({ assetId: '44' })]
+		});
+		setupMocksWithCandidates({ groups: [group] });
+		mockFetchBatch.mockClear();
+
+		render(UnlabeledGroupsView);
+
+		await waitFor(() => {
+			expect(mockFetchBatch).toHaveBeenCalled();
+		});
+
+		// Verify the batch was called with numeric asset IDs
+		const calledWith = mockFetchBatch.mock.calls[0][0] as number[];
+		expect(calledWith).toContain(42);
+		expect(calledWith).toContain(43);
+		expect(calledWith).toContain(44);
 	});
 });

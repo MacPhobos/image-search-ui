@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import FaceThumbnail from './FaceThumbnail.svelte';
+	import SelectableFaceThumbnail from './SelectableFaceThumbnail.svelte';
+	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import {
 		dismissUnknownPersonCandidate,
 		toAbsoluteUrl,
@@ -72,6 +72,16 @@
 		};
 	}
 
+	function getCachedThumbnail(face: FaceInGroupResponse): string | null | undefined {
+		const id = parseInt(face.assetId, 10);
+		return isNaN(id) ? undefined : thumbnailCache.get(id);
+	}
+
+	function isThumbnailLoading(face: FaceInGroupResponse): boolean {
+		const id = parseInt(face.assetId, 10);
+		return isNaN(id) ? false : thumbnailCache.isPending(id);
+	}
+
 	async function handleDismiss(markAsNoise: boolean) {
 		isDismissing = true;
 		dismissError = null;
@@ -106,34 +116,19 @@
 	</div>
 
 	<!-- Face thumbnail grid -->
-	<div class="mb-3 grid grid-cols-6 gap-2">
+	<div class="mb-3 flex flex-wrap gap-3">
 		{#each allFaces as face (face.faceInstanceId)}
-			<div class="relative">
-				<button
-					type="button"
-					class="w-full cursor-pointer border-2 rounded-lg p-0.5 transition-colors {selectedFaceIds.has(
-						face.faceInstanceId
-					)
-						? 'border-primary bg-primary/5'
-						: 'border-transparent hover:border-muted-foreground/30'}"
-					onclick={() => toggleFace(face.faceInstanceId)}
-					title="Quality: {face.qualityScore.toFixed(2)}"
-				>
-					<FaceThumbnail
-						thumbnailUrl={getThumbnailUrl(face)}
-						bbox={getBbox(face)}
-						size={56}
-						alt="Face in group"
-						square
-					/>
-				</button>
-				<div class="absolute -right-1 -top-1 z-10">
-					<Checkbox
-						checked={selectedFaceIds.has(face.faceInstanceId)}
-						onCheckedChange={() => toggleFace(face.faceInstanceId)}
-					/>
-				</div>
-			</div>
+			<SelectableFaceThumbnail
+				thumbnailUrl={getThumbnailUrl(face)}
+				dataUri={getCachedThumbnail(face)}
+				isLoading={isThumbnailLoading(face)}
+				bbox={getBbox(face)}
+				size={128}
+				alt="Face in group"
+				selected={selectedFaceIds.has(face.faceInstanceId)}
+				onSelect={() => toggleFace(face.faceInstanceId)}
+				onClick={() => toggleFace(face.faceInstanceId)}
+			/>
 		{/each}
 	</div>
 

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { FaceSuggestion } from '$lib/api/faces';
-	import FaceThumbnail from './FaceThumbnail.svelte';
+	import SelectableFaceThumbnail from './SelectableFaceThumbnail.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
 	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	interface Props {
@@ -85,58 +84,22 @@
 	const cachedThumbnail = $derived(assetId ? thumbnailCache.get(assetId) : undefined);
 	const isLoading = $derived(assetId ? thumbnailCache.isPending(assetId) : false);
 
-	function handleCheckboxChange(checked: boolean) {
-		onSelect(suggestion.id, checked);
-	}
-
-	function handleClick() {
-		onClick();
-	}
-
-	function handleKeyDown(event: KeyboardEvent) {
-		if (event.key === 'Enter' || event.key === ' ') {
-			event.preventDefault();
-			onClick();
-		}
+	function handleSelect(sel: boolean) {
+		onSelect(suggestion.id, sel);
 	}
 </script>
 
-<div
-	class="thumbnail-container"
-	class:selected
-	onclick={handleClick}
-	onkeydown={handleKeyDown}
-	role="button"
-	tabindex={0}
-	aria-label="Face suggestion for {suggestion.personName ||
-		'Unknown'} with {confidencePercent}% confidence"
+<SelectableFaceThumbnail
+	thumbnailUrl={suggestion.faceThumbnailUrl || ''}
+	dataUri={cachedThumbnail}
+	{isLoading}
+	size={128}
+	alt="Face for {suggestion.personName || 'Unknown'}"
+	{selected}
+	showCheckbox={suggestion.status === 'pending'}
+	onSelect={handleSelect}
+	{onClick}
 >
-	<!-- Selection checkbox (top-left, only for pending) -->
-	{#if suggestion.status === 'pending'}
-		<div
-			class="checkbox-container"
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
-			role="none"
-		>
-			<Checkbox
-				checked={selected}
-				onCheckedChange={handleCheckboxChange}
-				aria-label="Select suggestion"
-			/>
-		</div>
-	{/if}
-
-	<!-- Face thumbnail -->
-	<FaceThumbnail
-		thumbnailUrl={suggestion.faceThumbnailUrl || ''}
-		dataUri={cachedThumbnail}
-		{isLoading}
-		size={128}
-		alt="Face for {suggestion.personName || 'Unknown'}"
-		square={true}
-	/>
-
 	<!-- Confidence badge (bottom-right corner) -->
 	<div class="confidence-badge">
 		<Tooltip.Root>
@@ -147,7 +110,7 @@
 				>
 					{displayConfidence}%
 					{#if suggestion.isMultiPrototypeMatch}
-						<span class="multi-proto-indicator" title="Multi-prototype match">⚡</span>
+						<span class="multi-proto-indicator" title="Multi-prototype match">&#x26A1;</span>
 					{/if}
 				</Badge>
 			</Tooltip.Trigger>
@@ -187,9 +150,9 @@
 						class="w-5 h-5 rounded-full p-0 flex items-center justify-center text-xs font-bold cursor-help"
 					>
 						{#if suggestion.status === 'accepted'}
-							✓
+							&#x2713;
 						{:else if suggestion.status === 'rejected'}
-							✗
+							&#x2717;
 						{:else}
 							!
 						{/if}
@@ -201,46 +164,9 @@
 			</Tooltip.Root>
 		</div>
 	{/if}
-</div>
+</SelectableFaceThumbnail>
 
 <style>
-	.thumbnail-container {
-		position: relative;
-		width: 128px;
-		height: 128px;
-		cursor: pointer;
-		transition:
-			transform 0.2s,
-			box-shadow 0.2s;
-		border-radius: 8px;
-	}
-
-	.thumbnail-container:hover {
-		transform: scale(1.05);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-	}
-
-	.thumbnail-container:focus {
-		outline: 2px solid #4a90e2;
-		outline-offset: 2px;
-	}
-
-	.thumbnail-container.selected {
-		transform: scale(1.05);
-		box-shadow: 0 0 0 3px #4a90e2;
-	}
-
-	.checkbox-container {
-		position: absolute;
-		top: 4px;
-		left: 4px;
-		z-index: 10;
-		background-color: rgba(255, 255, 255, 0.95);
-		border-radius: 4px;
-		padding: 2px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-	}
-
 	.confidence-badge {
 		position: absolute;
 		bottom: 2px;

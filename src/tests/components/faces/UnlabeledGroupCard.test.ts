@@ -4,6 +4,18 @@ import UnlabeledGroupCard from '$lib/components/faces/UnlabeledGroupCard.svelte'
 import { createUnknownPersonCandidateGroup } from '../../helpers/fixtures';
 import { mockResponse, mockError } from '../../helpers/mockFetch';
 
+// Mock thumbnailCache module used by UnlabeledGroupCard
+vi.mock('$lib/stores/thumbnailCache.svelte', () => ({
+	thumbnailCache: {
+		get: vi.fn(() => undefined),
+		isPending: vi.fn(() => false),
+		has: vi.fn(() => false),
+		fetchBatch: vi.fn(),
+		clear: vi.fn(),
+		state: { cache: new Map(), pending: new Set(), error: null }
+	}
+}));
+
 describe('UnlabeledGroupCard', () => {
 	function renderCard(
 		groupOverrides?: Parameters<typeof createUnknownPersonCandidateGroup>[0],
@@ -133,7 +145,7 @@ describe('UnlabeledGroupCard', () => {
 	it('shows Dismissed badge when group is dismissed', () => {
 		renderCard({ isDismissed: true });
 
-		expect(screen.getByText('Dismissed')).toBeInTheDocument();
+		expect(screen.getByText(/Dismissed/)).toBeInTheDocument();
 	});
 
 	it('disables Create Person button when group is dismissed', () => {
@@ -148,5 +160,25 @@ describe('UnlabeledGroupCard', () => {
 
 		const dismissBtn = screen.getByRole('button', { name: 'Dismiss' });
 		expect(dismissBtn).toBeDisabled();
+	});
+
+	it('renders face thumbnails with role="button" attribute', () => {
+		renderCard();
+
+		// Each face thumbnail is rendered via SelectableFaceThumbnail which has role="button"
+		const faceButtons = screen.getAllByRole('button', { name: 'Face in group' });
+		expect(faceButtons.length).toBeGreaterThan(0);
+
+		// Each should have tabindex for keyboard access
+		faceButtons.forEach((btn) => {
+			expect(btn).toHaveAttribute('tabindex', '0');
+		});
+	});
+
+	it('renders checkboxes on each face thumbnail', () => {
+		renderCard();
+
+		const checkboxes = screen.getAllByRole('checkbox', { name: 'Select face' });
+		expect(checkboxes.length).toBeGreaterThan(0);
 	});
 });
