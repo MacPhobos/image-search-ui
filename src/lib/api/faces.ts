@@ -1795,14 +1795,13 @@ export async function listUnknownPersonCandidates(params: {
 }): Promise<UnknownPersonCandidatesResponse> {
 	const searchParams = new URLSearchParams();
 	if (params.page) searchParams.set('page', String(params.page));
-	if (params.groupsPerPage) searchParams.set('groups_per_page', String(params.groupsPerPage));
-	if (params.facesPerGroup) searchParams.set('faces_per_group', String(params.facesPerGroup));
-	if (params.minConfidence != null)
-		searchParams.set('min_confidence', String(params.minConfidence));
-	if (params.minGroupSize) searchParams.set('min_group_size', String(params.minGroupSize));
-	if (params.sortBy) searchParams.set('sort_by', params.sortBy);
-	if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
-	if (params.includeDismissed) searchParams.set('include_dismissed', 'true');
+	if (params.groupsPerPage) searchParams.set('groupsPerPage', String(params.groupsPerPage));
+	if (params.facesPerGroup) searchParams.set('facesPerGroup', String(params.facesPerGroup));
+	if (params.minConfidence != null) searchParams.set('minConfidence', String(params.minConfidence));
+	if (params.minGroupSize) searchParams.set('minGroupSize', String(params.minGroupSize));
+	if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+	if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+	if (params.includeDismissed) searchParams.set('includeDismissed', 'true');
 
 	return apiRequest<UnknownPersonCandidatesResponse>(
 		`/api/v1/faces/unknown-persons/candidates?${searchParams.toString()}`
