@@ -1715,6 +1715,16 @@ export interface UnknownPersonCandidatesResponse {
 	lastDiscoveryAt: string | null;
 	minGroupSizeSetting: number;
 	minConfidenceSetting: number;
+	/** The minimum confidence used during the discovery job (e.g. 0.50). */
+	discoveryMinConfidence?: number;
+	/** Number of groups hidden because they fall below the current confidence filter. */
+	filteredByConfidence?: number;
+	/** Number of groups hidden because they fall below the minimum size filter. */
+	filteredBySize?: number;
+	/** Number of groups hidden because they were dismissed. */
+	filteredByDismissed?: number;
+	/** Total number of clusters before any filtering was applied. */
+	totalBeforeFiltering?: number;
 }
 
 /** Request to accept a candidate group as a new person. */

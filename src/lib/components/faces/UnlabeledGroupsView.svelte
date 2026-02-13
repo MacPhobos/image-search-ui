@@ -38,6 +38,9 @@
 	let sortBy = $state<'face_count' | 'confidence' | 'quality'>('face_count');
 	let sortOrder = $state<'asc' | 'desc'>('desc');
 
+	// Dynamic slider minimum from discovery job (defaults to 0.50 until API responds)
+	let discoveryMinConfidence = $state(0.5);
+
 	// Response data -- use $state.raw() for large arrays
 	let response = $state.raw<UnknownPersonCandidatesResponse | null>(null);
 	let loading = $state(false);
@@ -72,6 +75,11 @@
 	let totalPages = $derived(Math.ceil((response?.totalGroups ?? 0) / groupsPerPage));
 	let hasGroups = $derived(groups.length > 0);
 	let showEmptyState = $derived(!loading && !hasGroups && !isDiscovering);
+
+	// Filter transparency derived values
+	let filteredByConfidence = $derived(response?.filteredByConfidence ?? 0);
+	let filteredByDismissed = $derived(response?.filteredByDismissed ?? 0);
+	let totalBeforeFiltering = $derived(response?.totalBeforeFiltering ?? 0);
 
 	// --- Effects ---
 
@@ -133,6 +141,10 @@
 				sortBy,
 				sortOrder
 			});
+			// Update the slider minimum from the discovery job threshold when available
+			if (response?.discoveryMinConfidence != null) {
+				discoveryMinConfidence = response.discoveryMinConfidence;
+			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load candidates';
 		} finally {
@@ -323,7 +335,25 @@
 	{/if}
 
 	<!-- Threshold slider -->
-	<SimilarityThresholdControl bind:value={threshold} min={0.7} max={0.95} step={0.01} />
+	<SimilarityThresholdControl
+		bind:value={threshold}
+		min={discoveryMinConfidence}
+		max={0.95}
+		step={0.01}
+	/>
+
+	<!-- Filter transparency info -->
+	{#if filteredByConfidence > 0 || filteredByDismissed > 0}
+		<p class="text-xs text-muted-foreground -mt-2">
+			{totalBeforeFiltering} total groups found
+			{#if filteredByConfidence > 0}
+				&middot; {filteredByConfidence} below threshold
+			{/if}
+			{#if filteredByDismissed > 0}
+				&middot; {filteredByDismissed} dismissed
+			{/if}
+		</p>
+	{/if}
 
 	<!-- Merge suggestions -->
 	{#if mergeSuggestions && mergeSuggestions.length > 0}

@@ -721,6 +721,11 @@ export function createUnknownPersonCandidatesResponse(
 		lastDiscoveryAt: '2026-02-11T10:30:00Z',
 		minGroupSizeSetting: 5,
 		minConfidenceSetting: 0.7,
+		discoveryMinConfidence: 0.5,
+		filteredByConfidence: 12,
+		filteredBySize: 3,
+		filteredByDismissed: 5,
+		totalBeforeFiltering: 62,
 		...overrides
 	};
 }
