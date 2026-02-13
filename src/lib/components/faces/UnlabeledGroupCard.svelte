@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import FaceThumbnail from './FaceThumbnail.svelte';
 	import {
@@ -60,15 +58,6 @@
 		}
 	}
 
-	function getConfidenceVariant(
-		confidence: number
-	): 'default' | 'success' | 'warning' | 'destructive' {
-		if (confidence >= 0.85) return 'success';
-		if (confidence >= 0.7) return 'default';
-		if (confidence >= 0.5) return 'warning';
-		return 'destructive';
-	}
-
 	function getThumbnailUrl(face: FaceInGroupResponse): string {
 		if (!face.thumbnailUrl) return '';
 		return toAbsoluteUrl(face.thumbnailUrl);
@@ -98,22 +87,22 @@
 </script>
 
 <div
-	class="rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+	class="bg-white border border-[#e0e0e0] rounded-xl p-4 transition-all hover:border-[#d0d0d0] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
 	class:opacity-60={group.isDismissed}
 >
 	<!-- Header -->
-	<div class="mb-3 flex items-center justify-between">
-		<div class="flex items-center gap-2">
-			<h3 class="text-sm font-semibold">
+	<div class="mb-4 flex items-center justify-between">
+		<div class="flex flex-col gap-1">
+			<h3 class="text-base font-semibold text-[#333]">
 				{group.faceCount} face{group.faceCount !== 1 ? 's' : ''}
 			</h3>
-			<Badge variant={getConfidenceVariant(group.clusterConfidence)}>
+			<span class="text-xs text-[#666]">
 				{(group.clusterConfidence * 100).toFixed(0)}% confidence
-			</Badge>
+				{#if group.isDismissed}
+					· Dismissed
+				{/if}
+			</span>
 		</div>
-		{#if group.isDismissed}
-			<Badge variant="outline">Dismissed</Badge>
-		{/if}
 	</div>
 
 	<!-- Face thumbnail grid -->
@@ -163,36 +152,97 @@
 
 	<!-- Error display -->
 	{#if dismissError}
-		<div class="mb-3 rounded-md bg-destructive/10 p-2 text-xs text-destructive" role="alert">
+		<div
+			class="mb-4 p-3 bg-[#fef2f2] border border-[#fecaca] rounded-md text-[#dc2626] text-sm"
+			role="alert"
+		>
 			{dismissError}
 		</div>
 	{/if}
 
 	<!-- Action buttons -->
 	<div class="flex flex-wrap gap-2">
-		<Button
-			size="sm"
+		<button
+			type="button"
+			class="action-btn accept-btn"
 			disabled={noneSelected || group.isDismissed}
 			onclick={() => onCreatePerson(group, excludedFaceIds)}
 		>
 			Create Person ({selectedCount})
-		</Button>
-		<Button
-			variant="outline"
-			size="sm"
+		</button>
+		<button
+			type="button"
+			class="action-btn outline-btn"
 			disabled={isDismissing || group.isDismissed}
 			onclick={() => handleDismiss(false)}
 		>
 			{isDismissing ? 'Dismissing...' : 'Dismiss'}
-		</Button>
-		<Button
-			variant="destructive"
-			size="sm"
+		</button>
+		<button
+			type="button"
+			class="action-btn reject-btn"
 			disabled={isDismissing || group.isDismissed}
 			onclick={() => handleDismiss(true)}
 			title="Dismiss and mark all faces as noise (will not appear in future clustering)"
 		>
 			Mark as Noise
-		</Button>
+		</button>
 	</div>
 </div>
+
+<style>
+	.action-btn {
+		padding: 0.5rem 0.875rem;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			transform 0.1s;
+		white-space: nowrap;
+	}
+
+	.action-btn:hover:not(:disabled) {
+		transform: translateY(-1px);
+	}
+
+	.action-btn:active:not(:disabled) {
+		transform: translateY(0);
+	}
+
+	.action-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.accept-btn {
+		background-color: #22c55e;
+		color: white;
+	}
+
+	.accept-btn:hover:not(:disabled) {
+		background-color: #16a34a;
+	}
+
+	.reject-btn {
+		background-color: #ef4444;
+		color: white;
+	}
+
+	.reject-btn:hover:not(:disabled) {
+		background-color: #dc2626;
+	}
+
+	.outline-btn {
+		background-color: white;
+		color: #374151;
+		border: 1px solid #e0e0e0;
+	}
+
+	.outline-btn:hover:not(:disabled) {
+		background-color: #f9fafb;
+		border-color: #d0d0d0;
+	}
+</style>

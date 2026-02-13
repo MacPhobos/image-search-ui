@@ -2,7 +2,6 @@
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import SimilarityThresholdControl from './SimilarityThresholdControl.svelte';
 	import UnlabeledGroupCard from './UnlabeledGroupCard.svelte';
@@ -259,9 +258,9 @@
 	<!-- Header with stats and discover button -->
 	<div class="flex items-center justify-between">
 		<div>
-			<h2 class="text-lg font-semibold">Suggested New Persons</h2>
+			<h2 class="text-base font-semibold text-[#333]">Suggested New Persons</h2>
 			{#if stats}
-				<p class="text-sm text-muted-foreground">
+				<p class="text-xs text-[#666]">
 					{stats.totalUnassignedFaces.toLocaleString()} unassigned faces
 					{#if stats.lastDiscoveryAt}
 						&middot; Last scan: {new Date(stats.lastDiscoveryAt).toLocaleDateString()}
@@ -270,10 +269,15 @@
 			{/if}
 		</div>
 		<div class="flex gap-2">
-			<Button variant="outline" onclick={handleDiscover} disabled={isDiscovering}>
+			<button
+				type="button"
+				class="action-btn outline-btn"
+				onclick={handleDiscover}
+				disabled={isDiscovering}
+			>
 				{isDiscovering ? 'Discovering...' : 'Discover New Persons'}
-			</Button>
-			<Button variant="ghost" size="sm" href="/faces/clusters">Advanced Mode</Button>
+			</button>
+			<a href="/faces/clusters" class="action-btn ghost-btn"> Advanced Mode </a>
 		</div>
 	</div>
 
@@ -309,8 +313,11 @@
 
 	<!-- Error state -->
 	{#if error}
-		<div class="rounded-md border-destructive bg-destructive/10 p-3" role="alert">
-			<p class="text-sm text-destructive">{error}</p>
+		<div
+			class="p-3 bg-[#fef2f2] border border-[#fecaca] rounded-md text-[#dc2626] text-sm"
+			role="alert"
+		>
+			{error}
 		</div>
 	{/if}
 
@@ -340,21 +347,27 @@
 		</div>
 
 		{#if totalPages > 1}
-			<div class="flex items-center justify-center gap-2 py-4">
-				<Button size="sm" disabled={page <= 1} onclick={() => (page = Math.max(1, page - 1))}>
+			<div class="flex items-center justify-center gap-4 py-4">
+				<button
+					type="button"
+					class="px-4 py-2 border border-[#e0e0e0] rounded-md hover:border-[#d0d0d0] disabled:opacity-50"
+					disabled={page <= 1}
+					onclick={() => (page = Math.max(1, page - 1))}
+				>
 					Previous
-				</Button>
-				<span class="text-sm text-muted-foreground">
+				</button>
+				<span class="text-sm text-[#666]">
 					Page {page} of {totalPages}
 					({response?.totalGroups ?? 0} groups)
 				</span>
-				<Button
-					size="sm"
+				<button
+					type="button"
+					class="px-4 py-2 border border-[#e0e0e0] rounded-md hover:border-[#d0d0d0] disabled:opacity-50"
 					disabled={page >= totalPages}
 					onclick={() => (page = Math.min(totalPages, page + 1))}
 				>
 					Next
-				</Button>
+				</button>
 			</div>
 		{/if}
 	{/if}
@@ -378,3 +391,58 @@
 		onMerged={handleMergeComplete}
 	/>
 {/if}
+
+<style>
+	.action-btn {
+		padding: 0.5rem 0.875rem;
+		border-radius: 6px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			border-color 0.2s,
+			transform 0.1s;
+		white-space: nowrap;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.action-btn:hover:not(:disabled) {
+		transform: translateY(-1px);
+	}
+
+	.action-btn:active:not(:disabled) {
+		transform: translateY(0);
+	}
+
+	.action-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.outline-btn {
+		background-color: white;
+		color: #374151;
+		border: 1px solid #e0e0e0;
+	}
+
+	.outline-btn:hover:not(:disabled) {
+		background-color: #f9fafb;
+		border-color: #d0d0d0;
+	}
+
+	.ghost-btn {
+		background-color: transparent;
+		color: #6b7280;
+		border: none;
+		padding: 0.375rem 0.5rem;
+	}
+
+	.ghost-btn:hover {
+		background-color: #f3f4f6;
+		color: #374151;
+	}
+</style>
