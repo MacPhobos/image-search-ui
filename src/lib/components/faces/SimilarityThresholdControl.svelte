@@ -9,11 +9,11 @@
 		step?: number;
 	}
 
-	let { value = $bindable(), min = 0.7, max = 0.95, step = 0.01 }: Props = $props();
+	let { value = $bindable(), min = 0.5, max = 0.95, step = 0.01 }: Props = $props();
 
 	const presets = [
-		{ label: 'Exploratory', value: 0.7, description: 'More groups, lower confidence' },
-		{ label: 'Standard', value: 0.8, description: 'Balanced confidence' },
+		{ label: 'Exploratory', value: 0.5, description: 'More groups, lower confidence' },
+		{ label: 'Standard', value: 0.7, description: 'Balanced confidence' },
 		{
 			label: 'High Confidence',
 			value: 0.9,
