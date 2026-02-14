@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.17.0
-> **Last Updated**: 2026-01-16
+> **Version**: 1.19.0
+> **Last Updated**: 2026-02-13
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -23,6 +23,7 @@ This document defines the API contract between `image-search-service` (backend) 
    - [Face Clusters](#face-clusters)
    - [Face Centroids](#face-centroids)
    - [Temporal Prototypes](#temporal-prototypes)
+   - [Unknown Persons Discovery](#unknown-persons-discovery)
    - [Configuration](#configuration)
    - [Jobs](#jobs)
    - [Job Progress](#job-progress)
@@ -1493,6 +1494,113 @@ GET /api/v1/faces/clusters?page=2&page_size=50
 
 ---
 
+#### LabelClusterRequest Schema
+
+```typescript
+interface LabelClusterRequest {
+	name?: string; // Person name (conditional, non-empty). Required if personId not provided.
+	personId?: string; // UUID of existing person (conditional). Required if name not provided.
+}
+```
+
+**Validation**: Exactly one of `name` or `personId` must be provided. Sending both or neither returns 422.
+
+#### LabelClusterResponse Schema
+
+```typescript
+interface LabelClusterResponse {
+	clusterId: string; // Cluster identifier
+	personId: string; // UUID of created or existing person
+	personName: string; // Name of the person
+	facesAssigned: number; // Number of faces assigned to person
+	assignmentEventId: string | null; // UUID of assignment event (for undo capability)
+}
+```
+
+---
+
+#### `POST /api/v1/faces/clusters/{cluster_id}/label`
+
+Label a cluster by creating a new Person OR assigning faces to an existing Person.
+
+**Path Parameters**
+
+| Parameter    | Type   | Description        |
+| ------------ | ------ | ------------------ |
+| `cluster_id` | string | Cluster identifier |
+
+**Request Body**
+
+Option 1: Create new person
+
+```json
+{
+	"name": "Alice Smith"
+}
+```
+
+Option 2: Assign to existing person
+
+```json
+{
+	"personId": "770e8400-e29b-41d4-a716-446655440002"
+}
+```
+
+**Request Body Fields**:
+
+- `name` (conditional): Person name (1-255 chars, non-empty). Required if `personId` not provided.
+- `personId` (conditional): UUID of existing person to assign faces to. Required if `name` not provided.
+
+**Validation**: Exactly one of `name` or `personId` must be provided. Sending both or neither returns 422.
+
+**Response** `200 OK`
+
+```json
+{
+	"clusterId": "clu_abc123",
+	"personId": "770e8400-e29b-41d4-a716-446655440002",
+	"personName": "Alice Smith",
+	"facesAssigned": 8,
+	"assignmentEventId": "550e8400-e29b-41d4-a716-446655440003"
+}
+```
+
+**Response** `404 Not Found` - Cluster not found
+
+```json
+{
+	"error": {
+		"code": "CLUSTER_NOT_FOUND",
+		"message": "Cluster 'clu_abc123' not found"
+	}
+}
+```
+
+**Response** `404 Not Found` - Person not found (when using personId)
+
+```json
+{
+	"error": {
+		"code": "PERSON_NOT_FOUND",
+		"message": "Person with ID '770e8400-...' not found"
+	}
+}
+```
+
+**Response** `422 Unprocessable Entity` - Validation error
+
+```json
+{
+	"error": {
+		"code": "VALIDATION_ERROR",
+		"message": "Exactly one of 'name' or 'personId' must be provided"
+	}
+}
+```
+
+---
+
 ### Face Centroids
 
 Face centroid management for person identity representation. Centroids are computed average embeddings of a person's labeled faces, used for efficient similarity matching and face suggestion generation. Supports both global centroids (all faces) and cluster-based centroids (subdivided by temporal/quality groups).
@@ -2130,6 +2238,578 @@ Trigger temporal re-diversification of prototypes. This recomputes automatic pro
 		"code": "PERSON_NOT_FOUND",
 		"message": "Person with ID '550e8400-...' not found"
 	}
+}
+```
+
+---
+
+### Unknown Persons Discovery
+
+Automated clustering of unassigned faces into candidate groups for batch person creation. The system uses HDBSCAN or K-means clustering to identify groups of similar faces that likely represent the same person.
+
+#### UnknownPersonCandidate Schema
+
+```typescript
+interface UnknownPersonCandidate {
+	groupId: string; // Cluster identifier (e.g., "unknown_0")
+	membershipHash: string; // Hash of face IDs for tracking changes
+	faceCount: number; // Number of faces in this group
+	clusterConfidence: number; // Average intra-cluster similarity (0.0-1.0)
+	avgQuality: number; // Average quality score (0.0-1.0)
+	representativeFace: FaceInstanceDetail; // Best quality face for preview
+	sampleFaces: FaceInstanceDetail[]; // Sample faces (limit configurable)
+	isDismissed: boolean; // Whether group was dismissed by user
+	dismissedAt: string | null; // ISO 8601 timestamp of dismissal
+}
+```
+
+#### FaceInstanceDetail Schema
+
+```typescript
+interface FaceInstanceDetail {
+	faceInstanceId: string; // UUID
+	assetId: string; // UUID of parent asset
+	qualityScore: number; // Face quality (0.0-1.0)
+	detectionConfidence: number; // Detection confidence (0.0-1.0)
+	bboxX: number; // Bounding box X (pixels)
+	bboxY: number; // Bounding box Y (pixels)
+	bboxW: number; // Bounding box width (pixels)
+	bboxH: number; // Bounding box height (pixels)
+	thumbnailUrl: string | null; // Face thumbnail URL
+}
+```
+
+#### DiscoveryJobResponse Schema
+
+```typescript
+interface DiscoveryJobResponse {
+	jobId: string; // RQ job ID
+	status: string; // Job status: "queued" | "started" | "finished" | "failed"
+	progressKey: string; // Redis key for progress tracking
+	params: ClusteringParams; // Parameters used for clustering
+}
+```
+
+#### ClusteringParams Schema
+
+```typescript
+interface ClusteringParams {
+	clusteringMethod: string; // "hdbscan" | "kmeans"
+	minClusterSize: number; // Minimum faces per cluster
+	minQuality: number; // Minimum face quality threshold (0.0-1.0)
+	maxFaces: number; // Maximum faces to process
+	minClusterConfidence: number; // Minimum avg similarity for valid cluster (0.0-1.0)
+	eps: number; // HDBSCAN epsilon parameter
+}
+```
+
+#### CandidatesListResponse Schema
+
+```typescript
+interface CandidatesListResponse {
+	groups: UnknownPersonCandidate[]; // Array of candidate groups
+	totalGroups: number; // Total groups matching filters
+	totalUnassignedFaces: number; // Total unassigned faces in system
+	totalNoiseFaces: number; // Total faces marked as noise (cluster_id = '-1')
+	totalDismissedGroups: number; // Total dismissed groups
+	page: number; // Current page number
+	groupsPerPage: number; // Groups per page
+	facesPerGroup: number; // Sample faces returned per group
+	lastDiscoveryAt: string | null; // ISO 8601 timestamp of last clustering job
+	minGroupSizeSetting: number; // Current admin setting for minimum group size
+	minConfidenceSetting: number; // Current admin setting for minimum confidence
+}
+```
+
+#### AcceptCandidateRequest Schema
+
+```typescript
+interface AcceptCandidateRequest {
+	name?: string; // Person name (conditional, non-empty). Required if personId not provided.
+	personId?: string; // UUID of existing person (conditional). Required if name not provided.
+	faceIdsToExclude?: string[]; // Face UUIDs to leave unassigned (partial acceptance)
+	triggerReclustering?: boolean; // Re-run discovery after acceptance (default: true)
+}
+```
+
+**Validation**: Exactly one of `name` or `personId` must be provided. Sending both or neither returns 422.
+
+#### AcceptCandidateResponse Schema
+
+```typescript
+interface AcceptCandidateResponse {
+	personId: string; // UUID of created or existing person
+	personName: string; // Name of the person
+	facesAssigned: number; // Number of faces assigned to person
+	facesExcluded: number; // Number of faces excluded (remained unassigned)
+	prototypesCreated: number; // Number of prototypes created (0 for existing person with prototypes)
+	findMoreJobId: string | null; // Job ID for "Find More" job (if triggered)
+	reclusteringJobId: string | null; // Job ID for reclustering (if triggered)
+	assignmentEventId: string | null; // UUID of assignment event (for undo capability)
+}
+```
+
+#### DismissCandidateRequest Schema
+
+```typescript
+interface DismissCandidateRequest {
+	reason?: string; // Optional reason for dismissal
+	markAsNoise?: boolean; // If true, sets cluster_id to '-1' to exclude from future clustering (default: false)
+}
+```
+
+#### DismissCandidateResponse Schema
+
+```typescript
+interface DismissCandidateResponse {
+	groupId: string; // Cluster identifier
+	membershipHash: string; // Hash of face IDs
+	facesAffected: number; // Number of faces in dismissed group
+	markedAsNoise: boolean; // Whether faces were marked as noise
+}
+```
+
+#### UndoAssignmentResponse Schema
+
+```typescript
+interface UndoAssignmentResponse {
+	eventId: string; // UUID of the original assignment event that was undone
+	facesUnassigned: number; // Number of faces reverted to unassigned state
+	personId: string; // UUID of person faces were removed from
+	personName: string; // Name of the person
+	undoEventId: string; // UUID of the new undo audit event
+}
+```
+
+#### DiscoveryStatsResponse Schema
+
+```typescript
+interface DiscoveryStatsResponse {
+	totalUnassignedFaces: number; // Total unassigned faces
+	totalClusteredFaces: number; // Faces in valid clusters (not noise)
+	totalNoiseFaces: number; // Faces marked as noise (cluster_id = '-1')
+	totalUnclusteredFaces: number; // Faces with cluster_id = NULL
+	candidateGroups: number; // Total non-dismissed candidate groups
+	avgGroupSize: number; // Average faces per group
+	avgGroupConfidence: number; // Average cluster confidence
+	totalDismissedGroups: number; // Total dismissed groups
+	lastDiscoveryAt: string | null; // ISO 8601 timestamp of last clustering
+}
+```
+
+#### `POST /api/v1/faces/unknown-persons/discover`
+
+Trigger a background clustering job to discover candidate person groups from unassigned faces.
+
+**Request Body**
+
+```json
+{
+	"clusteringMethod": "hdbscan",
+	"minClusterSize": 5,
+	"minQuality": 0.3,
+	"maxFaces": 50000,
+	"minClusterConfidence": 0.7,
+	"eps": 0.5
+}
+```
+
+All fields are optional with defaults as shown.
+
+**Response** `200 OK`
+
+```json
+{
+	"jobId": "abc123def456",
+	"status": "queued",
+	"progressKey": "job_progress:abc123def456",
+	"params": {
+		"clusteringMethod": "hdbscan",
+		"minClusterSize": 5,
+		"minQuality": 0.3,
+		"maxFaces": 50000,
+		"minClusterConfidence": 0.7,
+		"eps": 0.5
+	}
+}
+```
+
+**Response** `400 Bad Request` - Invalid parameters
+
+```json
+{
+	"error": {
+		"code": "INVALID_PARAMETERS",
+		"message": "clusteringMethod must be 'hdbscan' or 'kmeans'"
+	}
+}
+```
+
+---
+
+#### `GET /api/v1/faces/unknown-persons/candidates`
+
+List pre-computed candidate groups from the most recent clustering job.
+
+**Query Parameters**
+
+| Parameter          | Type    | Default      | Description                                        |
+| ------------------ | ------- | ------------ | -------------------------------------------------- |
+| `page`             | integer | 1            | Page number (1-indexed)                            |
+| `groupsPerPage`    | integer | 50           | Groups per page (max: 100)                         |
+| `facesPerGroup`    | integer | 6            | Sample faces per group (max: 20)                   |
+| `minConfidence`    | float   | -            | Filter by confidence (0.0-1.0, slider mechanism)   |
+| `minGroupSize`     | integer | -            | Override admin setting for minimum faces per group |
+| `sortBy`           | string  | "face_count" | Sort field: "face_count", "confidence", "quality"  |
+| `sortOrder`        | string  | "desc"       | Sort direction: "asc", "desc"                      |
+| `includeDismissed` | boolean | false        | Include previously dismissed groups                |
+
+**Response** `200 OK`
+
+```json
+{
+	"groups": [
+		{
+			"groupId": "unknown_0",
+			"membershipHash": "abc123def456...",
+			"faceCount": 15,
+			"clusterConfidence": 0.92,
+			"avgQuality": 0.85,
+			"representativeFace": {
+				"faceInstanceId": "550e8400-e29b-41d4-a716-446655440000",
+				"assetId": "660e8400-e29b-41d4-a716-446655440001",
+				"qualityScore": 0.95,
+				"detectionConfidence": 0.99,
+				"bboxX": 100,
+				"bboxY": 200,
+				"bboxW": 80,
+				"bboxH": 100,
+				"thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/face_thumb"
+			},
+			"sampleFaces": [],
+			"isDismissed": false,
+			"dismissedAt": null
+		}
+	],
+	"totalGroups": 42,
+	"totalUnassignedFaces": 50000,
+	"totalNoiseFaces": 35000,
+	"totalDismissedGroups": 5,
+	"page": 1,
+	"groupsPerPage": 50,
+	"facesPerGroup": 6,
+	"lastDiscoveryAt": "2026-02-11T10:30:00Z",
+	"minGroupSizeSetting": 5,
+	"minConfidenceSetting": 0.7
+}
+```
+
+---
+
+#### `GET /api/v1/faces/unknown-persons/candidates/{group_id}`
+
+View detailed candidate group with all face instances.
+
+**Path Parameters**
+
+| Parameter  | Type   | Description        |
+| ---------- | ------ | ------------------ |
+| `group_id` | string | Cluster identifier |
+
+**Response** `200 OK`
+
+```json
+{
+	"groupId": "unknown_0",
+	"membershipHash": "abc123def456...",
+	"faceCount": 15,
+	"clusterConfidence": 0.92,
+	"avgQuality": 0.85,
+	"faces": [
+		{
+			"faceInstanceId": "550e8400-e29b-41d4-a716-446655440000",
+			"assetId": "660e8400-e29b-41d4-a716-446655440001",
+			"qualityScore": 0.95,
+			"detectionConfidence": 0.99,
+			"bboxX": 100,
+			"bboxY": 200,
+			"bboxW": 80,
+			"bboxH": 100,
+			"thumbnailUrl": "/files/550e8400-e29b-41d4-a716-446655440000/face_thumb"
+		}
+	]
+}
+```
+
+**Response** `404 Not Found` - Group not found
+
+```json
+{
+	"error": {
+		"code": "GROUP_NOT_FOUND",
+		"message": "Candidate group 'unknown_0' not found"
+	}
+}
+```
+
+---
+
+#### `POST /api/v1/faces/unknown-persons/candidates/{group_id}/accept`
+
+Create a new Person from a candidate group OR assign faces to an existing Person.
+
+**Path Parameters**
+
+| Parameter  | Type   | Description        |
+| ---------- | ------ | ------------------ |
+| `group_id` | string | Cluster identifier |
+
+**Request Body**
+
+Option 1: Create new person
+
+```json
+{
+	"name": "John Doe",
+	"faceIdsToExclude": ["550e8400-e29b-41d4-a716-446655440000"],
+	"triggerReclustering": true
+}
+```
+
+Option 2: Assign to existing person
+
+```json
+{
+	"personId": "770e8400-e29b-41d4-a716-446655440002",
+	"faceIdsToExclude": ["550e8400-e29b-41d4-a716-446655440000"],
+	"triggerReclustering": true
+}
+```
+
+**Request Body Fields**:
+
+- `name` (conditional): Person name (non-empty string). Required if `personId` not provided.
+- `personId` (conditional): UUID of existing person to assign faces to. Required if `name` not provided.
+- `faceIdsToExclude` (optional): Face UUIDs to leave unassigned for partial acceptance
+- `triggerReclustering` (optional, default: true): Re-run discovery after acceptance
+
+**Validation**: Exactly one of `name` or `personId` must be provided. Sending both or neither returns 422.
+
+**Response** `200 OK`
+
+```json
+{
+	"personId": "770e8400-e29b-41d4-a716-446655440002",
+	"personName": "John Doe",
+	"facesAssigned": 13,
+	"facesExcluded": 2,
+	"prototypesCreated": 3,
+	"findMoreJobId": "job-uuid-123",
+	"reclusteringJobId": "job-uuid-456",
+	"assignmentEventId": "550e8400-e29b-41d4-a716-446655440003"
+}
+```
+
+**Response** `404 Not Found` - Group not found
+
+```json
+{
+	"error": {
+		"code": "GROUP_NOT_FOUND",
+		"message": "Candidate group 'unknown_0' not found"
+	}
+}
+```
+
+**Response** `409 Conflict` - Group already accepted
+
+```json
+{
+	"error": {
+		"code": "GROUP_ALREADY_LABELED",
+		"message": "Candidate group 'unknown_0' has already been accepted"
+	}
+}
+```
+
+**Response** `422 Unprocessable Entity` - Invalid name
+
+```json
+{
+	"error": {
+		"code": "INVALID_NAME",
+		"message": "Person name cannot be empty"
+	}
+}
+```
+
+---
+
+#### `POST /api/v1/faces/unknown-persons/candidates/{group_id}/dismiss`
+
+Dismiss a candidate group and optionally mark faces as noise.
+
+**Path Parameters**
+
+| Parameter  | Type   | Description        |
+| ---------- | ------ | ------------------ |
+| `group_id` | string | Cluster identifier |
+
+**Request Body**
+
+```json
+{
+	"reason": "Not a real person",
+	"markAsNoise": false
+}
+```
+
+- `reason` (optional): Reason for dismissal
+- `markAsNoise` (optional, default: false): If true, sets cluster_id to '-1' to exclude from future clustering
+
+**Response** `200 OK`
+
+```json
+{
+	"groupId": "unknown_0",
+	"membershipHash": "abc123def456...",
+	"facesAffected": 15,
+	"markedAsNoise": false
+}
+```
+
+**Response** `404 Not Found` - Group not found
+
+```json
+{
+	"error": {
+		"code": "GROUP_NOT_FOUND",
+		"message": "Candidate group 'unknown_0' not found"
+	}
+}
+```
+
+**Response** `409 Conflict` - Already dismissed
+
+```json
+{
+	"error": {
+		"code": "GROUP_ALREADY_DISMISSED",
+		"message": "Candidate group 'unknown_0' has already been dismissed"
+	}
+}
+```
+
+---
+
+#### `POST /api/v1/faces/assignment-events/{event_id}/undo`
+
+Undo a face assignment event, reverting affected faces to unassigned state.
+
+**Path Parameters**
+
+| Parameter  | Type          | Description                     |
+| ---------- | ------------- | ------------------------------- |
+| `event_id` | string (UUID) | The assignment event ID to undo |
+
+**Request Body**
+
+None required.
+
+**Response** `200 OK`
+
+```json
+{
+	"eventId": "550e8400-e29b-41d4-a716-446655440003",
+	"facesUnassigned": 13,
+	"personId": "770e8400-e29b-41d4-a716-446655440002",
+	"personName": "John Doe",
+	"undoEventId": "660e8400-e29b-41d4-a716-446655440004"
+}
+```
+
+**Response Fields**:
+
+- `eventId`: The original assignment event that was undone
+- `facesUnassigned`: Number of faces reverted to unassigned state
+- `personId`: Person ID the faces were removed from
+- `personName`: Name of the person
+- `undoEventId`: ID of the new audit event recording this undo operation
+
+**Response** `404 Not Found` - Event not found
+
+```json
+{
+	"error": {
+		"code": "EVENT_NOT_FOUND",
+		"message": "Assignment event '550e8400-...' not found"
+	}
+}
+```
+
+**Response** `400 Bad Request` - Wrong operation type
+
+```json
+{
+	"error": {
+		"code": "INVALID_OPERATION_TYPE",
+		"message": "Only ASSIGN_TO_PERSON events can be undone"
+	}
+}
+```
+
+**Response** `400 Bad Request` - Event too old
+
+```json
+{
+	"error": {
+		"code": "EVENT_TOO_OLD",
+		"message": "Cannot undo events older than 1 hour"
+	}
+}
+```
+
+**Response** `400 Bad Request` - No faces to undo
+
+```json
+{
+	"error": {
+		"code": "NO_FACES_TO_UNDO",
+		"message": "No face IDs recorded in event or all faces already reassigned"
+	}
+}
+```
+
+**Response** `409 Conflict` - Event already undone
+
+```json
+{
+	"error": {
+		"code": "EVENT_ALREADY_UNDONE",
+		"message": "Assignment event has already been undone"
+	}
+}
+```
+
+---
+
+#### `GET /api/v1/faces/unknown-persons/stats`
+
+Get discovery statistics and clustering summary.
+
+**Response** `200 OK`
+
+```json
+{
+	"totalUnassignedFaces": 50000,
+	"totalClusteredFaces": 15000,
+	"totalNoiseFaces": 35000,
+	"totalUnclusteredFaces": 0,
+	"candidateGroups": 42,
+	"avgGroupSize": 12.5,
+	"avgGroupConfidence": 0.82,
+	"totalDismissedGroups": 5,
+	"lastDiscoveryAt": "2026-02-11T10:30:00Z"
 }
 ```
 
@@ -2860,6 +3540,12 @@ All errors return JSON with consistent structure.
 | `FACE_PERSON_MISMATCH`        | 400         | Face does not belong to person           |
 | `INSUFFICIENT_FACES`          | 422         | Insufficient labeled faces for operation |
 | `CENTROIDS_NOT_AVAILABLE`     | 422         | No centroids available for person        |
+| `CLUSTER_NOT_FOUND`           | 404         | Cluster ID does not exist                |
+| `EVENT_NOT_FOUND`             | 404         | Assignment event ID does not exist       |
+| `EVENT_ALREADY_UNDONE`        | 409         | Assignment event already undone          |
+| `EVENT_TOO_OLD`               | 400         | Event older than undo time limit         |
+| `INVALID_OPERATION_TYPE`      | 400         | Operation type cannot be undone          |
+| `NO_FACES_TO_UNDO`            | 400         | No faces available to undo               |
 | `RATE_LIMITED`                | 429         | Too many requests                        |
 | `INTERNAL_ERROR`              | 500         | Server error                             |
 
@@ -2951,27 +3637,28 @@ All endpoints except:
 
 ## Changelog
 
-| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.18.0  | 2026-01-16 | Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more-centroid endpoint for centroid-based Find More job submission. Uses person's pre-computed centroid for faster and more consistent face matching than dynamic prototype sampling. Request body includes minSimilarity (0.5-0.95, default 0.65), maxResults (1-500, default 200), and unassignedOnly (boolean, default true) fields. Response follows same FindMoreJobResponse schema as prototype-based find-more. Returns 422 error if person has no centroid computed.                                                                                                                                                                                                                                                                                             |
-| 1.17.0  | 2026-01-16 | Added Face Centroids section with 4 new endpoints: POST /api/v1/faces/centroids/persons/{person_id}/compute (compute/recompute centroids with optional clustering), GET /api/v1/faces/centroids/persons/{person_id} (retrieve existing centroids), POST /api/v1/faces/centroids/persons/{person_id}/suggestions (get face suggestions using centroid similarity), DELETE /api/v1/faces/centroids/persons/{person_id} (delete all centroids for person). Added Centroid, PersonCentroidsResponse, CentroidSuggestion, and CentroidSuggestionsResponse schemas. Added INSUFFICIENT_FACES and CENTROIDS_NOT_AVAILABLE error codes (HTTP 422). Centroids provide efficient face suggestion generation by computing average embeddings of labeled faces, supporting both global (all faces) and cluster-based (subdivided) representations. |
-| 1.16.0  | 2026-01-14 | Added optional `minConfidence` field to POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint. Allows customizing similarity threshold (0.3-1.0) for finding suggestions. Uses system default (0.70) when not provided.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking.                                                                                                  |
-| 1.14.0  | 2026-01-09 | Added `path` field to FaceSuggestion schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field.                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 1.8.0   | 2025-12-30 | Added Face Clusters section with GET /api/v1/faces/clusters endpoint supporting optional filtering by min_confidence and min_cluster_size query parameters. Enhanced ClusterSummary schema with clusterConfidence (average pairwise similarity) and representativeFaceId (highest quality face) fields. Added Configuration section with GET /api/v1/config/face-clustering-unknown and PUT /api/v1/config/face-clustering-unknown endpoints for managing unknown face clustering display settings.                                                                                                                                                                                                                                                                                                                                    |
-| 1.7.0   | 2025-12-30 | Added Queue Monitoring section with 3 new endpoints: GET /api/v1/queues (overview), GET /api/v1/queues/{queue_name} (queue details), GET /api/v1/jobs/{job_id} (job details), GET /api/v1/workers (worker information). Added QUEUE_NOT_FOUND error code. Read-only endpoints for monitoring RQ queue status, jobs, and worker health.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| 1.6.0   | 2025-12-29 | Added Temporal Prototypes section with 5 new endpoints: POST /api/v1/faces/persons/{personId}/prototypes/pin (pin prototype), DELETE /api/v1/faces/persons/{personId}/prototypes/{prototypeId}/pin (unpin), GET /api/v1/faces/persons/{personId}/prototypes (list), GET /api/v1/faces/persons/{personId}/temporal-coverage (coverage report), POST /api/v1/faces/persons/{personId}/prototypes/recompute (recompute). Added Prototype, TemporalCoverage, and PrototypeListResponse schemas. Added PROTOTYPE_NOT_FOUND, PROTOTYPE_QUOTA_EXCEEDED, TEMPORAL_QUOTA_EXCEEDED, and FACE_PERSON_MISMATCH error codes. Documented age era buckets (infant, child, teen, young_adult, adult, senior) and prototype roles (primary, temporal, exemplar, fallback).                                                                              |
-| 1.5.0   | 2025-12-28 | Enhanced FaceSuggestion schema with bounding box data: added fullImageUrl, bboxX, bboxY, bboxW, bboxH, detectionConfidence, qualityScore fields for face overlay display support.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.19.0  | 2026-02-13 | Added "Merge Group Into Existing Person" feature. Updated POST /api/v1/faces/unknown-persons/candidates/{group_id}/accept to support assigning faces to existing person via new optional `personId` field (mutually exclusive with `name`). Added `assignmentEventId` to AcceptCandidateResponse for undo capability. Added POST /api/v1/faces/clusters/{cluster_id}/label endpoint for labeling clusters with conditional `name` or `personId` fields. Added POST /api/v1/faces/assignment-events/{event_id}/undo endpoint to revert face assignments within 1 hour. Added LabelClusterRequest, LabelClusterResponse, and UndoAssignmentResponse schemas. Added error codes: CLUSTER_NOT_FOUND, EVENT_NOT_FOUND, EVENT_ALREADY_UNDONE, EVENT_TOO_OLD, INVALID_OPERATION_TYPE, NO_FACES_TO_UNDO. Updated AcceptCandidateRequest schema to make `name` conditional and add `personId` as conditional field. |
+| 1.18.0  | 2026-01-16 | Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more-centroid endpoint for centroid-based Find More job submission. Uses person's pre-computed centroid for faster and more consistent face matching than dynamic prototype sampling. Request body includes minSimilarity (0.5-0.95, default 0.65), maxResults (1-500, default 200), and unassignedOnly (boolean, default true) fields. Response follows same FindMoreJobResponse schema as prototype-based find-more. Returns 422 error if person has no centroid computed.                                                                                                                                                                                                                                                                                                                                                                 |
+| 1.17.0  | 2026-01-16 | Added Face Centroids section with 4 new endpoints: POST /api/v1/faces/centroids/persons/{person_id}/compute (compute/recompute centroids with optional clustering), GET /api/v1/faces/centroids/persons/{person_id} (retrieve existing centroids), POST /api/v1/faces/centroids/persons/{person_id}/suggestions (get face suggestions using centroid similarity), DELETE /api/v1/faces/centroids/persons/{person_id} (delete all centroids for person). Added Centroid, PersonCentroidsResponse, CentroidSuggestion, and CentroidSuggestionsResponse schemas. Added INSUFFICIENT_FACES and CENTROIDS_NOT_AVAILABLE error codes (HTTP 422). Centroids provide efficient face suggestion generation by computing average embeddings of labeled faces, supporting both global (all faces) and cluster-based (subdivided) representations.                                                                     |
+| 1.16.0  | 2026-01-14 | Added optional `minConfidence` field to POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint. Allows customizing similarity threshold (0.3-1.0) for finding suggestions. Uses system default (0.70) when not provided.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 1.15.0  | 2026-01-10 | Added "Find More Suggestions" feature with dynamic prototype sampling. Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more endpoint to start background job finding additional suggestions using random face sampling. Added Job Progress section with GET /api/v1/job-progress/events (SSE streaming) and GET /api/v1/job-progress/status (polling) endpoints for real-time job progress monitoring. Enhanced POST /api/v1/faces/suggestions/bulk-action with optional `autoFindMore` and `findMorePrototypeCount` fields to auto-trigger find-more jobs after accepting suggestions. Response includes optional `findMoreJobs` array with job IDs and progress keys. Added JobProgress schema for progress tracking.                                                                                                                                                                      |
+| 1.14.0  | 2026-01-09 | Added `path` field to FaceSuggestion schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 1.13.0  | 2026-01-09 | Added `path` field to PersonPhotoGroup schema exposing the original filesystem path of the image asset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 1.12.0  | 2026-01-09 | Added birth date feature: Added `birthDate` field (ISO 8601 date, YYYY-MM-DD, nullable) to Person schema. Added PATCH /api/v1/faces/persons/{personId} endpoint for updating person name and/or birth date. Added `personAgeAtPhoto` field (nullable integer) to Face schema for displaying calculated age when photo was taken. Updated GET /api/v1/faces/persons/{personId} response to include birthDate field.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 1.11.0  | 2026-01-09 | Added EXIF metadata fields to Asset schema: `takenAt` (ISO 8601 datetime from EXIF DateTimeOriginal), `camera` (object with `make` and `model` strings), and `location` (object with `lat` and `lng` decimal degree coordinates). Introduced `LocationMetadata` and `CameraMetadata` interfaces. All new fields are optional/nullable to support images without EXIF data.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 1.10.0  | 2026-01-07 | Added GET /api/v1/faces/persons/{personId} endpoint to retrieve a single person by ID with detailed information including faceCount, photoCount, and thumbnailUrl fields.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 1.9.0   | 2025-12-31 | Added batch thumbnail endpoint POST /api/v1/images/thumbnails/batch for fetching multiple thumbnails in a single request with base64-encoded data URIs. Supports up to 100 asset IDs per request with validation error responses.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 1.8.0   | 2025-12-30 | Added Face Clusters section with GET /api/v1/faces/clusters endpoint supporting optional filtering by min_confidence and min_cluster_size query parameters. Enhanced ClusterSummary schema with clusterConfidence (average pairwise similarity) and representativeFaceId (highest quality face) fields. Added Configuration section with GET /api/v1/config/face-clustering-unknown and PUT /api/v1/config/face-clustering-unknown endpoints for managing unknown face clustering display settings.                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.7.0   | 2025-12-30 | Added Queue Monitoring section with 3 new endpoints: GET /api/v1/queues (overview), GET /api/v1/queues/{queue_name} (queue details), GET /api/v1/jobs/{job_id} (job details), GET /api/v1/workers (worker information). Added QUEUE_NOT_FOUND error code. Read-only endpoints for monitoring RQ queue status, jobs, and worker health.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 1.6.0   | 2025-12-29 | Added Temporal Prototypes section with 5 new endpoints: POST /api/v1/faces/persons/{personId}/prototypes/pin (pin prototype), DELETE /api/v1/faces/persons/{personId}/prototypes/{prototypeId}/pin (unpin), GET /api/v1/faces/persons/{personId}/prototypes (list), GET /api/v1/faces/persons/{personId}/temporal-coverage (coverage report), POST /api/v1/faces/persons/{personId}/prototypes/recompute (recompute). Added Prototype, TemporalCoverage, and PrototypeListResponse schemas. Added PROTOTYPE_NOT_FOUND, PROTOTYPE_QUOTA_EXCEEDED, TEMPORAL_QUOTA_EXCEEDED, and FACE_PERSON_MISMATCH error codes. Documented age era buckets (infant, child, teen, young_adult, adult, senior) and prototype roles (primary, temporal, exemplar, fallback).                                                                                                                                                  |
+| 1.5.0   | 2025-12-28 | Enhanced FaceSuggestion schema with bounding box data: added fullImageUrl, bboxX, bboxY, bboxW, bboxH, detectionConfidence, qualityScore fields for face overlay display support.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 1.4.0   | 2025-12-26 | Added face unassignment endpoint: DELETE /api/v1/faces/faces/{faceId}/person. Added FACE_NOT_ASSIGNED error code.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 1.3.0   | 2025-12-25 | Added Face Suggestions endpoints: GET /api/v1/faces/suggestions (list), GET /api/v1/faces/suggestions/stats (statistics), GET /api/v1/faces/suggestions/{id} (single), POST /api/v1/faces/suggestions/{id}/accept, POST /api/v1/faces/suggestions/{id}/reject, POST /api/v1/faces/suggestions/bulk-action. Added SUGGESTION_NOT_FOUND and SUGGESTION_ALREADY_REVIEWED error codes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 1.2.0   | 2024-12-24 | Added person creation endpoint (POST /api/v1/faces/persons), face assignment endpoint (POST /api/v1/faces/faces/{faceId}/assign), and status field to Person schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.1.0   | 2024-12-19 | Added Categories CRUD endpoints, categoryId filter in search, categoryId in training sessions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 1.0.0   | 2024-12-19 | Initial contract freeze                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 

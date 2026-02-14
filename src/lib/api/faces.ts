@@ -318,16 +318,20 @@ export async function getCluster(clusterId: string): Promise<ClusterDetailRespon
 }
 
 /**
- * Label a cluster with a person name (creates person if needed).
+ * Label a cluster with a person name or assign to an existing person.
+ * Provide EITHER { name } (to create/find person) OR { personId } (to assign to existing).
  * @param clusterId - The cluster ID to label
- * @param name - The person's name
+ * @param destination - Either { name: string } or { personId: string }
  */
-export async function labelCluster(clusterId: string, name: string): Promise<LabelClusterResponse> {
+export async function labelCluster(
+	clusterId: string,
+	destination: { name: string } | { personId: string }
+): Promise<LabelClusterResponse> {
 	return apiRequest<LabelClusterResponse>(
 		`/api/v1/faces/clusters/${encodeURIComponent(clusterId)}/label`,
 		{
 			method: 'POST',
-			body: JSON.stringify({ name })
+			body: JSON.stringify(destination)
 		}
 	);
 }
@@ -1727,9 +1731,12 @@ export interface UnknownPersonCandidatesResponse {
 	totalBeforeFiltering?: number;
 }
 
-/** Request to accept a candidate group as a new person. */
+/** Request to accept a candidate group -- assign to new or existing person. */
 export interface AcceptCandidateRequest {
-	name: string;
+	/** Name for a new person (mutually exclusive with personId). */
+	name?: string;
+	/** ID of an existing person to assign faces to (mutually exclusive with name). */
+	personId?: string;
 	faceIdsToExclude?: string[];
 	triggerReclustering?: boolean;
 }
@@ -1741,8 +1748,18 @@ export interface AcceptCandidateResponse {
 	facesAssigned: number;
 	facesExcluded: number;
 	prototypesCreated: number;
-	findMoreJobId: string;
+	findMoreJobId: string | null;
 	reclusteringJobId: string | null;
+	assignmentEventId: string | null;
+}
+
+/** Response from undoing a face assignment event. */
+export interface UndoAssignmentResponse {
+	eventId: string;
+	facesUnassigned: number;
+	personId: string;
+	personName: string;
+	undoEventId: string;
 }
 
 /** Request to dismiss a candidate group. */
@@ -1837,6 +1854,20 @@ export async function acceptUnknownPersonCandidate(
 		{
 			method: 'POST',
 			body: JSON.stringify(request)
+		}
+	);
+}
+
+/**
+ * Undo a face assignment event, reverting faces to unassigned state.
+ * @param eventId - The assignment event ID to undo
+ * @returns Promise with undo results
+ */
+export async function undoAssignmentEvent(eventId: string): Promise<UndoAssignmentResponse> {
+	return apiRequest<UndoAssignmentResponse>(
+		`/api/v1/faces/assignment-events/${encodeURIComponent(eventId)}/undo`,
+		{
+			method: 'POST'
 		}
 	);
 }

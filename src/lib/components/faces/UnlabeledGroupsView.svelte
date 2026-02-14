@@ -7,6 +7,7 @@
 	import SimilarityThresholdControl from './SimilarityThresholdControl.svelte';
 	import UnlabeledGroupCard from './UnlabeledGroupCard.svelte';
 	import CreatePersonFromGroupDialog from './CreatePersonFromGroupDialog.svelte';
+	import AssignGroupToPersonDialog from './AssignGroupToPersonDialog.svelte';
 	import MergeGroupsDialog from './MergeGroupsDialog.svelte';
 	import FaceDetailModal from './FaceDetailModal.svelte';
 	import {
@@ -14,12 +15,14 @@
 		triggerDiscovery,
 		getDiscoveryStats,
 		getMergeSuggestions,
+		undoAssignmentEvent,
 		toAbsoluteUrl,
 		type UnknownPersonCandidatesResponse,
 		type UnknownPersonCandidateGroup,
 		type UnknownPersonsStats,
 		type MergeSuggestion,
-		type FaceInGroupResponse
+		type FaceInGroupResponse,
+		type AcceptCandidateResponse
 	} from '$lib/api/faces';
 
 	// --- localStorage keys ---
@@ -54,6 +57,19 @@
 	let showCreateDialog = $state(false);
 	let selectedGroup = $state<UnknownPersonCandidateGroup | null>(null);
 	let excludedFaceIds = $state<string[]>([]);
+
+	// Assign-to-person dialog state
+	let showAssignDialog = $state(false);
+	let assignGroup = $state<UnknownPersonCandidateGroup | null>(null);
+	let assignExcludedFaceIds = $state<string[]>([]);
+
+	// Undo toast state
+	let undoInfo = $state<{
+		eventId: string;
+		personName: string;
+		facesAssigned: number;
+	} | null>(null);
+	let undoTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	// Merge dialog state
 	let mergeDialogOpen = $state(false);
@@ -259,6 +275,7 @@
 	onDestroy(() => {
 		if (pollIntervalId) clearInterval(pollIntervalId);
 		if (fetchTimeout) clearTimeout(fetchTimeout);
+		if (undoTimeout) clearTimeout(undoTimeout);
 		trackingCleanup();
 	});
 
@@ -297,6 +314,68 @@
 			selectedGroup = null;
 			excludedFaceIds = [];
 		}
+	}
+
+	function handleAssignToPerson(group: UnknownPersonCandidateGroup, excluded: string[]) {
+		assignGroup = group;
+		assignExcludedFaceIds = excluded;
+		showAssignDialog = true;
+	}
+
+	async function handleGroupAssigned(response: AcceptCandidateResponse) {
+		showAssignDialog = false;
+		assignGroup = null;
+		assignExcludedFaceIds = [];
+
+		// Show undo toast if assignment event ID is available
+		if (response.assignmentEventId) {
+			undoInfo = {
+				eventId: response.assignmentEventId,
+				personName: response.personName,
+				facesAssigned: response.facesAssigned
+			};
+			// Auto-dismiss after 15 seconds
+			if (undoTimeout) clearTimeout(undoTimeout);
+			undoTimeout = setTimeout(() => {
+				undoInfo = null;
+			}, 15000);
+		}
+
+		await fetchCandidates();
+		// Refresh stats after assignment
+		getDiscoveryStats()
+			.then((s) => (stats = s))
+			.catch(() => {});
+	}
+
+	function handleAssignDialogOpenChange(open: boolean) {
+		if (!open) {
+			showAssignDialog = false;
+			assignGroup = null;
+			assignExcludedFaceIds = [];
+		}
+	}
+
+	async function handleUndo() {
+		if (!undoInfo) return;
+
+		try {
+			await undoAssignmentEvent(undoInfo.eventId);
+			undoInfo = null;
+			if (undoTimeout) clearTimeout(undoTimeout);
+			await fetchCandidates();
+			getDiscoveryStats()
+				.then((s) => (stats = s))
+				.catch(() => {});
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to undo assignment';
+			undoInfo = null;
+		}
+	}
+
+	function dismissUndo() {
+		undoInfo = null;
+		if (undoTimeout) clearTimeout(undoTimeout);
 	}
 </script>
 
@@ -385,6 +464,45 @@
 		</div>
 	{/if}
 
+	<!-- Undo toast -->
+	{#if undoInfo}
+		<div
+			class="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-3"
+			role="status"
+		>
+			<span class="text-sm text-green-800">
+				Assigned {undoInfo.facesAssigned} face{undoInfo.facesAssigned !== 1 ? 's' : ''} to {undoInfo.personName}
+			</span>
+			<div class="flex items-center gap-2">
+				<button
+					type="button"
+					class="rounded px-3 py-1 text-sm font-medium text-green-700 hover:bg-green-100 border border-green-300"
+					onclick={handleUndo}
+				>
+					Undo
+				</button>
+				<button
+					type="button"
+					class="text-green-400 hover:text-green-600 px-1"
+					onclick={dismissUndo}
+					aria-label="Dismiss notification"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<line x1="18" y1="6" x2="6" y2="18" />
+						<line x1="6" y1="6" x2="18" y2="18" />
+					</svg>
+				</button>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Loading state -->
 	{#if loading}
 		<div class="space-y-4">
@@ -405,6 +523,7 @@
 				<UnlabeledGroupCard
 					{group}
 					onCreatePerson={handleCreatePerson}
+					onAssignToPerson={handleAssignToPerson}
 					onDismissed={handleGroupDismissed}
 					onThumbnailClick={handleThumbnailClick}
 				/>
@@ -444,6 +563,14 @@
 	{excludedFaceIds}
 	onOpenChange={handleCreateDialogOpenChange}
 	onAccepted={handlePersonCreated}
+/>
+
+<AssignGroupToPersonDialog
+	open={showAssignDialog}
+	group={assignGroup}
+	excludedFaceIds={assignExcludedFaceIds}
+	onOpenChange={handleAssignDialogOpenChange}
+	onAccepted={handleGroupAssigned}
 />
 
 {#if mergeDialogOpen && mergeGroupA && mergeGroupB}

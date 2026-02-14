@@ -11,12 +11,13 @@
 	interface Props {
 		group: UnknownPersonCandidateGroup;
 		onCreatePerson: (group: UnknownPersonCandidateGroup, excludedFaceIds: string[]) => void;
+		onAssignToPerson?: (group: UnknownPersonCandidateGroup, excludedFaceIds: string[]) => void;
 		onDismissed?: () => void;
 		/** Callback when a face thumbnail body is clicked (opens detail modal). */
 		onThumbnailClick?: (face: FaceInGroupResponse) => void;
 	}
 
-	let { group, onCreatePerson, onDismissed, onThumbnailClick }: Props = $props();
+	let { group, onCreatePerson, onAssignToPerson, onDismissed, onThumbnailClick }: Props = $props();
 
 	// Track which faces are selected (all selected by default)
 	let allFaces = $derived<FaceInGroupResponse[]>([
@@ -168,6 +169,16 @@
 		>
 			Create Person ({selectedCount})
 		</button>
+		{#if onAssignToPerson}
+			<button
+				type="button"
+				class="action-btn assign-btn"
+				disabled={noneSelected || group.isDismissed}
+				onclick={() => onAssignToPerson(group, excludedFaceIds)}
+			>
+				Assign to Person ({selectedCount})
+			</button>
+		{/if}
 		<button
 			type="button"
 			class="action-btn outline-btn"
@@ -222,6 +233,15 @@
 
 	.accept-btn:hover:not(:disabled) {
 		background-color: #16a34a;
+	}
+
+	.assign-btn {
+		background-color: #3b82f6;
+		color: white;
+	}
+
+	.assign-btn:hover:not(:disabled) {
+		background-color: #2563eb;
 	}
 
 	.reject-btn {

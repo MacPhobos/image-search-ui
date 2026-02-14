@@ -182,6 +182,69 @@ describe('UnlabeledGroupCard', () => {
 		expect(checkboxes.length).toBeGreaterThan(0);
 	});
 
+	// ============ Assign to Person Tests ============
+
+	describe('Assign to Person button', () => {
+		it('shows Assign to Person button when onAssignToPerson callback is provided', () => {
+			const group = createUnknownPersonCandidateGroup();
+			render(UnlabeledGroupCard, {
+				props: {
+					group,
+					onCreatePerson: vi.fn(),
+					onAssignToPerson: vi.fn(),
+					onDismissed: vi.fn()
+				}
+			});
+
+			expect(screen.getByRole('button', { name: /Assign to Person/ })).toBeInTheDocument();
+		});
+
+		it('hides Assign to Person button when onAssignToPerson is not provided', () => {
+			renderCard();
+
+			expect(screen.queryByRole('button', { name: /Assign to Person/ })).not.toBeInTheDocument();
+		});
+
+		it('calls onAssignToPerson with group and excluded face IDs when clicked', async () => {
+			const onAssignToPerson = vi.fn();
+			const group = createUnknownPersonCandidateGroup();
+
+			render(UnlabeledGroupCard, {
+				props: {
+					group,
+					onCreatePerson: vi.fn(),
+					onAssignToPerson,
+					onDismissed: vi.fn()
+				}
+			});
+
+			const assignBtn = screen.getByRole('button', { name: /Assign to Person/ });
+			await fireEvent.click(assignBtn);
+
+			expect(onAssignToPerson).toHaveBeenCalledTimes(1);
+			expect(onAssignToPerson).toHaveBeenCalledWith(
+				expect.objectContaining({ groupId: expect.any(String) }),
+				expect.any(Array)
+			);
+		});
+
+		it('disables Assign to Person button when group is dismissed', () => {
+			const group = createUnknownPersonCandidateGroup({ isDismissed: true });
+
+			render(UnlabeledGroupCard, {
+				props: {
+					group,
+					onCreatePerson: vi.fn(),
+					onAssignToPerson: vi.fn(),
+					onDismissed: vi.fn()
+				}
+			});
+
+			const assignBtn = screen.getByRole('button', { name: /Assign to Person/ });
+			expect(assignBtn).toBeDisabled();
+		});
+	});
+
 	// ============ onThumbnailClick Tests ============
 
 	describe('onThumbnailClick behavior', () => {

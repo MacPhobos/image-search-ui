@@ -103,7 +103,7 @@
 			}
 
 			const name = createNewMode ? newPersonName.trim() : (selectedPerson?.name ?? '');
-			const response = await labelCluster(clusterId, name);
+			const response = await labelCluster(clusterId, { name });
 			onSuccess(response.personName, response.personId);
 		} catch (err) {
 			console.error('Failed to label cluster:', err);
