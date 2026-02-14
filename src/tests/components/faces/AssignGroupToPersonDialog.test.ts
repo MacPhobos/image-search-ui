@@ -1,8 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi } from 'vitest';
 import AssignGroupToPersonDialog from '$lib/components/faces/AssignGroupToPersonDialog.svelte';
-import { createUnknownPersonCandidateGroup, createPerson } from '../../helpers/fixtures';
-import { mockResponse, mockError, assertCalled } from '../../helpers/mockFetch';
+import { createUnknownPersonCandidateGroup } from '../../helpers/fixtures';
 
 // Mock thumbnailCache module
 vi.mock('$lib/stores/thumbnailCache.svelte', () => ({
@@ -25,7 +24,7 @@ describe('AssignGroupToPersonDialog', () => {
 			group: mockGroup,
 			excludedFaceIds: [] as string[],
 			onOpenChange: vi.fn(),
-			onAccepted: vi.fn()
+			onChoosePerson: vi.fn()
 		};
 
 		const props = { ...defaultProps, ...propsOverrides };
@@ -103,123 +102,23 @@ describe('AssignGroupToPersonDialog', () => {
 		expect(images.length).toBeGreaterThan(0);
 	});
 
-	it('opens PersonPickerModal when Choose Person button clicked', async () => {
-		// Mock the person list API (fetchAllPersons calls listPersons with pagination params)
-		mockResponse('http://localhost:8000/api/v1/faces/persons?page=1&page_size=1000&status=active', {
-			items: [
-				createPerson({ id: 'person-1', name: 'Alice' }),
-				createPerson({ id: 'person-2', name: 'Bob' })
-			],
-			total: 2,
-			page: 1,
-			pageSize: 1000
-		});
-
-		renderDialog();
+	it('calls onChoosePerson callback when Choose Person button clicked', async () => {
+		const { onChoosePerson } = renderDialog();
 
 		const chooseBtn = screen.getByRole('button', { name: /Choose Person/i });
 		await fireEvent.click(chooseBtn);
 
-		// PersonPickerModal should appear with its title
-		await waitFor(() => {
-			expect(screen.getByText('Move to Person')).toBeInTheDocument();
-		});
+		expect(onChoosePerson).toHaveBeenCalled();
 	});
 
-	it('calls API with personId when existing person is selected', async () => {
-		// Mock person list (fetchAllPersons calls listPersons with pagination params)
-		mockResponse('http://localhost:8000/api/v1/faces/persons?page=1&page_size=1000&status=active', {
-			items: [createPerson({ id: 'person-alice', name: 'Alice', faceCount: 20 })],
-			total: 1,
-			page: 1,
-			pageSize: 1000
-		});
+	it('closes dialog when onChoosePerson is triggered', async () => {
+		const { onOpenChange, onChoosePerson } = renderDialog();
 
-		// Mock accept endpoint
-		mockResponse(
-			'http://localhost:8000/api/v1/faces/unknown-persons/candidates/test-group-1/accept',
-			{
-				personId: 'person-alice',
-				personName: 'Alice',
-				facesAssigned: 8,
-				facesExcluded: 0,
-				prototypesCreated: 0,
-				findMoreJobId: null,
-				reclusteringJobId: null,
-				assignmentEventId: 'event-uuid-1'
-			}
-		);
-
-		const { onAccepted } = renderDialog();
-
-		// Open PersonPickerModal
 		const chooseBtn = screen.getByRole('button', { name: /Choose Person/i });
 		await fireEvent.click(chooseBtn);
 
-		// Wait for person list to load and select a person
-		await waitFor(() => {
-			expect(screen.getByText('Alice')).toBeInTheDocument();
-		});
-
-		const aliceOption = screen.getByText('Alice').closest('button');
-		if (aliceOption) {
-			await fireEvent.click(aliceOption);
-		}
-
-		// Click the confirm/move button
-		const moveBtn = screen.getByRole('button', { name: /Move/i });
-		await fireEvent.click(moveBtn);
-
-		// Verify API was called with personId
-		await waitFor(() => {
-			assertCalled('/api/v1/faces/unknown-persons/candidates/test-group-1/accept');
-		});
-
-		// Verify onAccepted was called
-		await waitFor(() => {
-			expect(onAccepted).toHaveBeenCalled();
-		});
-	});
-
-	it('displays error on API failure', async () => {
-		// Mock person list (fetchAllPersons calls listPersons with pagination params)
-		mockResponse('http://localhost:8000/api/v1/faces/persons?page=1&page_size=1000&status=active', {
-			items: [createPerson({ id: 'person-fail', name: 'FailPerson', faceCount: 5 })],
-			total: 1,
-			page: 1,
-			pageSize: 1000
-		});
-
-		// Mock accept endpoint to fail
-		mockError(
-			'http://localhost:8000/api/v1/faces/unknown-persons/candidates/test-group-1/accept',
-			500,
-			{ detail: 'Internal server error' }
-		);
-
-		renderDialog();
-
-		// Open PersonPickerModal
-		const chooseBtn = screen.getByRole('button', { name: /Choose Person/i });
-		await fireEvent.click(chooseBtn);
-
-		// Wait for person list and select
-		await waitFor(() => {
-			expect(screen.getByText('FailPerson')).toBeInTheDocument();
-		});
-
-		const personOption = screen.getByText('FailPerson').closest('button');
-		if (personOption) {
-			await fireEvent.click(personOption);
-		}
-
-		const moveBtn = screen.getByRole('button', { name: /Move/i });
-		await fireEvent.click(moveBtn);
-
-		// Verify error is shown
-		await waitFor(() => {
-			expect(screen.getByRole('alert')).toBeInTheDocument();
-		});
+		expect(onChoosePerson).toHaveBeenCalled();
+		expect(onOpenChange).toHaveBeenCalledWith(false);
 	});
 
 	it('does not render dialog content when group is null', () => {

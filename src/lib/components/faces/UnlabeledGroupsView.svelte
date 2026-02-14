@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy, untrack } from 'svelte';
+	import { onMount, onDestroy, untrack, tick } from 'svelte';
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import { localSettings } from '$lib/stores/localSettings.svelte';
 	import { thumbnailCache } from '$lib/stores/thumbnailCache.svelte';
@@ -8,6 +8,7 @@
 	import UnlabeledGroupCard from './UnlabeledGroupCard.svelte';
 	import CreatePersonFromGroupDialog from './CreatePersonFromGroupDialog.svelte';
 	import AssignGroupToPersonDialog from './AssignGroupToPersonDialog.svelte';
+	import PersonPickerModal from './PersonPickerModal.svelte';
 	import MergeGroupsDialog from './MergeGroupsDialog.svelte';
 	import FaceDetailModal from './FaceDetailModal.svelte';
 	import {
@@ -16,6 +17,7 @@
 		getDiscoveryStats,
 		getMergeSuggestions,
 		undoAssignmentEvent,
+		acceptUnknownPersonCandidate,
 		toAbsoluteUrl,
 		type UnknownPersonCandidatesResponse,
 		type UnknownPersonCandidateGroup,
@@ -62,6 +64,10 @@
 	let showAssignDialog = $state(false);
 	let assignGroup = $state<UnknownPersonCandidateGroup | null>(null);
 	let assignExcludedFaceIds = $state<string[]>([]);
+
+	// PersonPickerModal state (managed at parent level to avoid nested modal issues)
+	let showPersonPicker = $state(false);
+	let transitioningToPicker = $state(false);
 
 	// Undo toast state
 	let undoInfo = $state<{
@@ -324,6 +330,7 @@
 
 	async function handleGroupAssigned(response: AcceptCandidateResponse) {
 		showAssignDialog = false;
+		showPersonPicker = false;
 		assignGroup = null;
 		assignExcludedFaceIds = [];
 
@@ -349,8 +356,54 @@
 	}
 
 	function handleAssignDialogOpenChange(open: boolean) {
-		if (!open) {
-			showAssignDialog = false;
+		showAssignDialog = open;
+		if (!open && !transitioningToPicker) {
+			assignGroup = null;
+			assignExcludedFaceIds = [];
+		}
+	}
+
+	function handleChoosePerson() {
+		transitioningToPicker = true;
+		showAssignDialog = false;
+		// Use tick() to ensure dialog fully closes before opening picker
+		tick().then(() => {
+			showPersonPicker = true;
+			transitioningToPicker = false;
+		});
+	}
+
+	function handlePickerClose() {
+		showPersonPicker = false;
+		assignGroup = null;
+		assignExcludedFaceIds = [];
+	}
+
+	async function handlePersonSelected(
+		destination: { toPersonId: string } | { toPersonName: string }
+	) {
+		showPersonPicker = false;
+		if (!assignGroup) return;
+
+		const currentGroup = assignGroup;
+		const currentExcludedFaceIds = [...assignExcludedFaceIds];
+
+		try {
+			const request: { personId?: string; name?: string; faceIdsToExclude?: string[] } = {};
+			if ('toPersonId' in destination) {
+				request.personId = destination.toPersonId;
+			} else {
+				request.name = destination.toPersonName;
+			}
+			if (currentExcludedFaceIds.length > 0) {
+				request.faceIdsToExclude = currentExcludedFaceIds;
+			}
+
+			const response = await acceptUnknownPersonCandidate(currentGroup.groupId, request);
+			await handleGroupAssigned(response);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to assign group to person';
+		} finally {
 			assignGroup = null;
 			assignExcludedFaceIds = [];
 		}
@@ -570,8 +623,12 @@
 	group={assignGroup}
 	excludedFaceIds={assignExcludedFaceIds}
 	onOpenChange={handleAssignDialogOpenChange}
-	onAccepted={handleGroupAssigned}
+	onChoosePerson={handleChoosePerson}
 />
+
+{#if showPersonPicker}
+	<PersonPickerModal onSelect={handlePersonSelected} onClose={handlePickerClose} />
+{/if}
 
 {#if mergeDialogOpen && mergeGroupA && mergeGroupB}
 	<MergeGroupsDialog
