@@ -30,6 +30,10 @@
 	// --- localStorage keys ---
 	const THRESHOLD_KEY = 'unlabeledGroups.threshold';
 	const PAGE_KEY = 'unlabeledGroups.page';
+	const FACES_PER_GROUP_KEY = 'unlabeledGroups.facesPerGroup';
+
+	// --- Constants ---
+	const FACES_PER_GROUP_OPTIONS = [10, 20, 50, 100] as const;
 
 	// Component tracking (DEV only)
 	const trackingCleanup = registerComponent('faces/UnlabeledGroupsView', {
@@ -39,6 +43,7 @@
 	// --- State ---
 	let threshold = $state(localSettings.get<number>(THRESHOLD_KEY, 0.7));
 	let page = $state(localSettings.get<number>(PAGE_KEY, 1));
+	let facesPerGroup = $state(localSettings.get<number>(FACES_PER_GROUP_KEY, 10));
 	let groupsPerPage = $state(50);
 	let sortBy = $state<'face_count' | 'confidence' | 'quality'>('face_count');
 	let sortOrder = $state<'asc' | 'desc'>('desc');
@@ -109,9 +114,11 @@
 	$effect(() => {
 		const t = threshold;
 		const p = page;
+		const fpg = facesPerGroup;
 		untrack(() => {
 			localSettings.set(THRESHOLD_KEY, t);
 			localSettings.set(PAGE_KEY, p);
+			localSettings.set(FACES_PER_GROUP_KEY, fpg);
 		});
 	});
 
@@ -119,7 +126,7 @@
 	let fetchTimeout: ReturnType<typeof setTimeout> | null = null;
 	$effect(() => {
 		// Track reactive dependencies
-		void [threshold, page, sortBy, sortOrder];
+		void [threshold, page, sortBy, sortOrder, facesPerGroup];
 
 		// Debounce fetch to avoid flooding on slider drag
 		if (fetchTimeout) clearTimeout(fetchTimeout);
@@ -159,6 +166,7 @@
 			response = await listUnknownPersonCandidates({
 				page,
 				groupsPerPage,
+				facesPerGroup: facesPerGroup - 1,
 				minConfidence: threshold,
 				sortBy,
 				sortOrder
@@ -284,6 +292,11 @@
 		if (undoTimeout) clearTimeout(undoTimeout);
 		trackingCleanup();
 	});
+
+	function handleFacesPerGroupChange(value: number) {
+		facesPerGroup = value;
+		page = 1;
+	}
 
 	function handleThumbnailClick(face: FaceInGroupResponse) {
 		detailFace = face;
@@ -466,13 +479,30 @@
 		</div>
 	{/if}
 
-	<!-- Threshold slider -->
-	<SimilarityThresholdControl
-		bind:value={threshold}
-		min={discoveryMinConfidence}
-		max={0.95}
-		step={0.01}
-	/>
+	<!-- Controls row: threshold slider + faces per group -->
+	<div class="flex items-end justify-between gap-4">
+		<div class="flex-1">
+			<SimilarityThresholdControl
+				bind:value={threshold}
+				min={discoveryMinConfidence}
+				max={0.95}
+				step={0.01}
+			/>
+		</div>
+		<div class="flex items-center gap-2">
+			<label for="faces-per-group" class="text-sm font-medium text-gray-700">Show:</label>
+			<select
+				id="faces-per-group"
+				value={facesPerGroup}
+				onchange={(e) => handleFacesPerGroupChange(parseInt(e.currentTarget.value, 10))}
+				class="rounded border-gray-300 text-sm"
+			>
+				{#each FACES_PER_GROUP_OPTIONS as option}
+					<option value={option}>{option} faces</option>
+				{/each}
+			</select>
+		</div>
+	</div>
 
 	<!-- Filter transparency info -->
 	{#if filteredByConfidence > 0 || filteredByDismissed > 0}
