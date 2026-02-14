@@ -80,6 +80,17 @@
 		}
 	}
 
+	/**
+	 * Prevent the Dialog from reclaiming focus when it moves to PersonPickerModal.
+	 * Without this, bits-ui's FocusTrap would pull focus back into Dialog.Content
+	 * every time the user tries to interact with PersonPickerModal.
+	 */
+	function handleFocusOutside(e: Event) {
+		if (showPersonPicker || isSubmitting || dismissGuardActive) {
+			e.preventDefault();
+		}
+	}
+
 	// Derived: faces that will be assigned (all sample faces minus excluded)
 	let includedFaces = $derived.by(() => {
 		if (!group) return [];
@@ -177,7 +188,12 @@
 </script>
 
 <Dialog.Root bind:open {onOpenChange}>
-	<Dialog.Content class="sm:max-w-lg" onInteractOutside={handleInteractOutside}>
+	<Dialog.Content
+		class="sm:max-w-lg"
+		onInteractOutside={handleInteractOutside}
+		onFocusOutside={handleFocusOutside}
+		trapFocus={!showPersonPicker && !dismissGuardActive}
+	>
 		<Dialog.Header>
 			<Dialog.Title>Assign Group to Person</Dialog.Title>
 			<Dialog.Description>
