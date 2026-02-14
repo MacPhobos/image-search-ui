@@ -446,18 +446,33 @@
 </script>
 
 <div class="space-y-4">
-	<!-- Header with stats and discover button -->
+	<!-- Header with stats, faces dropdown, and discover button -->
 	<div class="flex items-center justify-between">
-		<div>
-			<h2 class="text-base font-semibold text-[#333]">Suggested New Persons</h2>
-			{#if stats}
-				<p class="text-xs text-[#666]">
-					{stats.totalUnassignedFaces.toLocaleString()} unassigned faces
-					{#if stats.lastDiscoveryAt}
-						&middot; Last scan: {new Date(stats.lastDiscoveryAt).toLocaleDateString()}
-					{/if}
-				</p>
-			{/if}
+		<div class="flex items-center gap-3">
+			<div>
+				<h2 class="text-base font-semibold text-[#333]">Suggested New Persons</h2>
+				{#if stats}
+					<p class="text-xs text-[#666]">
+						{stats.totalUnassignedFaces.toLocaleString()} unassigned faces
+						{#if stats.lastDiscoveryAt}
+							&middot; Last scan: {new Date(stats.lastDiscoveryAt).toLocaleDateString()}
+						{/if}
+					</p>
+				{/if}
+			</div>
+			<div class="flex items-center gap-1.5">
+				<label for="faces-per-group" class="text-sm font-medium text-gray-700">Show:</label>
+				<select
+					id="faces-per-group"
+					value={facesPerGroup}
+					onchange={(e) => handleFacesPerGroupChange(parseInt(e.currentTarget.value, 10))}
+					class="rounded border-gray-300 text-sm"
+				>
+					{#each FACES_PER_GROUP_OPTIONS as option}
+						<option value={option}>{option} faces</option>
+					{/each}
+				</select>
+			</div>
 		</div>
 		<div class="flex gap-2">
 			<button
@@ -479,30 +494,13 @@
 		</div>
 	{/if}
 
-	<!-- Controls row: threshold slider + faces per group -->
-	<div class="flex items-end justify-between gap-4">
-		<div class="flex-1">
-			<SimilarityThresholdControl
-				bind:value={threshold}
-				min={discoveryMinConfidence}
-				max={0.95}
-				step={0.01}
-			/>
-		</div>
-		<div class="flex items-center gap-2">
-			<label for="faces-per-group" class="text-sm font-medium text-gray-700">Show:</label>
-			<select
-				id="faces-per-group"
-				value={facesPerGroup}
-				onchange={(e) => handleFacesPerGroupChange(parseInt(e.currentTarget.value, 10))}
-				class="rounded border-gray-300 text-sm"
-			>
-				{#each FACES_PER_GROUP_OPTIONS as option}
-					<option value={option}>{option} faces</option>
-				{/each}
-			</select>
-		</div>
-	</div>
+	<!-- Threshold slider -->
+	<SimilarityThresholdControl
+		bind:value={threshold}
+		min={discoveryMinConfidence}
+		max={0.95}
+		step={0.01}
+	/>
 
 	<!-- Filter transparency info -->
 	{#if filteredByConfidence > 0 || filteredByDismissed > 0}
