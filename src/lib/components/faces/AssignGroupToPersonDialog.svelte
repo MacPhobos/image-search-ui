@@ -51,6 +51,19 @@
 	let errorMessage = $state<string | null>(null);
 	let showPersonPicker = $state(false);
 
+	/**
+	 * Prevent the shadcn/bits-ui Dialog from closing when the user interacts
+	 * with the PersonPickerModal overlay (which renders outside Dialog.Content).
+	 * Without this, clicks on the PersonPickerModal are detected as "interact
+	 * outside" events, causing the Dialog to close and `group` to become null
+	 * before handlePersonSelected can fire the API call.
+	 */
+	function handleInteractOutside(e: Event) {
+		if (showPersonPicker) {
+			e.preventDefault();
+		}
+	}
+
 	// Derived: faces that will be assigned (all sample faces minus excluded)
 	let includedFaces = $derived.by(() => {
 		if (!group) return [];
@@ -101,9 +114,13 @@
 	async function handlePersonSelected(
 		destination: { toPersonId: string } | { toPersonName: string }
 	) {
+		// Capture group reference before any state changes, since the bits-ui
+		// Dialog's interact-outside handler can set the parent's group to null
+		// before this callback completes.
+		const currentGroup = group;
 		showPersonPicker = false;
 
-		if (!group) return;
+		if (!currentGroup) return;
 
 		isSubmitting = true;
 		errorMessage = null;
@@ -121,7 +138,7 @@
 				request.faceIdsToExclude = excludedFaceIds;
 			}
 
-			const response = await acceptUnknownPersonCandidate(group.groupId, request);
+			const response = await acceptUnknownPersonCandidate(currentGroup.groupId, request);
 
 			untrack(() => {
 				onAccepted(response);
@@ -136,7 +153,7 @@
 </script>
 
 <Dialog.Root bind:open {onOpenChange}>
-	<Dialog.Content class="sm:max-w-lg">
+	<Dialog.Content class="sm:max-w-lg" onInteractOutside={handleInteractOutside}>
 		<Dialog.Header>
 			<Dialog.Title>Assign Group to Person</Dialog.Title>
 			<Dialog.Description>
