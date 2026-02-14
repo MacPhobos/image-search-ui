@@ -52,14 +52,30 @@
 	let showPersonPicker = $state(false);
 
 	/**
+	 * Guard flag that stays true from the moment the PersonPickerModal opens
+	 * until the API call completes (or fails). This survives the 10ms debounce
+	 * window in bits-ui's DismissibleLayer that fires after pointerdown events.
+	 *
+	 * The problem: when the user clicks "Move" in PersonPickerModal, the click
+	 * handler sets showPersonPicker=false synchronously, but bits-ui's
+	 * interact-outside check runs 10ms later (debounced). By that time
+	 * showPersonPicker is already false, so the guard fails and the dialog
+	 * closes prematurely. This flag remains true throughout the entire flow.
+	 */
+	let dismissGuardActive = $state(false);
+
+	/**
 	 * Prevent the shadcn/bits-ui Dialog from closing when the user interacts
-	 * with the PersonPickerModal overlay (which renders outside Dialog.Content).
-	 * Without this, clicks on the PersonPickerModal are detected as "interact
-	 * outside" events, causing the Dialog to close and `group` to become null
-	 * before handlePersonSelected can fire the API call.
+	 * with the PersonPickerModal overlay (which renders outside Dialog.Content),
+	 * or while the API submission is in progress.
+	 *
+	 * bits-ui's DismissibleLayer debounces the interact-outside check by 10ms
+	 * after pointerdown. The click event fires before that debounce resolves,
+	 * so showPersonPicker may already be false by the time this handler runs.
+	 * The dismissGuardActive flag covers this gap.
 	 */
 	function handleInteractOutside(e: Event) {
-		if (showPersonPicker) {
+		if (showPersonPicker || isSubmitting || dismissGuardActive) {
 			e.preventDefault();
 		}
 	}
@@ -86,6 +102,7 @@
 			errorMessage = null;
 			isSubmitting = false;
 			showPersonPicker = false;
+			dismissGuardActive = false;
 		}
 	});
 
@@ -105,20 +122,26 @@
 
 	function handleOpenPicker() {
 		showPersonPicker = true;
+		dismissGuardActive = true;
 	}
 
 	function handlePickerClose() {
 		showPersonPicker = false;
+		dismissGuardActive = false;
 	}
 
 	async function handlePersonSelected(
 		destination: { toPersonId: string } | { toPersonName: string }
 	) {
-		// Capture group reference before any state changes, since the bits-ui
-		// Dialog's interact-outside handler can set the parent's group to null
-		// before this callback completes.
+		// Capture references before any state changes. The bits-ui Dialog's
+		// interact-outside handler (debounced 10ms) can cause the parent to
+		// set group=null and excludedFaceIds=[] if the dismiss guard fails.
 		const currentGroup = group;
+		const currentExcludedFaceIds = [...excludedFaceIds];
 		showPersonPicker = false;
+		// NOTE: dismissGuardActive stays true to block the debounced
+		// interact-outside check that fires ~10ms after the pointerdown
+		// on the "Move" button. It is cleared in the finally block.
 
 		if (!currentGroup) return;
 
@@ -134,8 +157,8 @@
 				request.name = destination.toPersonName;
 			}
 
-			if (excludedFaceIds.length > 0) {
-				request.faceIdsToExclude = excludedFaceIds;
+			if (currentExcludedFaceIds.length > 0) {
+				request.faceIdsToExclude = currentExcludedFaceIds;
 			}
 
 			const response = await acceptUnknownPersonCandidate(currentGroup.groupId, request);
@@ -148,6 +171,7 @@
 			errorMessage = err instanceof Error ? err.message : 'Failed to assign group to person';
 		} finally {
 			isSubmitting = false;
+			dismissGuardActive = false;
 		}
 	}
 </script>
