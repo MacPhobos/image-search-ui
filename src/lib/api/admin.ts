@@ -209,11 +209,6 @@ export interface UnknownFaceClusteringConfig {
 	minClusterSize: number;
 }
 
-export interface PostTrainingSuggestionsConfig {
-	mode: 'all' | 'top_n';
-	top_n_count: number;
-}
-
 export interface FaceMatchingConfig {
 	autoAssignThreshold: number;
 	suggestionThreshold: number;

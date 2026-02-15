@@ -7,8 +7,6 @@ export type SearchRequest = components['schemas']['SearchRequest'];
 export type SearchResponse = components['schemas']['SearchResponse'];
 export type SearchResult = components['schemas']['SearchResult'];
 export type ErrorResponse = components['schemas']['ErrorResponse'];
-export type PaginatedAssetResponse = components['schemas']['PaginatedResponse_Asset_'];
-
 // Alias generated types - Training
 export type TrainingSession = components['schemas']['TrainingSessionResponse'];
 export type TrainingSessionCreate = components['schemas']['TrainingSessionCreate'];

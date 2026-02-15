@@ -162,17 +162,6 @@ export async function searchSimilar(assetId: number, limit = 50): Promise<Search
 }
 
 /**
- * Search result with combined scores for hybrid search
- */
-export interface HybridSearchResult extends SearchResponse {
-	results: (SearchResponse['results'][0] & {
-		textScore?: number;
-		imageScore?: number;
-		combinedScore: number;
-	})[];
-}
-
-/**
  * Hybrid search combining text query and image similarity.
  * Uses POST /api/v1/search/hybrid endpoint.
  */
@@ -181,7 +170,7 @@ export async function searchHybrid(
 	imageFile: File | null,
 	textWeight: number = 0.5,
 	limit: number = 20
-): Promise<HybridSearchResult> {
+): Promise<SearchResponse> {
 	const formData = new FormData();
 
 	if (textQuery) {

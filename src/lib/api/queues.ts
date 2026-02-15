@@ -152,13 +152,6 @@ export async function getQueueDetail(
 }
 
 /**
- * Get detailed information for a specific job.
- */
-export async function getJobDetail(jobId: string): Promise<JobDetailResponse> {
-	return apiRequest<JobDetailResponse>(`/api/v1/jobs/${encodeURIComponent(jobId)}`);
-}
-
-/**
  * Get information about all RQ workers.
  */
 export async function getWorkers(): Promise<WorkersResponse> {
