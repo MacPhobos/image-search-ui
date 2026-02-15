@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import VectorsPage from '../../routes/vectors/+page.svelte';
+import VectorsPage from '../../routes/admin/vectors/+page.svelte';
 import type { Mock } from 'vitest';
 import {
 	createDirectoryStatsResponse,
