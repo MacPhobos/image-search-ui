@@ -763,3 +763,94 @@ export function createMergeSuggestion(overrides?: Partial<MergeSuggestion>): Mer
 		...overrides
 	};
 }
+
+// Queue Monitoring Fixtures
+
+import type {
+	QueueSummary,
+	QueuesOverviewResponse,
+	WorkerInfo,
+	WorkersResponse
+} from '$lib/api/queues';
+
+/**
+ * Create a test QueueSummary with sensible defaults
+ */
+export function createQueueSummary(overrides?: Partial<QueueSummary>): QueueSummary {
+	return {
+		name: 'default',
+		count: 5,
+		isEmpty: false,
+		startedCount: 2,
+		failedCount: 0,
+		finishedCount: 10,
+		scheduledCount: 0,
+		...overrides
+	};
+}
+
+/**
+ * Create a test QueuesOverviewResponse with sensible defaults
+ */
+export function createQueuesOverviewResponse(
+	overrides?: Partial<QueuesOverviewResponse>
+): QueuesOverviewResponse {
+	return {
+		queues: [
+			createQueueSummary({ name: 'high' }),
+			createQueueSummary({ name: 'default' }),
+			createQueueSummary({ name: 'low', count: 0, isEmpty: true, startedCount: 0 })
+		],
+		totalJobs: 10,
+		totalWorkers: 3,
+		workersBusy: 2,
+		redisConnected: true,
+		...overrides
+	};
+}
+
+/**
+ * Create a test WorkerInfo with sensible defaults
+ */
+export function createWorkerInfo(overrides?: Partial<WorkerInfo>): WorkerInfo {
+	return {
+		name: 'worker-1.abcdef',
+		state: 'busy',
+		queues: ['default', 'high', 'low'],
+		currentJob: {
+			jobId: 'job-123',
+			funcName: 'image_search_service.tasks.embed_image',
+			startedAt: '2026-02-16T10:00:00Z'
+		},
+		successfulJobCount: 42,
+		failedJobCount: 1,
+		totalWorkingTime: 3600,
+		birthDate: '2026-02-16T08:00:00Z',
+		lastHeartbeat: '2026-02-16T10:05:00Z',
+		pid: 12345,
+		hostname: 'worker-host',
+		...overrides
+	};
+}
+
+/**
+ * Create a test WorkersResponse with sensible defaults
+ */
+export function createWorkersResponse(overrides?: Partial<WorkersResponse>): WorkersResponse {
+	return {
+		workers: [
+			createWorkerInfo({ name: 'worker-1.abc', state: 'busy' }),
+			createWorkerInfo({
+				name: 'worker-2.def',
+				state: 'idle',
+				currentJob: null,
+				successfulJobCount: 20,
+				failedJobCount: 0
+			})
+		],
+		total: 2,
+		active: 1,
+		idle: 1,
+		...overrides
+	};
+}

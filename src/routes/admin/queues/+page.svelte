@@ -21,29 +21,48 @@
 
 	let overview = $state<QueuesOverviewResponse | null>(null);
 	let workers = $state<WorkersResponse | null>(null);
-	let loading = $state(true);
-	let error = $state<Error | null>(null);
+	let loadingQueues = $state(true);
+	let loadingWorkers = $state(true);
+	let queueError = $state<string | null>(null);
+	let workerError = $state<string | null>(null);
 	let lastUpdated = $state<Date | null>(null);
+
+	const loading = $derived(loadingQueues || loadingWorkers);
 
 	const POLL_INTERVAL_MS = 3000;
 	let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
-	async function fetchData() {
+	async function loadQueues() {
+		loadingQueues = true;
+		queueError = null;
 		try {
-			const [overviewData, workersData] = await Promise.all([getQueuesOverview(), getWorkers()]);
-			overview = overviewData;
-			workers = workersData;
-			error = null;
+			overview = await getQueuesOverview();
 			lastUpdated = new Date();
 		} catch (e) {
-			error = e instanceof Error ? e : new Error('Failed to fetch data');
+			queueError = e instanceof Error ? e.message : 'Failed to load queue data. Please try again.';
 		} finally {
-			loading = false;
+			loadingQueues = false;
 		}
 	}
 
+	async function loadWorkers() {
+		loadingWorkers = true;
+		workerError = null;
+		try {
+			workers = await getWorkers();
+		} catch (e) {
+			workerError =
+				e instanceof Error ? e.message : 'Failed to load worker data. Please try again.';
+		} finally {
+			loadingWorkers = false;
+		}
+	}
+
+	async function fetchData() {
+		await Promise.all([loadQueues(), loadWorkers()]);
+	}
+
 	function handleRefresh() {
-		loading = true;
 		fetchData();
 	}
 
@@ -106,14 +125,21 @@
 		</div>
 	</header>
 
-	{#if error}
+	{#if queueError}
 		<div class="error-banner" role="alert">
-			<span>{error.message}</span>
-			<button onclick={handleRefresh}>Retry</button>
+			<span>{queueError}</span>
+			<button class="btn-retry" onclick={loadQueues}>Retry</button>
 		</div>
 	{/if}
 
-	{#if loading}
+	{#if workerError}
+		<div class="error-banner" role="alert">
+			<span>{workerError}</span>
+			<button class="btn-retry" onclick={loadWorkers}>Retry</button>
+		</div>
+	{/if}
+
+	{#if loadingQueues && !overview}
 		<div class="stats-bar">
 			{#each Array.from({ length: 4 }, (_, i) => i) as i (i)}
 				<div class="stat">
@@ -163,17 +189,15 @@
 		</section>
 	{/if}
 
-	{#if workers}
-		<section class="section">
-			<WorkersPanel
-				workers={workers.workers}
-				total={workers.total}
-				active={workers.active}
-				idle={workers.idle}
-				{loading}
-			/>
-		</section>
-	{/if}
+	<section class="section">
+		<WorkersPanel
+			workers={workers?.workers ?? []}
+			total={workers?.total ?? 0}
+			active={workers?.active ?? 0}
+			idle={workers?.idle ?? 0}
+			loading={loadingWorkers}
+		/>
+	</section>
 </div>
 
 <style>
@@ -239,14 +263,19 @@
 		border-radius: 0.5rem;
 		color: #991b1b;
 	}
-	.error-banner button {
+	.btn-retry {
 		padding: 0.375rem 0.75rem;
 		font-size: 0.875rem;
-		border: 1px solid #fecaca;
+		font-weight: 500;
+		border: none;
 		border-radius: 0.25rem;
-		background: white;
-		color: #991b1b;
+		background: #dc2626;
+		color: white;
 		cursor: pointer;
+		transition: background 0.15s ease;
+	}
+	.btn-retry:hover {
+		background: #b91c1c;
 	}
 	.stats-bar {
 		display: grid;
