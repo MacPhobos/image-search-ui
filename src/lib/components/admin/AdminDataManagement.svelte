@@ -3,6 +3,7 @@
 	import { registerComponent } from '$lib/dev/componentRegistry.svelte';
 	import DeleteAllDataModal from './DeleteAllDataModal.svelte';
 	import PersonDataManagement from './PersonDataManagement.svelte';
+	import DriveSettingsPanel from './DriveSettingsPanel.svelte';
 	import type { DeleteAllDataResponse } from '$lib/api/admin';
 
 	// Component tracking (DEV only)
@@ -97,6 +98,12 @@
 
 	<!-- Person Data Management section -->
 	<PersonDataManagement />
+
+	<!-- Google Drive Integration -->
+	<div class="integrations-section" style="margin-bottom: 2rem;">
+		<h3 style="margin: 0 0 1rem 0; font-size: 1.125rem; color: #1f2937;">Integrations</h3>
+		<DriveSettingsPanel />
+	</div>
 
 	<div class="danger-zone">
 		<div class="danger-header">

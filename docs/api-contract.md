@@ -1,7 +1,7 @@
 # Image Search API Contract
 
-> **Version**: 1.19.0
-> **Last Updated**: 2026-02-13
+> **Version**: 1.20.0
+> **Last Updated**: 2026-02-17
 > **Status**: FROZEN - Changes require version bump and UI sync
 
 This document defines the API contract between `image-search-service` (backend) and `image-search-ui` (frontend).
@@ -29,6 +29,7 @@ This document defines the API contract between `image-search-service` (backend) 
    - [Job Progress](#job-progress)
    - [Corrections](#corrections)
    - [Queue Monitoring](#queue-monitoring)
+   - [Google Drive Storage](#google-drive-storage)
 5. [Pagination](#pagination)
 6. [Error Handling](#error-handling)
 7. [Status Codes](#status-codes)
@@ -3464,6 +3465,268 @@ Get information about all RQ workers.
 
 ---
 
+### Google Drive Storage
+
+Endpoints for exporting person photos to Google Drive. All mutating endpoints require
+`GOOGLE_DRIVE_ENABLED=true`. The health endpoint always returns 200.
+
+#### `POST /api/v1/gdrive/upload`
+
+Start a batch upload of person photos to Google Drive.
+
+**Request Body:**
+
+```json
+{
+	"personId": "550e8400-e29b-41d4-a716-446655440000",
+	"photoIds": [1, 2, 3],
+	"folderId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+	"options": {
+		"personNameOverride": "Custom Folder Name",
+		"createPersonSubfolder": true
+	}
+}
+```
+
+| Field                           | Type          | Required | Description                                                        |
+| ------------------------------- | ------------- | -------- | ------------------------------------------------------------------ |
+| `personId`                      | string (UUID) | Yes      | UUID of the person whose photos to upload                          |
+| `photoIds`                      | integer[]     | Yes      | Asset IDs to upload. Empty list = upload all photos for the person |
+| `folderId`                      | string        | Yes      | Google Drive folder ID for the upload destination                  |
+| `options`                       | object        | No       | Optional upload configuration                                      |
+| `options.personNameOverride`    | string        | No       | Override subfolder name (default: person's name from DB)           |
+| `options.createPersonSubfolder` | boolean       | No       | Create a named subfolder (default: true)                           |
+
+**Response (202 Accepted):**
+
+```json
+{
+	"batchId": "550e8400-e29b-41d4-a716-446655440001",
+	"jobIds": ["rq-job-id-1", "rq-job-id-2"],
+	"totalPhotos": 42,
+	"estimatedTimeSeconds": 14,
+	"message": "Queued 42 photos in 2 job(s)"
+}
+```
+
+**Error Responses:**
+
+- `400` — Invalid request (e.g. invalid UUID format)
+- `404` — Person or photos not found
+- `503` — Google Drive not enabled
+
+---
+
+#### `GET /api/v1/gdrive/upload/{batchId}/status`
+
+Poll upload batch progress. Designed for polling at ~2 second intervals.
+
+**Path Parameters:**
+
+- `batchId` — Batch ID returned from `POST /api/v1/gdrive/upload`
+
+**Response (200):**
+
+```json
+{
+	"batchId": "550e8400-e29b-41d4-a716-446655440001",
+	"status": "in_progress",
+	"total": 42,
+	"completed": 28,
+	"failed": 1,
+	"inProgress": 13,
+	"percentage": 66.7,
+	"etaSeconds": 5,
+	"files": [
+		{
+			"assetId": 1,
+			"filename": "photo_001.jpg",
+			"status": "completed",
+			"remoteFileId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+			"errorMessage": null,
+			"completedAt": "2026-02-17T10:00:00Z"
+		}
+	],
+	"startedAt": "2026-02-17T09:58:00Z",
+	"completedAt": null
+}
+```
+
+**Status Values:**
+
+- `pending` — All records are pending (no uploads started yet)
+- `in_progress` — Upload is actively running
+- `completed` — All files uploaded successfully
+- `partial_failure` — Some files uploaded, some failed
+- `failed` — All files failed
+- `cancelled` — Batch was cancelled
+
+**Error Responses:**
+
+- `404` — Batch not found
+
+---
+
+#### `DELETE /api/v1/gdrive/upload/{batchId}`
+
+Cancel an in-progress upload batch. Marks remaining pending uploads as cancelled.
+Already-completed uploads remain in Google Drive.
+
+**Path Parameters:**
+
+- `batchId` — Batch ID returned from `POST /api/v1/gdrive/upload`
+
+**Response (200):**
+
+```json
+{
+	"batchId": "550e8400-e29b-41d4-a716-446655440001",
+	"status": "cancelled",
+	"completedBeforeCancel": 28,
+	"cancelledCount": 14,
+	"message": "Cancelled 14 pending upload(s). 28 already completed."
+}
+```
+
+**Error Responses:**
+
+- `404` — Batch not found
+- `409` — Batch already completed or cancelled (no pending uploads to cancel)
+- `503` — Google Drive not enabled
+
+---
+
+#### `GET /api/v1/gdrive/folders`
+
+List folders in Google Drive. Supports lazy-loading via `parentId` for tree expansion.
+
+**Query Parameters:**
+
+| Parameter  | Type   | Required | Description                                      |
+| ---------- | ------ | -------- | ------------------------------------------------ |
+| `parentId` | string | No       | Parent folder ID. Omit for root folder contents. |
+
+**Response (200):**
+
+```json
+{
+	"parentId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+	"folders": [
+		{
+			"id": "1abc_def_ghi_jkl",
+			"name": "Family Photos",
+			"parentId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+			"hasChildren": true,
+			"createdAt": "2026-01-15T10:00:00Z"
+		}
+	],
+	"total": 5
+}
+```
+
+**Error Responses:**
+
+- `404` — Parent folder not found in Drive
+- `503` — Google Drive not enabled
+
+---
+
+#### `POST /api/v1/gdrive/folders`
+
+Create a new folder in Google Drive. Idempotent — returns existing folder ID if a
+folder with the same name already exists in the parent.
+
+**Request Body:**
+
+```json
+{
+	"name": "New Folder",
+	"parentId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+}
+```
+
+| Field      | Type                 | Required | Description                           |
+| ---------- | -------------------- | -------- | ------------------------------------- |
+| `name`     | string (1-255 chars) | Yes      | Folder name                           |
+| `parentId` | string               | No       | Parent folder ID. Null = root folder. |
+
+**Response (201 Created):**
+
+```json
+{
+	"folderId": "1xyz_abc_new_folder_id",
+	"name": "New Folder",
+	"parentId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+	"path": "/New Folder"
+}
+```
+
+**Error Responses:**
+
+- `400` — Empty or invalid folder name
+- `403` — Permission denied
+- `503` — Google Drive not enabled
+
+---
+
+#### `GET /api/v1/gdrive/health`
+
+Check Google Drive connection status. Always returns HTTP 200 — the frontend uses
+`connected` and `enabled` fields to decide whether to show Drive-dependent UI.
+
+**Response (200):**
+
+```json
+{
+	"connected": true,
+	"enabled": true,
+	"serviceAccountEmail": "photo-uploader@project.iam.gserviceaccount.com",
+	"rootFolderId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+	"rootFolderName": null,
+	"storageUsedBytes": null,
+	"storageTotalBytes": null,
+	"storageUsagePercentage": null,
+	"lastUploadAt": null,
+	"error": null
+}
+```
+
+**When Drive is disabled (`GOOGLE_DRIVE_ENABLED=false`):**
+
+```json
+{
+	"connected": false,
+	"enabled": false,
+	"serviceAccountEmail": null,
+	"rootFolderId": null,
+	"rootFolderName": null,
+	"storageUsedBytes": null,
+	"storageTotalBytes": null,
+	"storageUsagePercentage": null,
+	"lastUploadAt": null,
+	"error": null
+}
+```
+
+**When Drive is enabled but connection fails:**
+
+```json
+{
+	"connected": false,
+	"enabled": true,
+	"serviceAccountEmail": null,
+	"rootFolderId": null,
+	"rootFolderName": null,
+	"storageUsedBytes": null,
+	"storageTotalBytes": null,
+	"storageUsagePercentage": null,
+	"lastUploadAt": null,
+	"error": "Not found: root-folder-id"
+}
+```
+
+---
+
 ## Pagination
 
 All list endpoints use consistent pagination.
@@ -3639,6 +3902,7 @@ All endpoints except:
 
 | Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.20.0  | 2026-02-17 | Added Google Drive Storage section with 6 new endpoints: POST /api/v1/gdrive/upload (start batch upload), GET /api/v1/gdrive/upload/{batchId}/status (poll progress), DELETE /api/v1/gdrive/upload/{batchId} (cancel batch), GET /api/v1/gdrive/folders (list Drive folders with parentId query param), POST /api/v1/gdrive/folders (create folder, idempotent), GET /api/v1/gdrive/health (connection status, always 200). Added schemas: StartUploadRequest, StartUploadResponse, UploadOptions, UploadFileStatus, UploadStatusResponse, CancelUploadResponse, DriveFolderInfo, FolderListResponse, CreateFolderRequest, CreateFolderResponse, DriveHealthResponse, StorageErrorResponse. Requires GOOGLE_DRIVE_ENABLED=true for mutating endpoints. Health endpoint always returns 200 with connected/enabled flags.                                                                                    |
 | 1.19.0  | 2026-02-13 | Added "Merge Group Into Existing Person" feature. Updated POST /api/v1/faces/unknown-persons/candidates/{group_id}/accept to support assigning faces to existing person via new optional `personId` field (mutually exclusive with `name`). Added `assignmentEventId` to AcceptCandidateResponse for undo capability. Added POST /api/v1/faces/clusters/{cluster_id}/label endpoint for labeling clusters with conditional `name` or `personId` fields. Added POST /api/v1/faces/assignment-events/{event_id}/undo endpoint to revert face assignments within 1 hour. Added LabelClusterRequest, LabelClusterResponse, and UndoAssignmentResponse schemas. Added error codes: CLUSTER_NOT_FOUND, EVENT_NOT_FOUND, EVENT_ALREADY_UNDONE, EVENT_TOO_OLD, INVALID_OPERATION_TYPE, NO_FACES_TO_UNDO. Updated AcceptCandidateRequest schema to make `name` conditional and add `personId` as conditional field. |
 | 1.18.0  | 2026-01-16 | Added POST /api/v1/faces/suggestions/persons/{person_id}/find-more-centroid endpoint for centroid-based Find More job submission. Uses person's pre-computed centroid for faster and more consistent face matching than dynamic prototype sampling. Request body includes minSimilarity (0.5-0.95, default 0.65), maxResults (1-500, default 200), and unassignedOnly (boolean, default true) fields. Response follows same FindMoreJobResponse schema as prototype-based find-more. Returns 422 error if person has no centroid computed.                                                                                                                                                                                                                                                                                                                                                                 |
 | 1.17.0  | 2026-01-16 | Added Face Centroids section with 4 new endpoints: POST /api/v1/faces/centroids/persons/{person_id}/compute (compute/recompute centroids with optional clustering), GET /api/v1/faces/centroids/persons/{person_id} (retrieve existing centroids), POST /api/v1/faces/centroids/persons/{person_id}/suggestions (get face suggestions using centroid similarity), DELETE /api/v1/faces/centroids/persons/{person_id} (delete all centroids for person). Added Centroid, PersonCentroidsResponse, CentroidSuggestion, and CentroidSuggestionsResponse schemas. Added INSUFFICIENT_FACES and CENTROIDS_NOT_AVAILABLE error codes (HTTP 422). Centroids provide efficient face suggestion generation by computing average embeddings of labeled faces, supporting both global (all faces) and cluster-based (subdivided) representations.                                                                     |

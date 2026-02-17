@@ -17,12 +17,14 @@
 		type CentroidSuggestion
 	} from '$lib/api/faces';
 	import { ApiError } from '$lib/api/client';
+	import { getDriveHealth } from '$lib/api/gdrive';
 	import PersonPhotosTab from '$lib/components/faces/PersonPhotosTab.svelte';
 	import PhotoPreviewModal from '$lib/components/faces/PhotoPreviewModal.svelte';
 	import TemporalTimeline from '$lib/components/faces/TemporalTimeline.svelte';
 	import CoverageIndicator from '$lib/components/faces/CoverageIndicator.svelte';
 	import ComputeCentroidsDialog from '$lib/components/faces/ComputeCentroidsDialog.svelte';
 	import CentroidResultsDialog from '$lib/components/faces/CentroidResultsDialog.svelte';
+	import DriveUploadWizard from '$lib/components/gdrive/DriveUploadWizard.svelte';
 	import type { Person, Prototype, TemporalCoverage, AgeEraBucket } from '$lib/types';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { onMount } from 'svelte';
@@ -89,6 +91,12 @@
 	let centroidSuggestions = $state<CentroidSuggestion[]>([]);
 	let showCentroidResultsDialog = $state(false);
 
+	// Google Drive state
+	let driveConnected = $state(false);
+	let showDriveUploadAll = $state(false);
+	let allDrivePhotos = $state<PersonPhotoGroup[]>([]);
+	let loadingDrivePhotos = $state(false);
+
 	// Lightbox state
 	let showLightbox = $state(false);
 	let lightboxPhoto = $state<PersonPhotoGroup | null>(null);
@@ -98,6 +106,14 @@
 	// DEV: Set view ID for DevOverlay breadcrumb and component cleanup
 	onMount(() => {
 		loadPerson();
+		// Check Google Drive availability (non-blocking)
+		getDriveHealth()
+			.then((health) => {
+				driveConnected = health.connected;
+			})
+			.catch(() => {
+				driveConnected = false;
+			});
 		if (import.meta.env.DEV) {
 			const clearViewId = setViewId('page:/people/[personId]');
 			return () => {
@@ -469,6 +485,25 @@
 		}
 	}
 
+	async function handleUploadAllToDrive() {
+		if (!person) return;
+		const totalPhotos = person.photoCount ?? 0;
+		if (totalPhotos > 500) {
+			if (!confirm(`Upload all ${totalPhotos} photos? This may take a while.`)) return;
+		}
+		loadingDrivePhotos = true;
+		try {
+			const response = await getPersonPhotos(person.id, 1, totalPhotos || 500);
+			allDrivePhotos = response.items;
+			showDriveUploadAll = true;
+		} catch (e) {
+			console.error('Failed to load photos for upload', e);
+			toast.error('Failed to load photos for upload');
+		} finally {
+			loadingDrivePhotos = false;
+		}
+	}
+
 	async function handlePrototypeClick(proto: Prototype) {
 		if (!proto.faceInstanceId || !person) return;
 
@@ -652,6 +687,29 @@
 				{#if person.status === 'active'}
 					<button type="button" class="secondary-button" onclick={handleOpenMergeModal}>
 						Merge into Another Person
+					</button>
+				{/if}
+				{#if driveConnected && person.faceCount > 0}
+					<button
+						type="button"
+						class="secondary-button drive-upload-btn"
+						onclick={handleUploadAllToDrive}
+						disabled={loadingDrivePhotos}
+						title="Upload all of {person.name}'s photos to Google Drive"
+					>
+						<svg
+							class="action-icon"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<polyline points="16 16 12 12 8 16" />
+							<line x1="12" y1="12" x2="12" y2="21" />
+							<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+							<polyline points="16 16 12 12 8 16" />
+						</svg>
+						{loadingDrivePhotos ? 'Loading Photos...' : 'Upload All to Drive'}
 					</button>
 				{/if}
 			</div>
@@ -991,6 +1049,21 @@
 	</div>
 {/if}
 
+<!-- Drive Upload All Wizard -->
+{#if showDriveUploadAll && person}
+	<DriveUploadWizard
+		bind:open={showDriveUploadAll}
+		personId={person.id}
+		personName={person.name}
+		photos={allDrivePhotos}
+		initialPhotoIds={allDrivePhotos.map((p) => p.photoId)}
+		onClose={() => {
+			showDriveUploadAll = false;
+			allDrivePhotos = [];
+		}}
+	/>
+{/if}
+
 <style>
 	.person-detail-page {
 		max-width: 1200px;
@@ -1204,6 +1277,17 @@
 
 	.secondary-button:hover {
 		background-color: #f5f5f5;
+	}
+
+	.drive-upload-btn {
+		background-color: #f0fdf4;
+		color: #16a34a;
+		border-color: #86efac;
+	}
+
+	.drive-upload-btn:hover {
+		background-color: #dcfce7;
+		border-color: #16a34a;
 	}
 
 	.action-icon {

@@ -854,3 +854,256 @@ export function createWorkersResponse(overrides?: Partial<WorkersResponse>): Wor
 		...overrides
 	};
 }
+
+// Google Drive Fixtures
+
+import type {
+	DriveFolderInfo,
+	FolderListResponse,
+	UploadStatusResponse,
+	UploadFileStatus,
+	StartUploadResponse,
+	CancelUploadResponse,
+	DriveHealthResponse,
+	CreateFolderResponse
+} from '$lib/api/gdrive';
+
+/**
+ * Create a test DriveFolderInfo with sensible defaults
+ */
+export function createDriveFolder(overrides?: Partial<DriveFolderInfo>): DriveFolderInfo {
+	return {
+		id: 'folder_abc123',
+		name: 'Photos',
+		parentId: null,
+		hasChildren: true,
+		createdAt: '2026-01-15T10:00:00Z',
+		...overrides
+	};
+}
+
+/**
+ * Create a test FolderListResponse with a tree of folders
+ */
+export function createDriveFolderTree(overrides?: Partial<FolderListResponse>): FolderListResponse {
+	return {
+		parentId: null,
+		folders: [
+			createDriveFolder({ id: 'folder_1', name: 'People', hasChildren: true }),
+			createDriveFolder({ id: 'folder_2', name: 'Events', hasChildren: true }),
+			createDriveFolder({ id: 'folder_3', name: 'Archive', hasChildren: false })
+		],
+		total: 3,
+		...overrides
+	};
+}
+
+/**
+ * Create a test UploadFileStatus with sensible defaults
+ */
+export function createDriveFileStatus(overrides?: Partial<UploadFileStatus>): UploadFileStatus {
+	return {
+		assetId: 1,
+		filename: 'photo_001.jpg',
+		status: 'completed',
+		remoteFileId: 'gdrive_file_abc',
+		errorMessage: null,
+		completedAt: '2026-02-17T10:05:00Z',
+		...overrides
+	};
+}
+
+/**
+ * Create a test UploadStatusResponse for an in-progress upload
+ */
+export function createDriveUploadStatus(
+	overrides?: Partial<UploadStatusResponse>
+): UploadStatusResponse {
+	return {
+		batchId: 'batch_abc123',
+		status: 'in_progress',
+		total: 5,
+		completed: 2,
+		failed: 0,
+		inProgress: 3,
+		percentage: 40,
+		etaSeconds: 30,
+		files: [
+			createDriveFileStatus({ assetId: 1, filename: 'photo_001.jpg', status: 'completed' }),
+			createDriveFileStatus({ assetId: 2, filename: 'photo_002.jpg', status: 'completed' }),
+			createDriveFileStatus({
+				assetId: 3,
+				filename: 'photo_003.jpg',
+				status: 'uploading',
+				remoteFileId: null,
+				completedAt: null
+			}),
+			createDriveFileStatus({
+				assetId: 4,
+				filename: 'photo_004.jpg',
+				status: 'pending',
+				remoteFileId: null,
+				completedAt: null
+			}),
+			createDriveFileStatus({
+				assetId: 5,
+				filename: 'photo_005.jpg',
+				status: 'pending',
+				remoteFileId: null,
+				completedAt: null
+			})
+		],
+		startedAt: '2026-02-17T10:00:00Z',
+		completedAt: null,
+		...overrides
+	};
+}
+
+/**
+ * Create a completed upload result
+ */
+export function createDriveUploadResult(
+	overrides?: Partial<UploadStatusResponse>
+): UploadStatusResponse {
+	return createDriveUploadStatus({
+		status: 'completed',
+		completed: 5,
+		failed: 0,
+		inProgress: 0,
+		percentage: 100,
+		etaSeconds: null,
+		files: Array.from({ length: 5 }, (_, i) =>
+			createDriveFileStatus({
+				assetId: i + 1,
+				filename: `photo_00${i + 1}.jpg`,
+				status: 'completed'
+			})
+		),
+		completedAt: '2026-02-17T10:05:00Z',
+		...overrides
+	});
+}
+
+/**
+ * Create a partial failure upload result
+ */
+export function createDriveUploadPartialFailure(
+	overrides?: Partial<UploadStatusResponse>
+): UploadStatusResponse {
+	return createDriveUploadStatus({
+		status: 'partial_failure',
+		completed: 3,
+		failed: 2,
+		inProgress: 0,
+		percentage: 60,
+		etaSeconds: null,
+		files: [
+			createDriveFileStatus({ assetId: 1, status: 'completed' }),
+			createDriveFileStatus({ assetId: 2, status: 'completed' }),
+			createDriveFileStatus({ assetId: 3, status: 'completed' }),
+			createDriveFileStatus({
+				assetId: 4,
+				status: 'failed',
+				errorMessage: 'Storage quota exceeded',
+				remoteFileId: null,
+				completedAt: null
+			}),
+			createDriveFileStatus({
+				assetId: 5,
+				status: 'failed',
+				errorMessage: 'Rate limit exceeded',
+				remoteFileId: null,
+				completedAt: null
+			})
+		],
+		completedAt: '2026-02-17T10:05:00Z',
+		...overrides
+	});
+}
+
+/**
+ * Create a StartUploadResponse
+ */
+export function createDriveStartUploadResponse(
+	overrides?: Partial<StartUploadResponse>
+): StartUploadResponse {
+	return {
+		batchId: 'batch_abc123',
+		jobIds: ['job_1', 'job_2'],
+		totalPhotos: 5,
+		estimatedTimeSeconds: 60,
+		message: 'Upload started for 5 photos',
+		...overrides
+	};
+}
+
+/**
+ * Create a CancelUploadResponse
+ */
+export function createDriveCancelResponse(
+	overrides?: Partial<CancelUploadResponse>
+): CancelUploadResponse {
+	return {
+		batchId: 'batch_abc123',
+		status: 'cancelled',
+		completedBeforeCancel: 2,
+		cancelledCount: 3,
+		message: 'Upload cancelled. 2 photos were already uploaded.',
+		...overrides
+	};
+}
+
+/**
+ * Create a healthy DriveHealthResponse (connected)
+ */
+export function createDriveHealth(overrides?: Partial<DriveHealthResponse>): DriveHealthResponse {
+	return {
+		connected: true,
+		enabled: true,
+		serviceAccountEmail: 'image-search@project.iam.gserviceaccount.com',
+		rootFolderId: 'root_folder_123',
+		rootFolderName: 'Image Search',
+		storageUsedBytes: 5_000_000_000,
+		storageTotalBytes: 15_000_000_000,
+		storageUsagePercentage: 33.3,
+		lastUploadAt: '2026-02-16T15:30:00Z',
+		error: null,
+		...overrides
+	};
+}
+
+/**
+ * Create a disconnected DriveHealthResponse
+ */
+export function createDriveHealthDisconnected(
+	overrides?: Partial<DriveHealthResponse>
+): DriveHealthResponse {
+	return {
+		connected: false,
+		enabled: false,
+		serviceAccountEmail: null,
+		rootFolderId: null,
+		rootFolderName: null,
+		storageUsedBytes: null,
+		storageTotalBytes: null,
+		storageUsagePercentage: null,
+		lastUploadAt: null,
+		error: null,
+		...overrides
+	};
+}
+
+/**
+ * Create a CreateFolderResponse
+ */
+export function createDriveFolderResponse(
+	overrides?: Partial<CreateFolderResponse>
+): CreateFolderResponse {
+	return {
+		folderId: 'new_folder_123',
+		name: 'New Folder',
+		parentId: null,
+		path: '/New Folder',
+		...overrides
+	};
+}

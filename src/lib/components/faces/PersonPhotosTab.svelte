@@ -2,9 +2,12 @@
 	import { getPersonPhotos, bulkRemoveFromPerson, bulkMoveToPerson } from '$lib/api/faces';
 	import type { PersonPhotoGroup } from '$lib/api/faces';
 	import { API_BASE_URL } from '$lib/api/client';
+	import { getDriveHealth } from '$lib/api/gdrive';
 	import PersonPickerModal from './PersonPickerModal.svelte';
+	import DriveUploadWizard from '$lib/components/gdrive/DriveUploadWizard.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { toast } from 'svelte-sonner';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		personId: string;
@@ -13,6 +16,19 @@
 	}
 
 	let { personId, personName, onPhotoClick }: Props = $props();
+
+	// Google Drive state
+	let driveConnected = $state(false);
+	let showDriveWizard = $state(false);
+
+	onMount(async () => {
+		try {
+			const health = await getDriveHealth();
+			driveConnected = health.connected;
+		} catch {
+			driveConnected = false;
+		}
+	});
 
 	// State
 	let photos = $state<PersonPhotoGroup[]>([]);
@@ -268,6 +284,16 @@
 				>
 					Move to...
 				</button>
+				{#if driveConnected}
+					<button
+						type="button"
+						class="action-btn drive-btn"
+						onclick={() => (showDriveWizard = true)}
+						disabled={bulkActionInProgress}
+					>
+						Upload to Drive
+					</button>
+				{/if}
 				<button type="button" class="action-btn clear-btn" onclick={clearSelection}> Clear </button>
 			</div>
 		</div>
@@ -280,6 +306,21 @@
 		onSelect={handleBulkMove}
 		onClose={() => (showMoveModal = false)}
 		excludePersonId={personId}
+	/>
+{/if}
+
+<!-- Drive Upload Wizard -->
+{#if showDriveWizard}
+	<DriveUploadWizard
+		bind:open={showDriveWizard}
+		{personId}
+		{personName}
+		{photos}
+		initialPhotoIds={[...selectedPhotoIds]}
+		onClose={() => (showDriveWizard = false)}
+		onUploadComplete={() => {
+			selectedPhotoIds = new Set();
+		}}
 	/>
 {/if}
 
@@ -563,6 +604,15 @@
 
 	.move-btn:hover:not(:disabled) {
 		background-color: #3a7bc8;
+	}
+
+	.drive-btn {
+		background-color: #16a34a;
+		color: white;
+	}
+
+	.drive-btn:hover:not(:disabled) {
+		background-color: #15803d;
 	}
 
 	.clear-btn {
