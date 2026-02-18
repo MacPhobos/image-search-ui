@@ -80,6 +80,55 @@ src/
 
 - `VITE_API_BASE_URL` - Backend API base URL (default: http://localhost:8000)
 
+## Google Drive Integration
+
+Optional integration that lets users upload person photos to Google Drive from the UI. Requires a Google Cloud service account and a shared Drive folder.
+
+### Prerequisites
+
+1. Create a Google Cloud project (or use an existing one)
+2. Enable the **Google Drive API** in the Google Cloud Console
+3. Create a **service account** and download its JSON key file
+4. Create a folder in Google Drive for uploads
+5. Share that folder with the service account email as **Editor**
+6. Copy the folder ID from the URL (`https://drive.google.com/drive/folders/<FOLDER_ID>`)
+
+### Environment Variables
+
+Required:
+
+- `GOOGLE_DRIVE_ENABLED` - Enable Google Drive integration (default: `false`)
+- `GOOGLE_DRIVE_SA_JSON` - Path to service account JSON key file
+- `GOOGLE_DRIVE_ROOT_ID` - Google Drive folder ID shared with the service account
+
+Optional:
+
+- `GOOGLE_DRIVE_UPLOAD_BATCH_SIZE` - Photos per upload chunk (default: `10`, range: 1-50)
+- `GOOGLE_DRIVE_PATH_CACHE_TTL` - Path cache TTL in seconds (default: `300`)
+- `GOOGLE_DRIVE_PATH_CACHE_MAXSIZE` - Max path cache entries (default: `1024`)
+
+### Example Configuration
+
+```bash
+GOOGLE_DRIVE_ENABLED=true
+GOOGLE_DRIVE_SA_JSON=/path/to/service-account-key.json
+GOOGLE_DRIVE_ROOT_ID=1aBcDeFgHiJkLmNoPqRsTuVwXyZ
+```
+
+### Security
+
+- Never commit the service account key file
+- Set file permissions: `chmod 600 /path/to/service-account-key.json`
+- Add the key file path to `.gitignore`
+
+### Verification
+
+```bash
+curl http://localhost:8000/api/v1/gdrive/health
+```
+
+Or check the Admin panel in the UI — the Drive Settings section shows connection status.
+
 ## Tech Stack
 
 - **Framework**: SvelteKit with Svelte 5 Runes
